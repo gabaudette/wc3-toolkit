@@ -11,6 +11,7 @@ use std::process::ExitCode;
 
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::units::UnitDatabase;
+use wc3_map::lua;
 use wc3_map::units::MapUnits;
 use wc3_map::{FourCC, Layout, Map, OBJECT_FILES, ObjectData, STRINGS_FILE, save_files};
 
@@ -29,6 +30,9 @@ commands:
   unit <ID>                          every field of a unit; * marks the map's changes
   set <ID> <FIELD> <VALUE> -o <OUT>  change a field and save the map as OUT
   new <BASE> -o <OUT>                create a custom unit copying BASE and save as OUT
+  lua <DIR> [-o OUT] [--script FILE] build a [DEV] copy of the map with the Lua modules in
+                                     DIR added to its script (default OUT: <map>_dev.<ext>);
+                                     --script also saves the final script to FILE
 
 OUT may be the input map itself; it is replaced only after a complete save.";
 
@@ -59,6 +63,7 @@ struct Args {
     options: GameOptions,
     mode: ArtMode,
     output: Option<PathBuf>,
+    script_out: Option<PathBuf>,
     positional: Vec<String>,
 }
 
@@ -68,6 +73,7 @@ fn parse_args() -> Result<Args, String> {
         options: GameOptions::default(),
         mode: ArtMode::Sd,
         output: None,
+        script_out: None,
         positional: Vec::new(),
     };
     let mut args = std::env::args().skip(1);
@@ -80,6 +86,9 @@ fn parse_args() -> Result<Args, String> {
             }
             "--hd" => parsed.mode = ArtMode::Hd,
             "-o" | "--out" => parsed.output = Some(args.next().ok_or("-o needs a file")?.into()),
+            "--script" => {
+                parsed.script_out = Some(args.next().ok_or("--script needs a file")?.into())
+            }
             "-h" | "--help" => return Err(String::new()),
             _ => parsed.positional.push(arg),
         }
@@ -194,6 +203,27 @@ fn save(map_path: &Path, output: Option<&PathBuf>, units: &MapUnits) -> Result<(
     Ok(())
 }
 
+fn build_lua(map_path: &Path, modules_dir: &Path, args: &Args) -> Result<(), String> {
+    let output = args
+        .output
+        .clone()
+        .unwrap_or_else(|| lua::default_output(map_path));
+    let report = lua::build_dev_map(map_path, modules_dir, &output).map_err(|e| e.to_string())?;
+
+    if let Some(script_out) = &args.script_out {
+        std::fs::write(script_out, &report.script)
+            .map_err(|e| format!("cannot write {}: {e}", script_out.display()))?;
+    }
+
+    say!("built {}", report.output.display());
+    say!("modules: {}", report.modules.join(", "));
+    if !report.renamed {
+        say!("note: the map name is not a string reference, so it has no [DEV] prefix");
+    }
+
+    Ok(())
+}
+
 fn run(args: Args) -> Result<(), String> {
     let positional: Vec<&str> = args.positional.iter().map(String::as_str).collect();
     let Some((map_arg, command)) = positional.split_first() else {
@@ -201,6 +231,10 @@ fn run(args: Args) -> Result<(), String> {
     };
 
     let map_path = Path::new(map_arg);
+    if let ["lua", modules_dir] = command {
+        return build_lua(map_path, Path::new(modules_dir), &args);
+    }
+
     let map = Map::open(map_path).map_err(|e| e.to_string())?;
     if command == ["check"] {
         return check(&map);

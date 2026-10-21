@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 pub use wc3_data::objects::{FourCC, Layout, ObjectData, Value};
 pub use wc3_data::strings::MapStrings;
 
+pub mod lua;
 pub mod units;
 
 pub const STRINGS_FILE: &str = "war3map.wts";
@@ -49,6 +50,13 @@ pub enum Error {
     NotObjectFile(String),
     #[error("{0}")]
     Invalid(String),
+    #[error("{file}:{line}:{column}: Lua syntax error: {message}")]
+    Lua {
+        file: String,
+        line: usize,
+        column: usize,
+        message: String,
+    },
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

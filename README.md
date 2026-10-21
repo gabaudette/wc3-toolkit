@@ -22,10 +22,19 @@ reads and writes the same object data as the World Editor, with a better interfa
 The first version covers the Units tab (units, heroes, buildings). See
 [docs/pet-peeves.md](docs/pet-peeves.md) for the full list of goals.
 
-### Map script harness (`map/`)
+### Lua script harness (`wc3map lua`)
 
-Injects Lua modules from `map/src/` into a development copy of a map, so custom code and the
-World Editor never overwrite each other. Temporary and Linux-only for now.
+Builds a development copy of a map with Lua modules from a folder added to the World Editor's
+script, so custom code and the editor never overwrite each other. The copy is named
+`<map>_dev.w3m` and shows up as `[DEV] <map name>` in the game. Every module is syntax-checked
+as Lua 5.3 before anything is written, and the original map is never modified.
+`map/src/` holds example modules. Works on Windows, Linux and macOS.
+
+```bash
+cargo run --release -p wc3-map --bin wc3map -- path/to/test.w3m lua ../map/src
+```
+
+Modules register code to run at game start with `Dev.OnStart(function() ... end)`.
 
 ## Requirements
 

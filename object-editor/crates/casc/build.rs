@@ -71,6 +71,12 @@ fn main() {
         .warnings(false)
         .compile("casc_c");
 
+    // CascLib's network code uses Winsock on Windows.
+    let target = std::env::var("TARGET").unwrap_or_default();
+    if target.contains("windows") {
+        println!("cargo:rustc-link-lib=ws2_32");
+    }
+
     println!("cargo:rerun-if-changed=shim.cpp");
     println!("cargo:rerun-if-changed={}", src.display());
 }

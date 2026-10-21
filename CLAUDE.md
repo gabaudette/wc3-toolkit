@@ -13,12 +13,13 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `crates/mpq` reads/writes map archives via the vendored StormLib (built with CMake).
   `crates/wc3-map` opens maps, saves through a temp copy (`save_files`), and `units::MapUnits`
   applies a map's unit changes over the game data and edits them. `wc3map` is its CLI
-  (`check`, `units`, `unit`, `set`, `new`).
-- `map/` — Lua scripts (`src/`) injected into a dev copy of a test map by `tools/build.py`
-  (temporary, Linux-only; map writing moves into the Rust editor). It needs
-  `map/tools/lib/libstorm.so` (StormLib, built with `-DBUILD_SHARED_LIBS=ON
-  -DSTORM_USE_BUNDLED_LIBRARIES=ON`) and `map/tools/bin/luac` (Lua 5.3, `make posix`). Both are
-  local builds and are not committed.
+  (`check`, `units`, `unit`, `set`, `new`, `lua`).
+- Everything must build and run on Windows and Linux (CI tests both). StormLib's library is
+  named `StormLib` on Windows; CascLib needs `ws2_32` there.
+- `map/src/` — example Lua modules for the harness (`wc3map <map> lua <dir>`, implemented in
+  `crates/wc3-map/src/lua.rs`): appends the modules plus a `Dev.OnStart` loader and a `main()`
+  hook to the editor's `war3map.lua` in a `<map>_dev.w3m` copy named `[DEV] ...`, after
+  checking every file as Lua 5.3 with `full_moon`.
 
 Coding standards: `docs/standards/` (AGE Studio engineering standards) and their application
 to this repo plus validation commands in `CONTRIBUTING.md`; follow them for every change. Machine-specific notes (game paths, test maps) are in `CLAUDE.local.md` when present.

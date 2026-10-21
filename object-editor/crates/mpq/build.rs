@@ -8,7 +8,10 @@ fn main() {
     // bzip2 and LibTomCrypt, so the project does not duplicate that list. CMake
     // only prints the vendored code's compiler warnings when the build fails
     // (AGE-QUAL-003: third-party code this project does not modify).
+    // Always a release build: on MSVC, a debug build would link the debug C
+    // runtime while Rust links the release one, and the two cannot be mixed.
     let out = cmake::Config::new(&source)
+        .profile("Release")
         .define("STORM_USE_BUNDLED_LIBRARIES", "ON")
         .define("STORM_BUILD_TESTS", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
@@ -17,10 +20,17 @@ fn main() {
     for dir in ["lib", "lib64"] {
         println!("cargo:rustc-link-search=native={}", out.join(dir).display());
     }
-    println!("cargo:rustc-link-lib=static=storm");
+
+    // StormLib's CMake build names the library `StormLib` on Windows, `storm` elsewhere.
+    let target = std::env::var("TARGET").unwrap_or_default();
+    let library = if target.contains("windows") {
+        "StormLib"
+    } else {
+        "storm"
+    };
+    println!("cargo:rustc-link-lib=static={library}");
 
     // StormLib is C++; link the platform's C++ runtime (MSVC links it implicitly).
-    let target = std::env::var("TARGET").unwrap_or_default();
     if target.contains("apple") {
         println!("cargo:rustc-link-lib=c++");
     } else if !target.contains("msvc") {
