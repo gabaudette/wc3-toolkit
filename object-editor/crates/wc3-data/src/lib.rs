@@ -1,6 +1,7 @@
 //! Warcraft III game data: SLK tables, profile text files and the Object
 //! Editor's field metadata.
 
+pub mod abilities;
 pub mod game;
 pub mod guide;
 pub mod icon;

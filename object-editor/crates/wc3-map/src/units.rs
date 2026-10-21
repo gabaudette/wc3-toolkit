@@ -176,11 +176,19 @@ impl MapUnits {
     ) -> Result<()> {
         let field_id = FourCC::parse(&field.id)
             .ok_or_else(|| Error::Invalid(format!("bad field ID {}", field.id)))?;
-        if self.base_of(db, id).is_none() {
+        let Some(base) = self.base_of(db, id) else {
             return Err(Error::Invalid(format!("unknown unit {id}")));
+        };
+
+        // Setting the base unit's own value is no change at all: drop the
+        // modification instead of storing a copy.
+        let parsed = parse_value(field, text)?;
+        if same_as_base(db, base, field, &parsed) {
+            self.reset(id, field);
+            return Ok(());
         }
 
-        let value = match parse_value(field, text)? {
+        let value = match parsed {
             Value::String(s) if is_translatable(field) => {
                 Value::String(self.store_string(db, id, field, &s))
             }
@@ -354,6 +362,16 @@ fn entry_mut(data: &mut ObjectData, id: FourCC) -> &mut ObjectEntry {
             &mut data.original[last]
         }
     }
+}
+
+/// Whether `value` equals the base unit's game value in both art modes (some
+/// art fields differ between SD and HD; those always keep the change).
+fn same_as_base(db: &UnitDatabase, base: FourCC, field: &FieldMeta, value: &Value) -> bool {
+    let base = base.to_string();
+    [ArtMode::Sd, ArtMode::Hd].iter().all(|mode| {
+        let base_value = db.raw_value(&base, field, *mode).unwrap_or_default();
+        parse_value(field, &base_value).is_ok_and(|parsed| &parsed == value)
+    })
 }
 
 fn is_translatable(field: &FieldMeta) -> bool {

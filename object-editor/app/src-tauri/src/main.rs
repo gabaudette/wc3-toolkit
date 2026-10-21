@@ -5,6 +5,7 @@
 // Startup failures are reported on stderr (AGE-QUAL-003: documented, file-scoped).
 #![allow(clippy::print_stderr)]
 
+mod abilities;
 mod commands;
 mod icons;
 mod platform;
@@ -26,6 +27,8 @@ fn main() -> ExitCode {
             commands::list_units,
             commands::unit_detail,
             commands::search_units,
+            commands::list_abilities,
+            commands::ability_cards,
             commands::set_field,
             commands::reset_field,
             commands::create_unit,

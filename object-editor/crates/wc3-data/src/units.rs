@@ -323,13 +323,24 @@ impl UnitDatabase {
     }
 }
 
+impl crate::abilities::PlaceholderSource for UnitDatabase {
+    /// A unit's value from any unit table, e.g. `<osw1,realHP>` for a summoned wolf.
+    fn placeholder(&self, id: &str, column: &str) -> Option<String> {
+        self.tables
+            .values()
+            .find_map(|t| t.get(id, column))
+            .filter(|v| !is_empty(v))
+            .map(|v| v.trim().to_owned())
+    }
+}
+
 fn is_empty(value: &str) -> bool {
     EMPTY_MARKERS.contains(&value.trim())
 }
 
 /// Looks up an editor string, following redirects to other strings and keeping
 /// only the display part of flag labels.
-fn resolve_string(strings: &Profile, key: &str) -> Option<String> {
+pub(crate) fn resolve_string(strings: &Profile, key: &str) -> Option<String> {
     let mut value = strings.section_names().find_map(|s| strings.get(s, key))?;
 
     for _ in 0..MAX_STRING_REDIRECTS {

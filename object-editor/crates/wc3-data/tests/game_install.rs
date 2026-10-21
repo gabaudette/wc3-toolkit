@@ -185,3 +185,83 @@ fn the_field_guide_covers_every_unit_field() -> TestResult {
     assert!(misplaced.is_empty(), "{misplaced:?}");
     Ok(())
 }
+
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn holy_light_card_data() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let abilities = wc3_data::abilities::AbilityDatabase::load(&files)?;
+    let info = abilities.info("AHhb").ok_or("no AHhb")?;
+
+    assert_eq!(info.name, "Holy Light");
+    assert!(info.hero);
+    assert_eq!(info.levels, 3);
+    assert!(
+        info.icon
+            .as_deref()
+            .is_some_and(|i| i.contains("BTNHolyBolt"))
+    );
+    let none = wc3_data::abilities::NoPlaceholders;
+    assert!(
+        abilities
+            .description("AHhb", 2, &none)
+            .is_some_and(|d| d.contains("400") && !d.contains('<'))
+    );
+
+    let rows = abilities.level_values("AHhb");
+    let row = |label: &str| {
+        rows.iter()
+            .find(|r| r.label == label)
+            .map(|r| r.values.join("/"))
+    };
+    assert_eq!(row("Mana Cost").as_deref(), Some("65/65/65"));
+    assert_eq!(row("Cast Range").as_deref(), Some("800/800/800"));
+    assert_eq!(row("Amount Healed/Damaged").as_deref(), Some("200/400/600"));
+    Ok(())
+}
+
+/// Every placeholder in every ability tooltip resolves to a value.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn ability_tooltip_placeholders_resolve() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let abilities = wc3_data::abilities::AbilityDatabase::load(&files)?;
+    let units = UnitDatabase::load(&files)?;
+    let mut unresolved = Vec::new();
+
+    for id in abilities.ids() {
+        let levels = abilities.info(id).map_or(1, |i| i.levels);
+        let texts = (1..=levels)
+            .filter_map(|level| abilities.description(id, level, &units))
+            .chain(abilities.learn_description(id, &units));
+        for text in texts {
+            let mut rest = text.as_str();
+            while let Some(start) = rest.find('<') {
+                let Some(end) = rest[start..].find('>') else {
+                    break;
+                };
+                unresolved.push(format!("{id}: {}", &rest[start..start + end + 1]));
+                rest = &rest[start + end + 1..];
+            }
+        }
+    }
+
+    unresolved.sort();
+    unresolved.dedup();
+    assert!(
+        unresolved.is_empty(),
+        "{} unresolved, e.g. {:?}",
+        unresolved.len(),
+        unresolved
+            .iter()
+            .map(|u| u.split(',').nth(1).unwrap_or_default().to_owned())
+            .collect::<std::collections::BTreeSet<_>>()
+    );
+    Ok(())
+}
