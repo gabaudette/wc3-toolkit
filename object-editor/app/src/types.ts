@@ -60,10 +60,16 @@ export type Stat = {
   value: string;
 };
 
+export type DamageBonus = {
+  amount: number;
+  attribute: string;
+};
+
 export type UnitDetail = {
   item: UnitItem;
   summary: Stat[];
   sections: Section[];
+  damageBonus: DamageBonus | null;
 };
 
 /** Two or more buttons in one menu with the same hotkey. */

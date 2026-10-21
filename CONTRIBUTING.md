@@ -57,6 +57,8 @@ in them must rewrite byte for byte. Building also needs CMake (for the bundled S
 - **AGE-TECH-005** — Platform-agnostic by default: no hardcoded OS or install paths in
   libraries, and cargo aliases or Rust tools instead of shell scripts.
 - Library crates do not print to stdout or stderr; binaries may print intentionally.
+- Frontend tests (`*.test.ts`) may use literal numbers: expected values are the point of a
+  test. That is the only Biome override (`biome.json`).
 - The TypeScript rules (**AGE-TS**: `type` over `interface`, Biome, no `enum`, no ternaries,
   no `any`, no magic numbers) apply to the Tauri frontend once it exists.
 
