@@ -30,6 +30,14 @@ fn main() {
     };
     println!("cargo:rustc-link-lib=static={library}");
 
+    // StormLib's HTTP stream support uses WinINet and `wsprintf` (user32) on
+    // Windows. Its CMake file only passes these to CMake projects, so link them here.
+    if target.contains("windows") {
+        for system_library in ["wininet", "user32"] {
+            println!("cargo:rustc-link-lib={system_library}");
+        }
+    }
+
     // StormLib is C++; link the platform's C++ runtime (MSVC links it implicitly).
     if target.contains("apple") {
         println!("cargo:rustc-link-lib=c++");
