@@ -47,11 +47,17 @@ fn main() {
     let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let src = manifest.join("../../vendor/CascLib/src");
 
+    // On MSVC, CascLib.h otherwise asks the linker for a prebuilt
+    // `CascLibRAD.lib` (`#pragma comment(lib, ...)`); this crate builds CascLib
+    // from source instead.
+    let no_auto_link = "CASCLIB_NO_AUTO_LINK_LIBRARY";
+
     // Archives link in the order they are built, so the shim comes first: its
     // references into CascLib then resolve against the archives that follow.
     cc::Build::new()
         .cpp(true)
         .include(&src)
+        .define(no_auto_link, None)
         .file(manifest.join("shim.cpp"))
         .warnings(true)
         .warnings_into_errors(true)
@@ -62,11 +68,13 @@ fn main() {
     cc::Build::new()
         .cpp(true)
         .include(&src)
+        .define(no_auto_link, None)
         .files(CPP_SOURCES.iter().map(|f| src.join(f)))
         .warnings(false)
         .compile("casc_cpp");
     cc::Build::new()
         .include(&src)
+        .define(no_auto_link, None)
         .files(C_SOURCES.iter().map(|f| src.join(f)))
         .warnings(false)
         .compile("casc_c");
