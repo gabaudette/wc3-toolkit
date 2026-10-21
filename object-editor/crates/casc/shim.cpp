@@ -3,10 +3,18 @@
 
 #include "CascLib.h"
 
+// Bounded copy with an explicit length: portable, always NUL-terminated, and
+// free of strncpy, which MSVC rejects as deprecated (C4996).
 static void copy_found(const CASC_FIND_DATA &fd, char *name, size_t cap, unsigned long long *size)
 {
-    strncpy(name, fd.szFileName, cap - 1);
-    name[cap - 1] = 0;
+    size_t length = strlen(fd.szFileName);
+
+    if (length >= cap) {
+        length = cap - 1;
+    }
+
+    memcpy(name, fd.szFileName, length);
+    name[length] = 0;
     *size = fd.FileSize;
 }
 
