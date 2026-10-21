@@ -1,0 +1,24 @@
+[package]
+name = "wc3-object-editor"
+description = "Desktop Object Editor for Warcraft III maps"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+wc3-data = { path = "../../crates/wc3-data" }
+wc3-map = { path = "../../crates/wc3-map" }
+
+[lints]
+workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dev-dependencies]
+mpq = { path = "../../crates/mpq" }
+tempfile = "3"

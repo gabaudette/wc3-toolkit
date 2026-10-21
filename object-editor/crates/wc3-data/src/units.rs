@@ -172,13 +172,20 @@ impl UnitDatabase {
 
     /// The editor's label for a field, e.g. `Art - Model File`.
     pub fn field_label(&self, field: &FieldMeta) -> String {
-        let category = CATEGORY_NAMES
-            .iter()
-            .find(|(c, _)| *c == field.category)
-            .and_then(|(_, key)| self.editor_string(key))
-            .unwrap_or_else(|| field.category.clone());
+        format!(
+            "{} - {}",
+            self.category_label(&field.category),
+            self.field_name(field)
+        )
+    }
 
-        format!("{category} - {}", self.field_name(field))
+    /// The editor's name for a metadata category, e.g. `art` → `Art`.
+    pub fn category_label(&self, category: &str) -> String {
+        CATEGORY_NAMES
+            .iter()
+            .find(|(c, _)| *c == category)
+            .and_then(|(_, key)| self.editor_string(key))
+            .unwrap_or_else(|| category.to_owned())
     }
 
     /// A field's display name without its category, e.g. `Model File`.

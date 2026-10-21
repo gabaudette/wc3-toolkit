@@ -7,17 +7,55 @@ on:
 permissions:
   contents: read
 
+env:
+  BUN_VERSION: 1.4.2
+  # Build-time libraries Tauri needs on Linux.
+  TAURI_LINUX_DEPS: libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+
 jobs:
-  lint:
+  frontend:
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: object-editor
+        working-directory: object-editor/app
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Lint and type-check
+        run: bun run check
+
+      - name: Build
+        run: bun run build
+
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Tauri system libraries
+        run: sudo apt-get update && sudo apt-get install -y $TAURI_LINUX_DEPS
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Build the frontend (the app crate embeds it)
+        working-directory: object-editor/app
+        run: bun install --frozen-lockfile && bun run build
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
@@ -25,9 +63,11 @@ jobs:
           components: clippy, rustfmt
 
       - name: Format
+        working-directory: object-editor
         run: cargo fmt-check
 
       - name: Lint
+        working-directory: object-editor
         run: cargo lint
 
   test:
@@ -38,16 +78,26 @@ jobs:
 
     runs-on: ${{ matrix.os }}
 
-    defaults:
-      run:
-        working-directory: object-editor
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+
+      - name: Install Tauri system libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y $TAURI_LINUX_DEPS
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Build the frontend (the app crate embeds it)
+        working-directory: object-editor/app
+        run: bun install --frozen-lockfile && bun run build
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
       - name: Test
+        working-directory: object-editor
         run: cargo test --workspace

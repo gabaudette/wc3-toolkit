@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-surface-0: #0b1020;
+  --color-surface-1: #111832;
+  --color-surface-2: #18213f;
+  --color-line: #263156;
+  --color-ink: #e6e9f2;
+  --color-muted: #96a0bd;
+  --color-faint: #66708f;
+  --color-gold: #e3b552;
+  --color-gold-soft: #3b3220;
+  --color-changed: #6ea8ff;
+  --color-changed-soft: #17284a;
+  --color-danger: #ff7a7a;
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface-0);
+  color: var(--color-ink);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 14px;
+}

@@ -19,6 +19,12 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `ws2_32` and `CASCLIB_NO_AUTO_LINK_LIBRARY` (its header otherwise auto-links a prebuilt
   `CascLibRAD.lib`); MSVC rejects `strncpy` and similar CRT functions as deprecated, and the
   shim builds with warnings as errors.
+- `object-editor/app/` — the Tauri 2 editor: React 19 + TypeScript + Vite + Tailwind 4 +
+  react-aria-components, Bun, Biome with the AGE baseline plus the React domain. Rust side in
+  `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI,
+  `commands.rs` (Tauri commands), `icons.rs` (`wc3icon:` URL scheme serving PNG icons),
+  `platform.rs` (install/maps folder detection, the only platform-specific module).
+  `api.ts`/`types.ts` mirror the Rust types. Run with `bun run tauri dev` from `app/`.
 - `map/src/` — example Lua modules for the harness (`wc3map <map> lua <dir>`, implemented in
   `crates/wc3-map/src/lua.rs`): appends the modules plus a `Dev.OnStart` loader and a `main()`
   hook to the editor's `war3map.lua` in a `<map>_dev.w3m` copy named `[DEV] ...`, after
