@@ -11,6 +11,8 @@ casc = { path = "../casc" }
 thiserror = "2"
 texpresso = "2"
 png = "0.17"
+serde = { version = "1", features = ["derive"] }
+toml = "0.9"
 
 [lints]
 workspace = true

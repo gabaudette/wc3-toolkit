@@ -1,5 +1,6 @@
-import { open } from "@tauri-apps/plugin-dialog";
-import { useCallback, useEffect, useState } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { ask, open } from "@tauri-apps/plugin-dialog";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../api";
 import type { Field, GameSummary, MapSummary, UnitDetail, UnitItem } from "../types";
 import { MAP_PATH_KEY, remembered } from "../ui";
@@ -13,6 +14,16 @@ type EditorScreenProps = {
 };
 
 const MAP_FILTERS = [{ name: "Warcraft III maps", extensions: ["w3m", "w3x"] }];
+
+/** Asks before throwing away unsaved changes. Resolves to `true` to discard them. */
+function confirmDiscard(map: MapSummary): Promise<boolean> {
+  return ask(`${map.name} has unsaved changes. Discard them?`, {
+    title: "Unsaved changes",
+    kind: "warning",
+    okLabel: "Discard changes",
+    cancelLabel: "Keep editing",
+  });
+}
 
 function replaceField(detail: UnitDetail, updated: Field): UnitDetail {
   return {
@@ -38,6 +49,10 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const editable = map !== null;
+
+  // The close handler is registered once; it reads the latest map from here.
+  const mapRef = useRef(map);
+  mapRef.current = map;
 
   const fail = useCallback((e: unknown) => setError(errorMessage(e)), []);
 
@@ -105,6 +120,10 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   }, [fail]);
 
   async function openOtherMap() {
+    if (map?.unsaved && !(await confirmDiscard(map))) {
+      return;
+    }
+
     const picked = await open({
       title: "Open a map",
       filters: MAP_FILTERS,
@@ -124,6 +143,25 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       fail(e);
     }
   }
+
+  useEffect(() => {
+    const appWindow = getCurrentWindow();
+    const unlisten = appWindow.onCloseRequested(async (event) => {
+      const current = mapRef.current;
+      if (!current?.unsaved) {
+        return;
+      }
+
+      event.preventDefault();
+      if (await confirmDiscard(current)) {
+        await appWindow.destroy();
+      }
+    });
+
+    return () => {
+      unlisten.then((stop) => stop()).catch(fail);
+    };
+  }, [fail]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

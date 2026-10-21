@@ -5,12 +5,14 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 use wc3_data::game::{ArtMode, GameFiles};
+use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
 use wc3_map::units::MapUnits;
 
 pub struct Session {
     pub files: GameFiles,
     pub db: UnitDatabase,
+    pub guide: FieldGuide,
     pub mode: ArtMode,
     pub map: Option<OpenMap>,
     /// PNG bytes by `(art mode, game path)`, so each icon is decoded once.

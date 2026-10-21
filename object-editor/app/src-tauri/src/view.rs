@@ -2,6 +2,7 @@
 
 use serde::Serialize;
 use wc3_data::game::ArtMode;
+use wc3_data::guide::FieldGuide;
 use wc3_data::meta::{FieldMeta, ObjectKind};
 use wc3_data::units::UnitDatabase;
 use wc3_map::FourCC;
@@ -71,6 +72,12 @@ pub struct Field {
     pub min: Option<f64>,
     pub max: Option<f64>,
     pub integer: bool,
+    /// What the field does, from the field guide.
+    pub description: Option<String>,
+    /// Rarely needed; the page folds these into an "Advanced" group.
+    pub advanced: bool,
+    /// The description is not confirmed in game.
+    pub unverified: bool,
 }
 
 #[derive(Serialize)]
@@ -89,6 +96,7 @@ pub struct SearchHit {
 /// Read-only view of the game data with an optional map on top.
 pub struct View<'a> {
     pub db: &'a UnitDatabase,
+    pub guide: &'a FieldGuide,
     pub map: Option<&'a MapUnits>,
     pub mode: ArtMode,
 }
@@ -196,6 +204,7 @@ impl View<'_> {
     }
 
     pub fn field(&self, id: FourCC, field: &FieldMeta) -> Field {
+        let guide = self.guide.entry(&field.id);
         let raw = self.raw(id, field).unwrap_or_default();
         let options = self.db.enum_values(&field.value_type).unwrap_or_default();
         let is_list = field.value_type.ends_with(ENUM_LIST_SUFFIX);
@@ -228,6 +237,9 @@ impl View<'_> {
             min: field.min.as_deref().and_then(|v| v.parse().ok()),
             max: field.max.as_deref().and_then(|v| v.parse().ok()),
             integer: field.value_type == "int",
+            description: guide.map(|g| g.description.clone()),
+            advanced: guide.is_some_and(|g| g.advanced),
+            unverified: guide.is_some_and(|g| g.unverified),
         }
     }
 
@@ -239,7 +251,9 @@ impl View<'_> {
                 .iter()
                 .position(|c| *c == f.category)
                 .unwrap_or(CATEGORY_ORDER.len());
-            (order, self.db.field_name(f))
+            // The guide's important fields first, then alphabetical.
+            let rank = self.guide.rank(&f.id);
+            (order, rank.is_none(), rank, self.db.field_name(f))
         });
 
         let mut sections: Vec<Section> = Vec::new();
@@ -408,8 +422,10 @@ mod tests {
     #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
     fn paladin_page_matches_the_game_data() -> TestResult {
         let db = database()?;
+        let guide = FieldGuide::units()?;
         let view = View {
             db: &db,
+            guide: &guide,
             map: None,
             mode: ArtMode::Sd,
         };
@@ -441,6 +457,23 @@ mod tests {
             .ok_or("no uarm")?;
         assert_eq!(armor.control, "select");
         assert!(armor.options.iter().any(|o| o.value == "Metal"));
+        assert!(
+            armor
+                .description
+                .as_deref()
+                .is_some_and(|d| d.contains("sound"))
+        );
+
+        let stats = detail.sections.first().ok_or("no sections")?;
+        let first: Vec<&str> = stats.fields.iter().take(3).map(|f| f.id.as_str()).collect();
+        assert_eq!(first, ["uhpm", "umpm", "umpi"]);
+        assert!(
+            detail
+                .sections
+                .iter()
+                .flat_map(|s| &s.fields)
+                .any(|f| f.advanced)
+        );
         Ok(())
     }
 
@@ -448,8 +481,10 @@ mod tests {
     #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
     fn search_finds_names_codes_and_values() -> TestResult {
         let db = database()?;
+        let guide = FieldGuide::units()?;
         let view = View {
             db: &db,
+            guide: &guide,
             map: None,
             mode: ArtMode::Sd,
         };
@@ -483,8 +518,10 @@ mod tests {
         let hp = db.field("uhpm").ok_or("no uhpm")?;
         units.set(&db, hero, hp, "1000")?;
 
+        let guide = FieldGuide::units()?;
         let view = View {
             db: &db,
+            guide: &guide,
             map: Some(&units),
             mode: ArtMode::Sd,
         };

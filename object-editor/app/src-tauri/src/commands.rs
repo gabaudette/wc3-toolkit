@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use tauri::State;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
+use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
 use wc3_map::units::MapUnits;
 use wc3_map::{FourCC, Map, save_files};
@@ -37,6 +38,7 @@ fn fourcc(code: &str) -> Result<FourCC, String> {
 fn view(session: &Session) -> View<'_> {
     View {
         db: &session.db,
+        guide: &session.guide,
         map: session.map.as_ref().map(|m| &m.units),
         mode: session.mode,
     }
@@ -63,6 +65,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
 
     let files = GameFiles::open(&dir, GameOptions::default()).map_err(|e| e.to_string())?;
     let db = UnitDatabase::load(&files).map_err(|e| e.to_string())?;
+    let guide = FieldGuide::units().map_err(|e| e.to_string())?;
     let summary = GameSummary {
         dir: path_text(&dir),
         units: db.ids().len(),
@@ -73,6 +76,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
     state.replace(Session {
         files,
         db,
+        guide,
         mode,
         map: None,
         icons: HashMap::new(),

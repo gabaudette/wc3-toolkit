@@ -1,0 +1,145 @@
+//! The field guide: a description for every Object Editor field, which fields
+//! come first in each category, and which are rarely needed ("advanced").
+//!
+//! The guide is written for this project and lives in `data/*.toml`.
+
+use std::collections::HashMap;
+
+use serde::Deserialize;
+
+use crate::{Error, Result};
+
+const UNIT_GUIDE: &str = include_str!("../data/unit-fields.toml");
+const UNIT_GUIDE_FILE: &str = "data/unit-fields.toml";
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct GuideEntry {
+    pub description: String,
+    /// Rarely needed; shown in a folded "Advanced" group.
+    pub advanced: bool,
+    /// Not confirmed in game; the editor marks it.
+    pub unverified: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct FieldGuide {
+    entries: HashMap<String, GuideEntry>,
+    /// Field ID → (category it is listed under, position in that list).
+    ranks: HashMap<String, (String, usize)>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct GuideFile {
+    #[serde(default)]
+    order: HashMap<String, Vec<String>>,
+    #[serde(default)]
+    field: Vec<FieldEntry>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct FieldEntry {
+    ids: Vec<String>,
+    description: String,
+    #[serde(default)]
+    advanced: bool,
+    #[serde(default)]
+    unverified: bool,
+}
+
+fn invalid(reason: String) -> Error {
+    Error::Parse { line: 0, reason }.in_file(UNIT_GUIDE_FILE)
+}
+
+impl FieldGuide {
+    /// The guide for units, heroes and buildings.
+    pub fn units() -> Result<Self> {
+        Self::parse(UNIT_GUIDE).map_err(|e| e.in_file(UNIT_GUIDE_FILE))
+    }
+
+    pub fn parse(text: &str) -> Result<Self> {
+        let file: GuideFile = toml::from_str(text).map_err(|e| Error::Parse {
+            line: 0,
+            reason: e.to_string(),
+        })?;
+
+        let mut entries = HashMap::new();
+        for field in file.field {
+            let entry = GuideEntry {
+                description: field.description,
+                advanced: field.advanced,
+                unverified: field.unverified,
+            };
+            for id in field.ids {
+                if entries.insert(id.clone(), entry.clone()).is_some() {
+                    return Err(invalid(format!("field {id} is described twice")));
+                }
+            }
+        }
+
+        let mut ranks = HashMap::new();
+        for (category, ids) in &file.order {
+            for (rank, id) in ids.iter().enumerate() {
+                if !entries.contains_key(id) {
+                    return Err(invalid(format!(
+                        "field {id} is ordered but has no description"
+                    )));
+                }
+
+                if ranks.insert(id.clone(), (category.clone(), rank)).is_some() {
+                    return Err(invalid(format!("field {id} is ordered twice")));
+                }
+            }
+        }
+
+        Ok(Self { entries, ranks })
+    }
+
+    pub fn entry(&self, field_id: &str) -> Option<&GuideEntry> {
+        self.entries.get(field_id)
+    }
+
+    /// Position among the fields shown first in its category, if it is one of them.
+    pub fn rank(&self, field_id: &str) -> Option<usize> {
+        self.ranks.get(field_id).map(|(_, rank)| *rank)
+    }
+
+    /// Every described field ID.
+    pub fn field_ids(&self) -> impl Iterator<Item = &str> {
+        self.entries.keys().map(String::as_str)
+    }
+
+    /// Every field shown first, with the category it is listed under.
+    pub fn ordered(&self) -> impl Iterator<Item = (&str, &str)> {
+        self.ranks
+            .iter()
+            .map(|(id, (category, _))| (id.as_str(), category.as_str()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_unit_guide_is_valid() {
+        let guide = FieldGuide::units().unwrap();
+
+        assert_eq!(guide.rank("uhpm"), Some(0));
+        assert!(!guide.entry("uhpm").unwrap().advanced);
+        assert!(guide.entry("uept").unwrap().advanced);
+        assert_eq!(guide.entry("ua1b"), guide.entry("ua2b"));
+    }
+
+    #[test]
+    fn rejects_duplicates_and_undescribed_order() {
+        let twice = "[[field]]\nids = [\"a\"]\ndescription = \"x\"\n[[field]]\nids = [\"a\"]\ndescription = \"y\"\n";
+        let undescribed = "[order]\nstats = [\"zzzz\"]\n";
+        let unknown_key = "[[field]]\nids = [\"a\"]\ndescription = \"x\"\nadvnced = true\n";
+
+        assert!(FieldGuide::parse(twice).is_err());
+        assert!(FieldGuide::parse(undescribed).is_err());
+        assert!(FieldGuide::parse(unknown_key).is_err());
+    }
+}
