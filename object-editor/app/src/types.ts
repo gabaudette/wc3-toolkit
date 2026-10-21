@@ -36,6 +36,9 @@ export type Field = {
   min: number | null;
   max: number | null;
   integer: boolean;
+  description: string | null;
+  advanced: boolean;
+  unverified: boolean;
 };
 
 export type Section = {

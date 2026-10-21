@@ -2,6 +2,7 @@
 //! Editor's field metadata.
 
 pub mod game;
+pub mod guide;
 pub mod icon;
 pub mod meta;
 pub mod objects;

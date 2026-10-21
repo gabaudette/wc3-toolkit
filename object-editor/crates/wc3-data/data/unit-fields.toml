@@ -1,0 +1,728 @@
+# Field guide for the Units tab: what each field does, which fields come
+# first, and which are rarely needed. Written for this project (not taken from
+# the game). Corrections are welcome; mark anything not confirmed in game with
+# `unverified = true` so the editor shows it as such.
+#
+# [order]      per category, the fields shown first, in this order. Fields not
+#              listed follow alphabetically.
+# [[field]]    ids sharing one description; `advanced = true` folds the fields
+#              into the "Advanced" group of their category.
+
+[order]
+stats = [
+  "uhpm", "umpm", "umpi", "uhpr", "umpr", "uhrt",
+  "ustr", "uagi", "uint", "upra", "ustp", "uagp", "uinp",
+  "ulev", "ugol", "ulum", "ufoo", "ufma", "ubld", "usid", "usin", "urac", "utyp",
+]
+combat = [
+  "uaen", "ua1b", "ua1d", "ua1s", "ua1c", "ua1r", "ua1t", "ua1w", "ua1g",
+  "udef", "udty", "udup", "uacq", "uamn", "utar", "uarm", "udea",
+]
+abil = ["uhab", "uabi", "udaa", "uhas", "uabs"]
+text = ["unam", "utip", "utub", "uhot", "upro", "upru", "uawt", "utpr", "unsf", "ides"]
+art = [
+  "umdl", "uico", "usca", "ussc", "ubpx", "ubpy", "uwal", "urun",
+  "ucpt", "ucbs", "uclr", "uclg", "uclb", "utco", "upor", "ussi",
+]
+move = ["umvs", "umvt", "umvr", "umvh", "umvf", "umas", "umis"]
+path = ["ucol", "upat", "upap", "upar", "upaw"]
+sound = ["usnd", "umsl", "ursl", "ubsl"]
+tech = [
+  "utra", "ubui", "ureq", "urqa", "urq1", "urq2", "urqc", "ures", "upgr",
+  "uupt", "usei", "useu", "umki", "urev", "udep",
+]
+editor = ["uine", "util", "ucam", "uspe", "udro"]
+
+# --- Stats -------------------------------------------------------------------
+
+[[field]]
+ids = ["uhpm"]
+description = "Maximum life before bonuses. Heroes add life for each point of Strength on top of this."
+
+[[field]]
+ids = ["umpm"]
+description = "Maximum mana before bonuses. Heroes add mana for each point of Intelligence. 0 means the unit has no mana bar."
+
+[[field]]
+ids = ["umpi"]
+description = "Mana the unit has when it is created, up to its maximum."
+
+[[field]]
+ids = ["uhpr"]
+description = "Life regained per second, when the regeneration type allows it."
+
+[[field]]
+ids = ["umpr"]
+description = "Mana regained per second."
+
+[[field]]
+ids = ["uhrt"]
+description = "When life regenerates: always, only at night (Night Elves), only on Blight (Undead), or never."
+
+[[field]]
+ids = ["ustr", "uagi", "uint"]
+description = "The hero's attribute at level 1. Strength adds life and life regeneration, Agility adds armor and attack speed, Intelligence adds mana and mana regeneration."
+
+[[field]]
+ids = ["upra"]
+description = "The attribute that also adds 1 attack damage per point."
+
+[[field]]
+ids = ["ustp", "uagp", "uinp"]
+description = "Attribute gained per hero level. Fractions add up across levels."
+
+[[field]]
+ids = ["ulev"]
+description = "The unit's level. It sets the experience given when killed and limits some spells (for example, Charm only works up to a certain level). Heroes use their own level instead."
+
+[[field]]
+ids = ["ugol", "ulum"]
+description = "Cost to train or build the unit."
+
+[[field]]
+ids = ["ufoo"]
+description = "Food (supply) the unit uses."
+
+[[field]]
+ids = ["ufma"]
+description = "Food (supply) the unit provides, like a Farm or Town Hall."
+
+[[field]]
+ids = ["ubld"]
+description = "Seconds to train or build the unit."
+
+[[field]]
+ids = ["usid", "usin"]
+description = "How far the unit sees, during the day and at night."
+
+[[field]]
+ids = ["urac"]
+description = "The race the unit belongs to. Used for sounds, some spells and which list it appears in."
+
+[[field]]
+ids = ["utyp"]
+description = "Classifications such as Ancient, Giant, Mechanical, Undead, Worker, Sapper, Suicidal or Tauren. Spells and targets check these."
+
+[[field]]
+ids = ["ubba", "ubdi", "ubsi"]
+description = "Gold given to the player who kills the unit: base + a roll of the dice (number of dice × sides per die)."
+
+[[field]]
+ids = ["ulba", "ulbd", "ulbs"]
+description = "Lumber given to the player who kills the unit: base + a roll of the dice."
+
+[[field]]
+ids = ["ugor", "ulur", "urtm"]
+description = "What repairing the unit costs and how long it takes, for units and buildings that can be repaired."
+
+[[field]]
+ids = ["ubdg"]
+description = "Whether the unit is a building."
+
+[[field]]
+ids = ["ufle"]
+description = "Whether the unit runs away when attacked by something it cannot fight back against."
+
+[[field]]
+ids = ["usle"]
+description = "Whether the unit falls asleep at night. Used for neutral creeps."
+
+[[field]]
+ids = ["upri"]
+description = "Order in a selected group: higher priority units appear first and are commanded first."
+
+[[field]]
+ids = ["ufor"]
+description = "Position in group formations: higher ranks stay further back."
+advanced = true
+
+[[field]]
+ids = ["upoi"]
+description = "Points the unit is worth on the score screen when trained or killed."
+advanced = true
+
+[[field]]
+ids = ["ucar"]
+description = "Cargo slots the unit takes in a transport (ship, zeppelin, burrow)."
+
+[[field]]
+ids = ["usit", "usma", "usrg", "usst"]
+description = "Stock rules when the unit is sold in a shop (mercenaries): units available after the start delay, maximum stock, seconds between restocks, and the delay before the first."
+advanced = true
+
+[[field]]
+ids = ["uhhd", "uhhb", "uhhm"]
+description = "Hides the hero's death message, its portrait icon at the top left, or its minimap icon."
+advanced = true
+
+[[field]]
+ids = ["uhom"]
+description = "Hides the unit on the minimap."
+advanced = true
+
+[[field]]
+ids = ["uibo", "ucbo"]
+description = "Building placement on top of other buildings, as with the Entangled Gold Mine on a Gold Mine: whether others can be built on this one, or this one on others."
+advanced = true
+
+[[field]]
+ids = ["ufhp"]
+description = "Always shows the building's life bar."
+advanced = true
+
+[[field]]
+ids = ["unbm", "unbr"]
+description = "For neutral buildings: whether it shows an icon on the minimap, and whether it can be picked when a map places random buildings."
+advanced = true
+
+# --- Combat ------------------------------------------------------------------
+
+[[field]]
+ids = ["uaen"]
+description = "Which attacks the unit uses: none, Attack 1, Attack 2 or both."
+
+[[field]]
+ids = ["ua1b", "ua2b"]
+description = "Damage before dice: each hit deals base + a roll of the dice. Heroes add their primary attribute."
+
+[[field]]
+ids = ["ua1d", "ua2d"]
+description = "Number of dice rolled for each hit."
+
+[[field]]
+ids = ["ua1s", "ua2s"]
+description = "Sides on each die. Damage ranges from base + dice to base + dice × sides."
+
+[[field]]
+ids = ["ua1c", "ua2c"]
+description = "Seconds between attacks. Agility and attack speed bonuses shorten it."
+
+[[field]]
+ids = ["ua1r", "ua2r"]
+description = "How far the attack reaches. Melee units use about 100."
+
+[[field]]
+ids = ["ua1t", "ua2t"]
+description = "Attack type (Normal, Pierce, Siege, Magic, Chaos, Hero, Spells). The damage table compares it with the target's defense type."
+
+[[field]]
+ids = ["ua1w", "ua2w"]
+description = "How the attack travels: melee (Normal), Instant, Artillery, Artillery (line), Missile, Missile (splash), Missile (bounce) or Missile (line)."
+
+[[field]]
+ids = ["ua1g", "ua2g"]
+description = "What the attack can hit, for example Ground, Air, Structure, Debris, Item, Ward."
+
+[[field]]
+ids = ["ua1f", "ua2f", "ua1h", "ua2h", "ua1q", "ua2q"]
+description = "Splash radiuses for splash and artillery attacks: full damage inside the first, reduced damage out to the medium and small radiuses."
+
+[[field]]
+ids = ["uhd1", "uhd2", "uqd1", "uqd2"]
+description = "Share of the damage dealt in the medium and small splash radiuses (0.5 = half)."
+
+[[field]]
+ids = ["ua1p", "ua2p"]
+description = "What the splash damage can hit."
+
+[[field]]
+ids = ["udl1", "udl2"]
+description = "For bouncing and line attacks: share of damage lost on each further target (0.3 = 30% less each time)."
+
+[[field]]
+ids = ["usd1", "usd2", "usr1", "usr2"]
+description = "For line attacks: how far past the target the damage continues, and how wide that line is."
+
+[[field]]
+ids = ["udu1", "udu2"]
+description = "Damage added per level of attack upgrades that affect the unit."
+
+[[field]]
+ids = ["utc1", "utc2"]
+description = "For bouncing attacks: how many targets one attack can hit."
+
+[[field]]
+ids = ["ua1m", "ua2m"]
+description = "Model of the missile for ranged attacks."
+
+[[field]]
+ids = ["ua1z", "ua2z"]
+description = "Missile speed. Slow missiles can miss units that move away."
+
+[[field]]
+ids = ["uma1", "uma2"]
+description = "Missile arc: 0 flies straight, higher values lob it."
+
+[[field]]
+ids = ["umh1", "umh2"]
+description = "Whether the missile follows its target."
+
+[[field]]
+ids = ["udp1", "udp2"]
+description = "Seconds from the start of the attack animation until the damage is dealt. Shorter feels snappier."
+
+[[field]]
+ids = ["ubs1", "ubs2"]
+description = "Seconds after the damage point before the unit can move or act again. Moving during it cancels the rest (attack animation cancelling)."
+
+[[field]]
+ids = ["urb1", "urb2"]
+description = "Extra range the unit keeps attacking at once a fight started, so it does not chase targets that step just out of range."
+advanced = true
+
+[[field]]
+ids = ["uwu1", "uwu2"]
+description = "Shows the attack's icon and damage in the unit's info panel."
+advanced = true
+
+[[field]]
+ids = ["ucs1", "ucs2"]
+description = "Sound the attack makes when it hits, for example Metal Heavy Bash."
+
+[[field]]
+ids = ["udef"]
+description = "Armor value. Each point reduces damage taken (about 6% for the first point, less for each further one)."
+
+[[field]]
+ids = ["udty"]
+description = "Defense type (Light, Medium, Heavy, Fortified, Hero, Divine, Unarmored). This, not Armor Type, decides how much damage each attack type deals."
+
+[[field]]
+ids = ["udup"]
+description = "Armor added per level of armor upgrades that affect the unit."
+
+[[field]]
+ids = ["uarm"]
+description = "Material the unit is made of (Flesh, Metal, Wood, Ethereal, Stone). It only sets the sound when the unit is hit, not damage. See Defense Type for that."
+
+[[field]]
+ids = ["uacq"]
+description = "How close enemies must be before the unit attacks them on its own."
+
+[[field]]
+ids = ["uamn"]
+description = "The unit cannot attack targets closer than this, like siege units."
+
+[[field]]
+ids = ["utar"]
+description = "What the unit counts as when others pick targets, for example Ground or Air, Structure, Ward."
+
+[[field]]
+ids = ["udea"]
+description = "What happens to the corpse: whether it can be raised (Raise Dead, Resurrection) and whether it decays."
+
+# --- Abilities ---------------------------------------------------------------
+
+[[field]]
+ids = ["uhab"]
+description = "Abilities the hero can learn, up to 5. They appear in its Hero Abilities menu."
+
+[[field]]
+ids = ["uabi"]
+description = "Abilities the unit has from the start, including passive ones like Inventory."
+
+[[field]]
+ids = ["udaa"]
+description = "Ability that is on (autocast) when the unit is created, such as Heal for Priests."
+
+[[field]]
+ids = ["uhas", "uabs"]
+description = "Which abilities use this unit's skin (art and sounds) in Reforged. Normally the same as the hero or normal abilities."
+advanced = true
+unverified = true
+
+# --- Text --------------------------------------------------------------------
+
+[[field]]
+ids = ["unam"]
+description = "Name shown in the game."
+
+[[field]]
+ids = ["unsf"]
+description = "Extra text after the name in the World Editor only, to tell similar units apart, like \"(Campaign)\"."
+
+[[field]]
+ids = ["utip"]
+description = "One-line tooltip on the button that trains or builds the unit, like \"Train Footman\"."
+
+[[field]]
+ids = ["utub"]
+description = "Long tooltip under the basic one. Supports color codes such as |cffffcc00gold|r and |n for line breaks."
+
+[[field]]
+ids = ["uhot"]
+description = "Key that trains or builds the unit from its producer's command card."
+
+[[field]]
+ids = ["upro"]
+description = "Names a hero can get, picked at random when it is created."
+
+[[field]]
+ids = ["upru"]
+description = "How many of the proper names are used."
+advanced = true
+
+[[field]]
+ids = ["uawt", "utpr"]
+description = "Tooltip on the button that revives the hero (at an altar or a tavern)."
+
+[[field]]
+ids = ["ides"]
+description = "Short description. Few interface elements show it for units."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["ucun", "ucut", "ucua"]
+description = "For casters with training upgrades (Priest, Sorceress): name, tooltip and icon per upgrade level."
+advanced = true
+
+# --- Art ---------------------------------------------------------------------
+
+[[field]]
+ids = ["umdl"]
+description = "3D model of the unit."
+
+[[field]]
+ids = ["uico"]
+description = "Icon on command buttons and in the selection panel."
+
+[[field]]
+ids = ["ussi"]
+description = "Icon on the end-of-game score screen."
+
+[[field]]
+ids = ["upor"]
+description = "Model shown in the portrait box. Empty uses the unit's model's own portrait."
+
+[[field]]
+ids = ["usca"]
+description = "Size of the model (1 = normal)."
+
+[[field]]
+ids = ["ussc"]
+description = "Size of the selection circle under the unit."
+
+[[field]]
+ids = ["ubpx", "ubpy"]
+description = "Where the unit's button sits on its producer's command card: column (0–3) and row (0–2)."
+
+[[field]]
+ids = ["uwal", "urun"]
+description = "Movement speed the walk and run animations are made for, so feet match the ground. Does not change the actual speed."
+
+[[field]]
+ids = ["ucpt"]
+description = "Seconds from the start of the spell animation until the spell takes effect."
+
+[[field]]
+ids = ["ucbs"]
+description = "Seconds of spell animation after the spell took effect before the unit can act again."
+
+[[field]]
+ids = ["uclr", "uclg", "uclb"]
+description = "Tints the model: 255 for each color keeps the original look."
+
+[[field]]
+ids = ["utco"]
+description = "Which player color the model uses: the owner's, or a fixed one."
+
+[[field]]
+ids = ["utcc"]
+description = "Lets the model use a custom team color in Reforged."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["uble"]
+description = "Seconds the model takes to blend from one animation to the next."
+advanced = true
+
+[[field]]
+ids = ["udtm"]
+description = "Seconds the death animation plays before the corpse is left."
+advanced = true
+
+[[field]]
+ids = ["uspa"]
+description = "Models played when the unit dies in special ways, such as exploding."
+
+[[field]]
+ids = ["utaa"]
+description = "Models attached when the unit is targeted by certain effects."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["umd1", "umd2"]
+description = "Models the unit switches to after upgrades, such as the Footman's look with Defend research."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["uver"]
+description = "Which game versions have extra model versions (Reign of Chaos, The Frozen Throne). None for most units."
+advanced = true
+
+[[field]]
+ids = ["uept", "uerd"]
+description = "How the model tilts to follow the ground: number of points sampled and how far apart."
+advanced = true
+
+[[field]]
+ids = ["umxp", "umxr"]
+description = "How far the model may tilt forward or sideways on slopes."
+advanced = true
+
+[[field]]
+ids = ["uori"]
+description = "How smoothly the model turns to face a new direction."
+advanced = true
+
+[[field]]
+ids = ["uprw"]
+description = "Angle within which the unit can already move while it is still turning."
+advanced = true
+
+[[field]]
+ids = ["ufrd"]
+description = "Radius used to decide whether the unit is visible through fog of war."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["uocc", "uoct"]
+description = "How the model hides units behind it: occluder height, and in HD the occlusion type."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["uepa", "uevi"]
+description = "Reforged equipment preview settings: animation props and whether visual effects are ignored."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["ulpx", "ulpy", "ulpz", "ulsz"]
+description = "Where missiles start, relative to the unit (Z also while swimming)."
+advanced = true
+
+[[field]]
+ids = ["uimz", "uisz"]
+description = "Height at which missiles hit the unit (also while swimming)."
+advanced = true
+
+[[field]]
+ids = ["uscb"]
+description = "Whether missiles shrink or grow with the unit's scaling value."
+advanced = true
+
+[[field]]
+ids = ["uslz", "usew"]
+description = "Height of the selection circle, and whether it is shown on water."
+advanced = true
+
+[[field]]
+ids = ["ushu", "ushx", "ushy", "ushh", "ushw", "ushr"]
+description = "The flat shadow under the unit: image, position, size, and whether it shows on water."
+advanced = true
+
+[[field]]
+ids = ["ushb", "uubs"]
+description = "Ground textures for buildings: the shadow, and the decal (ubersplat) under it."
+advanced = true
+
+[[field]]
+ids = ["uani", "uaap", "ualp", "ubpr"]
+description = "Animation, attachment and bone names the model must use, for models with several variants (like the upgraded Town Hall)."
+advanced = true
+
+[[field]]
+ids = ["uatg"]
+description = "Shows markers on the ground under air units."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["ulos"]
+description = "Uses a wider line of sight that sees past blocking terrain more easily."
+advanced = true
+unverified = true
+
+# --- Movement ----------------------------------------------------------------
+
+[[field]]
+ids = ["umvs"]
+description = "Movement speed. The game caps it at 522."
+
+[[field]]
+ids = ["umas", "umis"]
+description = "Limits for movement speed after bonuses and slows. 0 uses the game's default limits."
+advanced = true
+
+[[field]]
+ids = ["umvt"]
+description = "How the unit moves: Foot, Horse, Fly, Hover, Float (water only) or Amphibious. Sets where it can go."
+
+[[field]]
+ids = ["umvr"]
+description = "How fast the unit turns. Higher is faster."
+
+[[field]]
+ids = ["umvh"]
+description = "Flying height for air units."
+
+[[field]]
+ids = ["umvf"]
+description = "Lowest height a flying unit drops to over uneven terrain."
+advanced = true
+
+[[field]]
+ids = ["urpo", "urpg", "urpp", "urpr"]
+description = "Group separation (repulsion): keeps units of the same group from bunching up when they move together."
+advanced = true
+unverified = true
+
+# --- Pathing -----------------------------------------------------------------
+
+[[field]]
+ids = ["ucol"]
+description = "Radius the unit takes up when moving: how close others can get and which gaps it fits through."
+
+[[field]]
+ids = ["upat"]
+description = "Footprint image of the building: where it blocks movement and building."
+
+[[field]]
+ids = ["upap", "upar"]
+description = "Ground the building needs or may not touch, like Blight for Undead buildings or unbuildable terrain."
+
+[[field]]
+ids = ["upaw"]
+description = "For buildings that need water (shipyards): how much water must be nearby."
+
+[[field]]
+ids = ["uabr", "uabt"]
+description = "How the computer player keeps space around this building when it builds a base."
+advanced = true
+unverified = true
+
+# --- Sound -------------------------------------------------------------------
+
+[[field]]
+ids = ["usnd"]
+description = "The unit's voice set: what it says when selected, given orders, and so on."
+
+[[field]]
+ids = ["umsl"]
+description = "Looping sound while the unit moves, like the creak of a siege engine."
+
+[[field]]
+ids = ["ursl"]
+description = "Sound the unit plays now and then while idle."
+
+[[field]]
+ids = ["ubsl"]
+description = "Looping sound while the building is under construction."
+
+[[field]]
+ids = ["ulfi", "ulfo"]
+description = "How quickly looping sounds fade in and out."
+advanced = true
+
+# --- Techtree ----------------------------------------------------------------
+
+[[field]]
+ids = ["utra"]
+description = "Units this building or hero can train."
+
+[[field]]
+ids = ["ubui"]
+description = "Buildings this worker can build."
+
+[[field]]
+ids = ["ureq"]
+description = "Buildings, units or upgrades needed before this unit can be trained or built."
+
+[[field]]
+ids = ["urqa"]
+description = "Upgrade levels needed, one per requirement above (for example level 2 of an upgrade)."
+
+[[field]]
+ids = ["urq1", "urq2", "urq3", "urq4", "urq5", "urq6", "urq7", "urq8"]
+description = "Requirements to train this hero as your second, third, … hero. In melee the second needs a Keep and the third a Castle."
+
+[[field]]
+ids = ["urqc"]
+description = "How many hero tiers the requirements above use."
+
+[[field]]
+ids = ["ures"]
+description = "Upgrades this building can research."
+
+[[field]]
+ids = ["upgr"]
+description = "Upgrades that change this unit, such as weapon and armor upgrades."
+
+[[field]]
+ids = ["uupt"]
+description = "Buildings this one can upgrade into, like Town Hall to Keep."
+
+[[field]]
+ids = ["usei"]
+description = "Items sold by this shop."
+
+[[field]]
+ids = ["useu"]
+description = "Units sold by this shop, like mercenaries."
+
+[[field]]
+ids = ["umki"]
+description = "Items this building makes, like the Arcane Vault's stock."
+
+[[field]]
+ids = ["urev"]
+description = "Whether this building can revive dead heroes, like an altar."
+
+[[field]]
+ids = ["udep"]
+description = "Units this one counts as for requirements, like a Keep counting as a Town Hall."
+
+[[field]]
+ids = ["urva"]
+description = "Buildings where this hero can be revived."
+unverified = true
+
+# --- Editor ------------------------------------------------------------------
+
+[[field]]
+ids = ["uine"]
+description = "Whether the unit is listed in the World Editor's unit palette."
+
+[[field]]
+ids = ["util"]
+description = "Tilesets whose palette lists the unit. * means all."
+
+[[field]]
+ids = ["ucam", "uspe"]
+description = "Which World Editor list the unit appears in: Campaign or Special instead of Melee."
+
+[[field]]
+ids = ["udro"]
+description = "Whether the unit drops the items it carries when it dies."
+
+[[field]]
+ids = ["uhos"]
+description = "Shows the unit as Neutral Hostile in the World Editor's palette."
+advanced = true
+
+[[field]]
+ids = ["utss"]
+description = "Whether the unit has different data per tileset."
+advanced = true
+
+[[field]]
+ids = ["uuch"]
+description = "Gives small units a larger clickable area."
+advanced = true
+unverified = true

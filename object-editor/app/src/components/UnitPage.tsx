@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronRight, Copy01 } from "@untitledui/icons";
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import type { Field, Section, UnitDetail } from "../types";
 import { classes } from "../ui";
 import { Button } from "./Button";
@@ -17,18 +17,59 @@ type UnitPageProps = {
 /** Sections open by default; the rest start folded to keep the page short. */
 const OPEN_BY_DEFAULT = ["stats", "combat", "abil", "text"];
 
+/** Matches names, codes, values and descriptions, so "armor" also finds Defense Type. */
 function matches(field: Field, filter: string): boolean {
   const needle = filter.toLowerCase();
-  return (
-    field.name.toLowerCase().includes(needle) ||
-    field.id.toLowerCase().includes(needle) ||
-    field.display.toLowerCase().includes(needle)
+  return [field.name, field.id, field.display, field.description ?? ""].some((text) =>
+    text.toLowerCase().includes(needle),
   );
 }
 
 function visibleFields(section: Section, filter: string, changedOnly: boolean): Field[] {
   return section.fields.filter(
     (f) => (!changedOnly || f.modified) && (!filter || matches(f, filter)),
+  );
+}
+
+function toggled(list: string[], value: string): string[] {
+  if (list.includes(value)) {
+    return list.filter((v) => v !== value);
+  }
+
+  return [...list, value];
+}
+
+type AdvancedGroupProps = {
+  fields: Field[];
+  open: boolean;
+  onToggle: () => void;
+  children: ReactNode;
+};
+
+/** Rarely needed fields, folded at the end of their section. */
+function AdvancedGroup({ fields, open, onToggle, children }: AdvancedGroupProps) {
+  if (fields.length === 0) {
+    return null;
+  }
+
+  const changed = fields.filter((f) => f.modified).length;
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center gap-2 border-b border-line/60 px-3 py-1.5 text-left text-sm text-muted hover:text-ink"
+      >
+        {open && <ChevronDown className="size-4" aria-hidden="true" />}
+        {!open && <ChevronRight className="size-4" aria-hidden="true" />}
+        Advanced
+        <span className="text-faint">{fields.length} rarely used fields</span>
+        {changed > 0 && <span className="text-changed">{changed} changed</span>}
+      </button>
+      {open && <div className="bg-surface-0/40">{children}</div>}
+    </div>
   );
 }
 
@@ -41,6 +82,7 @@ export function UnitPage({ detail, editable, onChange, onReset, onCreateCopy }: 
   const [filter, setFilter] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
   const [open, setOpen] = useState<string[]>(OPEN_BY_DEFAULT);
+  const [openAdvanced, setOpenAdvanced] = useState<string[]>([]);
   const { item } = detail;
   const changedCount = detail.sections.flatMap((s) => s.fields).filter((f) => f.modified).length;
   const searching = Boolean(filter) || changedOnly;
@@ -54,11 +96,23 @@ export function UnitPage({ detail, editable, onChange, onReset, onCreateCopy }: 
   );
 
   function toggleSection(category: string) {
-    if (open.includes(category)) {
-      setOpen(open.filter((c) => c !== category));
-    } else {
-      setOpen([...open, category]);
-    }
+    setOpen(toggled(open, category));
+  }
+
+  function toggleAdvanced(category: string) {
+    setOpenAdvanced(toggled(openAdvanced, category));
+  }
+
+  function rows(fields: Field[]) {
+    return fields.map((field) => (
+      <FieldRow
+        key={field.id}
+        field={field}
+        editable={editable}
+        onChange={(value) => onChange(field.id, value)}
+        onReset={() => onReset(field.id)}
+      />
+    ));
   }
 
   return (
@@ -98,7 +152,7 @@ export function UnitPage({ detail, editable, onChange, onReset, onCreateCopy }: 
             type="search"
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
-            placeholder="Filter fields: damage, speed, model…"
+            placeholder="Filter fields by name, code, value or description: armor, speed, model…"
             aria-label="Filter fields"
             className="min-w-0 flex-1 rounded-md border border-line bg-surface-0 px-3 py-1.5 outline-none focus:border-gold"
           />
@@ -139,16 +193,16 @@ export function UnitPage({ detail, editable, onChange, onReset, onCreateCopy }: 
                   <span className={classes("font-normal text-changed")}>{changed} changed</span>
                 )}
               </button>
-              {expanded &&
-                fields.map((field) => (
-                  <FieldRow
-                    key={field.id}
-                    field={field}
-                    editable={editable}
-                    onChange={(value) => onChange(field.id, value)}
-                    onReset={() => onReset(field.id)}
-                  />
-                ))}
+              {expanded && rows(fields.filter((f) => !f.advanced))}
+              {expanded && (
+                <AdvancedGroup
+                  fields={fields.filter((f) => f.advanced)}
+                  open={searching || openAdvanced.includes(section.category)}
+                  onToggle={() => toggleAdvanced(section.category)}
+                >
+                  {rows(fields.filter((f) => f.advanced))}
+                </AdvancedGroup>
+              )}
             </div>
           );
         })}

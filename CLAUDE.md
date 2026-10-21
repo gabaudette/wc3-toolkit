@@ -60,3 +60,7 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
 - Round trip verified on every map in the user's Maps folder (135 maps) and Legion TD
   (all 15 object/string files).
 - Never commit Blizzard game files or assets; tools read them from the user's install.
+- `crates/wc3-data/data/unit-fields.toml` is the field guide (written for this project):
+  importance order per category, `advanced` (folded in the UI), a description for every unit
+  field, `unverified` where not confirmed in game. A real-install test checks it covers every
+  field. "Armor Type" is only the hit sound; "Defense Type" drives the damage table.

@@ -1,4 +1,4 @@
-import { FlipBackward } from "@untitledui/icons";
+import { FlipBackward, InfoCircle } from "@untitledui/icons";
 import { type KeyboardEvent, useEffect, useState } from "react";
 import { Switch } from "react-aria-components";
 import type { Field } from "../types";
@@ -148,11 +148,53 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
   );
 }
 
+const numberFormat = new Intl.NumberFormat();
+
+/** "Range 1 – 500,000", "At most 5" or nothing, from the field's limits. */
+function rangeText(field: Field): string | null {
+  const { min, max } = field;
+  if (min !== null && max !== null) {
+    return `Range ${numberFormat.format(min)} – ${numberFormat.format(max)}`;
+  }
+
+  if (max !== null) {
+    return `At most ${numberFormat.format(max)}`;
+  }
+
+  if (min !== null) {
+    return `At least ${numberFormat.format(min)}`;
+  }
+
+  return null;
+}
+
+function Description({ field }: { field: Field }) {
+  const range = rangeText(field);
+
+  return (
+    <div className="col-span-3 mb-1 rounded bg-surface-1 px-3 py-2 text-sm leading-relaxed text-muted">
+      <p>{field.description}</p>
+      {(range || field.unverified) && (
+        <p className="mt-1 flex flex-wrap items-center gap-3 text-xs text-faint">
+          {range && <span>{range}</span>}
+          {field.unverified && (
+            <span className="rounded bg-gold-soft px-1.5 py-0.5 text-gold">
+              Unverified: not yet confirmed in game
+            </span>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) {
+  const [showInfo, setShowInfo] = useState(false);
+
   return (
     <div
       className={classes(
-        "grid grid-cols-[minmax(0,1fr)_minmax(12rem,24rem)_1.75rem] items-start gap-3 border-b border-line/60 px-3 py-1",
+        "grid grid-cols-[minmax(0,1fr)_minmax(12rem,24rem)_1.75rem] items-start gap-x-3 border-b border-line/60 px-3 py-1",
         field.modified && "border-l-2 border-l-changed bg-changed-soft/40",
       )}
     >
@@ -161,6 +203,22 @@ export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) 
           {field.name}
         </span>
         <span className="shrink-0 font-mono text-xs text-faint">{field.id}</span>
+        {field.description && (
+          <button
+            type="button"
+            onClick={() => setShowInfo(!showInfo)}
+            aria-expanded={showInfo}
+            aria-label={`What ${field.name} does`}
+            title="What this field does"
+            className={classes(
+              "shrink-0 self-center rounded p-0.5 hover:text-ink",
+              showInfo && "text-gold",
+              !showInfo && "text-faint",
+            )}
+          >
+            <InfoCircle className="size-3.5" aria-hidden="true" />
+          </button>
+        )}
       </div>
       <Editor field={field} editable={editable} onChange={onChange} />
       {field.modified && editable && (
@@ -174,6 +232,7 @@ export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) 
           <FlipBackward className="size-4" aria-hidden="true" />
         </button>
       )}
+      {showInfo && field.description && <Description field={field} />}
     </div>
   );
 }

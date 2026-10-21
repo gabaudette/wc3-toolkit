@@ -9,6 +9,7 @@
 use std::path::PathBuf;
 
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
+use wc3_data::guide::FieldGuide;
 use wc3_data::icon::load_texture;
 use wc3_data::meta::ObjectKind;
 use wc3_data::units::UnitDatabase;
@@ -149,5 +150,38 @@ fn every_field_of_every_unit_displays() -> TestResult {
 
     assert!(count > db.ids().len() * 100, "only {count} values");
 
+    Ok(())
+}
+
+/// The field guide describes every unit field and nothing else, and lists
+/// each ordered field under its real category.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn the_field_guide_covers_every_unit_field() -> TestResult {
+    let (_, db) = open(GameOptions::default())?;
+    let guide = FieldGuide::units()?;
+
+    let missing: Vec<&str> = db
+        .fields()
+        .iter()
+        .map(|f| f.id.as_str())
+        .filter(|id| guide.entry(id).is_none())
+        .collect();
+    let unknown: Vec<&str> = guide
+        .field_ids()
+        .filter(|id| db.field(id).is_none())
+        .collect();
+    let misplaced: Vec<String> = guide
+        .ordered()
+        .filter_map(|(id, category)| {
+            let field = db.field(id)?;
+            (field.category != category)
+                .then(|| format!("{id} is {} not {category}", field.category))
+        })
+        .collect();
+
+    assert!(missing.is_empty(), "no description: {missing:?}");
+    assert!(unknown.is_empty(), "not unit fields: {unknown:?}");
+    assert!(misplaced.is_empty(), "{misplaced:?}");
     Ok(())
 }

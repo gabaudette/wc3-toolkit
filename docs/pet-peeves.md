@@ -4,29 +4,29 @@ What's wrong with the World Editor's Object Editor, and what this tool does inst
 Each item is a requirement. Check it off when the tool handles it.
 
 ## Finding things
-- [ ] Tree navigation (race → melee/campaign → units → heroes) and raw codes.
+- [x] Tree navigation (race → melee/campaign → units → heroes) and raw codes.
       → One search box for names, raw codes (`Hpal`, `AHhb`) and field values.
 
 ## Editing is slow
-- [ ] A popup dialog for every field.
+- [x] A popup dialog for every field.
       → Edit values in place, keyboard navigation (arrows, Enter, Tab).
-- [ ] Can't tell what changed from the base object.
+- [x] Can't tell what changed from the base object.
       → Modified fields highlighted, reset per field, "modified only" filter.
 
 ## Field list (see screenshot of the Paladin's fields)
-- [ ] One flat alphabetical list of 200+ fields with the category glued to each name ("Art - …").
+- [x] One flat alphabetical list of 200+ fields with the category glued to each name ("Art - …").
       → Real sections (Stats, Attack 1, Attack 2, Abilities, Art, Sound, Pathing, Text, Tech tree),
         common fields first, rarely used ones in a collapsed "Advanced" group.
-- [ ] Field names cut off ("Combat - Attack 1 - Damag…" six times).
+- [x] Field names cut off ("Combat - Attack 1 - Damag…" six times).
       → Full names always visible.
-- [ ] No explanation of what a field does.
+- [x] No explanation of what a field does.
       → A short description for every field (hover or expand), plus allowed range and default.
 - [ ] Values shown without context.
       → Icon fields show the icon, model fields show a 3D preview, colors show a color picker,
         button position shows the command card grid.
 - [ ] Related values split across rows (damage base / dice / sides, projectile X/Y/Z, tint R/G/B).
       → Grouped into one control, with computed results (damage range including attribute bonus).
-- [ ] Key numbers buried in the list.
+- [x] Key numbers buried in the list.
       → Summary at the top: damage, armor, attributes, speed, HP, mana.
 
 ## Abilities and levels
