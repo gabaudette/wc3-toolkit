@@ -46,6 +46,9 @@ pub struct FieldMeta {
     pub use_item: bool,
     /// Restricts the field to specific object IDs when non-empty.
     pub use_specific: Vec<String>,
+    /// Cosmetic field that may differ between players. Reforged stores changes
+    /// to these in the map's `Skin` object files.
+    pub netsafe: bool,
 }
 
 impl FieldMeta {
@@ -108,6 +111,7 @@ fn parse_record(record: &HashMap<&str, &str>, row: usize) -> Result<FieldMeta> {
         use_building: flag("useBuilding"),
         use_item: flag("useItem"),
         use_specific,
+        netsafe: flag("netsafe"),
     })
 }
 

@@ -31,7 +31,7 @@ World Editor never overwrite each other. Temporary and Linux-only for now.
 
 - A legal copy of Warcraft III: Reforged. The tools read game data from your installation;
   this repository contains no Blizzard files.
-- Rust (stable) and a C/C++ compiler (for the bundled CascLib).
+- Rust (stable), a C/C++ compiler and CMake (for the bundled CascLib and StormLib).
 
 ## Building
 
@@ -47,6 +47,15 @@ export WC3_GAME_DIR="/path/to/Warcraft III"
 cargo run --release -p wc3-data --bin wc3data -- heroes
 cargo run --release -p wc3-data --bin wc3data -- unit Hpal
 cargo run --release -p wc3-data --bin wc3data -- --hd icon Hpal paladin.png
+```
+
+To inspect or edit a map's units (changes are always saved through a temporary copy):
+
+```bash
+cargo run --release -p wc3-map --bin wc3map -- my_map.w3m units
+cargo run --release -p wc3-map --bin wc3map -- my_map.w3m unit H000
+cargo run --release -p wc3-map --bin wc3map -- my_map.w3m set H000 uhpm 1000 -o my_map_edited.w3m
+cargo run --release -p wc3-map --bin wc3map -- my_map.w3m check
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the checks every change must pass.

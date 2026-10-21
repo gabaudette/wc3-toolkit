@@ -8,7 +8,12 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   storage via the vendored CascLib; `crates/wc3-data` loads game data: `game` (layered file
   access), `units` (every unit with all Object Editor fields and editor-style display values),
   `icon` (DDS → RGBA/PNG), plus the SLK/profile/metadata parsers. `wc3data` is a CLI inspector
-  (`cargo run --release -p wc3-data --bin wc3data -- unit Hpal`).
+  (`cargo run --release -p wc3-data --bin wc3data -- unit Hpal`). It also has the map formats:
+  `objects` (all Object Editor files, v1–v3, byte-exact round trip) and `strings` (`war3map.wts`).
+  `crates/mpq` reads/writes map archives via the vendored StormLib (built with CMake).
+  `crates/wc3-map` opens maps, saves through a temp copy (`save_files`), and `units::MapUnits`
+  applies a map's unit changes over the game data and edits them. `wc3map` is its CLI
+  (`check`, `units`, `unit`, `set`, `new`).
 - `map/` — Lua scripts (`src/`) injected into a dev copy of a test map by `tools/build.py`
   (temporary, Linux-only; map writing moves into the Rust editor). It needs
   `map/tools/lib/libstorm.so` (StormLib, built with `-DBUILD_SHARED_LIBS=ON
@@ -32,4 +37,16 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
   `WorldEditStrings.txt` and `WorldEditGameStrings.txt`.
 - `versionFlags` fields are bit flags (0 = None), not single choices.
 - Reforged moved some SLK columns into skin profile files; lookups fall back to the profile.
+
+## Map format notes
+
+- Object files (`war3map.w3u/.w3t/.w3b/.w3d/.w3a/.w3h/.w3q`) share one layout. Version 3 groups
+  modifications into sets with a flags word (meaning of the flags not yet known; maps seen so
+  far use 0). Leveled files (`.w3d/.w3a/.w3q`) store `type, level, column` after the field ID —
+  type first.
+- Reforged splits unit changes: gameplay fields in `war3map.w3u`, "netsafe" (cosmetic) fields
+  in `war3mapSkin.w3u`. Confirmed for names; other fields follow the metadata's `netsafe` flag.
+- Text fields hold `TRIGSTR_007` references into `war3map.wts` (UTF-8 BOM, CRLF, `//` comments).
+- Round trip verified on every map in the user's Maps folder (135 maps) and Legion TD
+  (all 15 object/string files).
 - Never commit Blizzard game files or assets; tools read them from the user's install.

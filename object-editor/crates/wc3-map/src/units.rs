@@ -1,0 +1,365 @@
+//! A map's unit changes on top of the game's unit data.
+//!
+//! Reforged stores a map's unit changes in two files: gameplay fields in
+//! `war3map.w3u` and cosmetic ("netsafe") fields such as names and art in
+//! `war3mapSkin.w3u`. Text fields refer to the map's string table.
+
+use wc3_data::game::ArtMode;
+use wc3_data::meta::{FieldMeta, ObjectKind};
+use wc3_data::objects::{FourCC, Layout, ModSet, Modification, ObjectData, ObjectEntry, Value};
+use wc3_data::strings::{MapStrings, reference_id};
+use wc3_data::units::UnitDatabase;
+
+use crate::{Error, Map, Result, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE};
+
+/// Characters the World Editor uses for the last three letters of new IDs (`H000`, `H00A`, ...).
+const ID_ALPHABET: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const ID_SUFFIX_LEN: u32 = 3;
+const NAME_FIELD: &str = "unam";
+const TEXT_CATEGORY: &str = "text";
+
+pub struct MapUnits {
+    data: ObjectData,
+    skins: ObjectData,
+    strings: MapStrings,
+}
+
+/// A unit the map adds or changes.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MapUnit {
+    pub id: FourCC,
+    pub base: FourCC,
+    pub is_custom: bool,
+    pub modified_fields: usize,
+}
+
+impl MapUnits {
+    pub fn load(map: &Map) -> Result<Self> {
+        let empty = || ObjectData::empty(Layout::Plain);
+
+        Ok(Self {
+            data: map.object_data(UNITS_FILE)?.unwrap_or_else(empty),
+            skins: map.object_data(UNIT_SKINS_FILE)?.unwrap_or_else(empty),
+            strings: map.strings()?,
+        })
+    }
+
+    pub fn strings(&self) -> &MapStrings {
+        &self.strings
+    }
+
+    /// Custom units first, then changed original units, each listed once.
+    pub fn units(&self) -> Vec<MapUnit> {
+        let mut units: Vec<MapUnit> = Vec::new();
+        let tables = [
+            (&self.data.custom, true),
+            (&self.skins.custom, true),
+            (&self.data.original, false),
+            (&self.skins.original, false),
+        ];
+
+        for (entries, is_custom) in tables {
+            for entry in entries {
+                let id = entry.effective_id();
+                let mods = entry.mods().count();
+
+                match units.iter_mut().find(|u| u.id == id) {
+                    Some(unit) => unit.modified_fields += mods,
+                    None => units.push(MapUnit {
+                        id,
+                        base: entry.base,
+                        is_custom,
+                        modified_fields: mods,
+                    }),
+                }
+            }
+        }
+
+        units
+    }
+
+    /// The game unit a map unit is based on: the base of a custom unit, or the
+    /// unit itself. `None` when neither the map nor the game has the ID.
+    pub fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC> {
+        if let Some(entry) = self.data.find(id).or_else(|| self.skins.find(id)) {
+            return Some(entry.base);
+        }
+
+        db.contains(&id.to_string()).then_some(id)
+    }
+
+    pub fn kind(&self, db: &UnitDatabase, id: FourCC) -> Option<ObjectKind> {
+        let base = self.base_of(db, id)?;
+        Some(db.kind(&base.to_string()))
+    }
+
+    /// Fields the Object Editor shows for this unit (those of its base unit).
+    pub fn fields<'a>(&self, db: &'a UnitDatabase, id: FourCC) -> Vec<&'a FieldMeta> {
+        self.base_of(db, id)
+            .map(|base| db.fields_for(&base.to_string()).collect())
+            .unwrap_or_default()
+    }
+
+    pub fn modification(&self, id: FourCC, field: &FieldMeta) -> Option<&Value> {
+        let field_id = FourCC::parse(&field.id)?;
+        let file = self.file_for(field);
+        let other = if std::ptr::eq(file, &self.data) {
+            &self.skins
+        } else {
+            &self.data
+        };
+
+        // Look in the file the field belongs to first; maps saved by older
+        // editors keep every field in war3map.w3u.
+        [file, other].into_iter().find_map(|data| {
+            data.find(id)?
+                .mods()
+                .filter(|m| m.field == field_id)
+                .last()
+                .map(|m| &m.value)
+        })
+    }
+
+    pub fn is_modified(&self, id: FourCC, field: &FieldMeta) -> bool {
+        self.modification(id, field).is_some()
+    }
+
+    /// The field's raw value: the map's change if there is one (with string
+    /// references resolved), otherwise the base unit's game data.
+    pub fn raw_value(
+        &self,
+        db: &UnitDatabase,
+        id: FourCC,
+        field: &FieldMeta,
+        mode: ArtMode,
+    ) -> Option<String> {
+        if let Some(value) = self.modification(id, field) {
+            return Some(match value {
+                Value::String(s) => self.strings.resolve(s).to_owned(),
+                other => other.to_string(),
+            });
+        }
+
+        let base = self.base_of(db, id)?;
+        db.raw_value(&base.to_string(), field, mode)
+    }
+
+    pub fn display_value(
+        &self,
+        db: &UnitDatabase,
+        id: FourCC,
+        field: &FieldMeta,
+        mode: ArtMode,
+    ) -> String {
+        db.format_value(field, self.raw_value(db, id, field, mode))
+    }
+
+    pub fn name(&self, db: &UnitDatabase, id: FourCC) -> String {
+        let name = db
+            .field(NAME_FIELD)
+            .and_then(|field| self.modification(id, field))
+            .map(|value| self.strings.resolve(&value.to_string()).to_owned());
+
+        name.or_else(|| self.base_of(db, id).map(|base| db.name(&base.to_string())))
+            .unwrap_or_else(|| id.to_string())
+    }
+
+    /// Sets a field from text as typed in an editor: numbers for numeric
+    /// fields, `true`/`false` or `1`/`0` for booleans, raw codes for lists and
+    /// choices. Text fields are stored in the map's string table.
+    pub fn set(
+        &mut self,
+        db: &UnitDatabase,
+        id: FourCC,
+        field: &FieldMeta,
+        text: &str,
+    ) -> Result<()> {
+        let field_id = FourCC::parse(&field.id)
+            .ok_or_else(|| Error::Invalid(format!("bad field ID {}", field.id)))?;
+        if self.base_of(db, id).is_none() {
+            return Err(Error::Invalid(format!("unknown unit {id}")));
+        }
+
+        let value = match parse_value(field, text)? {
+            Value::String(s) if is_translatable(field) => {
+                Value::String(self.store_string(db, id, field, &s))
+            }
+            other => other,
+        };
+
+        let in_skin = field.netsafe;
+        let data = if in_skin {
+            &mut self.skins
+        } else {
+            &mut self.data
+        };
+        let entry = entry_mut(data, id);
+        let set = match entry.sets.first_mut() {
+            Some(set) => set,
+            None => {
+                entry.sets.push(ModSet {
+                    flags: 0,
+                    mods: Vec::new(),
+                });
+                &mut entry.sets[0]
+            }
+        };
+
+        match set.mods.iter_mut().find(|m| m.field == field_id) {
+            Some(existing) => existing.value = value,
+            None => set.mods.push(Modification {
+                field: field_id,
+                level: None,
+                column: None,
+                value,
+                end: FourCC::ZERO,
+            }),
+        }
+
+        Ok(())
+    }
+
+    /// Creates a custom unit copying `base` and returns its new ID, numbered the
+    /// way the World Editor does (`H000`, `H001`, ... for a hero based on `Hpal`).
+    pub fn create(&mut self, db: &UnitDatabase, base: FourCC) -> Result<FourCC> {
+        if !db.contains(&base.to_string()) {
+            return Err(Error::Invalid(format!("unknown base unit {base}")));
+        }
+
+        let id = self
+            .next_id(db, base)
+            .ok_or_else(|| Error::Invalid(format!("no free ID for {base}")))?;
+        for data in [&mut self.data, &mut self.skins] {
+            data.custom.push(ObjectEntry {
+                base,
+                id,
+                sets: vec![ModSet {
+                    flags: 0,
+                    mods: Vec::new(),
+                }],
+            });
+        }
+
+        Ok(id)
+    }
+
+    fn next_id(&self, db: &UnitDatabase, base: FourCC) -> Option<FourCC> {
+        let prefix = base.0[0];
+        let radix = ID_ALPHABET.len();
+        let count = radix.pow(ID_SUFFIX_LEN);
+
+        (0..count)
+            .map(|n| {
+                FourCC([
+                    prefix,
+                    ID_ALPHABET[n / (radix * radix)],
+                    ID_ALPHABET[(n / radix) % radix],
+                    ID_ALPHABET[n % radix],
+                ])
+            })
+            .find(|id| {
+                self.data.find(*id).is_none()
+                    && self.skins.find(*id).is_none()
+                    && !db.contains(&id.to_string())
+            })
+    }
+
+    /// Updates the string a text field already refers to, or adds a new one
+    /// with a comment like the World Editor's: `Units: H000 (name), Name (Name)`.
+    fn store_string(
+        &mut self,
+        db: &UnitDatabase,
+        id: FourCC,
+        field: &FieldMeta,
+        text: &str,
+    ) -> String {
+        let current = self.modification(id, field).map(Value::to_string);
+        let existing = current.and_then(|c| Some((reference_id(&c)?, c)));
+
+        if let Some((number, reference)) = existing
+            && self.strings.set(number, text)
+        {
+            return reference;
+        }
+
+        let comment = format!(
+            "Units: {id} ({}), {} ({})",
+            self.name(db, id),
+            db.field_name(field),
+            field.field
+        );
+        self.strings.add(text, Some(&comment))
+    }
+
+    /// The files to write into the map for the current state.
+    pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
+        vec![
+            (UNITS_FILE, self.data.to_bytes()),
+            (UNIT_SKINS_FILE, self.skins.to_bytes()),
+            (STRINGS_FILE, self.strings.to_text().into_bytes()),
+        ]
+    }
+
+    fn file_for(&self, field: &FieldMeta) -> &ObjectData {
+        if field.netsafe {
+            &self.skins
+        } else {
+            &self.data
+        }
+    }
+}
+
+fn entry_mut(data: &mut ObjectData, id: FourCC) -> &mut ObjectEntry {
+    let index = data.custom.iter().position(|e| e.effective_id() == id);
+    if let Some(i) = index {
+        return &mut data.custom[i];
+    }
+
+    let index = data.original.iter().position(|e| e.effective_id() == id);
+    match index {
+        Some(i) => &mut data.original[i],
+        None => {
+            // A change to an original unit, or a custom unit missing from this file.
+            data.original.push(ObjectEntry {
+                base: id,
+                id: FourCC::ZERO,
+                sets: Vec::new(),
+            });
+            let last = data.original.len() - 1;
+            &mut data.original[last]
+        }
+    }
+}
+
+fn is_translatable(field: &FieldMeta) -> bool {
+    field.category == TEXT_CATEGORY && field.value_type == "string"
+}
+
+fn parse_value(field: &FieldMeta, text: &str) -> Result<Value> {
+    let text = text.trim();
+    let invalid = || {
+        Error::Invalid(format!(
+            "{} expects a {}, got {text:?}",
+            field.id, field.value_type
+        ))
+    };
+
+    Ok(match field.value_type.as_str() {
+        "int" => Value::Int(text.parse().map_err(|_| invalid())?),
+        "bool" => Value::Int(match text.to_ascii_lowercase().as_str() {
+            "1" | "true" => 1,
+            "0" | "false" => 0,
+            _ => return Err(invalid()),
+        }),
+        "real" => Value::Real(text.parse().map_err(|_| invalid())?),
+        "unreal" => {
+            let v: f32 = text.parse().map_err(|_| invalid())?;
+            if v < 0.0 {
+                return Err(invalid());
+            }
+
+            Value::Unreal(v)
+        }
+        _ => Value::String(text.to_owned()),
+    })
+}
