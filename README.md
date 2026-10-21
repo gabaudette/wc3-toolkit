@@ -22,6 +22,15 @@ reads and writes the same object data as the World Editor, with a better interfa
 The first version covers the Units tab (units, heroes, buildings). See
 [docs/pet-peeves.md](docs/pet-peeves.md) for the full list of goals.
 
+To run it you also need [Bun](https://bun.sh) and, on Linux, the WebKitGTK libraries Tauri
+uses ([Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)):
+
+```bash
+cd object-editor/app
+bun install
+bun run tauri dev
+```
+
 ### Lua script harness (`wc3map lua`)
 
 Builds a development copy of a map with Lua modules from a folder added to the World Editor's

@@ -17,7 +17,7 @@ const DEFAULT_LOCALE: &str = "enus";
 
 /// Which art the user works with. Reforged keeps separate values for some
 /// fields (`walk:sd`, `walk:hd`) and separate icons and models.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum ArtMode {
     #[default]
     Sd,

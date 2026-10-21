@@ -118,5 +118,13 @@ fn edited_units_save_and_read_back() -> TestResult {
     assert_eq!(field_ids(&map, UNITS_FILE, hero)?, ["uhpm"]);
     assert_eq!(field_ids(&map, UNIT_SKINS_FILE, hero)?, ["unam"]);
     assert_eq!(map.strings()?.resolve("TRIGSTR_001"), "Holy Tank");
+
+    let mut edited = reloaded;
+    assert!(edited.reset(hero, hp));
+    assert!(!edited.reset(hero, hp));
+    assert_eq!(
+        edited.display_value(&db, hero, hp, ArtMode::Sd),
+        db.display_value("Hpal", hp, ArtMode::Sd)
+    );
     Ok(())
 }

@@ -26,6 +26,17 @@ run with:
 WC3_GAME_DIR="/path/to/Warcraft III" WC3_MAPS_DIR="/path/to/Maps" cargo test --workspace -- --ignored
 ```
 
+The editor's frontend (`object-editor/app`) follows the AGE TypeScript rules through Biome:
+
+```bash
+cd object-editor/app
+bun run check
+bun run build
+```
+
+The Rust app crate embeds the built frontend, so run `bun run build` once before
+`cargo lint` or `cargo test`.
+
 `WC3_MAPS_DIR` can be any folder of `.w3m`/`.w3x` maps; every object data file and string table
 in them must rewrite byte for byte. Building also needs CMake (for the bundled StormLib).
 

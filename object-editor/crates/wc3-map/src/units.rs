@@ -219,6 +219,31 @@ impl MapUnits {
         Ok(())
     }
 
+    /// Removes the map's change to a field so the base unit's value applies
+    /// again. Returns `false` when the field was not changed.
+    pub fn reset(&mut self, id: FourCC, field: &FieldMeta) -> bool {
+        let Some(field_id) = FourCC::parse(&field.id) else {
+            return false;
+        };
+
+        let mut removed = false;
+        for data in [&mut self.data, &mut self.skins] {
+            let entries = data.custom.iter_mut().chain(data.original.iter_mut());
+            for entry in entries.filter(|e| e.effective_id() == id) {
+                for set in &mut entry.sets {
+                    let before = set.mods.len();
+                    set.mods.retain(|m| m.field != field_id);
+                    removed |= set.mods.len() != before;
+                }
+            }
+
+            // A changed original unit with no changes left is dropped entirely.
+            data.original.retain(|e| e.mods().next().is_some());
+        }
+
+        removed
+    }
+
     /// Creates a custom unit copying `base` and returns its new ID, numbered the
     /// way the World Editor does (`H000`, `H001`, ... for a hero based on `Hpal`).
     pub fn create(&mut self, db: &UnitDatabase, base: FourCC) -> Result<FourCC> {
