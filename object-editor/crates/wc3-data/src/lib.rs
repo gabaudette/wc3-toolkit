@@ -1,9 +1,12 @@
 //! Warcraft III game data: SLK tables, profile text files and the Object
 //! Editor's field metadata.
 
+pub mod game;
+pub mod icon;
 pub mod meta;
 pub mod profile;
 pub mod slk;
+pub mod units;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -11,6 +14,8 @@ pub enum Error {
     Casc(#[from] casc::Error),
     #[error("line {line}: {reason}")]
     Parse { line: usize, reason: String },
+    #[error("{0}")]
+    Image(String),
     #[error("row {row}: missing or invalid {column}")]
     Field { row: usize, column: &'static str },
     #[error("{file}: {source}")]
