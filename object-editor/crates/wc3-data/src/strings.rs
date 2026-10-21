@@ -168,6 +168,13 @@ impl MapStrings {
         }
     }
 
+    /// Removes a string. Returns `false` if there is none with that ID.
+    pub fn remove(&mut self, id: u32) -> bool {
+        let before = self.entries.len();
+        self.entries.retain(|e| e.id != id);
+        self.entries.len() != before
+    }
+
     /// Adds a string with the next free ID and returns its `TRIGSTR_` reference.
     pub fn add(&mut self, text: &str, comment: Option<&str>) -> String {
         let id = self.entries.iter().map(|e| e.id).max().map_or(1, |m| m + 1);

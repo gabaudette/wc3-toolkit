@@ -29,6 +29,7 @@ fn main() -> ExitCode {
             commands::search_units,
             commands::list_abilities,
             commands::ability_cards,
+            commands::fill_placeholders,
             commands::set_field,
             commands::reset_field,
             commands::create_unit,

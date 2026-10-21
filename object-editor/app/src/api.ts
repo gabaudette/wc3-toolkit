@@ -41,6 +41,7 @@ export const api = {
   searchUnits: (query: string) => invoke<SearchHit[]>("search_units", { query }),
   listAbilities: () => invoke<AbilitySummary[]>("list_abilities"),
   abilityCards: (ids: string[]) => invoke<AbilityCard[]>("ability_cards", { ids }),
+  fillPlaceholders: (text: string) => invoke<string>("fill_placeholders", { text }),
   setField: (id: string, field: string, value: string) =>
     invoke<Field>("set_field", { id, field, value }),
   resetField: (id: string, field: string) => invoke<Field>("reset_field", { id, field }),

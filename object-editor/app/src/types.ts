@@ -46,6 +46,7 @@ export type Field = {
   description: string | null;
   advanced: boolean;
   unverified: boolean;
+  preview: boolean;
 };
 
 export type Section = {

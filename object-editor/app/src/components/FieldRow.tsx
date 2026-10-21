@@ -4,6 +4,8 @@ import { Switch } from "react-aria-components";
 import type { Field } from "../types";
 import { classes } from "../ui";
 import { AbilityField } from "./AbilityField";
+import { ColoredTextInput } from "./ColoredTextInput";
+import { TextPreview } from "./TextPreview";
 
 type FieldRowProps = {
   field: Field;
@@ -38,12 +40,16 @@ function useDraft(field: Field, onChange: (value: string) => void) {
   }, [field.raw]);
 
   function commit() {
-    if (draft !== field.raw) {
-      onChange(draft);
+    commitText(draft);
+  }
+
+  function commitText(text: string) {
+    if (text !== field.raw) {
+      onChange(text);
     }
   }
 
-  return { draft, setDraft, commit };
+  return { draft, setDraft, commit, commitText };
 }
 
 function abilityCount(raw: string): string {
@@ -56,7 +62,7 @@ function abilityCount(raw: string): string {
 }
 
 function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
-  const { draft, setDraft, commit } = useDraft(field, onChange);
+  const { draft, setDraft, commit, commitText } = useDraft(field, onChange);
 
   if (field.control === "abilities") {
     return <p className="pt-1 text-sm text-faint">{abilityCount(field.raw)}</p>;
@@ -125,6 +131,26 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
         aria-label={field.label}
         className={classes(inputClass, "font-mono")}
       />
+    );
+  }
+
+  // Game text (names, tooltips) gets the color menu and a live preview.
+  if (field.preview) {
+    const multiline = field.control === "longText";
+    return (
+      <div>
+        <ColoredTextInput
+          value={draft}
+          multiline={multiline}
+          readOnly={!editable}
+          rows={LONG_TEXT_ROWS}
+          label={field.label}
+          className={inputClass}
+          onDraft={setDraft}
+          onCommit={commitText}
+        />
+        {(multiline || /[|<]/.test(draft)) && <TextPreview text={draft} />}
+      </div>
     );
   }
 
