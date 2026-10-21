@@ -7,6 +7,7 @@
 
 mod abilities;
 mod commands;
+mod hotkeys;
 mod icons;
 mod platform;
 mod state;
@@ -30,6 +31,7 @@ fn main() -> ExitCode {
             commands::list_abilities,
             commands::ability_cards,
             commands::fill_placeholders,
+            commands::hotkey_clashes,
             commands::set_field,
             commands::reset_field,
             commands::create_unit,

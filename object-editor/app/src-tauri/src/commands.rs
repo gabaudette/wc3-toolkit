@@ -13,6 +13,7 @@ use wc3_map::units::MapUnits;
 use wc3_map::{FourCC, Map, save_files};
 
 use crate::abilities::{self, AbilityCard, AbilitySummary};
+use crate::hotkeys::{self, Clash};
 use crate::platform;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
 use crate::view::{Field, SearchHit, UnitDetail, UnitItem, View};
@@ -149,6 +150,12 @@ pub fn ability_cards(
             .map(|id| abilities::card(&session.abilities, &session.db, id.trim()))
             .collect())
     })
+}
+
+#[tauri::command]
+pub fn hotkey_clashes(state: State<'_, AppState>, id: String) -> Result<Vec<Clash>, String> {
+    let id = fourcc(&id)?;
+    state.with(|session| Ok(hotkeys::clashes(&view(session), &session.abilities, id)))
 }
 
 /// Fills `<ID,Column>` placeholders in text being typed, for the live preview.

@@ -46,6 +46,11 @@ pub struct AbilityInfo {
     pub levels: u32,
     pub required_level: u32,
     pub hotkey: Option<String>,
+    /// Key that learns the ability in the hero's learn menu.
+    pub learn_hotkey: Option<String>,
+    /// Button slot (column, row) on the command card and in the learn menu.
+    pub button: Option<(u32, u32)>,
+    pub learn_button: Option<(u32, u32)>,
 }
 
 /// One row of a card's table: a value for each level.
@@ -157,6 +162,12 @@ impl AbilityDatabase {
             levels: self.number(id, "levels").max(1),
             required_level: self.number(id, "reqLevel"),
             hotkey: self.text(id, "Hotkey"),
+            learn_hotkey: self.text(id, "Researchhotkey"),
+            button: self.text(id, "Buttonpos").as_deref().and_then(parse_button),
+            learn_button: self
+                .text(id, "Researchbuttonpos")
+                .as_deref()
+                .and_then(parse_button),
         })
     }
 
@@ -306,6 +317,12 @@ impl PlaceholderSource for NoPlaceholders {
     fn placeholder(&self, _id: &str, _column: &str) -> Option<String> {
         None
     }
+}
+
+/// A button slot such as `0,2` → (column 0, row 2).
+fn parse_button(value: &str) -> Option<(u32, u32)> {
+    let (x, y) = value.split_once(',')?;
+    Some((x.trim().parse().ok()?, y.trim().parse().ok()?))
 }
 
 /// `200.00` → `200`, `5.50` → `5.5`; anything that is not a number stays as it is.

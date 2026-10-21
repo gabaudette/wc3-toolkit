@@ -2,7 +2,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, open } from "@tauri-apps/plugin-dialog";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../api";
-import type { Field, GameSummary, MapSummary, UnitDetail, UnitItem } from "../types";
+import type { Field, GameSummary, HotkeyClash, MapSummary, UnitDetail, UnitItem } from "../types";
 import { MAP_PATH_KEY, remembered } from "../ui";
 import { Button } from "./Button";
 import { UnitList } from "./UnitList";
@@ -46,6 +46,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [units, setUnits] = useState<UnitItem[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<UnitDetail | null>(null);
+  const [clashes, setClashes] = useState<HotkeyClash[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const editable = map !== null;
@@ -63,6 +64,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const refreshDetail = useCallback(
     (id: string) => {
       api.unitDetail(id).then(setDetail).catch(fail);
+      api.hotkeyClashes(id).then(setClashes).catch(fail);
     },
     [fail],
   );
@@ -214,6 +216,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
           <UnitPage
             key={detail.item.id}
             detail={detail}
+            clashes={clashes}
             editable={editable}
             onChange={(field, value) => applyField(api.setField(detail.item.id, field, value))}
             onReset={(field) => applyField(api.resetField(detail.item.id, field))}
