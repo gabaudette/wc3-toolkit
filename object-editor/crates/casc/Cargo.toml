@@ -1,0 +1,16 @@
+[package]
+name = "casc"
+description = "Read-only access to Blizzard CASC storages (wraps the bundled CascLib)"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+thiserror = "2"
+
+[build-dependencies]
+cc = "1"
+
+[lints]
+workspace = true

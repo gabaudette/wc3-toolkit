@@ -1,0 +1,51 @@
+# wc3-toolkit
+
+Open-source tools for Warcraft III: Reforged map creation.
+
+> **Status: early development.** Nothing here is ready for everyday use yet.
+
+## Tools
+
+### Object Editor (`object-editor/`, in progress)
+
+An external replacement for the World Editor's Object Editor, built with Rust and Tauri. It
+reads and writes the same object data as the World Editor, with a better interface:
+
+- one search box for names, raw codes and field values;
+- fields grouped by topic with full names and a description of what each one does;
+- edit in place, with changed fields highlighted and a reset per field;
+- ability cards showing icon, tooltip and per-level values wherever an ability is referenced;
+- live tooltip preview with color codes;
+- a 3D model viewer;
+- share codes to copy objects between maps.
+
+The first version covers the Units tab (units, heroes, buildings). See
+[docs/pet-peeves.md](docs/pet-peeves.md) for the full list of goals.
+
+### Map script harness (`map/`)
+
+Injects Lua modules from `map/src/` into a development copy of a map, so custom code and the
+World Editor never overwrite each other. Temporary and Linux-only for now.
+
+## Requirements
+
+- A legal copy of Warcraft III: Reforged. The tools read game data from your installation;
+  this repository contains no Blizzard files.
+- Rust (stable) and a C/C++ compiler (for the bundled CascLib).
+
+## Building
+
+```bash
+cd object-editor
+cargo build
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the checks every change must pass.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Bundled third-party code keeps its own license
+(`object-editor/vendor/CascLib`, MIT).
+
+Warcraft and Blizzard Entertainment are trademarks or registered trademarks of Blizzard
+Entertainment, Inc. This project is not affiliated with or endorsed by Blizzard Entertainment.

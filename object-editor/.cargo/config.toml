@@ -1,0 +1,4 @@
+# AGE-QUAL-001/002: zero warnings, and warnings fail validation.
+[alias]
+lint = "clippy --workspace --all-targets -- -D warnings"
+fmt-check = "fmt --all -- --check"

@@ -1,0 +1,16 @@
+[package]
+name = "wc3-data"
+description = "Warcraft III game data: SLK tables, profile text files, object metadata, icons"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+casc = { path = "../casc" }
+thiserror = "2"
+texpresso = "2"
+png = "0.17"
+
+[lints]
+workspace = true
