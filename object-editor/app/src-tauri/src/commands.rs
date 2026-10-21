@@ -5,12 +5,14 @@ use std::path::{Path, PathBuf};
 
 use serde::Serialize;
 use tauri::State;
+use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
 use wc3_map::units::MapUnits;
 use wc3_map::{FourCC, Map, save_files};
 
+use crate::abilities::{self, AbilityCard, AbilitySummary};
 use crate::platform;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
 use crate::view::{Field, SearchHit, UnitDetail, UnitItem, View};
@@ -66,6 +68,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
     let files = GameFiles::open(&dir, GameOptions::default()).map_err(|e| e.to_string())?;
     let db = UnitDatabase::load(&files).map_err(|e| e.to_string())?;
     let guide = FieldGuide::units().map_err(|e| e.to_string())?;
+    let abilities = AbilityDatabase::load(&files).map_err(|e| e.to_string())?;
     let summary = GameSummary {
         dir: path_text(&dir),
         units: db.ids().len(),
@@ -77,6 +80,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
         files,
         db,
         guide,
+        abilities,
         mode,
         map: None,
         icons: HashMap::new(),
@@ -126,6 +130,24 @@ pub fn unit_detail(state: State<'_, AppState>, id: String) -> Result<UnitDetail,
         view(session)
             .detail(id)
             .ok_or(format!("Unknown unit {id}."))
+    })
+}
+
+#[tauri::command]
+pub fn list_abilities(state: State<'_, AppState>) -> Result<Vec<AbilitySummary>, String> {
+    state.with(|session| Ok(abilities::list(&session.abilities)))
+}
+
+#[tauri::command]
+pub fn ability_cards(
+    state: State<'_, AppState>,
+    ids: Vec<String>,
+) -> Result<Vec<AbilityCard>, String> {
+    state.with(|session| {
+        Ok(ids
+            .iter()
+            .map(|id| abilities::card(&session.abilities, &session.db, id.trim()))
+            .collect())
     })
 }
 

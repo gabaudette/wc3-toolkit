@@ -120,6 +120,15 @@ fn edited_units_save_and_read_back() -> TestResult {
     assert_eq!(map.strings()?.resolve("TRIGSTR_001"), "Holy Tank");
 
     let mut edited = reloaded;
+    let abilities = db.field("uhab").ok_or("no uhab")?;
+    edited.set(&db, hero, abilities, "AHhb,AHds,AHre,AHad,AHtb")?;
+    assert!(edited.is_modified(hero, abilities));
+    edited.set(&db, hero, abilities, "AHhb,AHds,AHre,AHad")?;
+    assert!(
+        !edited.is_modified(hero, abilities),
+        "setting the Paladin's own list is no change"
+    );
+
     assert!(edited.reset(hero, hp));
     assert!(!edited.reset(hero, hp));
     assert_eq!(

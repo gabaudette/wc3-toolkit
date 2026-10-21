@@ -66,7 +66,7 @@ pub struct Field {
     pub raw: String,
     pub modified: bool,
     pub value_type: String,
-    /// `bool`, `number`, `text`, `longText`, `select` or `codes`.
+    /// `bool`, `number`, `text`, `longText`, `select`, `codes` or `abilities`.
     pub control: &'static str,
     pub options: Vec<Choice>,
     pub min: Option<f64>,
@@ -211,6 +211,7 @@ impl View<'_> {
 
         let control = match field.value_type.as_str() {
             "bool" => "bool",
+            "abilityList" | "heroAbilityList" => "abilities",
             "int" | "real" | "unreal" => "number",
             _ if !options.is_empty() && !is_list => "select",
             _ if is_list => "codes",

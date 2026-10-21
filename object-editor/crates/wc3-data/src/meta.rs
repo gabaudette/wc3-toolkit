@@ -46,12 +46,46 @@ pub struct FieldMeta {
     pub use_item: bool,
     /// Restricts the field to specific object IDs when non-empty.
     pub use_specific: Vec<String>,
+    /// Object IDs the field does not apply to.
+    pub not_specific: Vec<String>,
+    /// Per-level fields (abilities, upgrades): the column name gets the level
+    /// appended, e.g. `Cool` → `Cool1`, `Cool2`, ...
+    pub per_level: bool,
+    /// Spell-specific data column: 1 = `DataA`, 2 = `DataB`, ... (field `Data`).
+    pub data_column: Option<u32>,
     /// Cosmetic field that may differ between players. Reforged stores changes
     /// to these in the map's `Skin` object files.
     pub netsafe: bool,
 }
 
 impl FieldMeta {
+    /// The table column holding this field's value at `level` (1-based) for
+    /// per-level fields, e.g. `DataA2` or `Cool2`; the plain column otherwise.
+    pub fn column(&self, level: u32) -> String {
+        const FIRST_DATA_LETTER: u8 = b'A';
+
+        let base = match self.data_column {
+            Some(n) => {
+                let letter = u8::try_from(n - 1)
+                    .map_or('?', |offset| char::from(FIRST_DATA_LETTER + offset));
+                format!("{}{letter}", self.field)
+            }
+            None => self.field.clone(),
+        };
+
+        if self.per_level {
+            return format!("{base}{level}");
+        }
+
+        base
+    }
+
+    /// Whether the field applies to the object with this ID (or base code).
+    pub fn applies_to_id(&self, code: &str) -> bool {
+        let allowed = self.use_specific.is_empty() || self.use_specific.iter().any(|s| s == code);
+        allowed && !self.not_specific.iter().any(|s| s == code)
+    }
+
     pub fn applies_to(&self, kind: ObjectKind) -> bool {
         match kind {
             ObjectKind::Hero => self.use_hero,
@@ -90,9 +124,16 @@ fn parse_record(record: &HashMap<&str, &str>, row: usize) -> Result<FieldMeta> {
         }
     };
 
-    let use_specific = get("useSpecific")
-        .map(|s| s.split(',').map(str::to_owned).collect())
-        .unwrap_or_default();
+    let id_list = |column: &str| -> Vec<String> {
+        get(column)
+            .map(|s| s.split(',').map(str::to_owned).collect())
+            .unwrap_or_default()
+    };
+    let positive = |column: &str| {
+        get(column)
+            .and_then(|v| v.parse::<u32>().ok())
+            .filter(|n| *n > 0)
+    };
 
     Ok(FieldMeta {
         id: required("ID")?,
@@ -110,7 +151,10 @@ fn parse_record(record: &HashMap<&str, &str>, row: usize) -> Result<FieldMeta> {
         use_unit: flag("useUnit"),
         use_building: flag("useBuilding"),
         use_item: flag("useItem"),
-        use_specific,
+        use_specific: id_list("useSpecific"),
+        not_specific: id_list("notSpecific"),
+        per_level: positive("repeat").is_some(),
+        data_column: positive("data"),
         netsafe: flag("netsafe"),
     })
 }

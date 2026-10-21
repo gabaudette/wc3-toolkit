@@ -5,6 +5,20 @@ export function classes(...parts: (string | false | null | undefined)[]): string
   return parts.filter(Boolean).join(" ");
 }
 
+/** "1 level", "3 levels". */
+export function levelCount(levels: number): string {
+  if (levels === 1) {
+    return "1 level";
+  }
+
+  return `${levels} levels`;
+}
+
+/** "human" → "Human". */
+export function capitalized(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 /** Remembered paths; browser storage can be unavailable, so failures are ignored. */
 export const remembered = {
   get(key: string): string | null {

@@ -3,6 +3,7 @@ import { type KeyboardEvent, useEffect, useState } from "react";
 import { Switch } from "react-aria-components";
 import type { Field } from "../types";
 import { classes } from "../ui";
+import { AbilityField } from "./AbilityField";
 
 type FieldRowProps = {
   field: Field;
@@ -45,8 +46,21 @@ function useDraft(field: Field, onChange: (value: string) => void) {
   return { draft, setDraft, commit };
 }
 
+function abilityCount(raw: string): string {
+  const count = raw.split(",").filter((code) => code.trim()).length;
+  if (count === 1) {
+    return "1 ability";
+  }
+
+  return `${count} abilities`;
+}
+
 function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
   const { draft, setDraft, commit } = useDraft(field, onChange);
+
+  if (field.control === "abilities") {
+    return <p className="pt-1 text-sm text-faint">{abilityCount(field.raw)}</p>;
+  }
   const commitOnEnter = (e: KeyboardEvent) => {
     if (e.key === "Enter") {
       commit();
@@ -233,6 +247,9 @@ export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) 
         </button>
       )}
       {showInfo && field.description && <Description field={field} />}
+      {field.control === "abilities" && (
+        <AbilityField field={field} editable={editable} onChange={onChange} />
+      )}
     </div>
   );
 }

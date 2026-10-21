@@ -16,7 +16,14 @@ export type UnitItem = {
   icon: string | null;
 };
 
-export type FieldControl = "bool" | "number" | "text" | "longText" | "select" | "codes";
+export type FieldControl =
+  | "bool"
+  | "number"
+  | "text"
+  | "longText"
+  | "select"
+  | "codes"
+  | "abilities";
 
 export type Choice = {
   value: string;
@@ -73,4 +80,29 @@ export type MapSummary = {
   path: string;
   name: string;
   unsaved: boolean;
+};
+
+export type AbilitySummary = {
+  id: string;
+  name: string;
+  suffix: string | null;
+  icon: string | null;
+  hero: boolean;
+  item: boolean;
+  race: string;
+  levels: number;
+};
+
+export type LevelRow = {
+  label: string;
+  values: string[];
+};
+
+export type AbilityCard = {
+  summary: AbilitySummary;
+  known: boolean;
+  hotkey: string | null;
+  requiredLevel: number;
+  description: string | null;
+  rows: LevelRow[];
 };

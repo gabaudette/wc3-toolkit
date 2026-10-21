@@ -46,6 +46,10 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
   and flag labels read `Ground, &Ground` (display label, menu label). Strings come from both
   `WorldEditStrings.txt` and `WorldEditGameStrings.txt`.
 - `versionFlags` fields are bit flags (0 = None), not single choices.
+- Abilities (`wc3-data::abilities`): per-level columns are `<field><level>` (`Cool2`), spell data
+  `Data<letter><level>` (`DataA1`); metadata `useSpecific`/`notSpecific` say which apply to which
+  ability code and give the labels. Tooltip placeholders `<ID,Column[,%]>` can point at ability,
+  upgrade (`base1`, `mod1`) or unit tables (`realHP`, `mindmg1`); all game tooltips resolve.
 - Reforged moved some SLK columns into skin profile files; lookups fall back to the profile.
 
 ## Map format notes

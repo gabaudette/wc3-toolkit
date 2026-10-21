@@ -1,7 +1,16 @@
 // The only module that talks to the Rust backend.
 
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
-import type { Field, GameSummary, MapSummary, SearchHit, UnitDetail, UnitItem } from "./types";
+import type {
+  AbilityCard,
+  AbilitySummary,
+  Field,
+  GameSummary,
+  MapSummary,
+  SearchHit,
+  UnitDetail,
+  UnitItem,
+} from "./types";
 
 const ICON_SCHEME = "wc3icon";
 
@@ -30,6 +39,8 @@ export const api = {
   listUnits: () => invoke<UnitItem[]>("list_units"),
   unitDetail: (id: string) => invoke<UnitDetail>("unit_detail", { id }),
   searchUnits: (query: string) => invoke<SearchHit[]>("search_units", { query }),
+  listAbilities: () => invoke<AbilitySummary[]>("list_abilities"),
+  abilityCards: (ids: string[]) => invoke<AbilityCard[]>("ability_cards", { ids }),
   setField: (id: string, field: string, value: string) =>
     invoke<Field>("set_field", { id, field, value }),
   resetField: (id: string, field: string) => invoke<Field>("reset_field", { id, field }),
