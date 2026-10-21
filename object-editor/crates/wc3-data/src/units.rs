@@ -177,11 +177,14 @@ impl UnitDatabase {
             .find(|(c, _)| *c == field.category)
             .and_then(|(_, key)| self.editor_string(key))
             .unwrap_or_else(|| field.category.clone());
-        let name = self
-            .editor_string(&field.display_key)
-            .unwrap_or_else(|| field.field.clone());
 
-        format!("{category} - {name}")
+        format!("{category} - {}", self.field_name(field))
+    }
+
+    /// A field's display name without its category, e.g. `Model File`.
+    pub fn field_name(&self, field: &FieldMeta) -> String {
+        self.editor_string(&field.display_key)
+            .unwrap_or_else(|| field.field.clone())
     }
 
     /// The raw stored value of a field, or `None` when the unit leaves it empty.
@@ -209,7 +212,12 @@ impl UnitDatabase {
 
     /// A field's value formatted like the Object Editor shows it.
     pub fn display_value(&self, id: &str, field: &FieldMeta, mode: ArtMode) -> String {
-        let Some(raw) = self.raw_value(id, field, mode) else {
+        self.format_value(field, self.raw_value(id, field, mode))
+    }
+
+    /// Formats a raw value (as stored in game data or a map) like the Object Editor.
+    pub fn format_value(&self, field: &FieldMeta, raw: Option<String>) -> String {
+        let Some(raw) = raw else {
             return self.empty_display(field);
         };
 

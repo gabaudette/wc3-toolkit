@@ -4,8 +4,10 @@
 pub mod game;
 pub mod icon;
 pub mod meta;
+pub mod objects;
 pub mod profile;
 pub mod slk;
+pub mod strings;
 pub mod units;
 
 #[derive(Debug, thiserror::Error)]

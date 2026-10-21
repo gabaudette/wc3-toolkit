@@ -19,18 +19,23 @@ cargo test --workspace
 Lint levels live in `object-editor/Cargo.toml` under `[workspace.lints]`. CI runs the same
 checks on every push and pull request.
 
-Some tests read a real Warcraft III install. They are marked `#[ignore]` and run with:
+Some tests read a real Warcraft III install and real maps. They are marked `#[ignore]` and
+run with:
 
 ```bash
-WC3_GAME_DIR="/path/to/Warcraft III" cargo test --workspace -- --ignored
+WC3_GAME_DIR="/path/to/Warcraft III" WC3_MAPS_DIR="/path/to/Maps" cargo test --workspace -- --ignored
 ```
+
+`WC3_MAPS_DIR` can be any folder of `.w3m`/`.w3x` maps; every object data file and string table
+in them must rewrite byte for byte. Building also needs CMake (for the bundled StormLib).
 
 ## Rules
 
 - **AGE-QUAL-001/002** — Zero errors, zero warnings. Warnings fail validation.
 - **AGE-QUAL-003** — Fix the cause instead of silencing a diagnostic. Every `unsafe` block has a
-  `// SAFETY:` comment. Any suppression is narrow and documented; today the only one is the
-  compiler-warning suppression for the vendored CascLib sources.
+  `// SAFETY:` comment. Any suppression is narrow and documented; today these are the
+  compiler-warning suppression for the vendored CascLib and StormLib sources, and the CLI
+  binaries' use of `eprintln!` for errors.
 - **AGE-QUAL-004** — Do not relax lint or formatter configuration to make code pass.
 - **AGE-QUAL-006** — `rustfmt` owns Rust formatting (default settings, 100 columns).
 - **AGE-ERR-001/003** — Fallible code returns `Result`. Parsers report malformed data with

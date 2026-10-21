@@ -1,9 +1,11 @@
 //! Command-line inspector for the game data, mainly for checking the loader
 //! against the World Editor.
 
-// Terminal output is this binary's purpose (AGE-QUAL-003: documented, file-scoped).
-#![allow(clippy::print_stdout, clippy::print_stderr)]
+// Errors and usage go to stderr directly (AGE-QUAL-003: documented, file-scoped).
+// Regular output goes through `say!`, which handles a closed pipe.
+#![allow(clippy::print_stderr)]
 
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -27,6 +29,26 @@ commands:
   icon <ID> <OUT.png>    save a unit's icon as PNG";
 
 const GAME_DIR_VAR: &str = "WC3_GAME_DIR";
+
+/// Marks output that stopped because the reader went away (e.g. `| head`).
+const OUTPUT_CLOSED: &str = "\0output closed";
+
+/// Writes a line to stdout. A closed pipe ends the program quietly instead of
+/// panicking like `println!` does.
+fn emit(line: std::fmt::Arguments<'_>) -> Result<(), String> {
+    let mut stdout = std::io::stdout().lock();
+    match writeln!(stdout, "{line}") {
+        Ok(()) => Ok(()),
+        Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe => Err(OUTPUT_CLOSED.to_owned()),
+        Err(e) => Err(format!("cannot write output: {e}")),
+    }
+}
+
+macro_rules! say {
+    ($($arg:tt)*) => {
+        emit(format_args!($($arg)*))?
+    };
+}
 
 struct Args {
     game_dir: PathBuf,
@@ -70,7 +92,7 @@ fn kind_label(kind: ObjectKind) -> &'static str {
     }
 }
 
-fn list(db: &UnitDatabase, heroes_only: bool) {
+fn list(db: &UnitDatabase, heroes_only: bool) -> Result<(), String> {
     let mut count = 0;
 
     for id in db.ids() {
@@ -79,11 +101,12 @@ fn list(db: &UnitDatabase, heroes_only: bool) {
             continue;
         }
 
-        println!("{id}  {:<8}  {}", kind_label(kind), db.name(id));
+        say!("{id}  {:<8}  {}", kind_label(kind), db.name(id));
         count += 1;
     }
 
-    println!("{count} entries");
+    say!("{count} entries");
+    Ok(())
 }
 
 fn show_unit(db: &UnitDatabase, id: &str, mode: ArtMode) -> Result<(), String> {
@@ -103,14 +126,14 @@ fn show_unit(db: &UnitDatabase, id: &str, mode: ArtMode) -> Result<(), String> {
         .collect();
     rows.sort();
 
-    println!(
+    say!(
         "{id}: {} ({}), {} fields",
         db.name(id),
         kind_label(db.kind(id)),
         rows.len()
     );
     for (label, value, field_id) in rows {
-        println!("  {field_id}  {label:<55} {value}");
+        say!("  {field_id}  {label:<55} {value}");
     }
 
     Ok(())
@@ -128,7 +151,7 @@ fn save_icon(
     let png = image.to_png().map_err(|e| e.to_string())?;
     std::fs::write(out, png).map_err(|e| format!("cannot write {out}: {e}"))?;
 
-    println!("{path} -> {out} ({}x{})", image.width, image.height);
+    say!("{path} -> {out} ({}x{})", image.width, image.height);
     Ok(())
 }
 
@@ -138,8 +161,8 @@ fn run(args: Args) -> Result<(), String> {
     let command: Vec<&str> = args.command.iter().map(String::as_str).collect();
 
     match command.as_slice() {
-        ["heroes"] => list(&db, true),
-        ["units"] => list(&db, false),
+        ["heroes"] => list(&db, true)?,
+        ["units"] => list(&db, false)?,
         ["unit", id] => show_unit(&db, id, args.mode)?,
         ["icon", id, out] => save_icon(&files, &db, id, out, args.mode)?,
         _ => return Err(String::new()),
@@ -153,6 +176,7 @@ fn main() -> ExitCode {
 
     match result {
         Ok(()) => ExitCode::SUCCESS,
+        Err(message) if message == OUTPUT_CLOSED => ExitCode::SUCCESS,
         Err(message) if message.is_empty() => {
             eprintln!("{USAGE}");
             ExitCode::FAILURE

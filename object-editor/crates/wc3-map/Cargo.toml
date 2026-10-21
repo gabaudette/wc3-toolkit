@@ -1,0 +1,18 @@
+[package]
+name = "wc3-map"
+description = "Warcraft III maps: object data, strings, and the game data with a map's changes applied"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+mpq = { path = "../mpq" }
+wc3-data = { path = "../wc3-data" }
+thiserror = "2"
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true
