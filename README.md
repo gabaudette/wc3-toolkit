@@ -40,6 +40,15 @@ cd object-editor
 cargo build
 ```
 
+To inspect the game data the editor works with, point the `wc3data` tool at your install:
+
+```bash
+export WC3_GAME_DIR="/path/to/Warcraft III"
+cargo run --release -p wc3-data --bin wc3data -- heroes
+cargo run --release -p wc3-data --bin wc3data -- unit Hpal
+cargo run --release -p wc3-data --bin wc3data -- --hd icon Hpal paladin.png
+```
+
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the checks every change must pass.
 
 ## License
