@@ -14,8 +14,11 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `crates/wc3-map` opens maps, saves through a temp copy (`save_files`), and `units::MapUnits`
   applies a map's unit changes over the game data and edits them. `wc3map` is its CLI
   (`check`, `units`, `unit`, `set`, `new`, `lua`).
-- Everything must build and run on Windows and Linux (CI tests both). StormLib's library is
-  named `StormLib` on Windows; CascLib needs `ws2_32` there.
+- Everything must build and run on Windows and Linux (CI tests both). Windows specifics:
+  StormLib's library is named `StormLib` and needs `wininet` + `user32`; CascLib needs
+  `ws2_32` and `CASCLIB_NO_AUTO_LINK_LIBRARY` (its header otherwise auto-links a prebuilt
+  `CascLibRAD.lib`); MSVC rejects `strncpy` and similar CRT functions as deprecated, and the
+  shim builds with warnings as errors.
 - `map/src/` — example Lua modules for the harness (`wc3map <map> lua <dir>`, implemented in
   `crates/wc3-map/src/lua.rs`): appends the modules plus a `Dev.OnStart` loader and a `main()`
   hook to the editor's `war3map.lua` in a `<map>_dev.w3m` copy named `[DEV] ...`, after
