@@ -88,11 +88,7 @@ pub fn open_map(state: State<'_, AppState>, path: String) -> Result<MapSummary, 
     drop(map);
 
     state.with(|session| {
-        session.map = Some(OpenMap {
-            path: path.clone(),
-            units,
-            unsaved: false,
-        });
+        session.map = Some(OpenMap::new(path.clone(), units));
         Ok(map_summary(session))
     })
 }
@@ -105,8 +101,13 @@ fn map_summary(session: &Session) -> MapSummary {
             .and_then(|m| m.path.file_name())
             .map(|n| n.to_string_lossy().into_owned())
             .unwrap_or_default(),
-        unsaved: map.is_some_and(|m| m.unsaved),
+        unsaved: map.is_some_and(OpenMap::unsaved),
     }
+}
+
+#[tauri::command]
+pub fn map_status(state: State<'_, AppState>) -> Result<MapSummary, String> {
+    state.with(|session| Ok(map_summary(session)))
 }
 
 #[tauri::command]
@@ -149,7 +150,6 @@ fn edit_field(
             .ok_or(format!("Unknown field {field_id}."))?;
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         change(&session.db, &mut map.units, id, field)?;
-        map.unsaved = true;
         Ok(view(session).field(id, field))
     })
 }
@@ -183,7 +183,6 @@ pub fn create_unit(state: State<'_, AppState>, base: String) -> Result<UnitItem,
             .units
             .create(&session.db, base)
             .map_err(|e| e.to_string())?;
-        map.unsaved = true;
         view(session)
             .item(id)
             .ok_or(format!("Created {id} but cannot show it."))
@@ -195,8 +194,9 @@ pub fn create_unit(state: State<'_, AppState>, base: String) -> Result<UnitItem,
 pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
     state.with(|session| {
         let map = session.map.as_mut().ok_or(NO_MAP)?;
-        save_files(&map.path, &map.path, &map.units.files()).map_err(|e| e.to_string())?;
-        map.unsaved = false;
+        let files = map.units.files();
+        save_files(&map.path, &map.path, &files).map_err(|e| e.to_string())?;
+        map.saved_files = files;
         Ok(map_summary(session))
     })
 }

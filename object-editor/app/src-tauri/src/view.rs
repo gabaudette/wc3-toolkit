@@ -395,8 +395,13 @@ mod tests {
     const MAX_FILES: u32 = 8;
 
     fn database() -> Result<UnitDatabase, Box<dyn std::error::Error>> {
-        let dir = std::env::var_os("WC3_GAME_DIR").map(PathBuf::from).ok_or("set WC3_GAME_DIR")?;
-        Ok(UnitDatabase::load(&GameFiles::open(&dir, GameOptions::default())?)?)
+        let dir = std::env::var_os("WC3_GAME_DIR")
+            .map(PathBuf::from)
+            .ok_or("set WC3_GAME_DIR")?;
+        Ok(UnitDatabase::load(&GameFiles::open(
+            &dir,
+            GameOptions::default(),
+        )?)?)
     }
 
     #[test]
@@ -414,12 +419,26 @@ mod tests {
         assert_eq!(detail.item.name, "Paladin");
         assert_eq!(detail.item.kind, "hero");
         assert_eq!(detail.item.group, "melee");
-        assert_eq!(detail.sections.first().map(|s| s.category.as_str()), Some("stats"));
-        let stat = |label: &str| detail.summary.iter().find(|s| s.label == label).map(|s| s.value.clone());
+        assert_eq!(
+            detail.sections.first().map(|s| s.category.as_str()),
+            Some("stats")
+        );
+        let stat = |label: &str| {
+            detail
+                .summary
+                .iter()
+                .find(|s| s.label == label)
+                .map(|s| s.value.clone())
+        };
         assert_eq!(stat("Damage").as_deref(), Some("24–34"));
         assert_eq!(stat("Str / Agi / Int").as_deref(), Some("22 / 13 / 17"));
 
-        let armor = detail.sections.iter().flat_map(|s| &s.fields).find(|f| f.id == "uarm").ok_or("no uarm")?;
+        let armor = detail
+            .sections
+            .iter()
+            .flat_map(|s| &s.fields)
+            .find(|f| f.id == "uarm")
+            .ok_or("no uarm")?;
         assert_eq!(armor.control, "select");
         assert!(armor.options.iter().any(|o| o.value == "Metal"));
         Ok(())
@@ -435,10 +454,20 @@ mod tests {
             mode: ArtMode::Sd,
         };
 
-        assert_eq!(view.search("paladin").first().map(|h| h.id.as_str()), Some("Hpal"));
-        assert_eq!(view.search("Hamg").first().map(|h| h.id.as_str()), Some("Hamg"));
+        assert_eq!(
+            view.search("paladin").first().map(|h| h.id.as_str()),
+            Some("Hpal")
+        );
+        assert_eq!(
+            view.search("Hamg").first().map(|h| h.id.as_str()),
+            Some("Hamg")
+        );
         let by_value = view.search("Metal");
-        assert!(by_value.iter().any(|h| h.id == "Hpal" && h.reason.contains("Metal")));
+        assert!(
+            by_value
+                .iter()
+                .any(|h| h.id == "Hpal" && h.reason.contains("Metal"))
+        );
         Ok(())
     }
 

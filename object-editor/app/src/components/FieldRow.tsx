@@ -152,13 +152,15 @@ export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) 
   return (
     <div
       className={classes(
-        "grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)_2rem] items-start gap-3 border-b border-line/60 px-3 py-1.5",
+        "grid grid-cols-[minmax(0,1fr)_minmax(12rem,24rem)_1.75rem] items-start gap-3 border-b border-line/60 px-3 py-1",
         field.modified && "border-l-2 border-l-changed bg-changed-soft/40",
       )}
     >
-      <div className="min-w-0 pt-1">
-        <span className="block">{field.name}</span>
-        <span className="block font-mono text-xs text-faint">{field.id}</span>
+      <div className="flex min-w-0 items-baseline gap-2 pt-1">
+        <span className="truncate" title={field.name}>
+          {field.name}
+        </span>
+        <span className="shrink-0 font-mono text-xs text-faint">{field.id}</span>
       </div>
       <Editor field={field} editable={editable} onChange={onChange} />
       {field.modified && editable && (
@@ -167,7 +169,7 @@ export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) 
           onClick={onReset}
           title="Reset to the base unit's value"
           aria-label={`Reset ${field.name}`}
-          className="mt-1 rounded p-1 text-faint hover:bg-surface-2 hover:text-ink"
+          className="mt-0.5 rounded p-1 text-faint hover:bg-surface-2 hover:text-ink"
         >
           <FlipBackward className="size-4" aria-hidden="true" />
         </button>

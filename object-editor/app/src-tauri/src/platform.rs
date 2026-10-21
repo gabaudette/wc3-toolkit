@@ -7,9 +7,20 @@ use std::path::{Path, PathBuf};
 const INSTALL_MARKERS: &[&str] = &["Data", ".build.info"];
 const GAME_FOLDER: &str = "Warcraft III";
 
-/// The first folder that looks like a Warcraft III install.
+/// The most likely Warcraft III install. Several can exist (e.g. one per
+/// Proton prefix); prefer one whose user folder has maps, then the most
+/// recently updated (`.build.info` changes with every game update).
 pub fn detect_game_dir() -> Option<PathBuf> {
-    candidates().into_iter().find(|dir| is_game_dir(dir))
+    let updated = |dir: &Path| {
+        std::fs::metadata(dir.join(".build.info"))
+            .and_then(|m| m.modified())
+            .ok()
+    };
+
+    candidates()
+        .into_iter()
+        .filter(|dir| is_game_dir(dir))
+        .max_by_key(|dir| (maps_dir(dir).is_some(), updated(dir)))
 }
 
 pub fn is_game_dir(dir: &Path) -> bool {

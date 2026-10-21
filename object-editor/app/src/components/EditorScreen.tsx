@@ -66,7 +66,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     try {
       const updated = await edit;
       setDetail((current) => current && replaceField(current, updated));
-      setMap((current) => current && { ...current, unsaved: true });
+      setMap(await api.mapStatus());
       setError(null);
       refreshList();
       if (selected) {
@@ -84,7 +84,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
 
     try {
       const created = await api.createUnit(detail.item.base);
-      setMap((current) => current && { ...current, unsaved: true });
+      setMap(await api.mapStatus());
       refreshList();
       setSelected(created.id);
     } catch (e) {

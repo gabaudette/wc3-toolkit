@@ -91,7 +91,7 @@ export function UnitList({ units, selected, onSelect, onError }: UnitListProps) 
   }, [units, hits, groups, kinds]);
 
   return (
-    <aside className="flex min-h-0 w-80 shrink-0 flex-col border-r border-line bg-surface-1">
+    <aside className="flex min-h-0 w-[22rem] shrink-0 flex-col border-r border-line bg-surface-1">
       <div className="flex flex-col gap-2 border-b border-line p-3">
         <input
           type="search"

@@ -20,8 +20,25 @@ pub struct Session {
 pub struct OpenMap {
     pub path: PathBuf,
     pub units: MapUnits,
-    /// Changes not yet saved to the map file.
-    pub unsaved: bool,
+    /// The unit files as last loaded or saved, to tell whether anything changed.
+    pub saved_files: Vec<(&'static str, Vec<u8>)>,
+}
+
+impl OpenMap {
+    pub fn new(path: PathBuf, units: MapUnits) -> Self {
+        let saved_files = units.files();
+        Self {
+            path,
+            units,
+            saved_files,
+        }
+    }
+
+    /// Whether the map differs from the file on disk. Undoing every change
+    /// by hand counts as no change.
+    pub fn unsaved(&self) -> bool {
+        self.units.files() != self.saved_files
+    }
 }
 
 /// Shared by all commands. `None` until a game folder is opened.

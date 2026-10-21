@@ -22,6 +22,7 @@ fn main() -> ExitCode {
             commands::detect_game_dir,
             commands::open_game,
             commands::open_map,
+            commands::map_status,
             commands::list_units,
             commands::unit_detail,
             commands::search_units,

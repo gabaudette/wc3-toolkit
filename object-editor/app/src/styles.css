@@ -16,10 +16,20 @@
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
 }
 
+:root {
+  /* Native controls (select menus, number spinners, scrollbars) follow the dark theme. */
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {
   height: 100%;
+}
+
+select option {
+  background: var(--color-surface-1);
+  color: var(--color-ink);
 }
 
 body {

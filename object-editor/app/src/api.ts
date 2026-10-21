@@ -26,6 +26,7 @@ export const api = {
   detectGameDir: () => invoke<string | null>("detect_game_dir"),
   openGame: (dir: string, hd: boolean) => invoke<GameSummary>("open_game", { dir, hd }),
   openMap: (path: string) => invoke<MapSummary>("open_map", { path }),
+  mapStatus: () => invoke<MapSummary>("map_status"),
   listUnits: () => invoke<UnitItem[]>("list_units"),
   unitDetail: (id: string) => invoke<UnitDetail>("unit_detail", { id }),
   searchUnits: (query: string) => invoke<SearchHit[]>("search_units", { query }),
