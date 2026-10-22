@@ -21,7 +21,7 @@ Each item is a requirement. Check it off when the tool handles it.
       → Full names always visible.
 - [x] No explanation of what a field does.
       → A short description for every field (hover or expand), plus allowed range and default.
-- [ ] Values shown without context.
+- [x] Values shown without context.
       → Icon fields show the icon, model fields show a 3D preview, colors show a color picker,
         button position shows the command card grid.
 - [x] Related values split across rows (damage base / dice / sides, projectile X/Y/Z, tint R/G/B).

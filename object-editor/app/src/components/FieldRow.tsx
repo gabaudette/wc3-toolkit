@@ -6,6 +6,7 @@ import { classes } from "../ui";
 import { AbilityField } from "./AbilityField";
 import { ColoredTextInput } from "./ColoredTextInput";
 import { TextPreview } from "./TextPreview";
+import { UnitIcon } from "./UnitIcon";
 
 type FieldRowProps = {
   field: Field;
@@ -18,6 +19,8 @@ const TRUE = "1";
 const FALSE = "0";
 const REAL_STEP = 0.01;
 const INTEGER_STEP = 1;
+/** Metadata type of fields that hold an icon path. */
+const ICON_TYPE = "icon";
 const LONG_TEXT_ROWS = 3;
 
 const inputClass =
@@ -168,17 +171,31 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
     );
   }
 
+  const input = (
+    <input
+      value={draft}
+      readOnly={!editable}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={commitOnEnter}
+      aria-label={field.label}
+      className={classes(inputClass, field.control === "codes" && "font-mono text-xs")}
+    />
+  );
+
+  // Icon paths show the icon they point at; it updates once the edit is saved.
+  if (field.valueType === ICON_TYPE) {
+    return (
+      <div className="flex items-center gap-2">
+        <UnitIcon key={field.raw} path={field.raw || null} size="small" />
+        {input}
+      </div>
+    );
+  }
+
   return (
     <div>
-      <input
-        value={draft}
-        readOnly={!editable}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
-        onKeyDown={commitOnEnter}
-        aria-label={field.label}
-        className={classes(inputClass, field.control === "codes" && "font-mono text-xs")}
-      />
+      {input}
       {field.control === "codes" && field.display && field.display !== field.raw && (
         <p className="mt-0.5 truncate text-xs text-faint" title={field.display}>
           {field.display}
