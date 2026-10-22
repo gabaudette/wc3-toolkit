@@ -4,6 +4,8 @@
 //! `war3map.w3u` and cosmetic ("netsafe") fields such as names and art in
 //! `war3mapSkin.w3u`. Text fields refer to the map's string table.
 
+use std::collections::HashMap;
+
 use wc3_data::game::ArtMode;
 use wc3_data::meta::{FieldMeta, ObjectKind};
 use wc3_data::objects::{FourCC, Layout, ModSet, Modification, ObjectData, ObjectEntry, Value};
@@ -55,6 +57,7 @@ impl MapUnits {
     /// Custom units first, then changed original units, each listed once.
     pub fn units(&self) -> Vec<MapUnit> {
         let mut units: Vec<MapUnit> = Vec::new();
+        let mut index: HashMap<FourCC, usize> = HashMap::new();
         let tables = [
             (&self.data.custom, true),
             (&self.skins.custom, true),
@@ -67,14 +70,17 @@ impl MapUnits {
                 let id = entry.effective_id();
                 let mods = entry.mods().count();
 
-                match units.iter_mut().find(|u| u.id == id) {
-                    Some(unit) => unit.modified_fields += mods,
-                    None => units.push(MapUnit {
-                        id,
-                        base: entry.base,
-                        is_custom,
-                        modified_fields: mods,
-                    }),
+                match index.get(&id) {
+                    Some(&i) => units[i].modified_fields += mods,
+                    None => {
+                        index.insert(id, units.len());
+                        units.push(MapUnit {
+                            id,
+                            base: entry.base,
+                            is_custom,
+                            modified_fields: mods,
+                        });
+                    }
                 }
             }
         }
@@ -438,4 +444,77 @@ fn parse_value(field: &FieldMeta, text: &str) -> Result<Value> {
         }
         _ => Value::String(text.to_owned()),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn id(code: &str) -> FourCC {
+        FourCC::parse(code).unwrap_or(FourCC([0; 4]))
+    }
+
+    /// An entry with one modification per given field.
+    fn entry(base: &str, own_id: &str, fields: &[&str]) -> ObjectEntry {
+        let mods = fields
+            .iter()
+            .map(|field| Modification {
+                field: id(field),
+                level: None,
+                column: None,
+                value: Value::Int(1),
+                end: FourCC([0; 4]),
+            })
+            .collect();
+
+        ObjectEntry {
+            base: id(base),
+            id: if own_id.is_empty() {
+                FourCC([0; 4])
+            } else {
+                id(own_id)
+            },
+            sets: vec![ModSet { flags: 0, mods }],
+        }
+    }
+
+    #[test]
+    fn units_lists_custom_then_original_once_with_changes_from_both_files() {
+        let mut data = ObjectData::empty(Layout::Plain);
+        let mut skins = ObjectData::empty(Layout::Plain);
+        data.custom = vec![
+            entry("Hpal", "H000", &["uhpm"]),
+            entry("hfoo", "h001", &["uhpm", "udef"]),
+        ];
+        skins.custom = vec![
+            entry("hfoo", "h001", &["unam"]),
+            entry("ogru", "o002", &["unam"]),
+        ];
+        data.original = vec![entry("hpea", "", &["ubld"])];
+        skins.original = vec![
+            entry("hpea", "", &["unam", "uico"]),
+            entry("Hamg", "", &["unam"]),
+        ];
+        let units = MapUnits {
+            data,
+            skins,
+            strings: MapStrings::default(),
+            added_strings: Vec::new(),
+        };
+
+        let listed: Vec<(String, bool, usize)> = units
+            .units()
+            .iter()
+            .map(|u| (u.id.to_string(), u.is_custom, u.modified_fields))
+            .collect();
+        let expected = [
+            ("H000", true, 1),
+            ("h001", true, 3),
+            ("o002", true, 1),
+            ("hpea", false, 3),
+            ("Hamg", false, 1),
+        ]
+        .map(|(code, custom, changed)| (code.to_owned(), custom, changed));
+        assert_eq!(listed, expected);
+    }
 }
