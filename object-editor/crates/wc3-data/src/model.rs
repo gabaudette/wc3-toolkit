@@ -232,9 +232,11 @@ fn is_tag_at(data: &[u8], pos: usize, tags: &[&[u8; 4]]) -> bool {
 /// Little-endian 16-bit values to bytes. Bone indices and weights fit a byte
 /// in every game model; a larger value means the layout guess was wrong.
 fn narrow_values(wide: &[u8]) -> Result<Vec<u8>> {
-    wide.chunks_exact(WIDE_SKIN_VALUE_SIZE)
-        .map(|pair| {
-            let value = u16::from_le_bytes([pair[0], pair[1]]);
+    let (pairs, _) = wide.as_chunks::<WIDE_SKIN_VALUE_SIZE>();
+    pairs
+        .iter()
+        .map(|&pair| {
+            let value = u16::from_le_bytes(pair);
             u8::try_from(value)
                 .map_err(|_| invalid(format!("skin value {value} does not fit a byte")))
         })
