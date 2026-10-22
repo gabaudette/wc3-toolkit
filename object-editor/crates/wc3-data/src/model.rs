@@ -243,6 +243,48 @@ fn narrow_values(wide: &[u8]) -> Result<Vec<u8>> {
         .collect()
 }
 
+/// Texture entries: replaceable ID, a 260-byte path, flags.
+const TEXTURES_CHUNK: &[u8; 4] = b"TEXS";
+const TEXTURE_ENTRY_SIZE: usize = 268;
+const TEXTURE_PATH_SIZE: usize = 260;
+
+/// The texture files a model uses, as written in it. Replaceable textures
+/// (team color, glow) have no path and are left out. A file that is not a
+/// readable model has none.
+pub fn texture_paths(data: &[u8]) -> Vec<String> {
+    if data.get(..MAGIC.len()) != Some(MAGIC.as_slice()) {
+        return Vec::new();
+    }
+
+    let mut paths = Vec::new();
+    let mut pos = MAGIC.len();
+    while let (Some(tag), Ok(size)) = (
+        data.get(pos..pos + TAG_SIZE),
+        read_len(data, pos + TAG_SIZE),
+    ) {
+        let body_start = pos + CHUNK_HEADER;
+        let Some(body) = data.get(body_start..body_start + size) else {
+            break;
+        };
+
+        if tag == TEXTURES_CHUNK {
+            let (entries, _) = body.as_chunks::<TEXTURE_ENTRY_SIZE>();
+            for entry in entries {
+                let path = &entry[U32_SIZE..U32_SIZE + TEXTURE_PATH_SIZE];
+                let len = path.iter().position(|b| *b == 0).unwrap_or(path.len());
+                let text = String::from_utf8_lossy(&path[..len]).into_owned();
+                if !text.is_empty() && !paths.contains(&text) {
+                    paths.push(text);
+                }
+            }
+        }
+
+        pos = body_start + size;
+    }
+
+    paths
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -343,6 +385,29 @@ mod tests {
 
         let too_big: Vec<u8> = [1u8, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].to_vec();
         assert!(preview_copy(&model(&[chunk(GEOSETS_CHUNK, &geoset(&too_big, 8))])).is_err());
+    }
+
+    fn texture(path: &str) -> Vec<u8> {
+        let mut entry = vec![0; TEXTURE_ENTRY_SIZE];
+        entry[U32_SIZE..U32_SIZE + path.len()].copy_from_slice(path.as_bytes());
+        entry
+    }
+
+    #[test]
+    fn lists_texture_paths_once() {
+        let mut model = MAGIC.to_vec();
+        model.extend(chunk(b"VERS", &800u32.to_le_bytes()));
+        let textures = [
+            texture("Hero.blp"),
+            texture(""),
+            texture("Textures\\Glow.blp"),
+            texture("Hero.blp"),
+        ]
+        .concat();
+        model.extend(chunk(TEXTURES_CHUNK, &textures));
+
+        assert_eq!(texture_paths(&model), ["Hero.blp", "Textures\\Glow.blp"]);
+        assert!(texture_paths(b"not a model").is_empty());
     }
 
     #[test]

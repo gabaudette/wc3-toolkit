@@ -63,6 +63,7 @@ export const api = {
   createUnit: (base: string) => invoke<UnitItem>("create_unit", { base }),
   saveMap: () => invoke<MapSummary>("save_map"),
   shareCode: (ids: string[]) => invoke<SharePreview>("share_code", { ids }),
+  saveBundle: (ids: string[], path: string) => invoke<void>("save_bundle", { ids, path }),
   mapCustomUnits: (path: string) => invoke<UnitItem[]>("map_custom_units", { path }),
   previewImport: (source: ImportSource) => invoke<ImportPreview>("preview_import", { source }),
   importObjects: (source: ImportSource) => invoke<TransferObject[]>("import_objects", { source }),

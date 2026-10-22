@@ -18,7 +18,10 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `MapUnits::strings_mut`. `transfer` moves custom
   units with the custom units, abilities and buffs they reference between maps: share codes
   (`W3OBJ1:` + base64 of deflated object files) and imports, renaming taken IDs and every
-  reference to them (found through field metadata types). `wc3map` is its CLI
+  reference to them (found through field metadata types). Bundle files (`.w3obj`) also carry
+  the files imported into the source map that the objects use; `imports` finds them by trying
+  names from art fields (protected maps cannot list their files) and following models to their
+  textures, and adds them to a map with `war3map.imp` entries. `wc3map` is its CLI
   (`check`, `units`, `unit`, `set`, `new`, `lua`).
 - Everything must build and run on Windows and Linux (CI tests both). Windows specifics:
   StormLib's library is named `StormLib` and needs `wininet` + `user32`; CascLib needs
@@ -77,6 +80,11 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
 - Text fields hold `TRIGSTR_007` references into `war3map.wts` (UTF-8 BOM, CRLF, `//` comments).
 - Round trip verified on every map in the user's Maps folder (135 maps) and Legion TD
   (all 15 object/string files).
+- `war3map.imp` (the Import Manager's list): version, count, then a flag byte and a
+  NUL-terminated path per entry. Classic flags: 5/8 = under `war3mapImported\`, 10/13 = full
+  path; Reforged adds `0x10` (24 = `KoboldDigger.mdx` under `war3mapImported\`). Entries added
+  here use 29 (full path); not yet confirmed in the World Editor. Protected maps have no
+  `(listfile)` and often no `war3map.imp`, but files still read by name.
 - Never commit Blizzard game files or assets; tools read them from the user's install.
 - `crates/wc3-data/data/unit-fields.toml` is the field guide (written for this project):
   importance order per category, `advanced` (folded in the UI), a description for every unit

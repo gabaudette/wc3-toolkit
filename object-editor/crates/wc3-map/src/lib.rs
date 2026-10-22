@@ -7,6 +7,7 @@ pub use wc3_data::objects::{FourCC, Layout, ObjectData, Value};
 pub use wc3_data::strings::MapStrings;
 
 pub mod abilities;
+pub mod imports;
 pub mod lua;
 pub mod transfer;
 pub mod units;

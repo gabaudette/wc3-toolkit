@@ -9,6 +9,7 @@ use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::units::UnitDatabase;
 use wc3_map::abilities::{MapAbilities, MapPlaceholders};
+use wc3_map::imports::MapImports;
 use wc3_map::transfer::{self, Bundle, MapExtras, MapObjects, ObjectType, References};
 use wc3_map::units::MapUnits;
 use wc3_map::{
@@ -296,7 +297,7 @@ fn custom_units_move_between_maps() -> TestResult {
     let mut maps = Vec::new();
     find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
     let dir = tempfile::tempdir()?;
-    let (mut moved_maps, mut objects) = (0, 0);
+    let (mut moved_maps, mut objects, mut files_moved) = (0, 0, 0);
 
     for path in &maps {
         let map = Map::open(path)?;
@@ -318,14 +319,26 @@ fn custom_units_move_between_maps() -> TestResult {
             abilities: &abilities,
             extras: &extras,
         };
-        let export = transfer::export(source, &refs, &custom)?;
-        let bundle = Bundle::from_code(&export.bundle.to_code())?;
+        let export = transfer::export(source, &refs, &custom, &|path| {
+            map.read_file(path).ok().flatten()
+        })?;
+        let bundle = Bundle::from_file(&export.bundle.to_file())?;
         assert_eq!(
             bundle,
             export.bundle,
-            "{}: share code changes the bundle",
+            "{}: the bundle file changes the bundle",
             path.display()
         );
+        // Share codes carry the objects; imported files only travel in bundle files.
+        let from_code = Bundle::from_code(&export.bundle.to_code())?;
+        assert_eq!(
+            from_code.objects(),
+            bundle.objects(),
+            "{}: share code",
+            path.display()
+        );
+        assert!(from_code.files().is_empty());
+        files_moved += bundle.files().len();
 
         let mut target_units = MapUnits::load(&map)?;
         let mut target_abilities = MapAbilities::load(&map)?;
@@ -352,13 +365,30 @@ fn custom_units_move_between_maps() -> TestResult {
 
         // Protected maps cannot be rewritten, so the result goes into a new archive.
         let copy = dir.path().join(format!("moved{moved_maps}.w3x"));
-        mpq::Archive::create(&copy, MOVED_MAX_FILES)?.save()?;
+        let max_files = MOVED_MAX_FILES + u32::try_from(bundle.files().len())?;
+        mpq::Archive::create(&copy, max_files)?.save()?;
+        let mut imports = MapImports::load(&Map::open(&copy)?)?;
+        for file in bundle.files() {
+            imports.add(file.clone());
+        }
         let mut written = target_units.files();
         written.extend(target_abilities.files());
         written.extend(target_extras.files());
+        let import_files = imports.files();
+        written.extend(import_files.iter().map(|(p, b)| (p.as_str(), b.clone())));
         save_files(&copy, &copy, &written)?;
 
         let saved = Map::open(&copy)?;
+        MapImports::load(&saved)?;
+        for file in bundle.files() {
+            assert_eq!(
+                saved.read_file(&file.path)?.as_deref(),
+                Some(file.bytes.as_slice()),
+                "{}: imported file {} did not come along",
+                path.display(),
+                file.path
+            );
+        }
         let reread = MapUnits::load(&saved)?;
         let reread_abilities = MapAbilities::load(&saved)?;
         MapExtras::load(&saved)?;
@@ -414,5 +444,6 @@ fn custom_units_move_between_maps() -> TestResult {
     }
 
     assert!(moved_maps > 0 && objects > 0, "no map has custom units");
+    assert!(files_moved > 0, "no custom unit uses an imported file");
     Ok(())
 }

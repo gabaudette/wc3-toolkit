@@ -45,6 +45,7 @@ fn main() -> ExitCode {
             commands::create_unit,
             commands::save_map,
             transfer::share_code,
+            transfer::save_bundle,
             transfer::map_custom_units,
             transfer::preview_import,
             transfer::import_objects,

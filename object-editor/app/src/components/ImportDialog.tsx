@@ -2,7 +2,7 @@ import { open as openFile } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "../api";
 import type { ImportPreview, ImportSource, TransferObject, UnitItem } from "../types";
-import { classes, MAP_FILTERS, objectCount } from "../ui";
+import { BUNDLE_FILTERS, classes, MAP_FILTERS, objectCount } from "../ui";
 import { Button } from "./Button";
 import { DialogShell } from "./DialogShell";
 import { TransferList } from "./TransferList";
@@ -15,19 +15,24 @@ type ImportDialogProps = {
   onClose: () => void;
 };
 
-type Tab = "code" | "map";
+type Tab = "code" | "bundle" | "map";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "code", label: "Share code" },
+  { id: "bundle", label: "Bundle file" },
   { id: "map", label: "Another map" },
 ];
 
 const CODE_ROWS = 4;
 
-/** Adds custom objects from a share code or another map, after showing what will be added. */
+/**
+ * Adds custom objects from a share code, a bundle file or another map, after
+ * showing what will be added.
+ */
 export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialogProps) {
   const [tab, setTab] = useState<Tab>("code");
   const [code, setCode] = useState("");
+  const [bundlePath, setBundlePath] = useState<string | null>(null);
   const [otherMap, setOtherMap] = useState<string | null>(null);
   const [otherUnits, setOtherUnits] = useState<UnitItem[]>([]);
   const [chosen, setChosen] = useState<string[]>([]);
@@ -47,11 +52,16 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
       return { kind: "code", code };
     }
 
+    if (tab === "bundle") {
+      return { kind: "bundle", path: bundlePath ?? "" };
+    }
+
     return { kind: "map", path: otherMap ?? "", ids: chosen };
   }
 
   const ready =
     (tab === "code" && code.trim() !== "") ||
+    (tab === "bundle" && bundlePath !== null) ||
     (tab === "map" && otherMap !== null && chosen.length > 0);
 
   async function run<T>(work: () => Promise<T>): Promise<T | null> {
@@ -87,6 +97,14 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
     }
   }
 
+  async function pickBundle() {
+    const picked = await openFile({ title: "Import a bundle file", filters: BUNDLE_FILTERS });
+    if (typeof picked === "string") {
+      setBundlePath(picked);
+      setPreview(null);
+    }
+  }
+
   async function showPreview() {
     setPreview(await run(() => api.previewImport(source())));
   }
@@ -96,6 +114,7 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
     if (added) {
       // The next import starts fresh; the chosen map stays for picking more from it.
       setCode("");
+      setBundlePath(null);
       setChosen([]);
       setPreview(null);
       onImported(added);
@@ -103,6 +122,7 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
   }
 
   const otherName = otherMap?.split(/[\\/]/).pop();
+  const bundleName = bundlePath?.split(/[\\/]/).pop();
 
   return (
     <DialogShell
@@ -162,6 +182,17 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
         />
       )}
 
+      {tab === "bundle" && (
+        <div className="flex items-center gap-2">
+          <Button onPress={pickBundle} disabled={busy}>
+            Choose file…
+          </Button>
+          <span className="min-w-0 truncate font-mono text-xs text-muted" title={bundlePath ?? ""}>
+            {bundleName ?? "No bundle file chosen"}
+          </span>
+        </div>
+      )}
+
       {tab === "map" && (
         <>
           <div className="flex items-center gap-2">
@@ -188,7 +219,11 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
       {error && <p className="text-sm text-danger">{error}</p>}
       {preview && (
         <>
-          <TransferList objects={preview.objects} warnings={preview.warnings} />
+          <TransferList
+            objects={preview.objects}
+            files={preview.files}
+            warnings={preview.warnings}
+          />
           <p className="text-xs text-faint">
             IDs already used in this map get the next free one. Nothing is written until you save
             the map.

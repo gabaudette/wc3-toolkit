@@ -37,7 +37,7 @@ Each item is a requirement. Check it off when the tool handles it.
       → Table with one column per level, edited from the keyboard like a spreadsheet.
 
 ## Moving objects between maps
-- [ ] No easy way to reuse an object made in another map.
+- [x] No easy way to reuse an object made in another map.
       → Share codes: select objects, copy a text code (`W3OBJ1:…`), paste it into any map,
         preview what will be added before writing.
       → Import from map: open any .w3m/.w3x, browse its custom objects, copy the chosen ones.

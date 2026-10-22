@@ -11,6 +11,7 @@ use wc3_data::guide::FieldGuide;
 use wc3_data::meta::FieldMeta;
 use wc3_data::units::UnitDatabase;
 use wc3_map::abilities::MapAbilities;
+use wc3_map::imports::MapImports;
 use wc3_map::transfer::MapExtras;
 use wc3_map::units::MapUnits;
 use wc3_map::{FourCC, Map, MapStrings, save_files};
@@ -122,10 +123,17 @@ pub fn open_map(state: State<'_, AppState>, path: String) -> Result<MapSummary, 
     let units = MapUnits::load(&map).map_err(|e| e.to_string())?;
     let abilities = MapAbilities::load(&map).map_err(|e| e.to_string())?;
     let extras = MapExtras::load(&map).map_err(|e| e.to_string())?;
+    let imports = MapImports::load(&map).map_err(|e| e.to_string())?;
     drop(map);
 
     state.with(|session| {
-        session.map = Some(OpenMap::new(path.clone(), units, abilities, extras));
+        session.map = Some(OpenMap::new(
+            path.clone(),
+            units,
+            abilities,
+            extras,
+            imports,
+        ));
         Ok(map_summary(session))
     })
 }
@@ -366,8 +374,16 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
     state.with(|session| {
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         let files = map.files();
-        save_files(&map.path, &map.path, &files).map_err(|e| e.to_string())?;
+        let imported = map.imports.files();
+        let mut written = files.clone();
+        written.extend(
+            imported
+                .iter()
+                .map(|(path, bytes)| (path.as_str(), bytes.clone())),
+        );
+        save_files(&map.path, &map.path, &written).map_err(|e| e.to_string())?;
         map.saved_files = files;
+        map.imports.saved();
         Ok(map_summary(session))
     })
 }

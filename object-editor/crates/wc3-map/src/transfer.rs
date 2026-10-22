@@ -7,8 +7,11 @@
 //! [`plan`] gives every object a free ID in the target map, and [`apply`]
 //! adds them with every reference rewritten to the new IDs.
 //!
-//! A share code is the bundle's files, compressed and base64-encoded behind a
-//! `W3OBJ1:` prefix, so it can be pasted anywhere text goes.
+//! A share code is the bundle's object files, compressed and base64-encoded
+//! behind a `W3OBJ1:` prefix, so it can be pasted anywhere text goes. A bundle
+//! file (`.w3obj`) also carries the files the objects use that were imported
+//! into the source map (models, their textures, icons): those are too large
+//! for text.
 
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::{Read, Write};
@@ -24,6 +27,7 @@ use wc3_data::objects::{FourCC, Layout, ObjectData, ObjectEntry, Value};
 use wc3_data::strings::{MapStrings, reference_id};
 
 use crate::abilities::MapAbilities;
+use crate::imports::{ImportedFile, files_used};
 use crate::units::MapUnits;
 use crate::{
     ABILITIES_FILE, ABILITY_SKINS_FILE, BUFF_SKINS_FILE, BUFFS_FILE, Error, ITEMS_FILE, Map,
@@ -31,10 +35,16 @@ use crate::{
 };
 
 const CODE_PREFIX: &str = "W3OBJ1:";
+/// Start of a bundle file, before the compressed payload.
+const FILE_MAGIC: &[u8; 7] = b"W3OBJ1\0";
 const PAYLOAD_MAGIC: &[u8; 4] = b"W3OB";
 const PAYLOAD_VERSION: u8 = 1;
-/// Largest payload a share code may unpack to; real bundles are a few kilobytes.
-const MAX_PAYLOAD: u64 = 16 * 1024 * 1024;
+/// Largest payload a share code may unpack to; real codes are a few kilobytes.
+const MAX_CODE_PAYLOAD: u64 = 16 * 1024 * 1024;
+/// Largest payload a bundle file may unpack to: imported models add megabytes.
+const MAX_FILE_PAYLOAD: u64 = 512 * 1024 * 1024;
+/// Payload section holding the imported files.
+const IMPORTS_SECTION: &str = "imports";
 const LIST_SEPARATOR: char = ',';
 /// Characters the World Editor uses for the last three letters of new IDs.
 const ID_ALPHABET: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -302,6 +312,8 @@ pub struct Bundle {
     abilities: Tables,
     buffs: Tables,
     strings: MapStrings,
+    /// Files imported into the source map that the objects use.
+    files: Vec<ImportedFile>,
 }
 
 /// An object in a bundle.
@@ -327,7 +339,13 @@ impl Bundle {
             abilities: Tables::empty(ObjectType::Ability),
             buffs: Tables::empty(ObjectType::Buff),
             strings: MapStrings::default(),
+            files: Vec::new(),
         }
+    }
+
+    /// Imported files the objects use; empty for bundles read from a share code.
+    pub fn files(&self) -> &[ImportedFile] {
+        &self.files
     }
 
     fn tables(&self, ty: ObjectType) -> &Tables {
@@ -373,8 +391,8 @@ impl Bundle {
             .map(|m| self.strings.resolve(&m.value.to_string()).to_owned())
     }
 
-    /// The share code: `W3OBJ1:` and the compressed files, base64-encoded.
-    pub fn to_code(&self) -> String {
+    /// The object files and strings, and the imported files when asked.
+    fn payload(&self, with_files: bool) -> Vec<u8> {
         let mut payload = PAYLOAD_MAGIC.to_vec();
         payload.push(PAYLOAD_VERSION);
 
@@ -394,14 +412,40 @@ impl Bundle {
                 self.strings.to_text().as_bytes(),
             );
         }
+        if with_files && !self.files.is_empty() {
+            let mut files = Vec::new();
+            for file in &self.files {
+                // Archive paths are at most 260 bytes; files far below 4 GiB.
+                files.extend_from_slice(
+                    &u16::try_from(file.path.len())
+                        .unwrap_or(u16::MAX)
+                        .to_le_bytes(),
+                );
+                files.extend_from_slice(file.path.as_bytes());
+                files.extend_from_slice(
+                    &u32::try_from(file.bytes.len())
+                        .unwrap_or(u32::MAX)
+                        .to_le_bytes(),
+                );
+                files.extend_from_slice(&file.bytes);
+            }
+            put_section(&mut payload, IMPORTS_SECTION, &files);
+        }
 
-        let mut encoder = DeflateEncoder::new(Vec::new(), Compression::best());
-        // Writing to a Vec cannot fail.
-        let compressed = encoder
-            .write_all(&payload)
-            .and_then(|()| encoder.finish())
-            .unwrap_or_default();
-        format!("{CODE_PREFIX}{}", BASE64.encode(compressed))
+        compress(&payload)
+    }
+
+    /// The share code: `W3OBJ1:` and the compressed object files,
+    /// base64-encoded. Imported files only travel in a bundle file.
+    pub fn to_code(&self) -> String {
+        format!("{CODE_PREFIX}{}", BASE64.encode(self.payload(false)))
+    }
+
+    /// The bundle file (`.w3obj`): the objects and the imported files they use.
+    pub fn to_file(&self) -> Vec<u8> {
+        let mut out = FILE_MAGIC.to_vec();
+        out.extend(self.payload(true));
+        out
     }
 
     /// Reads a share code. Spaces and line breaks inside it are ignored.
@@ -414,13 +458,23 @@ impl Bundle {
         let compressed = BASE64
             .decode(body)
             .map_err(|_| invalid("it is cut off or has extra characters"))?;
+        let payload = decompress(&compressed, MAX_CODE_PAYLOAD)
+            .ok_or_else(|| invalid("it is cut off or has extra characters"))?;
+        Self::from_payload(&payload, &invalid)
+    }
 
-        let mut payload = Vec::new();
-        DeflateDecoder::new(compressed.as_slice())
-            .take(MAX_PAYLOAD)
-            .read_to_end(&mut payload)
-            .map_err(|_| invalid("it is cut off or has extra characters"))?;
+    /// Reads a bundle file (`.w3obj`).
+    pub fn from_file(bytes: &[u8]) -> Result<Self> {
+        let invalid = |reason: &str| Error::Invalid(format!("Not a valid bundle file: {reason}."));
+        let compressed = bytes
+            .strip_prefix(FILE_MAGIC.as_slice())
+            .ok_or_else(|| invalid("it is not a .w3obj file"))?;
+        let payload = decompress(compressed, MAX_FILE_PAYLOAD)
+            .ok_or_else(|| invalid("it is cut off or damaged"))?;
+        Self::from_payload(&payload, &invalid)
+    }
 
+    fn from_payload(payload: &[u8], invalid: &dyn Fn(&str) -> Error) -> Result<Self> {
         let rest = payload
             .strip_prefix(PAYLOAD_MAGIC.as_slice())
             .and_then(|r| r.split_first())
@@ -439,6 +493,11 @@ impl Bundle {
                 let text =
                     std::str::from_utf8(bytes).map_err(|_| invalid("its text is not UTF-8"))?;
                 bundle.strings = MapStrings::parse(text)?;
+                continue;
+            }
+
+            if name == IMPORTS_SECTION {
+                bundle.files = read_files(bytes).ok_or_else(|| invalid("its files are damaged"))?;
                 continue;
             }
 
@@ -471,6 +530,59 @@ impl Bundle {
 
         Ok(bundle)
     }
+
+    /// Every text value of the bundled objects, as stored (string references
+    /// unresolved): art fields among them name the files objects use.
+    fn values(&self) -> impl Iterator<Item = &str> {
+        ObjectType::ALL
+            .into_iter()
+            .flat_map(|ty| self.tables(ty).both())
+            .flat_map(|t| &t.custom)
+            .flat_map(ObjectEntry::mods)
+            .filter_map(|m| match &m.value {
+                Value::String(s) if reference_id(s).is_none() => Some(s.as_str()),
+                _ => None,
+            })
+    }
+}
+
+fn compress(bytes: &[u8]) -> Vec<u8> {
+    let mut encoder = DeflateEncoder::new(Vec::new(), Compression::best());
+    // Writing to a Vec cannot fail.
+    encoder
+        .write_all(bytes)
+        .and_then(|()| encoder.finish())
+        .unwrap_or_default()
+}
+
+/// Inflates at most `limit` bytes; `None` when the data is damaged.
+fn decompress(bytes: &[u8], limit: u64) -> Option<Vec<u8>> {
+    let mut out = Vec::new();
+    DeflateDecoder::new(bytes)
+        .take(limit)
+        .read_to_end(&mut out)
+        .ok()?;
+    Some(out)
+}
+
+/// The imported files section: path length (u16), path, size (u32), bytes.
+fn read_files(data: &[u8]) -> Option<Vec<ImportedFile>> {
+    let mut files = Vec::new();
+    let mut pos = 0;
+    while pos < data.len() {
+        let path_len = usize::from(u16::from_le_bytes([*data.get(pos)?, *data.get(pos + 1)?]));
+        let path_end = pos + 2 + path_len;
+        let path = std::str::from_utf8(data.get(pos + 2..path_end)?)
+            .ok()?
+            .to_owned();
+        let size = data.get(path_end..path_end + 4)?;
+        let size = u32::from_le_bytes([size[0], size[1], size[2], size[3]]) as usize;
+        let start = path_end + 4;
+        let bytes = data.get(start..start + size)?.to_vec();
+        files.push(ImportedFile { path, bytes });
+        pos = start + size;
+    }
+    Some(files)
 }
 
 fn put_section(out: &mut Vec<u8>, name: &str, bytes: &[u8]) {
@@ -503,8 +615,14 @@ fn object_target(target: Target) -> Option<ObjectType> {
 }
 
 /// Bundles the given custom units with every custom unit, ability and buff
-/// they depend on. Warnings name what could not come along.
-pub fn export(source: MapObjects<'_>, refs: &References, units: &[FourCC]) -> Result<Export> {
+/// they depend on, and the files imported into the source map that they use
+/// (`read` reads a file from it by path). Warnings name what could not come along.
+pub fn export(
+    source: MapObjects<'_>,
+    refs: &References,
+    units: &[FourCC],
+    read: &dyn Fn(&str) -> Option<Vec<u8>>,
+) -> Result<Export> {
     let (unit_data, unit_skin, strings) = source.units.parts();
     let source_units = Tables {
         data: unit_data.clone(),
@@ -599,6 +717,8 @@ pub fn export(source: MapObjects<'_>, refs: &References, units: &[FourCC]) -> Re
             objects.push(BundledObject { ty, id, base });
         }
     }
+
+    bundle.files = files_used(bundle.values(), read);
 
     Ok(Export {
         bundle,
@@ -792,6 +912,12 @@ mod tests {
     const ITEMS: &str = "umki";
     const BUFFS: &str = "abuf";
     const ABILITY_NAME: &str = "anam";
+    const MODEL: &str = "umdl";
+
+    /// A source map with no imported files.
+    fn no_files(_: &str) -> Option<Vec<u8>> {
+        None
+    }
 
     fn id(code: &str) -> FourCC {
         FourCC::parse(code).unwrap()
@@ -899,7 +1025,14 @@ mod tests {
             ),
             table(
                 Layout::Plain,
-                vec![entry("hfoo", "h001", vec![text(NAME, &name, id("h001"))])],
+                vec![entry(
+                    "hfoo",
+                    "h001",
+                    vec![
+                        text(NAME, &name, id("h001")),
+                        text(MODEL, "Elite.mdl", id("h001")),
+                    ],
+                )],
             ),
             strings,
         );
@@ -925,6 +1058,7 @@ mod tests {
             },
             &refs(),
             &[id("h000")],
+            &no_files,
         )
         .unwrap();
 
@@ -949,7 +1083,7 @@ mod tests {
             abilities: &abilities,
             extras: &extras,
         };
-        assert!(export(objects, &refs(), &[id("hfoo")]).is_err());
+        assert!(export(objects, &refs(), &[id("hfoo")], &no_files).is_err());
     }
 
     #[test]
@@ -963,6 +1097,7 @@ mod tests {
             },
             &refs(),
             &[id("h001")],
+            &no_files,
         )
         .unwrap()
         .bundle;
@@ -982,6 +1117,38 @@ mod tests {
     }
 
     #[test]
+    fn bundle_files_carry_imported_files_and_codes_do_not() {
+        let (units, abilities, extras) = source();
+        let read = |path: &str| (path == "Elite.mdx").then(|| b"model".to_vec());
+        let bundle = export(
+            MapObjects {
+                units: &units,
+                abilities: &abilities,
+                extras: &extras,
+            },
+            &refs(),
+            &[id("h001")],
+            &read,
+        )
+        .unwrap()
+        .bundle;
+
+        let paths: Vec<&str> = bundle.files().iter().map(|f| f.path.as_str()).collect();
+        assert_eq!(paths, ["Elite.mdx"]);
+        assert_eq!(Bundle::from_file(&bundle.to_file()).unwrap(), bundle);
+        assert!(
+            Bundle::from_code(&bundle.to_code())
+                .unwrap()
+                .files()
+                .is_empty()
+        );
+
+        let file = bundle.to_file();
+        assert!(Bundle::from_file(&file[..file.len() - 4]).is_err());
+        assert!(Bundle::from_file(bundle.to_code().as_bytes()).is_err());
+    }
+
+    #[test]
     fn imports_with_free_ids_and_rewritten_references() {
         let (units, abilities, extras) = source();
         let bundle = export(
@@ -992,6 +1159,7 @@ mod tests {
             },
             &refs(),
             &[id("h001")],
+            &no_files,
         )
         .unwrap()
         .bundle;
