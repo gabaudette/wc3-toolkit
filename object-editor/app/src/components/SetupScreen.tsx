@@ -84,77 +84,77 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
   const lastMap = remembered.get(MAP_PATH_KEY);
 
   return (
-    <main className="mx-auto flex h-full max-w-xl flex-col justify-center gap-8 px-6">
-      <header>
-        <h1 className="text-2xl font-semibold">WC3 Object Editor</h1>
-        <p className="mt-1 text-muted">
-          Reads the game data from your own Warcraft III install. Nothing is uploaded anywhere.
-        </p>
-      </header>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-faint">
-          1. Warcraft III folder
-        </h2>
-        <div className="flex gap-2">
-          <input
-            value={dir}
-            onChange={(e) => setDir(e.target.value)}
-            placeholder="C:\Program Files (x86)\Warcraft III"
-            aria-label="Warcraft III folder"
-            className="min-w-0 flex-1 rounded-md border border-line bg-surface-1 px-3 py-1.5 font-mono text-xs outline-none focus:border-gold"
-          />
-          <Button onPress={browseGame}>Browse…</Button>
-        </div>
-        <label className="flex items-center gap-2 text-muted">
-          <input type="checkbox" checked={hd} onChange={(e) => setHd(e.target.checked)} />
-          Use HD (Reforged) art values and icons
-        </label>
-        {!game && (
-          <div>
-            <Button primary disabled={busy || !dir} onPress={openGame}>
-              Load game data
-            </Button>
-          </div>
-        )}
-        {game && (
-          <p className="text-muted">
-            Loaded {game.units} units from <span className="font-mono text-xs">{game.dir}</span>
+    <main className="mx-auto flex h-full max-w-xl flex-col justify-center px-6">
+      <div className="frame flex flex-col gap-8 bg-surface-1 p-8">
+        <header>
+          <h1 className="font-display text-4xl font-bold text-gold">Object Editor</h1>
+          <p className="mt-1 text-muted">
+            Reads the game data from your own Warcraft III install. Nothing is uploaded anywhere.
           </p>
-        )}
-      </section>
+        </header>
 
-      {game && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-faint">2. Map</h2>
-          <p className="text-muted">
-            Close the map in the World Editor before saving here, or the editor will overwrite your
-            changes on its next save.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {lastMap && (
-              <Button primary disabled={busy} onPress={() => openMap(lastMap, game)}>
-                Reopen {lastMap.split(/[\\/]/).pop()}
-              </Button>
-            )}
-            <Button disabled={busy} onPress={() => browseMap(game)}>
-              Open a map…
-            </Button>
-            <Button disabled={busy} onPress={() => onReady(game, null)}>
-              Browse game data only
-            </Button>
+          <h2 className="font-display text-lg font-bold text-gold">1. Warcraft III folder</h2>
+          <div className="flex gap-2">
+            <input
+              value={dir}
+              onChange={(e) => setDir(e.target.value)}
+              placeholder="C:\Program Files (x86)\Warcraft III"
+              aria-label="Warcraft III folder"
+              className="min-w-0 flex-1 rounded-[3px] border border-line bg-well px-3 py-1.5 font-mono text-xs outline-none focus:border-glow"
+            />
+            <Button onPress={browseGame}>Browse…</Button>
           </div>
+          <label className="flex items-center gap-2 text-muted">
+            <input type="checkbox" checked={hd} onChange={(e) => setHd(e.target.checked)} />
+            Use HD (Reforged) art values and icons
+          </label>
+          {!game && (
+            <div>
+              <Button primary disabled={busy || !dir} onPress={openGame}>
+                Load game data
+              </Button>
+            </div>
+          )}
+          {game && (
+            <p className="text-muted">
+              Loaded {game.units} units from <span className="font-mono text-xs">{game.dir}</span>
+            </p>
+          )}
         </section>
-      )}
 
-      {error && (
-        <p
-          role="alert"
-          className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-danger"
-        >
-          {error}
-        </p>
-      )}
+        {game && (
+          <section className="flex flex-col gap-3">
+            <h2 className="font-display text-lg font-bold text-gold">2. Map</h2>
+            <p className="text-muted">
+              Close the map in the World Editor before saving here, or the editor will overwrite
+              your changes on its next save.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {lastMap && (
+                <Button primary disabled={busy} onPress={() => openMap(lastMap, game)}>
+                  Reopen {lastMap.split(/[\\/]/).pop()}
+                </Button>
+              )}
+              <Button disabled={busy} onPress={() => browseMap(game)}>
+                Open a map…
+              </Button>
+              <Button disabled={busy} onPress={() => onReady(game, null)}>
+                Browse game data only
+              </Button>
+            </div>
+          </section>
+        )}
+
+        {error && (
+          <p
+            role="alert"
+            className="rounded-[3px] border border-danger/40 bg-danger/10 px-3 py-2 text-danger"
+          >
+            {error}
+          </p>
+        )}
+      </div>
     </main>
   );
 }

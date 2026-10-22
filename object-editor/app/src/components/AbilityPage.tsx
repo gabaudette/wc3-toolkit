@@ -6,7 +6,7 @@ import { Button } from "./Button";
 import { GameText } from "./GameText";
 import { LevelTable } from "./LevelTable";
 import { LevelText } from "./LevelText";
-import { AdvancedGroup, FieldRows, matches, SectionToggle, toggled } from "./Sections";
+import { AdvancedGroup, FieldHeader, FieldRows, matches, SectionToggle, toggled } from "./Sections";
 import { UnitIcon } from "./UnitIcon";
 
 type AbilityPageProps = {
@@ -51,6 +51,16 @@ function visible(section: AbilitySection, filter: string, changedOnly: boolean):
 function changedIn(fields: Field[], levelFields: LevelField[]): number {
   const cells = levelFields.flatMap((f) => f.cells).filter((c) => c.modified).length;
   return fields.filter((f) => f.modified).length + cells;
+}
+
+/** Header of the base column: the ability a custom one copies, else the game's value. */
+function baseLabel(detail: AbilityDetail): string {
+  const { summary } = detail.card;
+  if (summary.custom) {
+    return `Base · ${summary.base}`;
+  }
+
+  return "Game value";
 }
 
 function facts(detail: AbilityDetail): string {
@@ -132,12 +142,12 @@ export function AbilityPage({
   }
 
   return (
-    <section className="flex min-h-0 min-w-0 flex-1 flex-col">
+    <section className="frame flex min-h-0 min-w-0 flex-1 flex-col bg-surface-1">
       <header className="flex flex-col gap-4 border-b border-line p-5">
         <div className="flex items-center gap-4">
           <UnitIcon path={summary.icon} size="large" />
           <div className="min-w-0 flex-1">
-            <h2 className="truncate text-xl font-semibold">
+            <h2 className="truncate font-display text-3xl font-bold text-gold-bright">
               {summary.name}
               {summary.suffix && (
                 <span className="ml-2 text-base font-normal text-faint">{summary.suffix}</span>
@@ -160,7 +170,7 @@ export function AbilityPage({
         </div>
 
         {description && (
-          <div className="max-h-32 overflow-y-auto rounded-md border border-line bg-[#05070d] px-3 py-2 text-sm leading-relaxed">
+          <div className="max-h-32 overflow-y-auto rounded-[3px] border border-line bg-well px-3 py-2 text-sm leading-relaxed">
             <GameText text={description} />
           </div>
         )}
@@ -172,7 +182,7 @@ export function AbilityPage({
             onChange={(e) => setFilter(e.target.value)}
             placeholder="Filter fields by name, code, value or description: cooldown, damage, icon…"
             aria-label="Filter fields"
-            className="min-w-0 flex-1 rounded-md border border-line bg-surface-0 px-3 py-1.5 outline-none focus:border-gold"
+            className="min-w-0 flex-1 rounded-[3px] border border-line bg-well px-3 py-1.5 outline-none focus:border-glow"
           />
           <label className="flex items-center gap-2 text-muted">
             <input
@@ -196,6 +206,7 @@ export function AbilityPage({
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
+        <FieldHeader base={baseLabel(detail)} />
         {sections.length === 0 && <p className="p-5 text-muted">No fields match.</p>}
         {sections.map(({ section, fields, levelFields }) => {
           const expanded = searching || open.includes(section.category);

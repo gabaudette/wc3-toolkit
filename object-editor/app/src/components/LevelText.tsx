@@ -18,7 +18,7 @@ const LONG_TEXT_ROWS = 3;
 const FORMATTED = /[|<]/;
 
 const inputClass =
-  "w-full rounded border border-line bg-surface-0 px-2 py-1 outline-none focus:border-gold read-only:opacity-70";
+  "w-full rounded border border-line bg-surface-0 px-2 py-1 outline-none focus:border-glow read-only:opacity-70";
 
 type LevelInputProps = {
   field: LevelField;

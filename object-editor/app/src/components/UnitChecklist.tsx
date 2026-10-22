@@ -37,7 +37,7 @@ export function UnitChecklist({ units, chosen, onChange }: UnitChecklistProps) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter units"
           aria-label="Filter units"
-          className="min-w-0 flex-1 rounded-md border border-line bg-surface-0 px-3 py-1 text-sm outline-none focus:border-gold"
+          className="min-w-0 flex-1 rounded-[3px] border border-line bg-surface-0 px-3 py-1 text-sm outline-none focus:border-glow"
         />
         <button
           type="button"
@@ -54,7 +54,7 @@ export function UnitChecklist({ units, chosen, onChange }: UnitChecklistProps) {
           None
         </button>
       </div>
-      <ul className="max-h-60 overflow-y-auto rounded-md border border-line" aria-label="Units">
+      <ul className="max-h-60 overflow-y-auto rounded-[3px] border border-line" aria-label="Units">
         {shown.map((unit) => (
           <li key={unit.id}>
             <label className="flex cursor-pointer items-center gap-3 px-3 py-1 hover:bg-surface-2">

@@ -18,12 +18,12 @@ export function Button({ children, onPress, primary, disabled, small, label }: B
       isDisabled={disabled ?? false}
       {...(label && { "aria-label": label })}
       className={classes(
-        "rounded-md border font-medium outline-none transition-colors",
-        "focus-visible:ring-2 focus-visible:ring-gold/60 disabled:cursor-not-allowed disabled:opacity-40",
+        "rounded-[3px] border font-semibold outline-none transition-colors",
+        "focus-visible:ring-2 focus-visible:ring-glow disabled:cursor-not-allowed disabled:opacity-40",
         small && "px-2 py-1 text-xs",
         !small && "px-3 py-1.5 text-sm",
-        primary && "border-gold bg-gold text-surface-0 hover:bg-gold/90",
-        !primary && "border-line bg-surface-2 text-ink hover:border-faint",
+        primary && "border-gold bg-gold-soft text-gold-bright hover:bg-frame-inner",
+        !primary && "border-line-strong bg-surface-2 text-ink hover:border-frame",
       )}
     >
       {children}

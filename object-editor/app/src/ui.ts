@@ -14,6 +14,13 @@ export function levelCount(levels: number): string {
   return `${levels} levels`;
 }
 
+/**
+ * Columns of every field row and the header above them: name, value, the
+ * base object's value, and the reset button.
+ */
+export const FIELD_ROW_GRID =
+  "grid grid-cols-[minmax(12rem,1fr)_minmax(9rem,16rem)_minmax(3.5rem,7rem)_1.75rem] items-start gap-x-3";
+
 /** "1 object", "3 objects". */
 export function objectCount(count: number): string {
   if (count === 1) {

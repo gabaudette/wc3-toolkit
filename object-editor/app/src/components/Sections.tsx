@@ -5,8 +5,26 @@ import { ChevronDown, ChevronRight } from "@untitledui/icons";
 import type { ReactNode } from "react";
 import { FIELD_GROUPS } from "../fieldGroups";
 import type { DamageBonus, Field } from "../types";
+import { classes, FIELD_ROW_GRID } from "../ui";
 import { FieldGroupRow } from "./FieldGroupRow";
 import { FieldRow } from "./FieldRow";
+
+/** Column labels above the field rows; the base column names the object copied. */
+export function FieldHeader({ base }: { base: string }) {
+  return (
+    <div
+      className={classes(
+        FIELD_ROW_GRID,
+        "border-b border-line px-4 py-1.5 font-display text-sm font-bold text-muted",
+      )}
+    >
+      <span>Field</span>
+      <span>Value</span>
+      <span className="truncate">{base}</span>
+      <span />
+    </div>
+  );
+}
 
 /** Matches names, codes, values and descriptions, so "armor" also finds Defense Type. */
 export function matches(field: Field, filter: string): boolean {
@@ -39,13 +57,13 @@ export function SectionToggle({ label, count, changed, expanded, onToggle }: Sec
       type="button"
       onClick={onToggle}
       aria-expanded={expanded}
-      className="sticky top-0 z-20 flex w-full items-center gap-2 border-b border-line bg-surface-1 px-3 py-2 text-left text-sm font-semibold"
+      className="sticky top-0 z-20 flex w-full items-center gap-2 border-b border-line bg-surface-1 px-4 py-2 text-left"
     >
       {expanded && <ChevronDown className="size-4" aria-hidden="true" />}
       {!expanded && <ChevronRight className="size-4" aria-hidden="true" />}
-      {label}
-      <span className="font-normal text-faint">{count} fields</span>
-      {changed > 0 && <span className="font-normal text-changed">{changed} changed</span>}
+      <span className="font-display text-lg font-bold text-gold">{label}</span>
+      <span className="text-sm text-faint">{count} fields</span>
+      {changed > 0 && <span className="text-sm text-changed">{changed} changed</span>}
     </button>
   );
 }
@@ -89,10 +107,18 @@ type FieldRowsProps = {
   damageBonus: DamageBonus | null;
   onChange: (field: string, value: string) => void;
   onReset: (field: string) => void;
+  onInspect?: (field: Field) => void;
 };
 
 /** Field rows, with related fields merged into one row where all of them are shown. */
-export function FieldRows({ fields, editable, damageBonus, onChange, onReset }: FieldRowsProps) {
+export function FieldRows({
+  fields,
+  editable,
+  damageBonus,
+  onChange,
+  onReset,
+  onInspect,
+}: FieldRowsProps) {
   const byId = new Map(fields.map((f) => [f.id, f]));
   const grouped = new Set<string>();
   const result = [];
@@ -131,6 +157,7 @@ export function FieldRows({ fields, editable, damageBonus, onChange, onReset }: 
         editable={editable}
         onChange={(value) => onChange(field.id, value)}
         onReset={() => onReset(field.id)}
+        {...(onInspect && { onInspect })}
       />,
     );
   }

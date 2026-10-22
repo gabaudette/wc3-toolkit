@@ -23,9 +23,12 @@ export function DialogShell({ open, title, onClose, children, footer }: DialogSh
       isDismissable
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
     >
-      <Modal className="flex max-h-[85vh] w-[40rem] flex-col rounded-lg border border-line bg-surface-1 shadow-2xl">
+      <Modal className="frame flex max-h-[85vh] w-[40rem] max-w-[calc(100vw-2rem)] flex-col bg-surface-1 shadow-2xl">
         <Dialog className="flex min-h-0 flex-1 flex-col outline-none">
-          <Heading slot="title" className="border-b border-line p-4 text-lg font-semibold">
+          <Heading
+            slot="title"
+            className="border-b border-line px-5 py-3 font-display text-2xl font-bold text-gold-bright"
+          >
             {title}
           </Heading>
           {/* Parts keep their height; the whole body scrolls instead. */}

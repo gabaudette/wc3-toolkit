@@ -67,7 +67,7 @@ export function UnitList({ units, selected, onSelect, onError }: UnitListProps) 
   }, [units, hits, groups, kinds]);
 
   return (
-    <aside className="flex min-h-0 w-[22rem] shrink-0 flex-col border-r border-line bg-surface-1">
+    <aside className="panel flex min-h-0 w-72 shrink-0 flex-col rounded-[3px] bg-surface-1">
       <div className="flex flex-col gap-2 border-b border-line p-3">
         <input
           type="search"
@@ -75,7 +75,7 @@ export function UnitList({ units, selected, onSelect, onError }: UnitListProps) 
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search: name, code (Hpal), value (1000, Metal)"
           aria-label="Search units"
-          className="rounded-md border border-line bg-surface-0 px-3 py-1.5 outline-none focus:border-gold"
+          className="rounded-[3px] border border-line bg-well px-3 py-1.5 outline-none focus:border-glow"
         />
         <div className="flex flex-wrap gap-1">
           {KINDS.map((k) => (
@@ -111,7 +111,7 @@ export function UnitList({ units, selected, onSelect, onError }: UnitListProps) 
               aria-current={selected === unit.id}
               className={classes(
                 "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2",
-                selected === unit.id && "bg-surface-2",
+                selected === unit.id && "bg-surface-2 shadow-[inset_2px_0_0_var(--color-glow)]",
               )}
             >
               <UnitIcon path={unit.icon} size="small" />

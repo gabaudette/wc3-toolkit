@@ -365,7 +365,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
 
   return (
     <div className="flex w-72 shrink-0 flex-col gap-1.5">
-      <div className="relative aspect-square overflow-hidden rounded-md border border-line bg-surface-0">
+      <div className="relative aspect-square overflow-hidden rounded-[3px] border border-line bg-surface-0">
         <canvas
           ref={canvasRef}
           width={576}
@@ -401,7 +401,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
             value={sequence}
             onChange={(e) => pickSequence(Number(e.target.value))}
             aria-label="Animation"
-            className="min-w-0 flex-1 rounded border border-line bg-surface-0 px-1.5 py-1 outline-none focus:border-gold"
+            className="min-w-0 flex-1 rounded border border-line bg-surface-0 px-1.5 py-1 outline-none focus:border-glow"
           >
             {sequences.map((animation) => (
               <option key={`${animation.start}-${animation.name}`} value={animation.index}>

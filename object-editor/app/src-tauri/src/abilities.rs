@@ -13,7 +13,7 @@ use wc3_map::FourCC;
 use wc3_map::MapStrings;
 use wc3_map::abilities::{MapAbilities, MapAbility, MapPlaceholders};
 
-use crate::view::{Field, FieldValue, SearchHit, build_field};
+use crate::view::{Field, FieldValue, SearchHit, base_text, build_field};
 
 /// Category order on an ability page: numbers people tune most come first.
 const CATEGORY_ORDER: &[&str] = &["stats", "data", "text", "art", "tech", "sound"];
@@ -246,6 +246,10 @@ impl AbilityView<'_> {
 
     fn value(&self, id: FourCC, field: &FieldMeta, level: u32) -> FieldValue {
         let raw = self.raw(id, field, level);
+        let base = self.map.base_of(self.db, id).and_then(|base| {
+            self.db
+                .raw_value(&base.to_string(), field, level, self.mode)
+        });
         FieldValue {
             name: self.db.field_name(field),
             label: format!(
@@ -256,6 +260,7 @@ impl AbilityView<'_> {
             display: self.units.format_value(field, raw.clone()),
             raw: raw.unwrap_or_default(),
             modified: self.map.is_modified(id, field, level),
+            base: base_text(self.units, field, base),
         }
     }
 

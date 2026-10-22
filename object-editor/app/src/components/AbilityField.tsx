@@ -34,7 +34,7 @@ function Card({ card, onRemove }: { card: AbilityCard; onRemove: (() => void) | 
   ].filter(Boolean);
 
   return (
-    <li className="rounded-md border border-line bg-surface-1">
+    <li className="rounded-[3px] border border-line bg-surface-1">
       <div className="flex items-start gap-3 p-2">
         <UnitIcon path={summary.icon} size="small" />
         <div className="min-w-0 flex-1">
@@ -152,7 +152,7 @@ export function AbilityField({ field, editable, onChange }: AbilityFieldProps) {
   }
 
   return (
-    <div className="col-span-3 mb-2 flex flex-col gap-2">
+    <div className="col-span-4 mb-2 flex flex-col gap-2">
       {error && <p className="text-sm text-danger">{error}</p>}
       {cards.length === 0 && <p className="text-sm text-faint">No abilities.</p>}
       <ul className="flex flex-col gap-1.5">
