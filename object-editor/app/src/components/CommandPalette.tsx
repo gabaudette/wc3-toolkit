@@ -47,9 +47,32 @@ type Group = { name: string; entries: Entry[] };
 /** Results shown per group; typing narrows them further. */
 const MAX_PER_GROUP = 8;
 
+/** Match quality: the start of the text, then the start of a word, then anywhere. */
+function rank(text: string, needle: string): number {
+  if (text.startsWith(needle)) {
+    return 0;
+  }
+
+  if (text.includes(` ${needle}`)) {
+    return 1;
+  }
+
+  return 2;
+}
+
+/** Items whose text contains the query, best matches first ("holy" finds Holy Light before Unholy Aura). */
 function matching<T>(list: T[], query: string, text: (item: T) => string): T[] {
   const needle = query.trim().toLowerCase();
-  return list.filter((item) => !needle || text(item).toLowerCase().includes(needle));
+  if (!needle) {
+    return list;
+  }
+
+  return list
+    .map((item) => ({ item, text: text(item).toLowerCase() }))
+    .filter((m) => m.text.includes(needle))
+    .map((m) => ({ item: m.item, rank: rank(m.text, needle) }))
+    .sort((a, b) => a.rank - b.rank)
+    .map((m) => m.item);
 }
 
 /**

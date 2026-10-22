@@ -28,7 +28,7 @@ const ICON_TYPE = "icon";
 const LONG_TEXT_ROWS = 3;
 
 const inputClass =
-  "w-full rounded border border-line bg-surface-0 px-2 py-1 outline-none focus:border-glow read-only:opacity-70";
+  "w-full rounded border border-field bg-well px-2 py-1 outline-none focus:border-glow read-only:opacity-70";
 
 function numberStep(field: Field): number {
   if (field.integer) {
@@ -94,7 +94,7 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
         }}
         className="group flex items-center gap-2 text-muted"
       >
-        <span className="h-5 w-9 rounded-full border border-line bg-surface-0 p-0.5 transition-colors group-data-[selected]:border-gold group-data-[selected]:bg-gold-soft">
+        <span className="h-5 w-9 rounded-full border border-field bg-well p-0.5 transition-colors group-data-[selected]:border-gold group-data-[selected]:bg-gold-soft">
           <span className="block size-3.5 rounded-full bg-faint transition-transform group-data-[selected]:translate-x-4 group-data-[selected]:bg-gold" />
         </span>
         {field.display}
@@ -244,7 +244,7 @@ export function Description({ field }: { field: Field }) {
           {range && <span>{range}</span>}
           {field.unverified && (
             <span className="rounded bg-gold-soft px-1.5 py-0.5 text-gold">
-              Unverified: not yet confirmed in game
+              Not yet confirmed in game
             </span>
           )}
         </p>
@@ -289,7 +289,7 @@ export function FieldRow({ field, editable, onChange, onReset, onInspect }: Fiel
             aria-label={`What ${field.name} does`}
             title="What this field does"
             className={classes(
-              "shrink-0 self-center rounded p-0.5 hover:text-ink",
+              "shrink-0 self-center -my-1 rounded p-1.5 hover:text-ink",
               showInfo && "text-gold",
               !showInfo && "text-faint",
             )}

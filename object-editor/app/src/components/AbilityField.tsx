@@ -52,7 +52,7 @@ function Card({ card, onRemove }: { card: AbilityCard; onRemove: (() => void) | 
             type="button"
             onClick={() => setExpanded(!expanded)}
             aria-expanded={expanded}
-            className="rounded px-2 py-0.5 text-xs text-faint hover:bg-surface-2 hover:text-ink"
+            className="min-h-6 rounded px-2 py-1 text-xs text-faint hover:bg-surface-2 hover:text-ink"
           >
             {expanded && "Less"}
             {!expanded && "Details"}
@@ -63,7 +63,7 @@ function Card({ card, onRemove }: { card: AbilityCard; onRemove: (() => void) | 
             type="button"
             onClick={() => openAbility(summary.id)}
             title="Open on the Abilities tab"
-            className="rounded px-2 py-0.5 text-xs text-faint hover:bg-surface-2 hover:text-ink"
+            className="min-h-6 rounded px-2 py-1 text-xs text-faint hover:bg-surface-2 hover:text-ink"
           >
             Open
           </button>

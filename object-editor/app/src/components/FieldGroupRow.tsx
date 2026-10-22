@@ -21,7 +21,7 @@ type FieldGroupRowProps = {
 };
 
 const numberClass =
-  "w-full rounded border border-line bg-surface-0 px-2 py-1 font-mono outline-none focus:border-glow read-only:opacity-70";
+  "w-full rounded border border-field bg-well px-2 py-1 font-mono outline-none focus:border-glow read-only:opacity-70";
 
 function numberOf(field: Field | undefined): number {
   const value = Number(field?.raw ?? "");
@@ -125,7 +125,7 @@ function ColorPicker({
       disabled={!editable}
       onChange={(e) => pick(e.target.value)}
       aria-label="Tint color"
-      className="h-8 w-12 shrink-0 cursor-pointer rounded border border-line bg-surface-0"
+      className="h-8 w-12 shrink-0 cursor-pointer rounded border border-field bg-well"
     />
   );
 }

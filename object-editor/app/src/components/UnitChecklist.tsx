@@ -37,7 +37,7 @@ export function UnitChecklist({ units, chosen, onChange }: UnitChecklistProps) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter units"
           aria-label="Filter units"
-          className="min-w-0 flex-1 rounded-[3px] border border-line bg-surface-0 px-3 py-1 text-sm outline-none focus:border-glow"
+          className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1 text-sm outline-none focus:border-glow"
         />
         <button
           type="button"

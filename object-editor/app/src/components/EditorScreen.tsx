@@ -268,7 +268,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         <button
           type="button"
           onClick={() => setDialog("search")}
-          className="flex w-[22rem] max-w-full items-center gap-2.5 rounded-[3px] border border-line-strong bg-well px-3 py-1.5 text-left text-muted hover:border-frame"
+          className="flex w-[22rem] max-w-full items-center gap-2.5 rounded-[3px] border border-field bg-well px-3 py-1.5 text-left text-muted hover:border-frame"
         >
           <SearchLg className="size-4" aria-hidden="true" />
           <span className="flex-1">Search units, abilities, commands…</span>
@@ -278,7 +278,11 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         </button>
         <span className="flex-1" />
         {map && (
-          <span className="min-w-0 truncate font-mono text-xs text-muted" title={map.path}>
+          <span
+            aria-live="polite"
+            className="min-w-0 truncate font-mono text-xs text-muted"
+            title={map.path}
+          >
             {map.name}
             {map.unsaved && <span className="ml-2 font-sans text-gold">● unsaved</span>}
           </span>
@@ -306,7 +310,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
             key={t.id}
             type="button"
             onClick={() => setTab(t.id)}
-            aria-pressed={tab === t.id}
+            aria-current={tab === t.id && "page"}
             className={classes(
               "py-1.5 font-display text-lg font-bold",
               tab === t.id && "text-gold-bright shadow-[inset_0_-2px_0_var(--color-gold)]",
@@ -351,38 +355,40 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         onClose={() => setDialog(null)}
       />
 
-      {tab === "abilities" && (
-        <AbilitiesPane
-          key={revision}
-          editable={editable}
-          selected={selectedAbility}
-          onSelect={setSelectedAbility}
-          onMapChanged={refreshMap}
-          onError={setError}
-        />
-      )}
+      <main className="flex min-h-0 flex-1 flex-col">
+        {tab === "abilities" && (
+          <AbilitiesPane
+            key={revision}
+            editable={editable}
+            selected={selectedAbility}
+            onSelect={setSelectedAbility}
+            onMapChanged={refreshMap}
+            onError={setError}
+          />
+        )}
 
-      <div className={classes("flex min-h-0 flex-1 gap-2.5", tab !== "units" && "hidden")}>
-        <UnitList units={units} selected={selected} onSelect={setSelected} onError={setError} />
-        {detail && tab === "units" && (
-          <OpenAbilityContext value={openAbility}>
-            <UnitPage
-              key={detail.item.id}
-              detail={detail}
-              clashes={clashes}
-              editable={editable}
-              onChange={(field, value) => applyField(api.setField(detail.item.id, field, value))}
-              onReset={(field) => applyField(api.resetField(detail.item.id, field))}
-              onCreateCopy={createCopy}
-            />
-          </OpenAbilityContext>
-        )}
-        {!detail && (
-          <p className="m-auto text-muted">
-            Pick a unit on the left. {game.units} game units loaded.
-          </p>
-        )}
-      </div>
+        <div className={classes("flex min-h-0 flex-1 gap-2.5", tab !== "units" && "hidden")}>
+          <UnitList units={units} selected={selected} onSelect={setSelected} onError={setError} />
+          {detail && tab === "units" && (
+            <OpenAbilityContext value={openAbility}>
+              <UnitPage
+                key={detail.item.id}
+                detail={detail}
+                clashes={clashes}
+                editable={editable}
+                onChange={(field, value) => applyField(api.setField(detail.item.id, field, value))}
+                onReset={(field) => applyField(api.resetField(detail.item.id, field))}
+                onCreateCopy={createCopy}
+              />
+            </OpenAbilityContext>
+          )}
+          {!detail && (
+            <p className="m-auto text-muted">
+              Pick a unit on the left. {game.units} game units loaded.
+            </p>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

@@ -16,7 +16,7 @@ export function Chip({ label, on, onPress }: { label: string; on: boolean; onPre
       onClick={onPress}
       aria-pressed={on}
       className={classes(
-        "rounded-full border px-2 py-0.5 text-xs",
+        "min-h-6 rounded-full border px-2.5 py-1 text-xs",
         on && "border-gold/60 bg-gold-soft text-gold",
         !on && "border-line text-faint hover:text-muted",
       )}

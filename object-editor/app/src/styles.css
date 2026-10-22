@@ -16,6 +16,9 @@
   --color-well: #08101f;
   --color-line: #1d2a45;
   --color-line-strong: #2c3c60;
+  /* Edges of controls (text boxes, selects, switches, buttons): at least
+     3.36:1 on every surface, so controls are visible (WCAG 1.4.11). */
+  --color-field: #5f7299;
   --color-ink: #e8ecf5;
   --color-muted: #a9b4cc;
   --color-faint: #8f9bb5;

@@ -133,9 +133,9 @@ export function UnitPage({
                 type="search"
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
-                placeholder="Filter fields by name, code, value or description: armor, speed, model…"
+                placeholder="Filter fields: armor, speed, model…"
                 aria-label="Filter fields"
-                className="min-w-0 flex-1 rounded-[3px] border border-line bg-well px-3 py-1.5 outline-none focus:border-glow"
+                className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
               />
               <label className="flex items-center gap-2 text-muted">
                 <input

@@ -37,6 +37,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   the open map's imported file first, then the game's),
   `platform.rs` (install/maps folder detection, the only platform-specific module).
   `api.ts`/`types.ts` mirror the Rust types. Run with `bun run tauri dev` from `app/`.
+  The look ("Arcane": tokens, type, components, accessibility and copy rules) is in
+  `docs/design.md`; follow it for every screen.
 - `map/src/` — example Lua modules for the harness (`wc3map <map> lua <dir>`, implemented in
   `crates/wc3-map/src/lua.rs`): appends the modules plus a `Dev.OnStart` loader and a `main()`
   hook to the editor's `war3map.lua` in a `<map>_dev.w3m` copy named `[DEV] ...`, after

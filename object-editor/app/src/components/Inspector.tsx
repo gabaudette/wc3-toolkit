@@ -5,22 +5,27 @@ import { rangeText } from "./FieldRow";
 import { ModelViewer } from "./ModelViewer";
 
 type InspectorProps = {
-  /** The model to preview, or `null` for objects without one. */
-  modelPath: string | null;
+  /** The model to preview: `null` shows "No model"; leave it out for objects without models. */
+  modelPath?: string | null;
   /** The field last focused on the page. */
   field: Field | null;
+  /** The field has a value per level: its base is level 1's, and it resets in its table. */
+  perLevel?: boolean;
   editable: boolean;
-  clashes: HotkeyClash[];
+  /** Hotkey clashes; leave out for objects the check does not cover. */
+  clashes?: HotkeyClash[];
   onReset: (field: string) => void;
 };
 
 /** What the selected field does, its limits, and its base value. */
 function FieldHelp({
   field,
+  perLevel,
   editable,
   onReset,
 }: {
   field: Field;
+  perLevel: boolean;
   editable: boolean;
   onReset: (field: string) => void;
 }) {
@@ -43,9 +48,13 @@ function FieldHelp({
         </p>
       )}
       <p className="text-sm text-muted">
-        Base value: <span className="text-ink">{field.base || "empty"}</span>
+        Base value{perLevel && " at level 1"}:{" "}
+        <span className="text-ink">{field.base || "empty"}</span>
       </p>
-      {field.modified && editable && (
+      {perLevel && (
+        <p className="text-sm text-muted">Each level has its own value; reset them in the table.</p>
+      )}
+      {field.modified && editable && !perLevel && (
         <div className="self-start">
           <Button small onPress={() => onReset(field.id)}>
             <span className="flex items-center gap-1.5">
@@ -85,25 +94,36 @@ function Checks({ clashes }: { clashes: HotkeyClash[] }) {
  * The page's right column: the model, help for the field being edited, and
  * checks such as hotkey clashes.
  */
-export function Inspector({ modelPath, field, editable, clashes, onReset }: InspectorProps) {
+export function Inspector({
+  modelPath,
+  field,
+  perLevel = false,
+  editable,
+  clashes,
+  onReset,
+}: InspectorProps) {
   return (
     <aside
       aria-label="Inspector"
       className="panel flex w-80 shrink-0 flex-col gap-3 overflow-y-auto rounded-[3px] bg-surface-1 p-3"
     >
-      <ModelViewer path={modelPath} />
+      {modelPath !== undefined && <ModelViewer path={modelPath} />}
 
       <section aria-label="Selected field" className="rounded-[3px] border border-line bg-well p-3">
-        {field && <FieldHelp field={field} editable={editable} onReset={onReset} />}
+        {field && (
+          <FieldHelp field={field} perLevel={perLevel} editable={editable} onReset={onReset} />
+        )}
         {!field && (
           <p className="text-muted">Select a field to see what it does and its base value.</p>
         )}
       </section>
 
-      <section aria-label="Checks" className="rounded-[3px] border border-line bg-well p-3">
-        <h3 className="mb-1.5 font-display text-lg font-bold text-gold">Checks</h3>
-        <Checks clashes={clashes} />
-      </section>
+      {clashes && (
+        <section aria-label="Checks" className="rounded-[3px] border border-line bg-well p-3">
+          <h3 className="mb-1.5 font-display text-lg font-bold text-gold">Checks</h3>
+          <Checks clashes={clashes} />
+        </section>
+      )}
     </aside>
   );
 }

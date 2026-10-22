@@ -96,10 +96,10 @@ export function AbilityPicker({ open, heroOnly, exclude, onPick, onClose }: Abil
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search: holy, AHhb…"
+              placeholder="Search abilities: Holy Light, AHhb…"
               aria-label="Search abilities"
               autoFocus
-              className="rounded-[3px] border border-line bg-well px-3 py-1.5 outline-none focus:border-glow"
+              className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
             />
             {!heroOnly && (
               <div className="flex gap-1">
@@ -110,7 +110,7 @@ export function AbilityPicker({ open, heroOnly, exclude, onPick, onClose }: Abil
                     onClick={() => setKind(k.id)}
                     aria-pressed={kind === k.id}
                     className={classes(
-                      "rounded-full border px-2 py-0.5 text-xs",
+                      "min-h-6 rounded-full border px-2.5 py-1 text-xs",
                       kind === k.id && "border-gold/60 bg-gold-soft text-gold",
                       kind !== k.id && "border-line text-faint hover:text-muted",
                     )}

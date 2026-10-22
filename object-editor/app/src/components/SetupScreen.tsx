@@ -101,7 +101,7 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
               onChange={(e) => setDir(e.target.value)}
               placeholder="C:\Program Files (x86)\Warcraft III"
               aria-label="Warcraft III folder"
-              className="min-w-0 flex-1 rounded-[3px] border border-line bg-well px-3 py-1.5 font-mono text-xs outline-none focus:border-glow"
+              className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 font-mono text-xs outline-none focus:border-glow"
             />
             <Button onPress={browseGame}>Browse…</Button>
           </div>

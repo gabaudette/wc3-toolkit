@@ -45,7 +45,7 @@ export function TransferList({ objects, files, warnings }: TransferListProps) {
             <UnitIcon path={object.icon} size="small" />
             <span className="min-w-0 flex-1 truncate">
               {object.name}
-              {object.dependency && <span className="text-faint"> · used by the selection</span>}
+              {object.dependency && <span className="text-faint"> · brought along</span>}
             </span>
             <span className="text-xs text-faint">{KIND_LABELS[object.kind]}</span>
             <span className="font-mono text-xs text-muted">

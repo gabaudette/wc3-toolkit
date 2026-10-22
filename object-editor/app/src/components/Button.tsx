@@ -23,7 +23,7 @@ export function Button({ children, onPress, primary, disabled, small, label }: B
         small && "px-2 py-1 text-xs",
         !small && "px-3 py-1.5 text-sm",
         primary && "border-gold bg-gold-soft text-gold-bright hover:bg-frame-inner",
-        !primary && "border-line-strong bg-surface-2 text-ink hover:border-frame",
+        !primary && "border-field bg-surface-2 text-ink hover:border-gold",
       )}
     >
       {children}
