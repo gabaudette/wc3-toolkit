@@ -1,12 +1,9 @@
-import { AlertTriangle, ChevronDown, ChevronRight, Copy01 } from "@untitledui/icons";
-import { type ReactNode, useMemo, useState } from "react";
-import { FIELD_GROUPS } from "../fieldGroups";
+import { AlertTriangle, Copy01 } from "@untitledui/icons";
+import { useMemo, useState } from "react";
 import type { Field, HotkeyClash, Section, UnitDetail } from "../types";
-import { classes } from "../ui";
 import { Button } from "./Button";
-import { FieldGroupRow } from "./FieldGroupRow";
-import { FieldRow } from "./FieldRow";
 import { ModelViewer } from "./ModelViewer";
+import { AdvancedGroup, FieldRows, matches, SectionToggle, toggled } from "./Sections";
 import { UnitIcon } from "./UnitIcon";
 
 type UnitPageProps = {
@@ -23,59 +20,9 @@ const MODEL_FIELD = "umdl";
 /** Sections open by default; the rest start folded to keep the page short. */
 const OPEN_BY_DEFAULT = ["stats", "combat", "abil", "text"];
 
-/** Matches names, codes, values and descriptions, so "armor" also finds Defense Type. */
-function matches(field: Field, filter: string): boolean {
-  const needle = filter.toLowerCase();
-  return [field.name, field.id, field.display, field.description ?? ""].some((text) =>
-    text.toLowerCase().includes(needle),
-  );
-}
-
 function visibleFields(section: Section, filter: string, changedOnly: boolean): Field[] {
   return section.fields.filter(
     (f) => (!changedOnly || f.modified) && (!filter || matches(f, filter)),
-  );
-}
-
-function toggled(list: string[], value: string): string[] {
-  if (list.includes(value)) {
-    return list.filter((v) => v !== value);
-  }
-
-  return [...list, value];
-}
-
-type AdvancedGroupProps = {
-  fields: Field[];
-  open: boolean;
-  onToggle: () => void;
-  children: ReactNode;
-};
-
-/** Rarely needed fields, folded at the end of their section. */
-function AdvancedGroup({ fields, open, onToggle, children }: AdvancedGroupProps) {
-  if (fields.length === 0) {
-    return null;
-  }
-
-  const changed = fields.filter((f) => f.modified).length;
-
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={onToggle}
-        aria-expanded={open}
-        className="flex w-full items-center gap-2 border-b border-line/60 px-3 py-1.5 text-left text-sm text-muted hover:text-ink"
-      >
-        {open && <ChevronDown className="size-4" aria-hidden="true" />}
-        {!open && <ChevronRight className="size-4" aria-hidden="true" />}
-        Advanced
-        <span className="text-faint">{fields.length} rarely used fields</span>
-        {changed > 0 && <span className="text-changed">{changed} changed</span>}
-      </button>
-      {open && <div className="bg-surface-0/40">{children}</div>}
-    </div>
   );
 }
 
@@ -142,51 +89,16 @@ export function UnitPage({
     setOpenAdvanced(toggled(openAdvanced, category));
   }
 
-  /** Field rows, with related fields merged into one row where all of them are shown. */
   function rows(fields: Field[]) {
-    const byId = new Map(fields.map((f) => [f.id, f]));
-    const grouped = new Set<string>();
-    const result = [];
-
-    for (const field of fields) {
-      if (grouped.has(field.id)) {
-        continue;
-      }
-
-      const group = FIELD_GROUPS.find((g) => g.ids.includes(field.id));
-      const members = group?.ids.map((id) => byId.get(id));
-      if (group && members?.every(Boolean)) {
-        const present = members.filter((m): m is Field => m !== undefined);
-        for (const id of group.ids) {
-          grouped.add(id);
-        }
-
-        result.push(
-          <FieldGroupRow
-            key={group.label}
-            group={group}
-            fields={present}
-            editable={editable}
-            damageBonus={detail.damageBonus}
-            onChange={onChange}
-            onReset={onReset}
-          />,
-        );
-        continue;
-      }
-
-      result.push(
-        <FieldRow
-          key={field.id}
-          field={field}
-          editable={editable}
-          onChange={(value) => onChange(field.id, value)}
-          onReset={() => onReset(field.id)}
-        />,
-      );
-    }
-
-    return result;
+    return (
+      <FieldRows
+        fields={fields}
+        editable={editable}
+        damageBonus={detail.damageBonus}
+        onChange={onChange}
+        onReset={onReset}
+      />
+    );
   }
 
   return (
@@ -255,31 +167,26 @@ export function UnitPage({
         {sections.map(({ section, fields }) => {
           const expanded = searching || open.includes(section.category);
           const changed = fields.filter((f) => f.modified).length;
+          const advanced = fields.filter((f) => f.advanced);
 
           return (
             <div key={section.category}>
-              <button
-                type="button"
-                onClick={() => toggleSection(section.category)}
-                aria-expanded={expanded}
-                className="sticky top-0 z-10 flex w-full items-center gap-2 border-b border-line bg-surface-1 px-3 py-2 text-left text-sm font-semibold"
-              >
-                {expanded && <ChevronDown className="size-4" aria-hidden="true" />}
-                {!expanded && <ChevronRight className="size-4" aria-hidden="true" />}
-                {section.label}
-                <span className="font-normal text-faint">{fields.length} fields</span>
-                {changed > 0 && (
-                  <span className={classes("font-normal text-changed")}>{changed} changed</span>
-                )}
-              </button>
+              <SectionToggle
+                label={section.label}
+                count={fields.length}
+                changed={changed}
+                expanded={expanded}
+                onToggle={() => toggleSection(section.category)}
+              />
               {expanded && rows(fields.filter((f) => !f.advanced))}
               {expanded && (
                 <AdvancedGroup
-                  fields={fields.filter((f) => f.advanced)}
+                  count={advanced.length}
+                  changed={advanced.filter((f) => f.modified).length}
                   open={searching || openAdvanced.includes(section.category)}
                   onToggle={() => toggleAdvanced(section.category)}
                 >
-                  {rows(fields.filter((f) => f.advanced))}
+                  {rows(advanced)}
                 </AdvancedGroup>
               )}
             </div>

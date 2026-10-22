@@ -40,7 +40,7 @@ const NAME_SOURCES: &[&str] = &[
 ];
 
 /// Metadata category → `WorldEditStrings` key of its display name.
-const CATEGORY_NAMES: &[(&str, &str)] = &[
+pub(crate) const CATEGORY_NAMES: &[(&str, &str)] = &[
     ("abil", "WESTRING_OE_CAT_ABILITIES"),
     ("art", "WESTRING_OE_CAT_ART"),
     ("combat", "WESTRING_OE_CAT_COMBAT"),
@@ -60,6 +60,9 @@ const MAX_STRING_REDIRECTS: usize = 4;
 /// Flag labels read "Ground, &Ground": the display label, then the menu label.
 const MENU_LABEL_SEPARATOR: &str = ", &";
 const NONE_KEY: &str = "WESTRING_NONE";
+/// `UnitEditorData.txt` lists other spellings of choice `01` under `01_Alt`
+/// (keys are stored lowercase).
+const ALIAS_SUFFIX: &str = "_alt";
 
 /// Values the game uses for "no value" in tables.
 const EMPTY_MARKERS: &[&str] = &["", "-", "_"];
@@ -72,6 +75,16 @@ pub struct EnumValue {
     pub value: String,
     /// Label shown in the editor, e.g. `Metal` or `Heavy`.
     pub label: String,
+    /// Other spellings the game accepts, e.g. `invu` for `invulnerable`.
+    pub aliases: Vec<String>,
+}
+
+impl EnumValue {
+    /// Whether `text` is this choice's value or one of its other spellings.
+    pub fn matches(&self, text: &str) -> bool {
+        self.value.eq_ignore_ascii_case(text)
+            || self.aliases.iter().any(|a| a.eq_ignore_ascii_case(text))
+    }
 }
 
 pub struct UnitDatabase {
@@ -245,7 +258,7 @@ impl UnitDatabase {
                 .map(|v| format!("{v:.REAL_DECIMALS$}"))
                 .unwrap_or(raw),
             "string" | "char" => unquote(&raw).to_owned(),
-            "versionFlags" => self.version_flags(&raw),
+            _ if field.is_bit_flags() => self.bit_flags(&field.value_type, &raw),
             "abilityList" | "heroAbilityList" | "abilitySkinList" | "unitList" | "itemList"
             | "upgradeList" | "techList" => self.list_names(&raw),
             other => match self.enums.get(other) {
@@ -316,15 +329,15 @@ impl UnitDatabase {
             .unwrap_or_else(|| "None".to_owned())
     }
 
-    /// Bit flags: entry `n` of the `versionFlags` enum labels bit `n`.
-    fn version_flags(&self, raw: &str) -> String {
+    /// Bit flags: entry `n` of the type's enum labels bit `n`.
+    fn bit_flags(&self, value_type: &str, raw: &str) -> String {
         let Ok(bits) = raw.trim().parse::<u32>() else {
             return raw.to_owned();
         };
 
         let labels: Vec<String> = self
             .enums
-            .get("versionFlags")
+            .get(value_type)
             .into_iter()
             .flatten()
             .filter_map(|v| {
@@ -411,7 +424,7 @@ fn enum_labels(values: &[EnumValue], raw: &str) -> String {
         .map(|item| {
             values
                 .iter()
-                .find(|v| v.value.eq_ignore_ascii_case(item.trim()))
+                .find(|v| v.matches(item.trim()))
                 .map_or_else(|| item.clone(), |v| v.label.clone())
         })
         .collect::<Vec<_>>()
@@ -432,14 +445,27 @@ fn parse_enums(editor_data: &Profile, editor_strings: &Profile) -> HashMap<Strin
 
             let values: Vec<EnumValue> = entries
                 .into_iter()
-                .filter_map(|(_, v)| {
+                .filter_map(|(key, v)| {
                     let mut parts = split_list(v).into_iter();
                     let value = parts.next()?;
                     let label = parts
                         .next()
                         .and_then(|k| resolve_string(editor_strings, &k))
                         .unwrap_or_else(|| value.clone());
-                    Some(EnumValue { value, label })
+                    let aliases = section
+                        .get(&format!("{key}{ALIAS_SUFFIX}"))
+                        .map(|list| {
+                            split_list(list)
+                                .into_iter()
+                                .map(|a| a.trim().to_owned())
+                                .collect()
+                        })
+                        .unwrap_or_default();
+                    Some(EnumValue {
+                        value,
+                        label,
+                        aliases,
+                    })
                 })
                 .collect();
 

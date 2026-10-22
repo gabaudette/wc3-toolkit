@@ -1,0 +1,160 @@
+import { useEffect, useMemo, useState } from "react";
+import { api, errorMessage } from "../api";
+import type { AbilitySummary, SearchHit } from "../types";
+import { classes } from "../ui";
+import { Chip, toggle } from "./Chip";
+import { UnitIcon } from "./UnitIcon";
+
+type AbilityListProps = {
+  abilities: AbilitySummary[];
+  selected: string | null;
+  onSelect: (id: string) => void;
+  onError: (message: string) => void;
+};
+
+type Kind = "hero" | "unit" | "item";
+type Origin = "map" | "game";
+
+const SEARCH_DELAY_MS = 200;
+
+const KINDS: { id: Kind; label: string }[] = [
+  { id: "hero", label: "Hero" },
+  { id: "unit", label: "Unit" },
+  { id: "item", label: "Item" },
+];
+
+const ORIGINS: { id: Origin; label: string }[] = [
+  { id: "map", label: "This map" },
+  { id: "game", label: "Game" },
+];
+
+export function kindOf(ability: AbilitySummary): Kind {
+  if (ability.hero) {
+    return "hero";
+  }
+
+  if (ability.item) {
+    return "item";
+  }
+
+  return "unit";
+}
+
+function originOf(ability: AbilitySummary): Origin {
+  if (ability.inMap) {
+    return "map";
+  }
+
+  return "game";
+}
+
+export function AbilityList({ abilities, selected, onSelect, onError }: AbilityListProps) {
+  const [query, setQuery] = useState("");
+  const [hits, setHits] = useState<SearchHit[] | null>(null);
+  const [kinds, setKinds] = useState<Kind[]>(["hero", "unit", "item"]);
+  const [origins, setOrigins] = useState<Origin[]>(["map", "game"]);
+
+  // Searches again when the list changes, so edited and new abilities show up.
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed || abilities.length === 0) {
+      setHits(null);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      api
+        .searchAbilities(trimmed)
+        .then(setHits)
+        .catch((e) => onError(errorMessage(e)));
+    }, SEARCH_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [query, abilities, onError]);
+
+  const shown = useMemo(() => {
+    const byId = new Map(abilities.map((a) => [a.id, a]));
+    const kept = (ability: AbilitySummary) =>
+      kinds.includes(kindOf(ability)) && origins.includes(originOf(ability));
+
+    if (hits) {
+      return hits
+        .map((hit) => ({ ability: byId.get(hit.id), reason: hit.reason }))
+        .filter((row): row is { ability: AbilitySummary; reason: string } => Boolean(row.ability))
+        .filter((row) => kept(row.ability));
+    }
+
+    return abilities.filter(kept).map((ability) => ({ ability, reason: "" }));
+  }, [abilities, hits, kinds, origins]);
+
+  return (
+    <aside className="flex min-h-0 w-[22rem] shrink-0 flex-col border-r border-line bg-surface-1">
+      <div className="flex flex-col gap-2 border-b border-line p-3">
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search: name, code (AHhb), value (75, 0.5)"
+          aria-label="Search abilities"
+          className="rounded-md border border-line bg-surface-0 px-3 py-1.5 outline-none focus:border-gold"
+        />
+        <div className="flex flex-wrap gap-1">
+          {KINDS.map((k) => (
+            <Chip
+              key={k.id}
+              label={k.label}
+              on={kinds.includes(k.id)}
+              onPress={() => setKinds(toggle(kinds, k.id))}
+            />
+          ))}
+          <span className="mx-1 border-l border-line" />
+          {ORIGINS.map((o) => (
+            <Chip
+              key={o.id}
+              label={o.label}
+              on={origins.includes(o.id)}
+              onPress={() => setOrigins(toggle(origins, o.id))}
+            />
+          ))}
+        </div>
+        <p className="text-xs text-faint">{shown.length} shown</p>
+      </div>
+
+      <ul className="min-h-0 flex-1 overflow-y-auto" aria-label="Abilities">
+        {shown.map(({ ability, reason }) => (
+          <li key={ability.id}>
+            <button
+              type="button"
+              onClick={() => onSelect(ability.id)}
+              aria-current={selected === ability.id}
+              className={classes(
+                "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2",
+                selected === ability.id && "bg-surface-2",
+              )}
+            >
+              <UnitIcon path={ability.icon} size="small" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate">
+                  {ability.name}
+                  {ability.suffix && <span className="ml-1 text-faint">{ability.suffix}</span>}
+                </span>
+                <span className="block truncate font-mono text-xs text-faint">
+                  {ability.id}
+                  {ability.custom && ` · based on ${ability.base}`}
+                  {reason && ` · ${reason}`}
+                </span>
+              </span>
+              {ability.changedFields > 0 && (
+                <span
+                  className="rounded bg-changed-soft px-1.5 text-xs text-changed"
+                  title={`${ability.changedFields} changed values`}
+                >
+                  {ability.changedFields}
+                </span>
+              )}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  );
+}

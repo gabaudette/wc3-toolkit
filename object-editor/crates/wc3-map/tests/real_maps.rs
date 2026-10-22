@@ -8,11 +8,12 @@ use std::path::{Path, PathBuf};
 use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::units::UnitDatabase;
+use wc3_map::abilities::{MapAbilities, MapPlaceholders};
 use wc3_map::transfer::{self, Bundle, MapExtras, MapObjects, ObjectType, References};
 use wc3_map::units::MapUnits;
 use wc3_map::{
-    FourCC, Layout, Map, OBJECT_FILES, ObjectData, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE,
-    save_files,
+    ABILITIES_FILE, ABILITY_SKINS_FILE, FourCC, Layout, Map, OBJECT_FILES, ObjectData,
+    STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, save_files,
 };
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -155,6 +156,127 @@ fn edited_units_save_and_read_back() -> TestResult {
     Ok(())
 }
 
+fn level_and_column(
+    map: &Map,
+    file: &str,
+    id: FourCC,
+    field: &str,
+) -> Result<Vec<(u32, u32)>, Box<dyn std::error::Error>> {
+    let data = map.object_data(file)?.ok_or(format!("{file} missing"))?;
+    let entry = data.find(id).ok_or(format!("{id} missing from {file}"))?;
+    Ok(entry
+        .mods()
+        .filter(|m| m.field.to_string() == field)
+        .map(|m| (m.level.unwrap_or_default(), m.column.unwrap_or_default()))
+        .collect())
+}
+
+/// Ability changes go to war3map.w3a with their level and data column, text
+/// to war3mapSkin.w3a and the string table, and everything reads back.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn edited_abilities_save_and_read_back() -> TestResult {
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let db = AbilityDatabase::load(&files)?;
+    let units_db = UnitDatabase::load(&files)?;
+    let dir = tempfile::tempdir()?;
+    let path = dir.path().join("map.w3m");
+    mpq::Archive::create(&path, MAX_FILES)?.save()?;
+
+    let map = Map::open(&path)?;
+    let mut units = MapUnits::load(&map)?;
+    let mut abilities = MapAbilities::load(&map)?;
+    drop(map);
+    let holy_light = FourCC::parse("AHhb").ok_or("bad id")?;
+    let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
+    let (amount, cooldown, levels, name, tooltip) = (
+        field("Hhb1")?,
+        field("acdn")?,
+        field("alev")?,
+        field("anam")?,
+        field("atp1")?,
+    );
+
+    // A text change that is reset again leaves no string behind.
+    let untouched = (units.files(), abilities.files());
+    abilities.set(
+        &db,
+        units.strings_mut(),
+        holy_light,
+        tooltip,
+        2,
+        "|cffffcc00New|r",
+    )?;
+    assert_ne!((units.files(), abilities.files()), untouched);
+    abilities.reset(units.strings_mut(), holy_light, tooltip, 2);
+    assert_eq!(
+        (units.files(), abilities.files()),
+        untouched,
+        "reset left a string or entry behind"
+    );
+
+    let custom = abilities.create(&db, holy_light)?;
+    abilities.set(&db, units.strings_mut(), custom, amount, 2, "500")?;
+    abilities.set(&db, units.strings_mut(), custom, cooldown, 3, "2.5")?;
+    abilities.set(&db, units.strings_mut(), custom, levels, 0, "4")?;
+    abilities.set(&db, units.strings_mut(), custom, name, 0, "Holier Light")?;
+    let mut written = units.files();
+    written.extend(abilities.files());
+    save_files(&path, &path, &written)?;
+
+    let map = Map::open(&path)?;
+    let units = MapUnits::load(&map)?;
+    let mut reloaded = MapAbilities::load(&map)?;
+    let strings = units.strings();
+    let raw = |abilities: &MapAbilities, field, level| {
+        abilities.raw_value(&db, strings, custom, field, level, ArtMode::Sd)
+    };
+    assert_eq!(custom.to_string(), "A000");
+    assert_eq!(raw(&reloaded, amount, 1).as_deref(), Some("200"));
+    assert_eq!(raw(&reloaded, amount, 2).as_deref(), Some("500"));
+    assert_eq!(raw(&reloaded, cooldown, 3).as_deref(), Some("2.5"));
+    assert_eq!(reloaded.levels(&db, custom), 4);
+    assert_eq!(reloaded.name(&db, strings, custom), "Holier Light");
+    let info = reloaded
+        .info(&db, strings, custom, ArtMode::Sd)
+        .ok_or("no info")?;
+    assert!(info.hero && info.code == "AHhb" && info.levels == 4);
+    assert_eq!(
+        level_and_column(&map, ABILITIES_FILE, custom, "Hhb1")?,
+        [(2, 1)]
+    );
+    assert_eq!(
+        level_and_column(&map, ABILITIES_FILE, custom, "alev")?,
+        [(0, 0)]
+    );
+    assert_eq!(
+        level_and_column(&map, ABILITY_SKINS_FILE, custom, "anam")?,
+        [(0, 0)]
+    );
+    assert_eq!(map.strings()?.resolve("TRIGSTR_001"), "Holier Light");
+
+    // Tooltips naming the ability show the map's values.
+    let placeholders = MapPlaceholders {
+        abilities: &reloaded,
+        db: &db,
+        strings,
+        mode: ArtMode::Sd,
+        others: &units_db,
+    };
+    assert_eq!(
+        db.fill_placeholders("<A000,DataA2> and <A000,Cool3>", &placeholders),
+        "500 and 2.5"
+    );
+
+    // Typing the base ability's value again is no change.
+    let mut strings = units.strings().clone();
+    reloaded.set(&db, &mut strings, custom, amount, 2, "400")?;
+    assert!(!reloaded.is_modified(custom, amount, 2));
+    assert!(reloaded.reset(&mut strings, custom, cooldown, 3));
+    assert!(!reloaded.reset(&mut strings, custom, cooldown, 3));
+    Ok(())
+}
+
 /// Every map's custom units, with what they use, survive a share code and an
 /// import into a copy of the same map, where every ID is taken: all objects get
 /// new IDs, references follow them, and the saved map reads back.
@@ -179,6 +301,7 @@ fn custom_units_move_between_maps() -> TestResult {
     for path in &maps {
         let map = Map::open(path)?;
         let units = MapUnits::load(&map)?;
+        let abilities = MapAbilities::load(&map)?;
         let extras = MapExtras::load(&map)?;
         let custom: Vec<FourCC> = units
             .units()
@@ -192,6 +315,7 @@ fn custom_units_move_between_maps() -> TestResult {
 
         let source = MapObjects {
             units: &units,
+            abilities: &abilities,
             extras: &extras,
         };
         let export = transfer::export(source, &refs, &custom)?;
@@ -204,9 +328,11 @@ fn custom_units_move_between_maps() -> TestResult {
         );
 
         let mut target_units = MapUnits::load(&map)?;
+        let mut target_abilities = MapAbilities::load(&map)?;
         let mut target_extras = MapExtras::load(&map)?;
         let target = MapObjects {
             units: &target_units,
+            abilities: &target_abilities,
             extras: &target_extras,
         };
         let plan = transfer::plan(&bundle, target, &in_game)?;
@@ -215,18 +341,38 @@ fn custom_units_move_between_maps() -> TestResult {
             "{}: an ID that is taken was kept",
             path.display()
         );
-        transfer::apply(&bundle, &plan, &refs, &mut target_units, &mut target_extras);
+        transfer::apply(
+            &bundle,
+            &plan,
+            &refs,
+            &mut target_units,
+            &mut target_abilities,
+            &mut target_extras,
+        );
 
         // Protected maps cannot be rewritten, so the result goes into a new archive.
         let copy = dir.path().join(format!("moved{moved_maps}.w3x"));
         mpq::Archive::create(&copy, MOVED_MAX_FILES)?.save()?;
         let mut written = target_units.files();
+        written.extend(target_abilities.files());
         written.extend(target_extras.files());
         save_files(&copy, &copy, &written)?;
 
         let saved = Map::open(&copy)?;
         let reread = MapUnits::load(&saved)?;
+        let reread_abilities = MapAbilities::load(&saved)?;
         MapExtras::load(&saved)?;
+        for planned in plan.iter().filter(|p| p.ty == ObjectType::Ability) {
+            assert!(
+                reread_abilities
+                    .abilities()
+                    .iter()
+                    .any(|a| a.id == planned.new_id && a.is_custom),
+                "{}: ability {} is missing after saving",
+                path.display(),
+                planned.new_id
+            );
+        }
         let old_ids: Vec<FourCC> = plan
             .iter()
             .filter(|p| p.ty == ObjectType::Unit)

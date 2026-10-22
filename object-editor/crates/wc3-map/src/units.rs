@@ -12,13 +12,13 @@ use wc3_data::objects::{FourCC, Layout, ModSet, Modification, ObjectData, Object
 use wc3_data::strings::{MapStrings, reference_id};
 use wc3_data::units::UnitDatabase;
 
+use crate::values::{is_translatable, parse_value};
 use crate::{Error, Map, Result, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE};
 
 /// Characters the World Editor uses for the last three letters of new IDs (`H000`, `H00A`, ...).
 const ID_ALPHABET: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const ID_SUFFIX_LEN: u32 = 3;
 const NAME_FIELD: &str = "unam";
-const TEXT_CATEGORY: &str = "text";
 
 pub struct MapUnits {
     data: ObjectData,
@@ -50,8 +50,14 @@ impl MapUnits {
         })
     }
 
+    /// The map's string table. Units keep it; abilities borrow it to store
+    /// their text.
     pub fn strings(&self) -> &MapStrings {
         &self.strings
+    }
+
+    pub fn strings_mut(&mut self) -> &mut MapStrings {
+        &mut self.strings
     }
 
     /// The unit tables (gameplay, skin) and the string table, for moving
@@ -430,39 +436,6 @@ fn same_as_base(db: &UnitDatabase, base: FourCC, field: &FieldMeta, value: &Valu
     [ArtMode::Sd, ArtMode::Hd].iter().all(|mode| {
         let base_value = db.raw_value(&base, field, *mode).unwrap_or_default();
         parse_value(field, &base_value).is_ok_and(|parsed| &parsed == value)
-    })
-}
-
-fn is_translatable(field: &FieldMeta) -> bool {
-    field.category == TEXT_CATEGORY && field.value_type == "string"
-}
-
-fn parse_value(field: &FieldMeta, text: &str) -> Result<Value> {
-    let text = text.trim();
-    let invalid = || {
-        Error::Invalid(format!(
-            "{} expects a {}, got {text:?}",
-            field.id, field.value_type
-        ))
-    };
-
-    Ok(match field.value_type.as_str() {
-        "int" => Value::Int(text.parse().map_err(|_| invalid())?),
-        "bool" => Value::Int(match text.to_ascii_lowercase().as_str() {
-            "1" | "true" => 1,
-            "0" | "false" => 0,
-            _ => return Err(invalid()),
-        }),
-        "real" => Value::Real(text.parse().map_err(|_| invalid())?),
-        "unreal" => {
-            let v: f32 = text.parse().map_err(|_| invalid())?;
-            if v < 0.0 {
-                return Err(invalid());
-            }
-
-            Value::Unreal(v)
-        }
-        _ => Value::String(text.to_owned()),
     })
 }
 

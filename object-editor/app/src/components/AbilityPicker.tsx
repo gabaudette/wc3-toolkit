@@ -19,20 +19,6 @@ type AbilityPickerProps = {
 /** Results shown at once; typing narrows the list further. */
 const MAX_RESULTS = 200;
 
-let allAbilities: Promise<AbilitySummary[]> | null = null;
-
-/** Loaded once per session; the game's ability list does not change. */
-function loadAbilities(): Promise<AbilitySummary[]> {
-  if (!allAbilities) {
-    allAbilities = api.listAbilities().catch((e) => {
-      allAbilities = null;
-      throw e;
-    });
-  }
-
-  return allAbilities;
-}
-
 function kindOf(ability: AbilitySummary): Kind {
   if (ability.hero) {
     return "hero";
@@ -62,7 +48,9 @@ export function AbilityPicker({ open, heroOnly, exclude, onPick, onClose }: Abil
       return;
     }
 
-    loadAbilities()
+    // Loaded each time: the map's own abilities change while editing.
+    api
+      .listAbilities()
       .then(setAbilities)
       .catch((e) => setError(errorMessage(e)));
   }, [open]);

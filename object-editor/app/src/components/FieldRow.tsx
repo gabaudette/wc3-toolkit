@@ -5,6 +5,7 @@ import type { Field } from "../types";
 import { classes } from "../ui";
 import { AbilityField } from "./AbilityField";
 import { ColoredTextInput } from "./ColoredTextInput";
+import { FlagsInput } from "./FlagsInput";
 import { TextPreview } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
@@ -96,6 +97,10 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
         {field.display}
       </Switch>
     );
+  }
+
+  if (field.control === "flags" || field.control === "flagList") {
+    return <FlagsInput field={field} raw={field.raw} editable={editable} onChange={onChange} />;
   }
 
   if (field.control === "select") {
@@ -225,7 +230,7 @@ function rangeText(field: Field): string | null {
   return null;
 }
 
-function Description({ field }: { field: Field }) {
+export function Description({ field }: { field: Field }) {
   const range = rangeText(field);
 
   return (
@@ -282,7 +287,7 @@ export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) 
         <button
           type="button"
           onClick={onReset}
-          title="Reset to the base unit's value"
+          title="Reset to the base value"
           aria-label={`Reset ${field.name}`}
           className="mt-0.5 rounded p-1 text-faint hover:bg-surface-2 hover:text-ink"
         >

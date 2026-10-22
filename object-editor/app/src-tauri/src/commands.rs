@@ -8,12 +8,14 @@ use tauri::State;
 use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::guide::FieldGuide;
+use wc3_data::meta::FieldMeta;
 use wc3_data::units::UnitDatabase;
+use wc3_map::abilities::MapAbilities;
 use wc3_map::transfer::MapExtras;
 use wc3_map::units::MapUnits;
-use wc3_map::{FourCC, Map, save_files};
+use wc3_map::{FourCC, Map, MapStrings, save_files};
 
-use crate::abilities::{self, AbilityCard, AbilitySummary};
+use crate::abilities::{AbilityCard, AbilityDetail, AbilitySummary, AbilityView};
 use crate::hotkeys::{self, Clash};
 use crate::platform;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
@@ -48,6 +50,27 @@ pub(crate) fn view(session: &Session) -> View<'_> {
     }
 }
 
+/// Runs `f` with the abilities as the open map has them, or the game's alone.
+pub(crate) fn with_abilities<T>(session: &Session, f: impl FnOnce(&AbilityView<'_>) -> T) -> T {
+    let unchanged;
+    let (map, strings) = match &session.map {
+        Some(open) => (&open.abilities, open.units.strings()),
+        None => {
+            unchanged = (MapAbilities::empty(), MapStrings::default());
+            (&unchanged.0, &unchanged.1)
+        }
+    };
+
+    f(&AbilityView {
+        db: &session.abilities,
+        units: &session.db,
+        guide: &session.ability_guide,
+        map,
+        strings,
+        mode: session.mode,
+    })
+}
+
 fn path_text(path: &Path) -> String {
     path.to_string_lossy().into_owned()
 }
@@ -71,6 +94,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
     let db = UnitDatabase::load(&files).map_err(|e| e.to_string())?;
     let guide = FieldGuide::units().map_err(|e| e.to_string())?;
     let abilities = AbilityDatabase::load(&files).map_err(|e| e.to_string())?;
+    let ability_guide = FieldGuide::abilities().map_err(|e| e.to_string())?;
     let summary = GameSummary {
         dir: path_text(&dir),
         units: db.ids().len(),
@@ -83,6 +107,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
         db,
         guide,
         abilities,
+        ability_guide,
         mode,
         map: None,
         icons: HashMap::new(),
@@ -95,11 +120,12 @@ pub fn open_map(state: State<'_, AppState>, path: String) -> Result<MapSummary, 
     let path = PathBuf::from(path);
     let map = Map::open(&path).map_err(|e| e.to_string())?;
     let units = MapUnits::load(&map).map_err(|e| e.to_string())?;
+    let abilities = MapAbilities::load(&map).map_err(|e| e.to_string())?;
     let extras = MapExtras::load(&map).map_err(|e| e.to_string())?;
     drop(map);
 
     state.with(|session| {
-        session.map = Some(OpenMap::new(path.clone(), units, extras));
+        session.map = Some(OpenMap::new(path.clone(), units, abilities, extras));
         Ok(map_summary(session))
     })
 }
@@ -136,9 +162,10 @@ pub fn unit_detail(state: State<'_, AppState>, id: String) -> Result<UnitDetail,
     })
 }
 
+/// The map's abilities first, then the game's.
 #[tauri::command]
 pub fn list_abilities(state: State<'_, AppState>) -> Result<Vec<AbilitySummary>, String> {
-    state.with(|session| Ok(abilities::list(&session.abilities)))
+    state.with(|session| Ok(with_abilities(session, |abilities| abilities.list())))
 }
 
 #[tauri::command]
@@ -147,23 +174,51 @@ pub fn ability_cards(
     ids: Vec<String>,
 ) -> Result<Vec<AbilityCard>, String> {
     state.with(|session| {
-        Ok(ids
-            .iter()
-            .map(|id| abilities::card(&session.abilities, &session.db, id.trim()))
-            .collect())
+        Ok(with_abilities(session, |abilities| {
+            ids.iter().map(|id| abilities.card(id.trim())).collect()
+        }))
+    })
+}
+
+#[tauri::command]
+pub fn ability_detail(state: State<'_, AppState>, id: String) -> Result<AbilityDetail, String> {
+    let id = fourcc(&id)?;
+    state.with(|session| {
+        with_abilities(session, |abilities| abilities.detail(id))
+            .ok_or(format!("Unknown ability {id}."))
+    })
+}
+
+#[tauri::command]
+pub fn search_abilities(
+    state: State<'_, AppState>,
+    query: String,
+) -> Result<Vec<SearchHit>, String> {
+    state.with(|session| {
+        Ok(with_abilities(session, |abilities| {
+            abilities.search(&query)
+        }))
     })
 }
 
 #[tauri::command]
 pub fn hotkey_clashes(state: State<'_, AppState>, id: String) -> Result<Vec<Clash>, String> {
     let id = fourcc(&id)?;
-    state.with(|session| Ok(hotkeys::clashes(&view(session), &session.abilities, id)))
+    state.with(|session| {
+        Ok(with_abilities(session, |abilities| {
+            hotkeys::clashes(&view(session), &|ability| abilities.info(ability), id)
+        }))
+    })
 }
 
 /// Fills `<ID,Column>` placeholders in text being typed, for the live preview.
 #[tauri::command]
 pub fn fill_placeholders(state: State<'_, AppState>, text: String) -> Result<String, String> {
-    state.with(|session| Ok(session.abilities.fill_placeholders(&text, &session.db)))
+    state.with(|session| {
+        Ok(with_abilities(session, |abilities| {
+            abilities.fill_placeholders(&text)
+        }))
+    })
 }
 
 #[tauri::command]
@@ -226,6 +281,81 @@ pub fn create_unit(state: State<'_, AppState>, base: String) -> Result<UnitItem,
             .map_err(|e| e.to_string())?;
         view(session)
             .item(id)
+            .ok_or(format!("Created {id} but cannot show it."))
+    })
+}
+
+/// Applies `change` to an ability in the open map and returns its new page.
+fn edit_ability(
+    state: &AppState,
+    id: &str,
+    field_id: &str,
+    change: impl FnOnce(
+        &AbilityDatabase,
+        &mut MapAbilities,
+        &mut MapStrings,
+        FourCC,
+        &FieldMeta,
+    ) -> Result<(), String>,
+) -> Result<AbilityDetail, String> {
+    let id = fourcc(id)?;
+    state.with(|session| {
+        let field = session
+            .abilities
+            .field(field_id)
+            .ok_or(format!("Unknown field {field_id}."))?;
+        let map = session.map.as_mut().ok_or(NO_MAP)?;
+        change(
+            &session.abilities,
+            &mut map.abilities,
+            map.units.strings_mut(),
+            id,
+            field,
+        )?;
+        with_abilities(session, |abilities| abilities.detail(id))
+            .ok_or(format!("Unknown ability {id}."))
+    })
+}
+
+/// Sets an ability field at `level` (0 for fields without levels).
+#[tauri::command]
+pub fn set_ability_field(
+    state: State<'_, AppState>,
+    id: String,
+    field: String,
+    level: u32,
+    value: String,
+) -> Result<AbilityDetail, String> {
+    edit_ability(&state, &id, &field, |db, abilities, strings, id, meta| {
+        abilities
+            .set(db, strings, id, meta, level, &value)
+            .map_err(|e| e.to_string())
+    })
+}
+
+#[tauri::command]
+pub fn reset_ability_field(
+    state: State<'_, AppState>,
+    id: String,
+    field: String,
+    level: u32,
+) -> Result<AbilityDetail, String> {
+    edit_ability(&state, &id, &field, |_, abilities, strings, id, meta| {
+        abilities.reset(strings, id, meta, level);
+        Ok(())
+    })
+}
+
+#[tauri::command]
+pub fn create_ability(state: State<'_, AppState>, base: String) -> Result<AbilitySummary, String> {
+    let base = fourcc(&base)?;
+    state.with(|session| {
+        let map = session.map.as_mut().ok_or(NO_MAP)?;
+        let id = map
+            .abilities
+            .create(&session.abilities, base)
+            .map_err(|e| e.to_string())?;
+        with_abilities(session, |abilities| abilities.summary(id))
             .ok_or(format!("Created {id} but cannot show it."))
     })
 }

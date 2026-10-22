@@ -12,7 +12,10 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `objects` (all Object Editor files, v1–v3, byte-exact round trip) and `strings` (`war3map.wts`).
   `crates/mpq` reads/writes map archives via the vendored StormLib (built with CMake).
   `crates/wc3-map` opens maps, saves through a temp copy (`save_files`), and `units::MapUnits`
-  applies a map's unit changes over the game data and edits them. `transfer` moves custom
+  applies a map's unit changes over the game data and edits them; `abilities::MapAbilities`
+  does the same for abilities (per level), and owns the ability tables `transfer` reads and
+  imports into. The map's string table lives in `MapUnits`; ability text goes through
+  `MapUnits::strings_mut`. `transfer` moves custom
   units with the custom units, abilities and buffs they reference between maps: share codes
   (`W3OBJ1:` + base64 of deflated object files) and imports, renaming taken IDs and every
   reference to them (found through field metadata types). `wc3map` is its CLI
@@ -24,7 +27,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   shim builds with warnings as errors.
 - `object-editor/app/` — the Tauri 2 editor: React 19 + TypeScript + Vite + Tailwind 4 +
   react-aria-components, Bun, Biome with the AGE baseline plus the React domain. Rust side in
-  `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI,
+  `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI
+  (`abilities.rs` the same for abilities: list, cards, pages with per-level cells),
   `commands.rs` (Tauri commands), `icons.rs` (`wc3icon:` URL scheme serving PNG icons),
   `platform.rs` (install/maps folder detection, the only platform-specific module).
   `api.ts`/`types.ts` mirror the Rust types. Run with `bun run tauri dev` from `app/`.
@@ -51,7 +55,10 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
 - `versionFlags` fields are bit flags (0 = None), not single choices.
 - Abilities (`wc3-data::abilities`): per-level columns are `<field><level>` (`Cool2`), spell data
   `Data<letter><level>` (`DataA1`); metadata `useSpecific`/`notSpecific` say which apply to which
-  ability code and give the labels. Tooltip placeholders `<ID,Column[,%]>` can point at ability,
+  ability code and give the labels. `AbilityData.slk` has columns for 6 levels; empty (`-`)
+  means 0 in game. Per-level profile text (`Tip`, `Ubertip`) is a comma list, one per level.
+  `data/ability-fields.toml` is the guide for the 70 generic ability fields (not the
+  spell-specific data fields, whose editor names already explain them). Tooltip placeholders `<ID,Column[,%]>` can point at ability,
   upgrade (`base1`, `mod1`) or unit tables (`realHP`, `mindmg1`); all game tooltips resolve.
 - Reforged moved some SLK columns into skin profile files; lookups fall back to the profile.
 
@@ -60,7 +67,11 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
 - Object files (`war3map.w3u/.w3t/.w3b/.w3d/.w3a/.w3h/.w3q`) share one layout. Version 3 groups
   modifications into sets with a flags word (meaning of the flags not yet known; maps seen so
   far use 0). Leveled files (`.w3d/.w3a/.w3q`) store `type, level, column` after the field ID —
-  type first.
+  type first. In `.w3a`, fields without levels use level 0 column 0; per-level fields use
+  level 1.. and the data column (`DataA` = 1, generic ones like `Cool` = 0).
+- Bit flags (`stackFlags`, `versionFlags`, ...) and numbered choices (`attackBits`,
+  `defenseTypeInt`, ...) are stored as integers; `FieldMeta::is_integer` lists them.
+  `UnitEditorData.txt` gives other accepted spellings as `NN_Alt` (`invu` = invulnerable).
 - Reforged splits unit changes: gameplay fields in `war3map.w3u`, "netsafe" (cosmetic) fields
   in `war3mapSkin.w3u`. Confirmed for names; other fields follow the metadata's `netsafe` flag.
 - Text fields hold `TRIGSTR_007` references into `war3map.wts` (UTF-8 BOM, CRLF, `//` comments).

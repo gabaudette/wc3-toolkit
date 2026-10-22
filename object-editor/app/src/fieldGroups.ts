@@ -42,6 +42,24 @@ export const FIELD_GROUPS: FieldGroup[] = [
   },
   { kind: "color", label: "Tinting Color", ids: ["uclr", "uclg", "uclb"], parts: ["R", "G", "B"] },
   { kind: "button", label: "Button Position", ids: ["ubpx", "ubpy"], parts: ["Column", "Row"] },
+  {
+    kind: "button",
+    label: "Button Position - Normal",
+    ids: ["abpx", "abpy"],
+    parts: ["Column", "Row"],
+  },
+  {
+    kind: "button",
+    label: "Button Position - Research",
+    ids: ["arpx", "arpy"],
+    parts: ["Column", "Row"],
+  },
+  {
+    kind: "button",
+    label: "Button Position - Turn Off",
+    ids: ["aubx", "auby"],
+    parts: ["Column", "Row"],
+  },
   { kind: "pair", label: "Shadow Image - Center", ids: ["ushx", "ushy"], parts: ["X", "Y"] },
   { kind: "pair", label: "Shadow Image - Size", ids: ["ushw", "ushh"], parts: ["Width", "Height"] },
 ];

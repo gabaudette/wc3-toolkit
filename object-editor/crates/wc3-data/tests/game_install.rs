@@ -265,3 +265,101 @@ fn ability_tooltip_placeholders_resolve() -> TestResult {
     );
     Ok(())
 }
+
+/// The ability guide describes every generic ability field (those not tied to
+/// specific abilities) and nothing else, each under its real category.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn the_ability_guide_covers_every_generic_field() -> TestResult {
+    let (files, _) = open(GameOptions::default())?;
+    let abilities = wc3_data::abilities::AbilityDatabase::load(&files)?;
+    let guide = FieldGuide::abilities()?;
+
+    let missing: Vec<&str> = abilities
+        .fields()
+        .iter()
+        .filter(|f| f.use_specific.is_empty())
+        .map(|f| f.id.as_str())
+        .filter(|id| guide.entry(id).is_none())
+        .collect();
+    let unknown: Vec<&str> = guide
+        .field_ids()
+        .filter(|id| {
+            abilities
+                .field(id)
+                .is_none_or(|f| !f.use_specific.is_empty())
+        })
+        .collect();
+    let misplaced: Vec<String> = guide
+        .ordered()
+        .filter_map(|(id, category)| {
+            let field = abilities.field(id)?;
+            (field.category != category)
+                .then(|| format!("{id} is {} not {category}", field.category))
+        })
+        .collect();
+
+    assert!(missing.is_empty(), "no description: {missing:?}");
+    assert!(
+        unknown.is_empty(),
+        "not generic ability fields: {unknown:?}"
+    );
+    assert!(misplaced.is_empty(), "{misplaced:?}");
+    Ok(())
+}
+
+/// Base values per level, from the data table and from per-level profile lists.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn ability_values_per_level() -> TestResult {
+    let (files, _) = open(GameOptions::default())?;
+    let abilities = wc3_data::abilities::AbilityDatabase::load(&files)?;
+    let field = |id: &str| abilities.field(id).ok_or(format!("no {id}"));
+    let value = |id: &str, level| -> TestResult<Option<String>> {
+        Ok(abilities.raw_value("AHhb", field(id)?, level, ArtMode::Sd))
+    };
+
+    assert_eq!(value("Hhb1", 2)?.as_deref(), Some("400"));
+    assert_eq!(value("amcs", 3)?.as_deref(), Some("65"));
+    assert_eq!(value("alev", 0)?.as_deref(), Some("3"));
+    assert_eq!(value("anam", 0)?.as_deref(), Some("Holy Light"));
+    assert!(value("atp1", 2)?.is_some_and(|t| t.contains("Level 2")));
+    assert!(value("arut", 0)?.is_some_and(|t| t.contains("<AHhb,DataA1>")));
+    assert_eq!(value("abpy", 0)?.as_deref(), Some("2"));
+    assert_eq!(value("Hhb1", 5)?, None, "Holy Light has no level 5 data");
+
+    let fields = abilities.fields_for("AHhb", true, false);
+    assert!(fields.iter().any(|f| f.id == "Hhb1"));
+    assert!(
+        fields.iter().any(|f| f.id == "arut"),
+        "heroes have learn tooltips"
+    );
+    assert!(
+        !fields.iter().any(|f| f.id == "Hbh1"),
+        "Bash's data is not Holy Light's"
+    );
+    let column = abilities.column_field("AHhb", "DataA2");
+    assert_eq!(
+        column.map(|(f, level)| (f.id.as_str(), level)),
+        Some(("Hhb1", 2))
+    );
+    Ok(())
+}
+
+/// Choices keep the other spellings the game accepts, like `invu` for targets.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn choices_know_other_spellings() -> TestResult {
+    let (_, db) = open(GameOptions::default())?;
+    let targets = db.enum_values("targetList").ok_or("no targetList")?;
+    let invulnerable = targets
+        .iter()
+        .find(|c| c.value == "invulnerable")
+        .ok_or("no invulnerable")?;
+
+    assert!(invulnerable.matches("invu"));
+    let field = db.field("ua1g").ok_or("no ua1g")?;
+    let shown = db.format_value(field, Some("air,invu".to_owned()));
+    assert_eq!(shown, format!("Air, {}", invulnerable.label));
+    Ok(())
+}

@@ -1,14 +1,16 @@
 //! Warcraft III maps: reading and writing their object data and strings, and
-//! viewing the game's units with a map's changes applied.
+//! viewing the game's units and abilities with a map's changes applied.
 
 use std::path::{Path, PathBuf};
 
 pub use wc3_data::objects::{FourCC, Layout, ObjectData, Value};
 pub use wc3_data::strings::MapStrings;
 
+pub mod abilities;
 pub mod lua;
 pub mod transfer;
 pub mod units;
+mod values;
 
 pub const STRINGS_FILE: &str = "war3map.wts";
 pub const UNITS_FILE: &str = "war3map.w3u";
