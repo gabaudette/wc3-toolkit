@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The main window: app commands, the open-file dialog, the unsaved-changes prompt, and closing itself after that prompt.",
+  "description": "The main window: app commands, the open- and save-file dialogs, the unsaved-changes prompt, and closing itself after that prompt.",
   "windows": ["main"],
-  "permissions": ["core:default", "core:window:allow-destroy", "dialog:allow-open", "dialog:allow-ask"]
+  "permissions": ["core:default", "core:window:allow-destroy", "dialog:allow-open", "dialog:allow-save", "dialog:allow-ask"]
 }

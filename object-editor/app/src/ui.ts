@@ -49,6 +49,25 @@ export const remembered = {
 /** File types the map pickers offer. */
 export const MAP_FILTERS = [{ name: "Warcraft III maps", extensions: ["w3m", "w3x"] }];
 
+/** File types the bundle file pickers offer. */
+export const BUNDLE_FILTERS = [{ name: "Object bundles", extensions: ["w3obj"] }];
+
+const KILOBYTE = 1024;
+const MEGABYTE = KILOBYTE * KILOBYTE;
+
+/** "820 bytes", "35 KB", "1.5 MB". */
+export function fileSize(bytes: number): string {
+  if (bytes >= MEGABYTE) {
+    return `${(bytes / MEGABYTE).toFixed(1)} MB`;
+  }
+
+  if (bytes >= KILOBYTE) {
+    return `${Math.round(bytes / KILOBYTE)} KB`;
+  }
+
+  return `${bytes} bytes`;
+}
+
 export const GAME_DIR_KEY = "wc3-object-editor.gameDir";
 export const MAP_PATH_KEY = "wc3-object-editor.mapPath";
 export const HD_KEY = "wc3-object-editor.hd";

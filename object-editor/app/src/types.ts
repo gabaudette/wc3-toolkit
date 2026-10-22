@@ -172,17 +172,32 @@ export type TransferObject = {
   dependency: boolean;
 };
 
+/** What importing a file does: added, already in the map, or the map keeps its own. */
+export type FileStatus = "new" | "same" | "different";
+
+/** A file imported into a map (model, texture, icon) that travels with objects. */
+export type TransferFile = {
+  path: string;
+  size: number;
+  /** Set when importing. */
+  status: FileStatus | null;
+};
+
 export type SharePreview = {
   code: string;
   objects: TransferObject[];
+  /** In bundle files only; share codes leave them out. */
+  files: TransferFile[];
   warnings: string[];
 };
 
 export type ImportPreview = {
   objects: TransferObject[];
+  files: TransferFile[];
   warnings: string[];
 };
 
 export type ImportSource =
   | { kind: "code"; code: string }
+  | { kind: "bundle"; path: string }
   | { kind: "map"; path: string; ids: string[] };

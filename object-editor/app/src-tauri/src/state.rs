@@ -8,7 +8,9 @@ use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles};
 use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
+use wc3_map::Map;
 use wc3_map::abilities::MapAbilities;
+use wc3_map::imports::MapImports;
 use wc3_map::transfer::MapExtras;
 use wc3_map::units::MapUnits;
 
@@ -31,17 +33,26 @@ pub struct OpenMap {
     pub abilities: MapAbilities,
     /// Buffs: only imports change them.
     pub extras: MapExtras,
+    /// The import list, and files imports queued for the next save.
+    pub imports: MapImports,
     /// The files as last loaded or saved, to tell whether anything changed.
     pub saved_files: Vec<(&'static str, Vec<u8>)>,
 }
 
 impl OpenMap {
-    pub fn new(path: PathBuf, units: MapUnits, abilities: MapAbilities, extras: MapExtras) -> Self {
+    pub fn new(
+        path: PathBuf,
+        units: MapUnits,
+        abilities: MapAbilities,
+        extras: MapExtras,
+        imports: MapImports,
+    ) -> Self {
         let mut map = Self {
             path,
             units,
             abilities,
             extras,
+            imports,
             saved_files: Vec::new(),
         };
         map.saved_files = map.files();
@@ -59,7 +70,19 @@ impl OpenMap {
     /// Whether the map differs from the file on disk. Undoing every change
     /// by hand counts as no change.
     pub fn unsaved(&self) -> bool {
-        self.files() != self.saved_files
+        self.files() != self.saved_files || self.imports.has_pending()
+    }
+
+    /// Reads a file from the map: one an import queued, or else from the
+    /// file on disk (opened once per reader).
+    pub fn reader(&self) -> impl Fn(&str) -> Option<Vec<u8>> + '_ {
+        let archive = Map::open(&self.path).ok();
+        move |path| {
+            self.imports
+                .pending(path)
+                .map(<[u8]>::to_vec)
+                .or_else(|| archive.as_ref()?.read_file(path).ok().flatten())
+        }
     }
 }
 
