@@ -11,6 +11,7 @@ casc = { path = "../casc" }
 thiserror = "2"
 texpresso = "2"
 png = "0.17"
+jpeg-decoder = { version = "0.3", default-features = false }
 serde = { version = "1", features = ["derive"] }
 toml = "0.9"
 

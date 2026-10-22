@@ -1,5 +1,7 @@
-//! Serves game files to the window through custom URL schemes. The path after
-//! the host is the file's game path, URL-encoded.
+//! Serves art to the window through custom URL schemes. The path after the
+//! host is the file's path as game data or a model names it, URL-encoded. The
+//! open map's file comes first (imported models, textures and icons, which may
+//! also replace game files), then the game's.
 //!
 //! - `wc3icon:` icons as PNG (cached; small and shown in lists)
 //! - `wc3tex:` textures as raw RGBA with a size header (large, for the 3D view)
@@ -7,8 +9,8 @@
 
 use tauri::http::{Request, Response, StatusCode, header};
 use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
-use wc3_data::icon::{dds_file, decode_dds, load_texture};
-use wc3_data::model::load_model;
+use wc3_data::icon::{dds_file, decode_texture, load_texture};
+use wc3_data::model::{load_model, preview_copy};
 
 use crate::state::AppState;
 
@@ -68,6 +70,19 @@ pub fn handle_model<R: Runtime>(
 fn icon_png<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>, String> {
     let state = app.state::<AppState>();
     state.with(|session| {
+        if let Some(map) = &mut session.map {
+            if let Some(png) = map.icons.get(path) {
+                return Ok(png.clone());
+            }
+
+            if let Some((file, data)) = map.art(path) {
+                let image = decode_texture(&data).map_err(|e| format!("{file}: {e}"))?;
+                let png = image.to_png().map_err(|e| e.to_string())?;
+                map.icons.insert(path.to_owned(), png.clone());
+                return Ok(png);
+            }
+        }
+
         let key = (session.mode, path.to_owned());
         if let Some(png) = session.icons.get(&key) {
             return Ok(png.clone());
@@ -83,22 +98,33 @@ fn icon_png<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>
 /// Reads the file while holding the session lock, then decodes after
 /// releasing it, so a large texture never stalls other commands.
 fn texture_raw<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>, String> {
-    let file = dds_file(path);
     let state = app.state::<AppState>();
-    let data = state.with(|session| {
-        session
+    let (file, data) = state.with(|session| {
+        if let Some(found) = session.map.as_ref().and_then(|map| map.art(path)) {
+            return Ok(found);
+        }
+
+        let file = dds_file(path);
+        let data = session
             .files
             .read_art(&file, session.mode)
-            .map_err(|e| e.to_string())
+            .map_err(|e| e.to_string())?;
+        Ok((file, data))
     })?;
 
-    let image = decode_dds(&data).map_err(|e| format!("{file}: {e}"))?;
+    let image = decode_texture(&data).map_err(|e| format!("{file}: {e}"))?;
     Ok(image.to_raw())
 }
 
 fn model_bytes<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>, String> {
     let state = app.state::<AppState>();
-    state.with(|session| load_model(&session.files, path, session.mode).map_err(|e| e.to_string()))
+    state.with(|session| {
+        if let Some((file, data)) = session.map.as_ref().and_then(|map| map.art(path)) {
+            return preview_copy(&data).map_err(|e| format!("{file}: {e}"));
+        }
+
+        load_model(&session.files, path, session.mode).map_err(|e| e.to_string())
+    })
 }
 
 fn response(status: StatusCode, content_type: &str, body: Vec<u8>) -> Response<Vec<u8>> {
@@ -110,7 +136,7 @@ fn response(status: StatusCode, content_type: &str, body: Vec<u8>) -> Response<V
 
     // The page fetches models and textures from these schemes; in development it
     // runs from the dev server's origin, so the response must allow that origin.
-    // These schemes only exist inside this app and only serve game files.
+    // These schemes only exist inside this app and only serve game and map art.
     if let Ok(value) = "*".parse() {
         response
             .headers_mut()

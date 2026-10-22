@@ -2,7 +2,9 @@
 //!
 //! Data files and models name textures `*.blp` or `*.tif`, but Reforged ships
 //! them as `.dds` (DXT1, DXT5, or ATI2 for normal maps) in its SD and HD layers.
+//! Maps import `.blp` files too ([`crate::blp`]).
 
+use crate::blp::{self, decode_blp};
 use crate::game::{ArtMode, GameFiles};
 use crate::{Error, Result};
 
@@ -71,6 +73,16 @@ pub fn dds_file(path: &str) -> String {
     };
 
     format!("{stem}.dds")
+}
+
+/// Decodes a DDS or BLP1 texture, told apart by their first bytes. Maps can
+/// import either.
+pub fn decode_texture(data: &[u8]) -> Result<Image> {
+    if data.starts_with(blp::MAGIC) {
+        decode_blp(data)
+    } else {
+        decode_dds(data)
+    }
 }
 
 /// Decodes the top mip level of a DXT1, DXT3, DXT5, ATI1 or ATI2 DDS file.
@@ -176,6 +188,8 @@ mod tests {
     #[test]
     fn rejects_unknown_formats_and_truncated_data() {
         assert!(decode_dds(b"nope").is_err());
+        assert!(decode_texture(b"BLP1").is_err());
+        assert!(decode_texture(b"BLP2").is_err());
         assert!(decode_dds(&dds_header(4, 4, b"BC7X")).is_err());
         assert!(decode_dds(&dds_header(64, 64, b"DXT5")).is_err());
     }

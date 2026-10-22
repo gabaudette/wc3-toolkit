@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 
 use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
+use wc3_data::icon::decode_texture;
+use wc3_data::model::preview_copy;
 use wc3_data::units::UnitDatabase;
 use wc3_map::abilities::{MapAbilities, MapPlaceholders};
 use wc3_map::imports::MapImports;
@@ -445,5 +447,60 @@ fn custom_units_move_between_maps() -> TestResult {
 
     assert!(moved_maps > 0 && objects > 0, "no map has custom units");
     assert!(files_moved > 0, "no custom unit uses an imported file");
+    Ok(())
+}
+
+/// Every model and texture the maps' custom units import decodes for the
+/// editor's previews.
+#[test]
+#[ignore = "needs maps and an install (WC3_MAPS_DIR, WC3_GAME_DIR)"]
+fn imported_art_decodes() -> TestResult {
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let db = UnitDatabase::load(&files)?;
+    let abilities = AbilityDatabase::load(&files)?;
+    let refs = References::new(db.fields(), abilities.fields());
+
+    let mut maps = Vec::new();
+    find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
+    let (mut models, mut textures) = (0, 0);
+    let mut failures = Vec::new();
+
+    for path in &maps {
+        let map = Map::open(path)?;
+        let units = MapUnits::load(&map)?;
+        let custom: Vec<FourCC> = units
+            .units()
+            .iter()
+            .filter(|u| u.is_custom)
+            .map(|u| u.id)
+            .collect();
+        let source = MapObjects {
+            units: &units,
+            abilities: &MapAbilities::load(&map)?,
+            extras: &MapExtras::load(&map)?,
+        };
+        let export = transfer::export(source, &refs, &custom, &|file| {
+            map.read_file(file).ok().flatten()
+        })?;
+
+        for file in export.bundle.files() {
+            let lower = file.path.to_ascii_lowercase();
+            let decoded = if lower.ends_with(".mdx") {
+                models += 1;
+                preview_copy(&file.bytes).map(drop)
+            } else if lower.ends_with(".blp") || lower.ends_with(".dds") {
+                textures += 1;
+                decode_texture(&file.bytes).map(drop)
+            } else {
+                continue;
+            };
+            if let Err(e) = decoded {
+                failures.push(format!("{}: {}: {e}", path.display(), file.path));
+            }
+        }
+    }
+
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    assert!(models > 0 && textures > 0, "no map imports art");
     Ok(())
 }
