@@ -103,6 +103,19 @@ fn edited_units_save_and_read_back() -> TestResult {
 
     let mut units = MapUnits::load(&Map::open(&path)?)?;
     let paladin = FourCC::parse("Hpal").ok_or("bad id")?;
+
+    // A text change that is reset again leaves no string behind.
+    let untouched = units.files();
+    let tooltip = db.field("utub").ok_or("no utub")?;
+    units.set(&db, paladin, tooltip, "|cffffcc00New|r tooltip")?;
+    assert_ne!(units.files(), untouched);
+    units.reset(paladin, tooltip);
+    assert_eq!(
+        units.files(),
+        untouched,
+        "reset left a string or entry behind"
+    );
+
     let hero = units.create(&db, paladin)?;
     let hp = db.field("uhpm").ok_or("no uhpm")?;
     let name = db.field("unam").ok_or("no unam")?;

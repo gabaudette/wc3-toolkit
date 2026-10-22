@@ -46,5 +46,5 @@ Each item is a requirement. Check it off when the tool handles it.
       → Bundle file (`.w3obj`) when objects use custom models or icons imported into the map.
 
 ## Tooltips and text
-- [ ] Color codes edited blind.
+- [x] Color codes edited blind.
       → Live preview rendered like the game, with placeholder values (`<AHhb,DataA1>`) filled in.

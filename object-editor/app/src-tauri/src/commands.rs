@@ -151,6 +151,12 @@ pub fn ability_cards(
     })
 }
 
+/// Fills `<ID,Column>` placeholders in text being typed, for the live preview.
+#[tauri::command]
+pub fn fill_placeholders(state: State<'_, AppState>, text: String) -> Result<String, String> {
+    state.with(|session| Ok(session.abilities.fill_placeholders(&text, &session.db)))
+}
+
 #[tauri::command]
 pub fn search_units(state: State<'_, AppState>, query: String) -> Result<Vec<SearchHit>, String> {
     state.with(|session| Ok(view(session).search(&query)))

@@ -31,6 +31,7 @@ The editor's frontend (`object-editor/app`) follows the AGE TypeScript rules thr
 ```bash
 cd object-editor/app
 bun run check
+bun run test
 bun run build
 ```
 

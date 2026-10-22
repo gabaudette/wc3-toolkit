@@ -22,6 +22,9 @@ pub struct MapUnits {
     data: ObjectData,
     skins: ObjectData,
     strings: MapStrings,
+    /// Strings this editor added since loading. Only these are removed again
+    /// when nothing refers to them; strings already in the map are never touched.
+    added_strings: Vec<u32>,
 }
 
 /// A unit the map adds or changes.
@@ -41,6 +44,7 @@ impl MapUnits {
             data: map.object_data(UNITS_FILE)?.unwrap_or_else(empty),
             skins: map.object_data(UNIT_SKINS_FILE)?.unwrap_or_else(empty),
             strings: map.strings()?,
+            added_strings: Vec::new(),
         })
     }
 
@@ -249,7 +253,31 @@ impl MapUnits {
             data.original.retain(|e| e.mods().next().is_some());
         }
 
+        self.drop_unused_strings();
         removed
+    }
+
+    /// Removes strings this editor added that no field refers to anymore.
+    fn drop_unused_strings(&mut self) {
+        let referenced: Vec<u32> = [&self.data, &self.skins]
+            .iter()
+            .flat_map(|data| data.custom.iter().chain(&data.original))
+            .flat_map(ObjectEntry::mods)
+            .filter_map(|m| match &m.value {
+                Value::String(s) => reference_id(s),
+                _ => None,
+            })
+            .collect();
+
+        let strings = &mut self.strings;
+        self.added_strings.retain(|id| {
+            if referenced.contains(id) {
+                return true;
+            }
+
+            strings.remove(*id);
+            false
+        });
     }
 
     /// Creates a custom unit copying `base` and returns its new ID, numbered the
@@ -321,7 +349,12 @@ impl MapUnits {
             db.field_name(field),
             field.field
         );
-        self.strings.add(text, Some(&comment))
+        let reference = self.strings.add(text, Some(&comment));
+        if let Some(id) = reference_id(&reference) {
+            self.added_strings.push(id);
+        }
+
+        reference
     }
 
     /// The files to write into the map for the current state.

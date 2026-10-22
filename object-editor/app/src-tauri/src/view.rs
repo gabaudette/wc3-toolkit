@@ -13,6 +13,7 @@ const CATEGORY_ORDER: &[&str] = &[
     "stats", "combat", "abil", "text", "art", "move", "path", "sound", "tech", "editor", "data",
 ];
 const ENUM_LIST_SUFFIX: &str = "List";
+const TEXT_CATEGORY: &str = "text";
 /// Text fields shown as multi-line boxes.
 const LONG_TEXT_FIELDS: &[&str] = &["utub", "upro", "ides"];
 const TRUE: &str = "1";
@@ -78,6 +79,9 @@ pub struct Field {
     pub advanced: bool,
     /// The description is not confirmed in game.
     pub unverified: bool,
+    /// Text the game shows to players (names, tooltips): the editor previews
+    /// it with colors, line breaks and placeholders filled in.
+    pub preview: bool,
 }
 
 #[derive(Serialize)]
@@ -241,6 +245,7 @@ impl View<'_> {
             description: guide.map(|g| g.description.clone()),
             advanced: guide.is_some_and(|g| g.advanced),
             unverified: guide.is_some_and(|g| g.unverified),
+            preview: field.category == TEXT_CATEGORY && field.value_type == "string",
         }
     }
 
