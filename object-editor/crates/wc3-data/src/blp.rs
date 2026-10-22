@@ -113,8 +113,9 @@ fn decode_jpeg(data: &[u8], mip: &[u8], w: usize, h: usize, alpha: bool) -> Resu
 
     let mut rgba = Vec::with_capacity(w * h * CHANNELS);
     for row in pixels.chunks_exact(jpeg_width * CHANNELS).take(h) {
-        for inverted in row.chunks_exact(CHANNELS).take(w) {
-            let [b, g, r, a] = [0, 1, 2, 3].map(|c| OPAQUE - inverted[c]);
+        let (row_pixels, _) = row.as_chunks::<CHANNELS>();
+        for inverted in row_pixels.iter().take(w) {
+            let [b, g, r, a] = inverted.map(|c| OPAQUE - c);
             rgba.extend_from_slice(&[r, g, b, if alpha { a } else { OPAQUE }]);
         }
     }
