@@ -19,7 +19,9 @@ fn main() -> ExitCode {
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(state::AppState::default())
-        .register_asynchronous_uri_scheme_protocol(icons::SCHEME, icons::handle)
+        .register_asynchronous_uri_scheme_protocol(icons::ICON_SCHEME, icons::handle_icon)
+        .register_asynchronous_uri_scheme_protocol(icons::TEXTURE_SCHEME, icons::handle_texture)
+        .register_asynchronous_uri_scheme_protocol(icons::MODEL_SCHEME, icons::handle_model)
         .invoke_handler(tauri::generate_handler![
             commands::detect_game_dir,
             commands::open_game,

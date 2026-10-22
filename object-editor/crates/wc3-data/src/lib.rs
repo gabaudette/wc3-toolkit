@@ -6,6 +6,7 @@ pub mod game;
 pub mod guide;
 pub mod icon;
 pub mod meta;
+pub mod model;
 pub mod objects;
 pub mod profile;
 pub mod slk;

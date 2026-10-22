@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' wc3icon: http://wc3icon.localhost; style-src 'self' 'unsafe-inline'",
+      "csp": "default-src 'self' ipc: http://ipc.localhost; img-src 'self' wc3icon: http://wc3icon.localhost; connect-src 'self' ipc: http://ipc.localhost wc3tex: http://wc3tex.localhost wc3model: http://wc3model.localhost; style-src 'self' 'unsafe-inline'",
       "devCsp": null
     }
   },
