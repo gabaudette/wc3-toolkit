@@ -10,7 +10,7 @@ use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
 use wc3_map::Map;
 use wc3_map::abilities::MapAbilities;
-use wc3_map::imports::MapImports;
+use wc3_map::imports::{MapImports, candidates};
 use wc3_map::transfer::MapExtras;
 use wc3_map::units::MapUnits;
 
@@ -37,6 +37,9 @@ pub struct OpenMap {
     pub imports: MapImports,
     /// The files as last loaded or saved, to tell whether anything changed.
     pub saved_files: Vec<(&'static str, Vec<u8>)>,
+    /// PNG bytes of icons the map holds, by the path asked for. Files in a
+    /// map never change while it is open; imports only add new ones.
+    pub icons: HashMap<String, Vec<u8>>,
 }
 
 impl OpenMap {
@@ -54,6 +57,7 @@ impl OpenMap {
             extras,
             imports,
             saved_files: Vec::new(),
+            icons: HashMap::new(),
         };
         map.saved_files = map.files();
         map
@@ -84,6 +88,17 @@ impl OpenMap {
                 .or_else(|| archive.as_ref()?.read_file(path).ok().flatten())
         }
     }
+
+    /// A model or texture the map holds for an art path as data or a model
+    /// names it (`Haramad.mdl` → `Haramad.mdx`, `x.blp` → also `x.dds`), with
+    /// the path it was found at. `None` when the map has none, so the game's
+    /// file applies.
+    pub fn art(&self, path: &str) -> Option<(String, Vec<u8>)> {
+        let read = self.reader();
+        candidates(path)
+            .into_iter()
+            .find_map(|file| read(&file).map(|bytes| (file, bytes)))
+    }
 }
 
 /// Shared by all commands. `None` until a game folder is opened.
@@ -110,4 +125,51 @@ impl AppState {
 /// A command panicked while holding the lock; the data may be half-updated.
 fn poisoned() -> String {
     "The editor hit an internal error. Restart it; unsaved changes are lost.".to_owned()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use wc3_map::imports::ImportedFile;
+
+    type TestResult = Result<(), Box<dyn std::error::Error>>;
+
+    const MAX_FILES: u32 = 8;
+
+    #[test]
+    fn art_comes_from_the_map_or_its_queued_imports() -> TestResult {
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("map.w3x");
+        let mut archive = mpq::Archive::create(&path, MAX_FILES)?;
+        archive.write("Haramad.mdx", b"model")?;
+        archive.write("Textures\\Skin.dds", b"texture")?;
+        archive.save()?;
+
+        let map = Map::open(&path)?;
+        let mut imports = MapImports::load(&map)?;
+        imports.add(ImportedFile {
+            path: "war3mapImported\\BTNHero.blp".to_owned(),
+            bytes: b"icon".to_vec(),
+        });
+        let open = OpenMap::new(
+            path.clone(),
+            MapUnits::load(&map)?,
+            MapAbilities::load(&map)?,
+            MapExtras::load(&map)?,
+            imports,
+        );
+
+        let found = |art: &str| open.art(art).map(|(file, bytes)| (file, bytes.len()));
+        assert_eq!(found("Haramad.mdl"), Some(("Haramad.mdx".to_owned(), 5)));
+        assert_eq!(
+            found("Textures/Skin.blp"),
+            Some(("Textures\\Skin.dds".to_owned(), 7))
+        );
+        assert_eq!(
+            found("war3mapImported\\BTNHero.blp"),
+            Some(("war3mapImported\\BTNHero.blp".to_owned(), 4))
+        );
+        assert_eq!(found("units\\human\\Footman\\Footman"), None);
+        Ok(())
+    }
 }

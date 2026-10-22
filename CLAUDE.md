@@ -7,7 +7,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
 - `object-editor/` — Rust workspace (Tauri app later). `crates/casc` reads the game's CASC
   storage via the vendored CascLib; `crates/wc3-data` loads game data: `game` (layered file
   access), `units` (every unit with all Object Editor fields and editor-style display values),
-  `icon` (DDS → RGBA/PNG), plus the SLK/profile/metadata parsers. `wc3data` is a CLI inspector
+  `icon` (DDS → RGBA/PNG), `blp` (BLP1, JPEG or paletted, as maps import), plus the
+  SLK/profile/metadata parsers. `wc3data` is a CLI inspector
   (`cargo run --release -p wc3-data --bin wc3data -- unit Hpal`). It also has the map formats:
   `objects` (all Object Editor files, v1–v3, byte-exact round trip) and `strings` (`war3map.wts`).
   `crates/mpq` reads/writes map archives via the vendored StormLib (built with CMake).
@@ -32,7 +33,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   react-aria-components, Bun, Biome with the AGE baseline plus the React domain. Rust side in
   `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI
   (`abilities.rs` the same for abilities: list, cards, pages with per-level cells),
-  `commands.rs` (Tauri commands), `icons.rs` (`wc3icon:` URL scheme serving PNG icons),
+  `commands.rs` (Tauri commands), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
+  the open map's imported file first, then the game's),
   `platform.rs` (install/maps folder detection, the only platform-specific module).
   `api.ts`/`types.ts` mirror the Rust types. Run with `bun run tauri dev` from `app/`.
 - `map/src/` — example Lua modules for the harness (`wc3map <map> lua <dir>`, implemented in

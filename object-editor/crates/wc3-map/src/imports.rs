@@ -192,9 +192,10 @@ fn split_extension(path: &str) -> (&str, Option<String>) {
     }
 }
 
-/// The archive paths a field value may name. Models are stored as `.mdx`
-/// whatever the data says; textures may be any of the image formats.
-fn candidates(value: &str) -> Vec<String> {
+/// The archive paths a field value or a model's texture may name, most likely
+/// first. Models are stored as `.mdx` whatever the data says; textures may be
+/// any of the image formats.
+pub fn candidates(value: &str) -> Vec<String> {
     let path = value.trim().replace('/', "\\");
     if path.is_empty() || !(path.contains('.') || path.contains(PATH_SEPARATOR)) {
         return Vec::new();
