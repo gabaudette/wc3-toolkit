@@ -1,12 +1,14 @@
 //! The game's units with the open map's changes applied, shaped for the UI.
 
+use std::collections::{HashMap, HashSet};
+
 use serde::Serialize;
 use wc3_data::game::ArtMode;
 use wc3_data::guide::FieldGuide;
 use wc3_data::meta::{FieldMeta, ObjectKind};
 use wc3_data::units::UnitDatabase;
 use wc3_map::FourCC;
-use wc3_map::units::MapUnits;
+use wc3_map::units::{MapUnit, MapUnits};
 
 /// Category order on a unit page: what people edit most comes first.
 const CATEGORY_ORDER: &[&str] = &[
@@ -119,12 +121,21 @@ pub struct View<'a> {
 impl View<'_> {
     /// The map's units first, then every game unit, each once.
     pub fn ids(&self) -> Vec<FourCC> {
-        let mut ids: Vec<FourCC> = self
-            .map
-            .map(|m| m.units().into_iter().map(|u| u.id).collect())
-            .unwrap_or_default();
+        self.ids_after(&self.map_units())
+    }
+
+    /// The units the map adds or changes. Rebuilt on every call, so callers
+    /// going through many units compute it once.
+    fn map_units(&self) -> Vec<MapUnit> {
+        self.map.map(MapUnits::units).unwrap_or_default()
+    }
+
+    /// The given map units first, then every game unit, each once.
+    fn ids_after(&self, map_units: &[MapUnit]) -> Vec<FourCC> {
+        let mut ids: Vec<FourCC> = map_units.iter().map(|u| u.id).collect();
+        let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
         for id in self.db.ids().iter().filter_map(|id| FourCC::parse(id)) {
-            if !ids.contains(&id) {
+            if seen.insert(id) {
                 ids.push(id);
             }
         }
@@ -172,10 +183,13 @@ impl View<'_> {
     }
 
     pub fn item(&self, id: FourCC) -> Option<UnitItem> {
+        let map_unit = self.map_units().into_iter().find(|u| u.id == id);
+        self.item_with(id, map_unit.as_ref())
+    }
+
+    /// The list row for a unit, given its entry in the map's units if it has one.
+    fn item_with(&self, id: FourCC, map_unit: Option<&MapUnit>) -> Option<UnitItem> {
         let base = self.base(id)?;
-        let map_unit = self
-            .map
-            .and_then(|m| m.units().into_iter().find(|u| u.id == id));
         let race = self
             .db
             .field("urac")
@@ -189,7 +203,7 @@ impl View<'_> {
             kind: kind_name(self.db.kind(&base.to_string())),
             race,
             group: self.group(id, map_unit.is_some()),
-            custom: map_unit.as_ref().is_some_and(|u| u.is_custom),
+            custom: map_unit.is_some_and(|u| u.is_custom),
             changed_fields: map_unit.map_or(0, |u| u.modified_fields),
             icon: self.raw_by_id(id, "uico"),
         })
@@ -212,9 +226,12 @@ impl View<'_> {
     }
 
     pub fn items(&self) -> Vec<UnitItem> {
-        self.ids()
+        let map_units = self.map_units();
+        let by_id: HashMap<FourCC, &MapUnit> = map_units.iter().map(|u| (u.id, u)).collect();
+
+        self.ids_after(&map_units)
             .into_iter()
-            .filter_map(|id| self.item(id))
+            .filter_map(|id| self.item_with(id, by_id.get(&id).copied()))
             .collect()
     }
 
@@ -564,6 +581,62 @@ mod tests {
         assert!(field.modified);
         assert_eq!(field.display, "1000");
         assert_eq!(view.item(hero).map(|i| i.group), Some("map"));
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+    fn list_of_a_map_with_many_units_matches_each_row() -> TestResult {
+        const CUSTOM_UNITS: usize = 1600;
+        const BASES: [&str; 4] = ["Hpal", "hfoo", "ogru", "Edem"];
+
+        let db = database()?;
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("map.w3m");
+        mpq::Archive::create(&path, MAX_FILES)?.save()?;
+        let mut units = MapUnits::load(&Map::open(&path)?)?;
+        let name = db.field("unam").ok_or("no unam")?;
+        let mut created = Vec::new();
+        for n in 0..CUSTOM_UNITS {
+            let base = FourCC::parse(BASES[n % BASES.len()]).ok_or("bad id")?;
+            let unit = units.create(&db, base)?;
+            units.set(&db, unit, name, &format!("Unit {n}"))?;
+            created.push(unit);
+        }
+
+        let guide = FieldGuide::units()?;
+        let view = View {
+            db: &db,
+            guide: &guide,
+            map: Some(&units),
+            mode: ArtMode::Sd,
+        };
+        // A refresh used to take seconds here: every row rebuilt the map's unit list.
+        let items = view.items();
+
+        let ids: Vec<String> = view.ids().iter().map(ToString::to_string).collect();
+        let listed: Vec<String> = items.iter().map(|i| i.id.clone()).collect();
+        assert_eq!(listed, ids);
+        for (item, unit) in items.iter().zip(&created) {
+            assert_eq!(item.id, unit.to_string());
+            assert_eq!(item.group, "map");
+            assert!(item.custom);
+            assert_eq!(item.changed_fields, 1);
+        }
+
+        for item in items.iter().step_by(CUSTOM_UNITS / BASES.len()) {
+            let id = FourCC::parse(&item.id).ok_or("bad id")?;
+            let row = view.item(id).ok_or("no row")?;
+            assert_eq!(
+                (row.name, row.group, row.custom, row.changed_fields),
+                (
+                    item.name.clone(),
+                    item.group,
+                    item.custom,
+                    item.changed_fields
+                )
+            );
+        }
         Ok(())
     }
 }
