@@ -14,6 +14,8 @@ const CATEGORY_ORDER: &[&str] = &[
 ];
 const ENUM_LIST_SUFFIX: &str = "List";
 const TEXT_CATEGORY: &str = "text";
+/// Primary attribute codes and the fields holding each attribute.
+const ATTRIBUTES: [(&str, &str); 3] = [("STR", "ustr"), ("AGI", "uagi"), ("INT", "uint")];
 /// Text fields shown as multi-line boxes.
 const LONG_TEXT_FIELDS: &[&str] = &["utub", "upro", "ides"];
 const TRUE: &str = "1";
@@ -40,6 +42,15 @@ pub struct UnitDetail {
     pub item: UnitItem,
     pub summary: Vec<Stat>,
     pub sections: Vec<Section>,
+    /// Damage a hero adds to every attack from its primary attribute.
+    pub damage_bonus: Option<DamageBonus>,
+}
+
+#[derive(Serialize)]
+pub struct DamageBonus {
+    pub amount: f64,
+    /// The primary attribute's name, e.g. `Strength`.
+    pub attribute: String,
 }
 
 #[derive(Serialize)]
@@ -275,10 +286,15 @@ impl View<'_> {
             }
         }
 
+        let damage_bonus = (item.kind == "hero")
+            .then(|| self.damage_bonus(id))
+            .flatten();
+
         Some(UnitDetail {
             summary: self.summary(id, item.kind),
             item,
             sections,
+            damage_bonus,
         })
     }
 
@@ -296,15 +312,27 @@ impl View<'_> {
     }
 
     /// The numbers people check first. Heroes add their primary attribute to damage.
-    fn summary(&self, id: FourCC, kind: &str) -> Vec<Stat> {
-        let attributes = [("STR", "ustr"), ("AGI", "uagi"), ("INT", "uint")];
-        let primary = self.raw_by_id(id, "upra").unwrap_or_default();
-        let bonus = attributes
+    /// A hero's primary attribute value, which every attack adds as damage.
+    fn damage_bonus(&self, id: FourCC) -> Option<DamageBonus> {
+        let primary = self.raw_by_id(id, "upra")?;
+        let field = ATTRIBUTES
             .iter()
             .find(|(code, _)| primary.eq_ignore_ascii_case(code))
-            .map_or(0.0, |(_, field)| self.number(id, field));
+            .map(|(_, field)| *field)?;
+        Some(DamageBonus {
+            amount: self.number(id, field),
+            attribute: self.shown(id, "upra"),
+        })
+    }
+
+    fn summary(&self, id: FourCC, kind: &str) -> Vec<Stat> {
+        let attributes = ATTRIBUTES;
         let is_hero = kind == "hero";
-        let hero_bonus = if is_hero { bonus } else { 0.0 };
+        let hero_bonus = if is_hero {
+            self.damage_bonus(id).map_or(0.0, |b| b.amount)
+        } else {
+            0.0
+        };
 
         let base = self.number(id, "ua1b") + hero_bonus;
         let dice = self.number(id, "ua1d");

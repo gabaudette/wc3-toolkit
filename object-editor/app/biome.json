@@ -58,5 +58,17 @@
   },
   "files": {
     "includes": ["**", "!**/dist", "!**/node_modules", "!src-tauri"]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noMagicNumbers": "off"
+          }
+        }
+      }
+    }
+  ]
 }

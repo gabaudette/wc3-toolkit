@@ -1,8 +1,10 @@
 import { AlertTriangle, ChevronDown, ChevronRight, Copy01 } from "@untitledui/icons";
 import { type ReactNode, useMemo, useState } from "react";
+import { FIELD_GROUPS } from "../fieldGroups";
 import type { Field, HotkeyClash, Section, UnitDetail } from "../types";
 import { classes } from "../ui";
 import { Button } from "./Button";
+import { FieldGroupRow } from "./FieldGroupRow";
 import { FieldRow } from "./FieldRow";
 import { UnitIcon } from "./UnitIcon";
 
@@ -135,16 +137,51 @@ export function UnitPage({
     setOpenAdvanced(toggled(openAdvanced, category));
   }
 
+  /** Field rows, with related fields merged into one row where all of them are shown. */
   function rows(fields: Field[]) {
-    return fields.map((field) => (
-      <FieldRow
-        key={field.id}
-        field={field}
-        editable={editable}
-        onChange={(value) => onChange(field.id, value)}
-        onReset={() => onReset(field.id)}
-      />
-    ));
+    const byId = new Map(fields.map((f) => [f.id, f]));
+    const grouped = new Set<string>();
+    const result = [];
+
+    for (const field of fields) {
+      if (grouped.has(field.id)) {
+        continue;
+      }
+
+      const group = FIELD_GROUPS.find((g) => g.ids.includes(field.id));
+      const members = group?.ids.map((id) => byId.get(id));
+      if (group && members?.every(Boolean)) {
+        const present = members.filter((m): m is Field => m !== undefined);
+        for (const id of group.ids) {
+          grouped.add(id);
+        }
+
+        result.push(
+          <FieldGroupRow
+            key={group.label}
+            group={group}
+            fields={present}
+            editable={editable}
+            damageBonus={detail.damageBonus}
+            onChange={onChange}
+            onReset={onReset}
+          />,
+        );
+        continue;
+      }
+
+      result.push(
+        <FieldRow
+          key={field.id}
+          field={field}
+          editable={editable}
+          onChange={(value) => onChange(field.id, value)}
+          onReset={() => onReset(field.id)}
+        />,
+      );
+    }
+
+    return result;
   }
 
   return (

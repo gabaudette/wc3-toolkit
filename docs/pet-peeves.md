@@ -24,7 +24,7 @@ Each item is a requirement. Check it off when the tool handles it.
 - [ ] Values shown without context.
       → Icon fields show the icon, model fields show a 3D preview, colors show a color picker,
         button position shows the command card grid.
-- [ ] Related values split across rows (damage base / dice / sides, projectile X/Y/Z, tint R/G/B).
+- [x] Related values split across rows (damage base / dice / sides, projectile X/Y/Z, tint R/G/B).
       → Grouped into one control, with computed results (damage range including attribute bonus).
 - [x] Key numbers buried in the list.
       → Summary at the top: damage, armor, attributes, speed, HP, mana.
