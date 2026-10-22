@@ -7,11 +7,18 @@ pub use wc3_data::objects::{FourCC, Layout, ObjectData, Value};
 pub use wc3_data::strings::MapStrings;
 
 pub mod lua;
+pub mod transfer;
 pub mod units;
 
 pub const STRINGS_FILE: &str = "war3map.wts";
 pub const UNITS_FILE: &str = "war3map.w3u";
 pub const UNIT_SKINS_FILE: &str = "war3mapSkin.w3u";
+pub const ABILITIES_FILE: &str = "war3map.w3a";
+pub const ABILITY_SKINS_FILE: &str = "war3mapSkin.w3a";
+pub const BUFFS_FILE: &str = "war3map.w3h";
+pub const BUFF_SKINS_FILE: &str = "war3mapSkin.w3h";
+pub const ITEMS_FILE: &str = "war3map.w3t";
+pub const UPGRADES_FILE: &str = "war3map.w3q";
 
 /// Object data files. Reforged splits each kind into
 /// gameplay data and a `Skin` file with names and art.

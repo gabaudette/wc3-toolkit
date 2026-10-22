@@ -7,8 +7,12 @@ import type {
   Field,
   GameSummary,
   HotkeyClash,
+  ImportPreview,
+  ImportSource,
   MapSummary,
   SearchHit,
+  SharePreview,
+  TransferObject,
   UnitDetail,
   UnitItem,
 } from "./types";
@@ -49,4 +53,8 @@ export const api = {
   resetField: (id: string, field: string) => invoke<Field>("reset_field", { id, field }),
   createUnit: (base: string) => invoke<UnitItem>("create_unit", { base }),
   saveMap: () => invoke<MapSummary>("save_map"),
+  shareCode: (ids: string[]) => invoke<SharePreview>("share_code", { ids }),
+  mapCustomUnits: (path: string) => invoke<UnitItem[]>("map_custom_units", { path }),
+  previewImport: (source: ImportSource) => invoke<ImportPreview>("preview_import", { source }),
+  importObjects: (source: ImportSource) => invoke<TransferObject[]>("import_objects", { source }),
 };

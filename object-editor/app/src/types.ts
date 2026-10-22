@@ -120,3 +120,33 @@ export type AbilityCard = {
   description: string | null;
   rows: LevelRow[];
 };
+
+/** Objects that move between maps: custom units and what they use. */
+export type TransferKind = "unit" | "ability" | "buff";
+
+export type TransferObject = {
+  kind: TransferKind;
+  id: string;
+  /** The ID it gets in this map, when importing. */
+  newId: string | null;
+  base: string;
+  name: string;
+  icon: string | null;
+  /** Brought along because a chosen unit uses it. */
+  dependency: boolean;
+};
+
+export type SharePreview = {
+  code: string;
+  objects: TransferObject[];
+  warnings: string[];
+};
+
+export type ImportPreview = {
+  objects: TransferObject[];
+  warnings: string[];
+};
+
+export type ImportSource =
+  | { kind: "code"; code: string }
+  | { kind: "map"; path: string; ids: string[] };

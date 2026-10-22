@@ -14,6 +14,15 @@ export function levelCount(levels: number): string {
   return `${levels} levels`;
 }
 
+/** "1 object", "3 objects". */
+export function objectCount(count: number): string {
+  if (count === 1) {
+    return "1 object";
+  }
+
+  return `${count} objects`;
+}
+
 /** "human" → "Human". */
 export function capitalized(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
@@ -36,6 +45,9 @@ export const remembered = {
     }
   },
 };
+
+/** File types the map pickers offer. */
+export const MAP_FILTERS = [{ name: "Warcraft III maps", extensions: ["w3m", "w3x"] }];
 
 export const GAME_DIR_KEY = "wc3-object-editor.gameDir";
 export const MAP_PATH_KEY = "wc3-object-editor.mapPath";

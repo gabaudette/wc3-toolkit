@@ -11,6 +11,7 @@ mod hotkeys;
 mod icons;
 mod platform;
 mod state;
+mod transfer;
 mod view;
 
 use std::process::ExitCode;
@@ -38,6 +39,10 @@ fn main() -> ExitCode {
             commands::reset_field,
             commands::create_unit,
             commands::save_map,
+            transfer::share_code,
+            transfer::map_custom_units,
+            transfer::preview_import,
+            transfer::import_objects,
         ])
         .run(tauri::generate_context!());
 
