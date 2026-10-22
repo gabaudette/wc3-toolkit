@@ -8,6 +8,7 @@ use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles};
 use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
+use wc3_map::abilities::MapAbilities;
 use wc3_map::transfer::MapExtras;
 use wc3_map::units::MapUnits;
 
@@ -16,6 +17,7 @@ pub struct Session {
     pub db: UnitDatabase,
     pub guide: FieldGuide,
     pub abilities: AbilityDatabase,
+    pub ability_guide: FieldGuide,
     pub mode: ArtMode,
     pub map: Option<OpenMap>,
     /// PNG bytes by `(art mode, game path)`, so each icon is decoded once.
@@ -24,18 +26,21 @@ pub struct Session {
 
 pub struct OpenMap {
     pub path: PathBuf,
+    /// Units, and the map's string table.
     pub units: MapUnits,
-    /// Abilities and buffs: only imports change them.
+    pub abilities: MapAbilities,
+    /// Buffs: only imports change them.
     pub extras: MapExtras,
     /// The files as last loaded or saved, to tell whether anything changed.
     pub saved_files: Vec<(&'static str, Vec<u8>)>,
 }
 
 impl OpenMap {
-    pub fn new(path: PathBuf, units: MapUnits, extras: MapExtras) -> Self {
+    pub fn new(path: PathBuf, units: MapUnits, abilities: MapAbilities, extras: MapExtras) -> Self {
         let mut map = Self {
             path,
             units,
+            abilities,
             extras,
             saved_files: Vec::new(),
         };
@@ -46,6 +51,7 @@ impl OpenMap {
     /// Every file the editor writes into the map.
     pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
         let mut files = self.units.files();
+        files.extend(self.abilities.files());
         files.extend(self.extras.files());
         files
     }

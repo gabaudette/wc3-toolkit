@@ -3,6 +3,7 @@
 import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 import type {
   AbilityCard,
+  AbilityDetail,
   AbilitySummary,
   Field,
   GameSummary,
@@ -46,6 +47,14 @@ export const api = {
   searchUnits: (query: string) => invoke<SearchHit[]>("search_units", { query }),
   listAbilities: () => invoke<AbilitySummary[]>("list_abilities"),
   abilityCards: (ids: string[]) => invoke<AbilityCard[]>("ability_cards", { ids }),
+  abilityDetail: (id: string) => invoke<AbilityDetail>("ability_detail", { id }),
+  searchAbilities: (query: string) => invoke<SearchHit[]>("search_abilities", { query }),
+  /** `level` is 0 for fields without levels. */
+  setAbilityField: (id: string, field: string, level: number, value: string) =>
+    invoke<AbilityDetail>("set_ability_field", { id, field, level, value }),
+  resetAbilityField: (id: string, field: string, level: number) =>
+    invoke<AbilityDetail>("reset_ability_field", { id, field, level }),
+  createAbility: (base: string) => invoke<AbilitySummary>("create_ability", { base }),
   fillPlaceholders: (text: string) => invoke<string>("fill_placeholders", { text }),
   hotkeyClashes: (id: string) => invoke<HotkeyClash[]>("hotkey_clashes", { id }),
   setField: (id: string, field: string, value: string) =>

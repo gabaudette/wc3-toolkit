@@ -6,11 +6,13 @@
 //! which ability and what they mean (`DataA` is "Amount Healed/Damaged" for
 //! Holy Light). Tooltips refer to values with placeholders like `<AHhb,DataA1>`.
 
-use crate::game::{GameFiles, decode_text};
+use std::collections::HashMap;
+
+use crate::game::{ArtMode, GameFiles, decode_text};
 use crate::meta::{FieldMeta, parse_metadata};
 use crate::profile::{Profile, split_list, unquote};
 use crate::slk::Slk;
-use crate::units::resolve_string;
+use crate::units::{CATEGORY_NAMES, resolve_string};
 use crate::{Error, Result};
 
 const METADATA: &str = "units\\abilitymetadata.slk";
@@ -28,6 +30,8 @@ const SOURCES: &[&str] = &[
 const GENERIC_ORDER: &[&str] = &["Cost", "Cool", "Rng", "Area", "Dur", "HeroDur", "Cast"];
 const NUMERIC_TYPES: &[&str] = &["int", "real", "unreal"];
 const DATA_SOURCE: &str = "AbilityData";
+const PROFILE_SOURCE: &str = "Profile";
+const TEXT_TYPE: &str = "string";
 const TRUE: &str = "1";
 const PERCENT_SCALE: f64 = 100.0;
 
@@ -68,6 +72,8 @@ pub trait PlaceholderSource {
 
 pub struct AbilityDatabase {
     fields: Vec<FieldMeta>,
+    /// Field ID → position in `fields`.
+    field_index: HashMap<String, usize>,
     table: Slk,
     upgrades: Slk,
     profile: Profile,
@@ -82,6 +88,11 @@ impl AbilityDatabase {
         let table = load_slk(files.read_balanced(TABLE)?, TABLE)?;
         let upgrades = load_slk(files.read_balanced(UPGRADE_TABLE)?, UPGRADE_TABLE)?;
         let ids = table.keys().map(str::to_owned).collect();
+        let field_index = fields
+            .iter()
+            .enumerate()
+            .map(|(i, f)| (f.id.clone(), i))
+            .collect();
 
         let mut profile = Profile::new();
         for source in SOURCES {
@@ -108,6 +119,7 @@ impl AbilityDatabase {
 
         Ok(Self {
             fields,
+            field_index,
             table,
             upgrades,
             profile,
@@ -116,12 +128,44 @@ impl AbilityDatabase {
         })
     }
 
-    /// Every ability ID in the game data, in table order.
     /// Every ability field the metadata defines.
     pub fn fields(&self) -> &[FieldMeta] {
         &self.fields
     }
 
+    pub fn field(&self, field_id: &str) -> Option<&FieldMeta> {
+        self.fields.get(*self.field_index.get(field_id)?)
+    }
+
+    /// Fields the Object Editor shows for an ability with this base code
+    /// (`AHhb`): the generic ones for its kind and the code's own data fields.
+    pub fn fields_for(&self, code: &str, hero: bool, item: bool) -> Vec<&FieldMeta> {
+        self.fields
+            .iter()
+            .filter(|f| {
+                let for_kind =
+                    (hero && f.use_hero) || (item && f.use_item) || (!hero && !item && f.use_unit);
+                for_kind && f.applies_to_id(code)
+            })
+            .collect()
+    }
+
+    /// A field's display name, e.g. `Amount Healed/Damaged`.
+    pub fn field_name(&self, field: &FieldMeta) -> String {
+        resolve_string(&self.editor_strings, &field.display_key)
+            .unwrap_or_else(|| field.field.clone())
+    }
+
+    /// The editor's name for a metadata category, e.g. `data` → `Data`.
+    pub fn category_label(&self, category: &str) -> String {
+        CATEGORY_NAMES
+            .iter()
+            .find(|(c, _)| *c == category)
+            .and_then(|(_, key)| resolve_string(&self.editor_strings, key))
+            .unwrap_or_else(|| category.to_owned())
+    }
+
+    /// Every ability ID in the game data, in table order.
     pub fn ids(&self) -> &[String] {
         &self.ids
     }
@@ -148,6 +192,47 @@ impl AbilityDatabase {
         self.cell(id, column)
             .and_then(|v| v.parse().ok())
             .unwrap_or_default()
+    }
+
+    /// The base ability code an ability copies (`ACbh` → `AHbh`), which
+    /// decides its data fields. Its own ID when it has no other.
+    pub fn code(&self, id: &str) -> Option<String> {
+        self.contains(id)
+            .then(|| self.cell(id, "code").unwrap_or(id).to_owned())
+    }
+
+    /// The game's raw value of a field at `level` (1-based; ignored for fields
+    /// without levels), or `None` when the ability leaves it empty. Profile
+    /// lists hold one entry per level (`Tip=Level 1,Level 2`).
+    pub fn raw_value(
+        &self,
+        id: &str,
+        field: &FieldMeta,
+        level: u32,
+        mode: ArtMode,
+    ) -> Option<String> {
+        if field.source != PROFILE_SOURCE {
+            return self.cell(id, &field.column(level)).map(str::to_owned);
+        }
+
+        let variant = format!("{}:{}", field.field, mode.key_suffix());
+        let whole = self
+            .profile
+            .get(id, &variant)
+            .or_else(|| self.profile.get(id, &field.field))?;
+        let position = match field.index {
+            _ if field.per_level => usize::try_from(level.checked_sub(1)?).ok(),
+            // Text is one value even where the metadata gives an index.
+            Some(index) if field.value_type != TEXT_TYPE => Some(index),
+            _ => None,
+        };
+
+        let value = match position {
+            Some(i) => split_list(whole).into_iter().nth(i)?,
+            None => unquote(whole).to_owned(),
+        };
+        let value = value.trim();
+        (!value.is_empty() && value != "-" && value != "_").then(|| value.to_owned())
     }
 
     pub fn info(&self, id: &str) -> Option<AbilityInfo> {
@@ -219,13 +304,26 @@ impl AbilityDatabase {
             return Vec::new();
         };
 
+        self.level_values_with(&info.code, info.levels, &|field, level| {
+            self.cell(id, &field.column(level)).map(str::to_owned)
+        })
+    }
+
+    /// [`Self::level_values`] for an ability with base code `code` and `levels`
+    /// levels whose values come from `value` (a map's changes, for example).
+    pub fn level_values_with(
+        &self,
+        code: &str,
+        levels: u32,
+        value: &dyn Fn(&FieldMeta, u32) -> Option<String>,
+    ) -> Vec<LevelValues> {
         let mut fields: Vec<&FieldMeta> = self
             .fields
             .iter()
             .filter(|f| {
                 f.per_level
                     && f.source == DATA_SOURCE
-                    && f.applies_to_id(&info.code)
+                    && f.applies_to_id(code)
                     && NUMERIC_TYPES.contains(&f.value_type.as_str())
             })
             .collect();
@@ -244,9 +342,10 @@ impl AbilityDatabase {
             }
 
             seen_columns.push(column);
-            let values: Vec<String> = (1..=info.levels)
+            let values: Vec<String> = (1..=levels)
                 .map(|level| {
-                    self.cell(id, &field.column(level))
+                    value(field, level)
+                        .as_deref()
                         .map(format_number)
                         .unwrap_or_default()
                 })
@@ -255,17 +354,31 @@ impl AbilityDatabase {
                 continue;
             }
 
-            let label = resolve_string(&self.editor_strings, &field.display_key)
-                .unwrap_or_else(|| field.field.clone());
-            rows.push(LevelValues { label, values });
+            rows.push(LevelValues {
+                label: self.field_name(field),
+                values,
+            });
         }
 
         rows
     }
 
+    /// The per-level field and level a table column such as `DataA2` holds for
+    /// abilities with base code `code`, as tooltip placeholders name them.
+    pub fn column_field(&self, code: &str, column: &str) -> Option<(&FieldMeta, u32)> {
+        let digits = column.len() - column.trim_end_matches(|c: char| c.is_ascii_digit()).len();
+        let level: u32 = column.get(column.len() - digits..)?.parse().ok()?;
+        self.fields
+            .iter()
+            .filter(|f| f.per_level && f.source == DATA_SOURCE && f.applies_to_id(code))
+            .find(|f| f.column(level).eq_ignore_ascii_case(column))
+            .map(|f| (f, level))
+    }
+
     /// Replaces `<AHhb,DataA1>` (and `<AHhb,DataA1,%>` for percentages) with the
-    /// value from the ability, upgrade or `others` tables. Unknown placeholders
-    /// are left as they are.
+    /// value from `others`, or else the ability or upgrade tables. `others`
+    /// comes first so a map's changed values win over the game's. Unknown
+    /// placeholders are left as they are.
     pub fn fill_placeholders(&self, text: &str, others: &dyn PlaceholderSource) -> String {
         let mut out = String::with_capacity(text.len());
         let mut rest = text;
@@ -300,11 +413,10 @@ impl AbilityDatabase {
         let id = parts.next()?.trim();
         let column = parts.next()?.trim();
         let percent = parts.next().is_some_and(|p| p.trim() == "%");
-        let raw = self
-            .cell(id, column)
-            .map(str::to_owned)
-            .or_else(|| self.upgrades.get(id, column).map(|v| v.trim().to_owned()))
-            .or_else(|| others.placeholder(id, column))?;
+        let raw = others
+            .placeholder(id, column)
+            .or_else(|| self.cell(id, column).map(str::to_owned))
+            .or_else(|| self.upgrades.get(id, column).map(|v| v.trim().to_owned()))?;
 
         if percent {
             let value: f64 = raw.parse().ok()?;

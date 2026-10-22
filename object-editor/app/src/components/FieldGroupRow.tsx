@@ -231,7 +231,7 @@ export function FieldGroupRow({
               onReset(field.id);
             }
           }}
-          title="Reset to the base unit's values"
+          title="Reset to the base values"
           aria-label={`Reset ${group.label}`}
           className="mt-0.5 rounded p-1 text-faint hover:bg-surface-2 hover:text-ink"
         >

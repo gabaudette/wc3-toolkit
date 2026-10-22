@@ -11,12 +11,21 @@ import type {
   UnitDetail,
   UnitItem,
 } from "../types";
-import { MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
+import { classes, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
+import { AbilitiesPane } from "./AbilitiesPane";
 import { Button } from "./Button";
 import { ImportDialog } from "./ImportDialog";
+import { OpenAbilityContext } from "./openAbility";
 import { ShareDialog } from "./ShareDialog";
 import { UnitList } from "./UnitList";
 import { UnitPage } from "./UnitPage";
+
+type Tab = "units" | "abilities";
+
+const TABS: { id: Tab; label: string }[] = [
+  { id: "units", label: "Units" },
+  { id: "abilities", label: "Abilities" },
+];
 
 type EditorScreenProps = {
   game: GameSummary;
@@ -58,6 +67,10 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dialog, setDialog] = useState<"share" | "import" | null>(null);
+  const [tab, setTab] = useState<Tab>("units");
+  const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
+  /** Bumped when the map is replaced or imported into, so the ability list reloads. */
+  const [revision, setRevision] = useState(0);
   const editable = map !== null;
   const customUnits = useMemo(() => units.filter((u) => u.custom), [units]);
   const shareFirst = useMemo(() => {
@@ -73,6 +86,15 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   mapRef.current = map;
 
   const fail = useCallback((e: unknown) => setError(errorMessage(e)), []);
+
+  const refreshMap = useCallback(() => {
+    api.mapStatus().then(setMap).catch(fail);
+  }, [fail]);
+
+  const openAbility = useCallback((id: string) => {
+    setSelectedAbility(id);
+    setTab("abilities");
+  }, []);
 
   const refreshList = useCallback(() => {
     api.listUnits().then(setUnits).catch(fail);
@@ -128,6 +150,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
 
   async function imported(objects: TransferObject[]) {
     setDialog(null);
+    setRevision((r) => r + 1);
     try {
       setMap(await api.mapStatus());
       refreshList();
@@ -171,6 +194,8 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       remembered.set(MAP_PATH_KEY, picked);
       setSelected(null);
       setDetail(null);
+      setSelectedAbility(null);
+      setRevision((r) => r + 1);
       refreshList();
     } catch (e) {
       fail(e);
@@ -212,6 +237,23 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     <div className="flex h-full flex-col">
       <header className="flex items-center gap-3 border-b border-line bg-surface-1 px-4 py-2">
         <h1 className="font-semibold">WC3 Object Editor</h1>
+        <nav className="flex gap-1 rounded-md bg-surface-0 p-0.5" aria-label="Object types">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTab(t.id)}
+              aria-pressed={tab === t.id}
+              className={classes(
+                "rounded px-3 py-1 text-sm",
+                tab === t.id && "bg-surface-2 text-ink",
+                tab !== t.id && "text-muted hover:text-ink",
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </nav>
         <span className="text-faint">·</span>
         {map && (
           <span className="min-w-0 truncate font-mono text-xs text-muted" title={map.path}>
@@ -262,18 +304,31 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         onClose={() => setDialog(null)}
       />
 
-      <div className="flex min-h-0 flex-1">
+      {tab === "abilities" && (
+        <AbilitiesPane
+          key={revision}
+          editable={editable}
+          selected={selectedAbility}
+          onSelect={setSelectedAbility}
+          onMapChanged={refreshMap}
+          onError={setError}
+        />
+      )}
+
+      <div className={classes("flex min-h-0 flex-1", tab !== "units" && "hidden")}>
         <UnitList units={units} selected={selected} onSelect={setSelected} onError={setError} />
-        {detail && (
-          <UnitPage
-            key={detail.item.id}
-            detail={detail}
-            clashes={clashes}
-            editable={editable}
-            onChange={(field, value) => applyField(api.setField(detail.item.id, field, value))}
-            onReset={(field) => applyField(api.resetField(detail.item.id, field))}
-            onCreateCopy={createCopy}
-          />
+        {detail && tab === "units" && (
+          <OpenAbilityContext value={openAbility}>
+            <UnitPage
+              key={detail.item.id}
+              detail={detail}
+              clashes={clashes}
+              editable={editable}
+              onChange={(field, value) => applyField(api.setField(detail.item.id, field, value))}
+              onReset={(field) => applyField(api.resetField(detail.item.id, field))}
+              onCreateCopy={createCopy}
+            />
+          </OpenAbilityContext>
         )}
         {!detail && (
           <p className="m-auto text-muted">

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { api, errorMessage } from "../api";
 import type { SearchHit, UnitGroup, UnitItem, UnitKind } from "../types";
 import { classes } from "../ui";
+import { Chip, toggle } from "./Chip";
 import { UnitIcon } from "./UnitIcon";
 
 type UnitListProps = {
@@ -28,31 +29,6 @@ const KINDS: { id: UnitKind; label: string }[] = [
 ];
 
 const DEFAULT_GROUPS: UnitGroup[] = ["map", "melee", "campaign"];
-
-function toggle<T>(list: T[], value: T): T[] {
-  if (list.includes(value)) {
-    return list.filter((v) => v !== value);
-  }
-
-  return [...list, value];
-}
-
-function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onPress}
-      aria-pressed={on}
-      className={classes(
-        "rounded-full border px-2 py-0.5 text-xs",
-        on && "border-gold/60 bg-gold-soft text-gold",
-        !on && "border-line text-faint hover:text-muted",
-      )}
-    >
-      {label}
-    </button>
-  );
-}
 
 export function UnitList({ units, selected, onSelect, onError }: UnitListProps) {
   const [query, setQuery] = useState("");

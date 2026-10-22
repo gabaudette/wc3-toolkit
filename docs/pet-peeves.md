@@ -33,8 +33,8 @@ Each item is a requirement. Check it off when the tool handles it.
 - [x] Adding an ability (e.g. Holy Light) tells you nothing: no icon, no description, no values.
       → Ability card everywhere an ability appears: icon, name, rendered tooltip, values per level,
         targets, "used by", one click to open it.
-- [ ] Multi-level data in long "Level 1 / Level 2 / …" lists.
-      → Table with one column per level.
+- [x] Multi-level data in long "Level 1 / Level 2 / …" lists.
+      → Table with one column per level, edited from the keyboard like a spreadsheet.
 
 ## Moving objects between maps
 - [ ] No easy way to reuse an object made in another map.

@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
 use wc3_data::game::ArtMode;
-use wc3_data::guide::FieldGuide;
+use wc3_data::guide::{FieldGuide, GuideEntry};
 use wc3_data::meta::{FieldMeta, ObjectKind};
 use wc3_data::units::UnitDatabase;
 use wc3_map::FourCC;
@@ -18,8 +18,8 @@ const ENUM_LIST_SUFFIX: &str = "List";
 const TEXT_CATEGORY: &str = "text";
 /// Primary attribute codes and the fields holding each attribute.
 const ATTRIBUTES: [(&str, &str); 3] = [("STR", "ustr"), ("AGI", "uagi"), ("INT", "uint")];
-/// Text fields shown as multi-line boxes.
-const LONG_TEXT_FIELDS: &[&str] = &["utub", "upro", "ides"];
+/// Text fields shown as multi-line boxes: unit and ability tooltips.
+const LONG_TEXT_FIELDS: &[&str] = &["utub", "upro", "ides", "aub1", "auu1", "arut"];
 const TRUE: &str = "1";
 const NOT_PLACEABLE: &str = "0";
 
@@ -80,7 +80,8 @@ pub struct Field {
     pub raw: String,
     pub modified: bool,
     pub value_type: String,
-    /// `bool`, `number`, `text`, `longText`, `select`, `codes` or `abilities`.
+    /// `bool`, `number`, `text`, `longText`, `select`, `flags` (bit flags),
+    /// `flagList` (a list of choices, like targets), `codes` or `abilities`.
     pub control: &'static str,
     pub options: Vec<Choice>,
     pub min: Option<f64>,
@@ -101,6 +102,8 @@ pub struct Field {
 pub struct Choice {
     pub value: String,
     pub label: String,
+    /// Other spellings the game accepts, e.g. `invu` for `invulnerable`.
+    pub aliases: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -236,45 +239,19 @@ impl View<'_> {
     }
 
     pub fn field(&self, id: FourCC, field: &FieldMeta) -> Field {
-        let guide = self.guide.entry(&field.id);
-        let raw = self.raw(id, field).unwrap_or_default();
-        let options = self.db.enum_values(&field.value_type).unwrap_or_default();
-        let is_list = field.value_type.ends_with(ENUM_LIST_SUFFIX);
-
-        let control = match field.value_type.as_str() {
-            "bool" => "bool",
-            "abilityList" | "heroAbilityList" => "abilities",
-            "int" | "real" | "unreal" => "number",
-            _ if !options.is_empty() && !is_list => "select",
-            _ if is_list => "codes",
-            _ if LONG_TEXT_FIELDS.contains(&field.id.as_str()) => "longText",
-            _ => "text",
-        };
-
-        Field {
-            id: field.id.clone(),
-            name: self.db.field_name(field),
-            label: self.db.field_label(field),
-            display: self.display(id, field),
-            raw,
-            modified: self.modified(id, field),
-            value_type: field.value_type.clone(),
-            control,
-            options: options
-                .iter()
-                .map(|o| Choice {
-                    value: o.value.clone(),
-                    label: o.label.clone(),
-                })
-                .collect(),
-            min: field.min.as_deref().and_then(|v| v.parse().ok()),
-            max: field.max.as_deref().and_then(|v| v.parse().ok()),
-            integer: field.value_type == "int",
-            description: guide.map(|g| g.description.clone()),
-            advanced: guide.is_some_and(|g| g.advanced),
-            unverified: guide.is_some_and(|g| g.unverified),
-            preview: field.category == TEXT_CATEGORY && field.value_type == "string",
-        }
+        let raw = self.raw(id, field);
+        build_field(
+            self.db,
+            field,
+            self.guide.entry(&field.id),
+            FieldValue {
+                name: self.db.field_name(field),
+                label: self.db.field_label(field),
+                display: self.db.format_value(field, raw.clone()),
+                raw: raw.unwrap_or_default(),
+                modified: self.modified(id, field),
+            },
+        )
     }
 
     pub fn detail(&self, id: FourCC) -> Option<UnitDetail> {
@@ -432,6 +409,65 @@ impl View<'_> {
 
         by_name.extend(by_field);
         by_name
+    }
+}
+
+/// A field's names and value, as the page shows them.
+pub struct FieldValue {
+    pub name: String,
+    pub label: String,
+    pub display: String,
+    pub raw: String,
+    pub modified: bool,
+}
+
+/// A field row for any object kind. Choices come from the unit database,
+/// which holds every enumerated type the editor knows.
+pub fn build_field(
+    db: &UnitDatabase,
+    field: &FieldMeta,
+    guide: Option<&GuideEntry>,
+    value: FieldValue,
+) -> Field {
+    let options = db.enum_values(&field.value_type).unwrap_or_default();
+    let is_list = field.value_type.ends_with(ENUM_LIST_SUFFIX);
+
+    let control = match field.value_type.as_str() {
+        "bool" => "bool",
+        "abilityList" | "heroAbilityList" => "abilities",
+        "int" | "real" | "unreal" => "number",
+        _ if !options.is_empty() && field.is_bit_flags() => "flags",
+        _ if !options.is_empty() && is_list => "flagList",
+        _ if !options.is_empty() => "select",
+        _ if is_list => "codes",
+        _ if LONG_TEXT_FIELDS.contains(&field.id.as_str()) => "longText",
+        _ => "text",
+    };
+
+    Field {
+        id: field.id.clone(),
+        name: value.name,
+        label: value.label,
+        display: value.display,
+        raw: value.raw,
+        modified: value.modified,
+        value_type: field.value_type.clone(),
+        control,
+        options: options
+            .iter()
+            .map(|o| Choice {
+                value: o.value.clone(),
+                label: o.label.clone(),
+                aliases: o.aliases.clone(),
+            })
+            .collect(),
+        min: field.min.as_deref().and_then(|v| v.parse().ok()),
+        max: field.max.as_deref().and_then(|v| v.parse().ok()),
+        integer: field.value_type == "int",
+        description: guide.map(|g| g.description.clone()),
+        advanced: guide.is_some_and(|g| g.advanced),
+        unverified: guide.is_some_and(|g| g.unverified),
+        preview: field.category == TEXT_CATEGORY && field.value_type == "string",
     }
 }
 

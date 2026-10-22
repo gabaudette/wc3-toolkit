@@ -1,11 +1,12 @@
 import { Plus, XClose } from "@untitledui/icons";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { api, errorMessage } from "../api";
 import type { AbilityCard, Field } from "../types";
 import { levelCount } from "../ui";
 import { AbilityPicker } from "./AbilityPicker";
 import { Button } from "./Button";
 import { GameText } from "./GameText";
+import { OpenAbilityContext } from "./openAbility";
 import { UnitIcon } from "./UnitIcon";
 
 type AbilityFieldProps = {
@@ -23,6 +24,7 @@ function codesOf(raw: string): string[] {
 
 function Card({ card, onRemove }: { card: AbilityCard; onRemove: (() => void) | null }) {
   const [expanded, setExpanded] = useState(false);
+  const openAbility = use(OpenAbilityContext);
   const { summary } = card;
   const levels = Array.from({ length: summary.levels }, (_, i) => i + 1);
   const facts = [
@@ -42,9 +44,7 @@ function Card({ card, onRemove }: { card: AbilityCard; onRemove: (() => void) | 
           </p>
           {card.known && <p className="text-xs text-muted">{facts.join(" · ")}</p>}
           {!card.known && (
-            <p className="text-xs text-faint">
-              Not in the game data. Custom abilities from the map show up here later.
-            </p>
+            <p className="text-xs text-faint">Neither the game data nor this map has it.</p>
           )}
         </div>
         {card.known && (
@@ -56,6 +56,16 @@ function Card({ card, onRemove }: { card: AbilityCard; onRemove: (() => void) | 
           >
             {expanded && "Less"}
             {!expanded && "Details"}
+          </button>
+        )}
+        {card.known && openAbility && (
+          <button
+            type="button"
+            onClick={() => openAbility(summary.id)}
+            title="Open on the Abilities tab"
+            className="rounded px-2 py-0.5 text-xs text-faint hover:bg-surface-2 hover:text-ink"
+          >
+            Open
           </button>
         )}
         {onRemove && (

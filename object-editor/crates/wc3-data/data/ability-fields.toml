@@ -1,0 +1,254 @@
+# Field guide for the Abilities tab: what each generic ability field does, which
+# fields come first, and which are rarely needed. Written for this project (not
+# taken from the game). Spell-specific data fields (Holy Light's "Amount
+# Healed/Damaged", ...) are not described here: their editor names already say
+# what they are. Mark anything not confirmed in game with `unverified = true`.
+#
+# [order]      per category, the fields shown first, in this order. Fields not
+#              listed follow in the game's metadata order.
+# [[field]]    ids sharing one description; `advanced = true` folds the fields
+#              into the "Advanced" group of their category.
+
+[order]
+stats = [
+  "alev", "amcs", "acdn", "aran", "aare", "adur", "ahdu", "acas", "atar",
+  "abuf", "aeff", "aher", "aite", "arac", "arlv", "alsk", "apri",
+]
+text = [
+  "anam", "atp1", "aub1", "ahky", "aret", "arut", "arhk", "ansf",
+  "aut1", "auu1", "auhk", "aord", "aoru", "aoro", "aorf",
+]
+art = [
+  "aart", "abpx", "abpy", "arar", "arpx", "arpy", "auar", "aubx", "auby",
+  "acat", "atat", "asat", "aeat", "aaea", "amat", "amsp", "amac", "amho", "alig",
+]
+tech = ["areq", "arqa", "achd"]
+sound = ["aefs", "aefl"]
+
+# --- Stats -------------------------------------------------------------------
+
+[[field]]
+ids = ["alev"]
+description = "How many levels the ability has. Every per-level field gets one column per level; levels the base ability does not define start empty (0), so fill them in after adding levels."
+
+[[field]]
+ids = ["amcs"]
+description = "Mana spent each time the ability is cast. Passive abilities and auras ignore it."
+
+[[field]]
+ids = ["acdn"]
+description = "Seconds before the ability can be cast again."
+
+[[field]]
+ids = ["aran"]
+description = "How far away the target can be when casting, in game distance units (a Footman is about 30 wide). Melee range is about 100."
+
+[[field]]
+ids = ["aare"]
+description = "Radius affected around the target point or the caster, for area spells and auras."
+
+[[field]]
+ids = ["adur"]
+description = "How long the effect lasts on normal units, in seconds. 0 usually means instant or permanent, depending on the spell."
+
+[[field]]
+ids = ["ahdu"]
+description = "How long the effect lasts on heroes (and some resistant units), in seconds. Stuns and disables are usually shorter on heroes."
+
+[[field]]
+ids = ["acas"]
+description = "Seconds the caster spends casting before the effect happens. Most spells use 0 and rely on the cast animation instead."
+
+[[field]]
+ids = ["atar"]
+description = "Which targets the ability may affect: air or ground, enemies or allies, self, structures, heroes, dead units and so on."
+
+[[field]]
+ids = ["abuf"]
+description = "The buffs the ability applies, shown on affected units and checked by other abilities and triggers."
+
+[[field]]
+ids = ["aeff"]
+description = "Special effects (lightning, missiles, area art) the ability uses, as effect codes."
+
+[[field]]
+ids = ["aher"]
+description = "A hero ability: learned with skill points from the hero's learn menu instead of being available from the start."
+
+[[field]]
+ids = ["aite"]
+description = "An item ability: given to units by carrying an item. Item abilities have no button on the command card."
+
+[[field]]
+ids = ["arac"]
+description = "The race the ability is listed under in the editor. It does not change how the ability works."
+advanced = true
+
+[[field]]
+ids = ["arlv"]
+description = "Hero level needed to learn the first level of this ability."
+
+[[field]]
+ids = ["alsk"]
+description = "Hero levels needed between learning one level of the ability and the next. 0 uses the default from the gameplay constants."
+
+[[field]]
+ids = ["apri"]
+description = "When Spell Steal can take one of several buffs from a target, the buff with the highest priority is taken first."
+advanced = true
+
+# --- Text --------------------------------------------------------------------
+
+[[field]]
+ids = ["anam"]
+description = "The ability's name, shown in the editor and in some game messages."
+
+[[field]]
+ids = ["ansf"]
+description = "Editor-only text after the name that tells similar abilities apart, like \"(Neutral Hostile)\". Players never see it."
+
+[[field]]
+ids = ["atp1"]
+description = "The tooltip's first line, shown when hovering the ability's button, one per level."
+
+[[field]]
+ids = ["aub1"]
+description = "The tooltip's body, one per level. Color codes (|cffffcc00...|r), line breaks (|n) and value placeholders like <AHhb,DataA1> work here."
+
+[[field]]
+ids = ["ahky"]
+description = "Key that casts or uses the ability from the command card."
+
+[[field]]
+ids = ["aret"]
+description = "First line of the hero's learn tooltip. %d is replaced by the level being learned."
+
+[[field]]
+ids = ["arut"]
+description = "Body of the hero's learn tooltip, describing every level. Shown in the learn menu."
+
+[[field]]
+ids = ["arhk"]
+description = "Key that learns the ability in the hero's learn menu."
+
+[[field]]
+ids = ["aut1", "auu1"]
+description = "Tooltip shown while the ability is switched on, for abilities that toggle (Immolation, Defend): first line and body, one per level."
+advanced = true
+
+[[field]]
+ids = ["auhk"]
+description = "Key that switches a toggled ability off."
+advanced = true
+
+[[field]]
+ids = ["aord", "aoru", "aoro", "aorf"]
+description = "The order string triggers and the AI use to issue this ability (\"holybolt\"). Two abilities with the same order on one unit get in each other's way, so custom abilities based on the same base should not share a unit."
+advanced = true
+
+# --- Art ---------------------------------------------------------------------
+
+[[field]]
+ids = ["aart"]
+description = "Icon on the command card."
+
+[[field]]
+ids = ["abpx", "abpy"]
+description = "Position of the ability's button on the command card: column 0–3 from the left, row 0–2 from the top."
+
+[[field]]
+ids = ["arar"]
+description = "Icon in the hero's learn menu."
+
+[[field]]
+ids = ["arpx", "arpy"]
+description = "Position of the button in the hero's learn menu: column 0–3, row 0–2."
+
+[[field]]
+ids = ["auar"]
+description = "Icon shown while a toggled ability is switched on."
+advanced = true
+
+[[field]]
+ids = ["aubx", "auby"]
+description = "Command card position of a toggled ability's button while it is switched on."
+advanced = true
+
+[[field]]
+ids = ["acat", "atat", "asat", "aeat", "aaea"]
+description = "Models played when the ability is used: on the caster, on the target, as a special effect, as the main effect and over the area of effect."
+
+[[field]]
+ids = ["amat"]
+description = "Model of the missile the ability launches."
+
+[[field]]
+ids = ["amsp"]
+description = "Speed of the ability's missile, in distance units per second."
+
+[[field]]
+ids = ["amac"]
+description = "How high the missile arcs: 0 flies straight, 1 is a high lob."
+
+[[field]]
+ids = ["amho"]
+description = "Whether the missile follows a target that moves."
+advanced = true
+
+[[field]]
+ids = ["alig"]
+description = "Lightning effects the ability draws, such as Chain Lightning's bolt."
+
+[[field]]
+ids = ["atac", "acac"]
+description = "How many attachment points the target or caster art is placed on."
+advanced = true
+
+[[field]]
+ids = ["ata0", "ata1", "ata2", "ata3", "ata4", "ata5", "acap", "aca1", "aspt"]
+description = "Where on the model an effect is attached, as attachment point names like \"origin\", \"overhead\" or \"hand,left\"."
+advanced = true
+
+[[field]]
+ids = ["aani"]
+description = "Animation the caster plays, like \"spell\" or \"attack,slam\"."
+advanced = true
+
+# --- Tech tree ---------------------------------------------------------------
+
+[[field]]
+ids = ["areq"]
+description = "Buildings, units or upgrades the player needs before the ability can be used or learned."
+
+[[field]]
+ids = ["arqa"]
+description = "For upgrade requirements: the upgrade level each one needs."
+advanced = true
+
+[[field]]
+ids = ["achd"]
+description = "Whether the requirements are checked. When off, the ability works without them."
+advanced = true
+
+# --- Sound and data ------------------------------------------------------------
+
+[[field]]
+ids = ["aefs"]
+description = "Sound played when the ability takes effect, as a label from the game's sound tables."
+
+[[field]]
+ids = ["aefl"]
+description = "Sound that loops while the ability's effect lasts."
+advanced = true
+
+[[field]]
+ids = ["ausk"]
+description = "Unit skins the ability uses, for abilities that change a unit's look."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["alcp"]
+description = "Uses the newer default limit on how many levels a hero ability can have, instead of the classic one."
+advanced = true
+unverified = true

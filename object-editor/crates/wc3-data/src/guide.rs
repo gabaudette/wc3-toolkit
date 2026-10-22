@@ -11,6 +11,8 @@ use crate::{Error, Result};
 
 const UNIT_GUIDE: &str = include_str!("../data/unit-fields.toml");
 const UNIT_GUIDE_FILE: &str = "data/unit-fields.toml";
+const ABILITY_GUIDE: &str = include_str!("../data/ability-fields.toml");
+const ABILITY_GUIDE_FILE: &str = "data/ability-fields.toml";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GuideEntry {
@@ -49,13 +51,18 @@ struct FieldEntry {
 }
 
 fn invalid(reason: String) -> Error {
-    Error::Parse { line: 0, reason }.in_file(UNIT_GUIDE_FILE)
+    Error::Parse { line: 0, reason }
 }
 
 impl FieldGuide {
     /// The guide for units, heroes and buildings.
     pub fn units() -> Result<Self> {
         Self::parse(UNIT_GUIDE).map_err(|e| e.in_file(UNIT_GUIDE_FILE))
+    }
+
+    /// The guide for abilities' generic fields.
+    pub fn abilities() -> Result<Self> {
+        Self::parse(ABILITY_GUIDE).map_err(|e| e.in_file(ABILITY_GUIDE_FILE))
     }
 
     pub fn parse(text: &str) -> Result<Self> {
@@ -130,6 +137,15 @@ mod tests {
         assert!(!guide.entry("uhpm").unwrap().advanced);
         assert!(guide.entry("uept").unwrap().advanced);
         assert_eq!(guide.entry("ua1b"), guide.entry("ua2b"));
+    }
+
+    #[test]
+    fn the_ability_guide_is_valid() {
+        let guide = FieldGuide::abilities().unwrap();
+
+        assert_eq!(guide.rank("alev"), Some(0));
+        assert!(guide.entry("aord").unwrap().advanced);
+        assert_eq!(guide.entry("abpx"), guide.entry("abpy"));
     }
 
     #[test]

@@ -10,7 +10,7 @@
 //! evidently places them itself.
 
 use serde::Serialize;
-use wc3_data::abilities::AbilityDatabase;
+use wc3_data::abilities::AbilityInfo;
 use wc3_data::units::parse_hotkey;
 use wc3_map::FourCC;
 
@@ -116,13 +116,14 @@ fn unit_slot(view: &View<'_>, id: FourCC) -> Slot {
     Some((coordinate("ubpx")?, coordinate("ubpy")?))
 }
 
-fn ability_name(abilities: &AbilityDatabase, id: FourCC) -> String {
-    abilities
-        .info(&id.to_string())
-        .map_or_else(|| id.to_string(), |a| a.name)
+/// Looks up an ability by ID, with the map's changes applied.
+pub type AbilityLookup<'a> = &'a dyn Fn(FourCC) -> Option<AbilityInfo>;
+
+fn ability_name(info: Option<&AbilityInfo>, id: FourCC) -> String {
+    info.map_or_else(|| id.to_string(), |a| a.name.clone())
 }
 
-pub fn clashes(view: &View<'_>, abilities: &AbilityDatabase, id: FourCC) -> Vec<Clash> {
+pub fn clashes(view: &View<'_>, abilities: AbilityLookup<'_>, id: FourCC) -> Vec<Clash> {
     let raw = |field: &str| view.raw_by_id(id, field);
     let is_building = raw("ubdg").as_deref() == Some("1");
     let hero_abilities = codes(raw("uhab"));
@@ -159,13 +160,13 @@ pub fn clashes(view: &View<'_>, abilities: &AbilityDatabase, id: FourCC) -> Vec<
         .into_iter()
         .chain(hero_abilities.iter().copied())
     {
-        let info = abilities.info(&ability.to_string());
+        let info = abilities(ability);
         let key = info
             .as_ref()
             .and_then(|a| a.hotkey.as_deref())
             .and_then(parse_hotkey);
         let slot = info.as_ref().and_then(|a| a.button);
-        card.add(key, ability_name(abilities, ability), slot);
+        card.add(key, ability_name(info.as_ref(), ability), slot);
     }
 
     for unit in trains.into_iter().chain(codes(raw("uupt"))) {
@@ -183,13 +184,13 @@ pub fn clashes(view: &View<'_>, abilities: &AbilityDatabase, id: FourCC) -> Vec<
 
     let mut learn = Menu::new("Learn menu");
     for ability in &hero_abilities {
-        let info = abilities.info(&ability.to_string());
+        let info = abilities(*ability);
         let key = info
             .as_ref()
             .and_then(|a| a.learn_hotkey.as_deref())
             .and_then(parse_hotkey);
         let slot = info.as_ref().and_then(|a| a.learn_button);
-        learn.add(key, ability_name(abilities, *ability), slot);
+        learn.add(key, ability_name(info.as_ref(), *ability), slot);
     }
 
     let mut build = Menu::new("Build menu");
@@ -212,6 +213,7 @@ mod tests {
     //! Against a real install; run with `WC3_GAME_DIR=... cargo test -- --ignored`.
 
     use std::path::PathBuf;
+    use wc3_data::abilities::AbilityDatabase;
 
     use wc3_data::game::{ArtMode, GameFiles, GameOptions};
     use wc3_data::guide::FieldGuide;
@@ -252,7 +254,7 @@ mod tests {
 
         for id in view.ids() {
             if view.item(id).is_some_and(|i| i.group == "melee") {
-                for clash in clashes(&view, &abilities, id) {
+                for clash in clashes(&view, &|a| abilities.info(&a.to_string()), id) {
                     found.push(format!(
                         "{id} {}: {} {} {:?}",
                         view.name(id),
@@ -291,7 +293,7 @@ mod tests {
             map: Some(&units),
             mode: ArtMode::Sd,
         };
-        let found = clashes(&view, &abilities, hero);
+        let found = clashes(&view, &|a| abilities.info(&a.to_string()), hero);
 
         let both = |c: &Clash| {
             c.names.contains(&"Holy Light".to_owned()) && c.names.contains(&"Storm Bolt".to_owned())

@@ -12,6 +12,27 @@ use crate::{Error, Result};
 /// Data rows start after the header row, which is row 1 in the file.
 const FIRST_DATA_ROW: usize = 2;
 
+/// Enumerated types holding bit flags: choice `n` stands for bit `n`, and 0 is "None".
+pub const BIT_FLAG_TYPES: &[&str] = &[
+    "versionFlags",
+    "morphFlags",
+    "stackFlags",
+    "channelFlags",
+    "interactionFlags",
+    "pickFlags",
+    "silenceFlags",
+];
+
+/// Enumerated types whose choices are numbers. Maps store them, like bit
+/// flags, as integers.
+const NUMBER_CHOICE_TYPES: &[&str] = &[
+    "attackBits",
+    "channelType",
+    "defenseTypeInt",
+    "detectionType",
+    "fullFlags",
+];
+
 /// Which object kinds a field applies to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ObjectKind {
@@ -84,6 +105,18 @@ impl FieldMeta {
     pub fn applies_to_id(&self, code: &str) -> bool {
         let allowed = self.use_specific.is_empty() || self.use_specific.iter().any(|s| s == code);
         allowed && !self.not_specific.iter().any(|s| s == code)
+    }
+
+    pub fn is_bit_flags(&self) -> bool {
+        BIT_FLAG_TYPES.contains(&self.value_type.as_str())
+    }
+
+    /// Whether maps store the value as an integer: numbers, booleans, bit
+    /// flags and numbered choices.
+    pub fn is_integer(&self) -> bool {
+        matches!(self.value_type.as_str(), "int" | "bool")
+            || self.is_bit_flags()
+            || NUMBER_CHOICE_TYPES.contains(&self.value_type.as_str())
     }
 
     pub fn applies_to(&self, kind: ObjectKind) -> bool {

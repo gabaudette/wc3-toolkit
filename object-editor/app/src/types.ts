@@ -22,12 +22,16 @@ export type FieldControl =
   | "text"
   | "longText"
   | "select"
+  | "flags"
+  | "flagList"
   | "codes"
   | "abilities";
 
 export type Choice = {
   value: string;
   label: string;
+  /** Other spellings the game accepts, e.g. "invu" for "invulnerable". */
+  aliases: string[];
 };
 
 export type Field = {
@@ -98,6 +102,8 @@ export type MapSummary = {
 
 export type AbilitySummary = {
   id: string;
+  /** The game ability it copies; its own ID for game abilities. */
+  base: string;
   name: string;
   suffix: string | null;
   icon: string | null;
@@ -105,6 +111,11 @@ export type AbilitySummary = {
   item: boolean;
   race: string;
   levels: number;
+  /** Added by the map (`A000`). */
+  custom: boolean;
+  /** Added or changed by the map. */
+  inMap: boolean;
+  changedFields: number;
 };
 
 export type LevelRow = {
@@ -119,6 +130,31 @@ export type AbilityCard = {
   requiredLevel: number;
   description: string | null;
   rows: LevelRow[];
+};
+
+export type LevelCell = {
+  raw: string;
+  display: string;
+  modified: boolean;
+};
+
+/** A field with a value per level; `field` holds its names, control and limits. */
+export type LevelField = {
+  field: Field;
+  cells: LevelCell[];
+};
+
+export type AbilitySection = {
+  category: string;
+  label: string;
+  fields: Field[];
+  levelFields: LevelField[];
+};
+
+export type AbilityDetail = {
+  card: AbilityCard;
+  levels: number;
+  sections: AbilitySection[];
 };
 
 /** Objects that move between maps: custom units and what they use. */

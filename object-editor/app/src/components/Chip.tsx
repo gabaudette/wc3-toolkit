@@ -1,0 +1,27 @@
+import { classes } from "../ui";
+
+/** The list with `value` added, or removed if it was there. */
+export function toggle<T>(list: T[], value: T): T[] {
+  if (list.includes(value)) {
+    return list.filter((v) => v !== value);
+  }
+
+  return [...list, value];
+}
+
+export function Chip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onPress}
+      aria-pressed={on}
+      className={classes(
+        "rounded-full border px-2 py-0.5 text-xs",
+        on && "border-gold/60 bg-gold-soft text-gold",
+        !on && "border-line text-faint hover:text-muted",
+      )}
+    >
+      {label}
+    </button>
+  );
+}

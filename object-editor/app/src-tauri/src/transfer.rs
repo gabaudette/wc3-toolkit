@@ -6,6 +6,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 use tauri::State;
+use wc3_map::abilities::MapAbilities;
 use wc3_map::transfer::{
     self, Bundle, BundledObject, Export, MapExtras, MapObjects, ObjectType, PlannedObject,
     References,
@@ -66,6 +67,7 @@ pub enum ImportSource {
 /// Another map's units and extras, read before taking the session lock.
 struct OtherMap {
     units: MapUnits,
+    abilities: MapAbilities,
     extras: MapExtras,
 }
 
@@ -74,6 +76,7 @@ impl OtherMap {
         let map = Map::open(&PathBuf::from(path)).map_err(|e| e.to_string())?;
         Ok(Self {
             units: MapUnits::load(&map).map_err(|e| e.to_string())?,
+            abilities: MapAbilities::load(&map).map_err(|e| e.to_string())?,
             extras: MapExtras::load(&map).map_err(|e| e.to_string())?,
         })
     }
@@ -81,6 +84,7 @@ impl OtherMap {
     fn objects(&self) -> MapObjects<'_> {
         MapObjects {
             units: &self.units,
+            abilities: &self.abilities,
             extras: &self.extras,
         }
     }
@@ -158,6 +162,7 @@ pub fn share_code(state: State<'_, AppState>, ids: Vec<String>) -> Result<ShareP
         let map = session.map.as_ref().ok_or(NO_MAP)?;
         let source = MapObjects {
             units: &map.units,
+            abilities: &map.abilities,
             extras: &map.extras,
         };
         let Export {
@@ -227,6 +232,7 @@ fn planned(session: &Session, bundle: &Bundle) -> Result<Vec<PlannedObject>, Str
     let map = session.map.as_ref().ok_or(NO_MAP)?;
     let target = MapObjects {
         units: &map.units,
+        abilities: &map.abilities,
         extras: &map.extras,
     };
     let in_game = |ty: ObjectType, id: FourCC| match ty {
@@ -287,7 +293,14 @@ pub fn import_objects(
         let added = listed(session, &bundle, &plan, &chosen);
 
         let map = session.map.as_mut().ok_or(NO_MAP)?;
-        transfer::apply(&bundle, &plan, &refs, &mut map.units, &mut map.extras);
+        transfer::apply(
+            &bundle,
+            &plan,
+            &refs,
+            &mut map.units,
+            &mut map.abilities,
+            &mut map.extras,
+        );
         Ok(added)
     })
 }
