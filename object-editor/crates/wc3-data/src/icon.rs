@@ -1,7 +1,7 @@
 //! Icons and other textures: decoding the game's DDS images to RGBA.
 //!
-//! Data files still name icons `*.blp`, but Reforged ships them as `.dds`
-//! (DXT1 or DXT5) in both its SD and HD layers.
+//! Data files and models name textures `*.blp` or `*.tif`, but Reforged ships
+//! them as `.dds` (DXT1, DXT5, or ATI2 for normal maps) in its SD and HD layers.
 
 use crate::game::{ArtMode, GameFiles};
 use crate::{Error, Result};
@@ -21,7 +21,20 @@ pub struct Image {
     pub rgba: Vec<u8>,
 }
 
+/// Bytes before the pixels in [`Image::to_raw`]: width and height, little-endian.
+pub const RAW_HEADER_SIZE: usize = 8;
+
 impl Image {
+    /// Width and height (u32 little-endian each), then the RGBA pixels. Faster
+    /// than PNG for large textures that are only passed to a renderer.
+    pub fn to_raw(&self) -> Vec<u8> {
+        let mut out = Vec::with_capacity(RAW_HEADER_SIZE + self.rgba.len());
+        out.extend_from_slice(&self.width.to_le_bytes());
+        out.extend_from_slice(&self.height.to_le_bytes());
+        out.extend_from_slice(&self.rgba);
+        out
+    }
+
     pub fn to_png(&self) -> Result<Vec<u8>> {
         let mut out = Vec::new();
         let mut encoder = png::Encoder::new(&mut out, self.width, self.height);
@@ -42,16 +55,25 @@ fn png_error(e: png::EncodingError) -> Error {
 /// Loads a texture by the path the game data uses, e.g.
 /// `ReplaceableTextures\CommandButtons\BTNHeroPaladin.blp`.
 pub fn load_texture(files: &GameFiles, path: &str, mode: ArtMode) -> Result<Image> {
-    let dds_path = match path.rsplit_once('.') {
-        Some((stem, ext)) if ext.eq_ignore_ascii_case("blp") => format!("{stem}.dds"),
-        _ => path.to_owned(),
-    };
+    let dds_path = dds_file(path);
 
     let data = files.read_art(&dds_path, mode)?;
     decode_dds(&data).map_err(|e| e.in_file(dds_path))
 }
 
-/// Decodes the top mip level of a DXT1, DXT3 or DXT5 DDS file.
+/// The `.dds` file Reforged ships for a texture path: `x.blp`, `x.tif` and `x` → `x.dds`.
+pub fn dds_file(path: &str) -> String {
+    let normalized = path.replace('/', "\\");
+    let file_start = normalized.rfind('\\').map_or(0, |i| i + 1);
+    let stem = match normalized[file_start..].rfind('.') {
+        Some(dot) => &normalized[..file_start + dot],
+        None => &normalized,
+    };
+
+    format!("{stem}.dds")
+}
+
+/// Decodes the top mip level of a DXT1, DXT3, DXT5, ATI1 or ATI2 DDS file.
 pub fn decode_dds(data: &[u8]) -> Result<Image> {
     if data.len() < DDS_HEADER_SIZE || &data[..DDS_MAGIC.len()] != DDS_MAGIC {
         return Err(Error::Image("not a DDS file".to_owned()));
@@ -64,6 +86,8 @@ pub fn decode_dds(data: &[u8]) -> Result<Image> {
         b"DXT1" => texpresso::Format::Bc1,
         b"DXT3" => texpresso::Format::Bc2,
         b"DXT5" => texpresso::Format::Bc3,
+        b"ATI1" | b"BC4U" => texpresso::Format::Bc4,
+        b"ATI2" | b"BC5U" => texpresso::Format::Bc5,
         other => {
             return Err(Error::Image(format!(
                 "unsupported DDS format {:?}",
@@ -121,6 +145,32 @@ mod tests {
         assert_eq!((image.width, image.height), (4, 4));
         assert_eq!(&image.rgba[..4], &[255, 0, 0, 255]);
         assert!(image.to_png().unwrap().starts_with(b"\x89PNG"));
+    }
+
+    #[test]
+    fn decodes_ati2_normal_maps() {
+        // One 4x4 BC5 block: red and green both at 255 everywhere.
+        let mut data = dds_header(4, 4, b"ATI2");
+        data.extend_from_slice(&[255, 255, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0]);
+
+        let image = decode_dds(&data).unwrap();
+
+        assert_eq!(&image.rgba[..2], &[255, 255]);
+        assert_eq!(image.to_raw().len(), RAW_HEADER_SIZE + image.rgba.len());
+    }
+
+    #[test]
+    fn texture_paths_map_to_dds_files() {
+        assert_eq!(
+            dds_file("Units/Human/HeroPaladin/Main_Diffuse.tif"),
+            "Units\\Human\\HeroPaladin\\Main_Diffuse.dds"
+        );
+        assert_eq!(dds_file("Textures\\Black32.blp"), "Textures\\Black32.dds");
+        assert_eq!(
+            dds_file("Textures\\NoExtension"),
+            "Textures\\NoExtension.dds"
+        );
+        assert_eq!(dds_file("Dir.v2\\File"), "Dir.v2\\File.dds");
     }
 
     #[test]
