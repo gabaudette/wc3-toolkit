@@ -14,6 +14,8 @@ use crate::{Error, Result};
 
 const METADATA: &str = "units\\unitmetadata.slk";
 const EDITOR_DATA: &str = "ui\\uniteditordata.txt";
+/// Standard commands (Move, Attack, ...) with their hotkeys.
+const COMMAND_STRINGS: &str = "units\\commandstrings.txt";
 const EDITOR_STRINGS: &[&str] = &["ui\\worldeditstrings.txt", "ui\\worldeditgamestrings.txt"];
 
 /// Game data tables and the metadata source name that refers to each one.
@@ -79,6 +81,7 @@ pub struct UnitDatabase {
     names: Profile,
     editor_strings: Profile,
     enums: HashMap<String, Vec<EnumValue>>,
+    commands: Profile,
     ids: Vec<String>,
 }
 
@@ -105,6 +108,7 @@ impl UnitDatabase {
         let editor_strings = load_profile(files, EDITOR_STRINGS, GameFiles::read_localized)?;
         let editor_data = load_profile(files, &[EDITOR_DATA], GameFiles::read_base)?;
         let enums = parse_enums(&editor_data, &editor_strings);
+        let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
 
         Ok(Self {
             fields,
@@ -113,6 +117,7 @@ impl UnitDatabase {
             names: load_name_profile(files)?,
             editor_strings,
             enums,
+            commands,
             ids,
         })
     }
@@ -255,6 +260,28 @@ impl UnitDatabase {
         self.enums.get(value_type).map(Vec::as_slice)
     }
 
+    /// Hotkey of a unit or upgrade from the game's text files, e.g. `F` for the Footman.
+    pub fn hotkey(&self, id: &str) -> Option<char> {
+        [&self.profile, &self.names]
+            .iter()
+            .find_map(|p| p.get(id, "Hotkey"))
+            .and_then(parse_hotkey)
+    }
+
+    /// A standard command's name and hotkey, e.g. `CmdMove` → ("Move", `M`).
+    pub fn command(&self, section: &str) -> Option<(String, char)> {
+        let key = self
+            .commands
+            .get(section, "Hotkey")
+            .and_then(parse_hotkey)?;
+        let name = self
+            .commands
+            .get(section, "Tip")
+            .map_or(section, unquote)
+            .to_owned();
+        Some((name, key))
+    }
+
     /// The unit's icon path as stored in the data, e.g. `ReplaceableTextures\...\BTNHeroPaladin.blp`.
     pub fn icon_path(&self, id: &str, mode: ArtMode) -> Option<String> {
         self.profile_value(id, "Art", mode)
@@ -332,6 +359,14 @@ impl crate::abilities::PlaceholderSource for UnitDatabase {
             .filter(|v| !is_empty(v))
             .map(|v| v.trim().to_owned())
     }
+}
+
+/// A hotkey as the game stores it: one letter or digit. Values like `27` or
+/// `512` are key codes for special keys and do not count.
+pub fn parse_hotkey(value: &str) -> Option<char> {
+    let mut chars = unquote(value).trim().chars();
+    let key = chars.next()?;
+    (chars.next().is_none() && key.is_ascii_alphanumeric()).then(|| key.to_ascii_uppercase())
 }
 
 fn is_empty(value: &str) -> bool {
@@ -490,4 +525,18 @@ fn load_name_profile(files: &GameFiles) -> Result<Profile> {
     }
 
     Ok(profile)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_hotkey;
+
+    #[test]
+    fn hotkeys_are_single_letters_or_digits() {
+        assert_eq!(parse_hotkey("t"), Some('T'));
+        assert_eq!(parse_hotkey("\"F\""), Some('F'));
+        assert_eq!(parse_hotkey("27"), None);
+        assert_eq!(parse_hotkey(""), None);
+        assert_eq!(parse_hotkey("-"), None);
+    }
 }

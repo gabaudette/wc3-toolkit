@@ -1,6 +1,6 @@
-import { ChevronDown, ChevronRight, Copy01 } from "@untitledui/icons";
+import { AlertTriangle, ChevronDown, ChevronRight, Copy01 } from "@untitledui/icons";
 import { type ReactNode, useMemo, useState } from "react";
-import type { Field, Section, UnitDetail } from "../types";
+import type { Field, HotkeyClash, Section, UnitDetail } from "../types";
 import { classes } from "../ui";
 import { Button } from "./Button";
 import { FieldRow } from "./FieldRow";
@@ -8,6 +8,7 @@ import { UnitIcon } from "./UnitIcon";
 
 type UnitPageProps = {
   detail: UnitDetail;
+  clashes: HotkeyClash[];
   editable: boolean;
   onChange: (field: string, value: string) => void;
   onReset: (field: string) => void;
@@ -78,7 +79,38 @@ function kindLabel(detail: UnitDetail): string {
   return [kind, race].filter(Boolean).join(" · ");
 }
 
-export function UnitPage({ detail, editable, onChange, onReset, onCreateCopy }: UnitPageProps) {
+function ClashWarning({ clashes }: { clashes: HotkeyClash[] }) {
+  if (clashes.length === 0) {
+    return null;
+  }
+
+  return (
+    <div
+      role="status"
+      className="flex gap-2 rounded-md border border-gold/40 bg-gold-soft px-3 py-2 text-sm text-gold"
+    >
+      <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+      <ul>
+        {clashes.map((clash) => (
+          <li key={`${clash.menu}-${clash.key}`}>
+            Hotkey <kbd className="rounded bg-surface-0 px-1 font-mono text-ink">{clash.key}</kbd>{" "}
+            is used by {clash.names.join(" and ")} ({clash.menu.toLowerCase()}). Only one of them
+            will react to the key.
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function UnitPage({
+  detail,
+  clashes,
+  editable,
+  onChange,
+  onReset,
+  onCreateCopy,
+}: UnitPageProps) {
   const [filter, setFilter] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
   const [open, setOpen] = useState<string[]>(OPEN_BY_DEFAULT);
@@ -146,6 +178,8 @@ export function UnitPage({ detail, editable, onChange, onReset, onCreateCopy }: 
             </div>
           ))}
         </dl>
+
+        <ClashWarning clashes={clashes} />
 
         <div className="flex items-center gap-3">
           <input

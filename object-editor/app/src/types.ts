@@ -66,6 +66,13 @@ export type UnitDetail = {
   sections: Section[];
 };
 
+/** Two or more buttons in one menu with the same hotkey. */
+export type HotkeyClash = {
+  key: string;
+  menu: string;
+  names: string[];
+};
+
 export type SearchHit = {
   id: string;
   reason: string;

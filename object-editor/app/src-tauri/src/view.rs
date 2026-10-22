@@ -135,7 +135,7 @@ impl View<'_> {
         }
     }
 
-    fn raw_by_id(&self, id: FourCC, field_id: &str) -> Option<String> {
+    pub(crate) fn raw_by_id(&self, id: FourCC, field_id: &str) -> Option<String> {
         self.db.field(field_id).and_then(|f| self.raw(id, f))
     }
 
@@ -147,7 +147,7 @@ impl View<'_> {
         self.map.is_some_and(|m| m.is_modified(id, field))
     }
 
-    fn name(&self, id: FourCC) -> String {
+    pub(crate) fn name(&self, id: FourCC) -> String {
         match self.map {
             Some(map) => map.name(self.db, id),
             None => self.db.name(&id.to_string()),
