@@ -2,14 +2,12 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "../api";
 import type { GameSummary, MapSummary } from "../types";
-import { GAME_DIR_KEY, HD_KEY, MAP_PATH_KEY, remembered } from "../ui";
+import { GAME_DIR_KEY, HD_KEY, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
 import { Button } from "./Button";
 
 type SetupScreenProps = {
   onReady: (game: GameSummary, map: MapSummary | null) => void;
 };
-
-const MAP_FILTERS = [{ name: "Warcraft III maps", extensions: ["w3m", "w3x"] }];
 
 export function SetupScreen({ onReady }: SetupScreenProps) {
   const [dir, setDir] = useState(remembered.get(GAME_DIR_KEY) ?? "");

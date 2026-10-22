@@ -8,6 +8,7 @@ use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles};
 use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
+use wc3_map::transfer::MapExtras;
 use wc3_map::units::MapUnits;
 
 pub struct Session {
@@ -24,24 +25,35 @@ pub struct Session {
 pub struct OpenMap {
     pub path: PathBuf,
     pub units: MapUnits,
-    /// The unit files as last loaded or saved, to tell whether anything changed.
+    /// Abilities and buffs: only imports change them.
+    pub extras: MapExtras,
+    /// The files as last loaded or saved, to tell whether anything changed.
     pub saved_files: Vec<(&'static str, Vec<u8>)>,
 }
 
 impl OpenMap {
-    pub fn new(path: PathBuf, units: MapUnits) -> Self {
-        let saved_files = units.files();
-        Self {
+    pub fn new(path: PathBuf, units: MapUnits, extras: MapExtras) -> Self {
+        let mut map = Self {
             path,
             units,
-            saved_files,
-        }
+            extras,
+            saved_files: Vec::new(),
+        };
+        map.saved_files = map.files();
+        map
+    }
+
+    /// Every file the editor writes into the map.
+    pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
+        let mut files = self.units.files();
+        files.extend(self.extras.files());
+        files
     }
 
     /// Whether the map differs from the file on disk. Undoing every change
     /// by hand counts as no change.
     pub fn unsaved(&self) -> bool {
-        self.units.files() != self.saved_files
+        self.files() != self.saved_files
     }
 }
 

@@ -5,8 +5,10 @@
 
 use std::path::{Path, PathBuf};
 
+use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::units::UnitDatabase;
+use wc3_map::transfer::{self, Bundle, MapExtras, MapObjects, ObjectType, References};
 use wc3_map::units::MapUnits;
 use wc3_map::{
     FourCC, Layout, Map, OBJECT_FILES, ObjectData, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE,
@@ -19,6 +21,8 @@ const MAPS_DIR_VAR: &str = "WC3_MAPS_DIR";
 const GAME_DIR_VAR: &str = "WC3_GAME_DIR";
 const MAP_EXTENSIONS: &[&str] = &["w3m", "w3x"];
 const MAX_FILES: u32 = 8;
+/// Unit, ability and buff files with their skins, and the string table.
+const MOVED_MAX_FILES: u32 = 16;
 
 fn env_dir(var: &str) -> Result<PathBuf, String> {
     std::env::var_os(var)
@@ -148,5 +152,121 @@ fn edited_units_save_and_read_back() -> TestResult {
         edited.display_value(&db, hero, hp, ArtMode::Sd),
         db.display_value("Hpal", hp, ArtMode::Sd)
     );
+    Ok(())
+}
+
+/// Every map's custom units, with what they use, survive a share code and an
+/// import into a copy of the same map, where every ID is taken: all objects get
+/// new IDs, references follow them, and the saved map reads back.
+#[test]
+#[ignore = "needs maps and an install (WC3_MAPS_DIR, WC3_GAME_DIR)"]
+fn custom_units_move_between_maps() -> TestResult {
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let db = UnitDatabase::load(&files)?;
+    let abilities = AbilityDatabase::load(&files)?;
+    let refs = References::new(db.fields(), abilities.fields());
+    let in_game = |ty: ObjectType, id: FourCC| match ty {
+        ObjectType::Unit => db.contains(&id.to_string()),
+        ObjectType::Ability => abilities.contains(&id.to_string()),
+        ObjectType::Buff => false,
+    };
+
+    let mut maps = Vec::new();
+    find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
+    let dir = tempfile::tempdir()?;
+    let (mut moved_maps, mut objects) = (0, 0);
+
+    for path in &maps {
+        let map = Map::open(path)?;
+        let units = MapUnits::load(&map)?;
+        let extras = MapExtras::load(&map)?;
+        let custom: Vec<FourCC> = units
+            .units()
+            .iter()
+            .filter(|u| u.is_custom)
+            .map(|u| u.id)
+            .collect();
+        if custom.is_empty() {
+            continue;
+        }
+
+        let source = MapObjects {
+            units: &units,
+            extras: &extras,
+        };
+        let export = transfer::export(source, &refs, &custom)?;
+        let bundle = Bundle::from_code(&export.bundle.to_code())?;
+        assert_eq!(
+            bundle,
+            export.bundle,
+            "{}: share code changes the bundle",
+            path.display()
+        );
+
+        let mut target_units = MapUnits::load(&map)?;
+        let mut target_extras = MapExtras::load(&map)?;
+        let target = MapObjects {
+            units: &target_units,
+            extras: &target_extras,
+        };
+        let plan = transfer::plan(&bundle, target, &in_game)?;
+        assert!(
+            plan.iter().all(|p| p.new_id != p.id),
+            "{}: an ID that is taken was kept",
+            path.display()
+        );
+        transfer::apply(&bundle, &plan, &refs, &mut target_units, &mut target_extras);
+
+        // Protected maps cannot be rewritten, so the result goes into a new archive.
+        let copy = dir.path().join(format!("moved{moved_maps}.w3x"));
+        mpq::Archive::create(&copy, MOVED_MAX_FILES)?.save()?;
+        let mut written = target_units.files();
+        written.extend(target_extras.files());
+        save_files(&copy, &copy, &written)?;
+
+        let saved = Map::open(&copy)?;
+        let reread = MapUnits::load(&saved)?;
+        MapExtras::load(&saved)?;
+        let old_ids: Vec<FourCC> = plan
+            .iter()
+            .filter(|p| p.ty == ObjectType::Unit)
+            .map(|p| p.id)
+            .collect();
+        for planned in plan.iter().filter(|p| p.ty == ObjectType::Unit) {
+            assert!(
+                reread
+                    .units()
+                    .iter()
+                    .any(|u| u.id == planned.new_id && u.is_custom),
+                "{}: {} is missing after saving",
+                path.display(),
+                planned.new_id
+            );
+            // Lists of units an imported unit trains or builds name only new IDs.
+            for field in ["utra", "ubui", "uupt"].iter().filter_map(|f| db.field(f)) {
+                let value = reread
+                    .raw_value(&db, planned.new_id, field, ArtMode::Sd)
+                    .unwrap_or_default();
+                let stale = value.split(',').filter_map(FourCC::parse).find(|id| {
+                    old_ids.contains(id)
+                        && !reread
+                            .units()
+                            .iter()
+                            .any(|u| u.id == *id && !plan.iter().any(|p| p.id == *id))
+                });
+                assert!(
+                    stale.is_none(),
+                    "{}: {} still names {stale:?}",
+                    path.display(),
+                    planned.new_id
+                );
+            }
+        }
+
+        moved_maps += 1;
+        objects += plan.len();
+    }
+
+    assert!(moved_maps > 0 && objects > 0, "no map has custom units");
     Ok(())
 }

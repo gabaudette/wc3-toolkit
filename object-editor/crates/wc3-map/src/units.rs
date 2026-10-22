@@ -54,6 +54,26 @@ impl MapUnits {
         &self.strings
     }
 
+    /// The unit tables (gameplay, skin) and the string table, for moving
+    /// objects between maps.
+    pub(crate) fn parts(&self) -> (&ObjectData, &ObjectData, &MapStrings) {
+        (&self.data, &self.skins, &self.strings)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn from_parts(data: ObjectData, skins: ObjectData, strings: MapStrings) -> Self {
+        Self {
+            data,
+            skins,
+            strings,
+            added_strings: Vec::new(),
+        }
+    }
+
+    pub(crate) fn parts_mut(&mut self) -> (&mut ObjectData, &mut ObjectData, &mut MapStrings) {
+        (&mut self.data, &mut self.skins, &mut self.strings)
+    }
+
     /// Custom units first, then changed original units, each listed once.
     pub fn units(&self) -> Vec<MapUnit> {
         let mut units: Vec<MapUnit> = Vec::new();

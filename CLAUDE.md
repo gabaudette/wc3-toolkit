@@ -12,7 +12,10 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `objects` (all Object Editor files, v1–v3, byte-exact round trip) and `strings` (`war3map.wts`).
   `crates/mpq` reads/writes map archives via the vendored StormLib (built with CMake).
   `crates/wc3-map` opens maps, saves through a temp copy (`save_files`), and `units::MapUnits`
-  applies a map's unit changes over the game data and edits them. `wc3map` is its CLI
+  applies a map's unit changes over the game data and edits them. `transfer` moves custom
+  units with the custom units, abilities and buffs they reference between maps: share codes
+  (`W3OBJ1:` + base64 of deflated object files) and imports, renaming taken IDs and every
+  reference to them (found through field metadata types). `wc3map` is its CLI
   (`check`, `units`, `unit`, `set`, `new`, `lua`).
 - Everything must build and run on Windows and Linux (CI tests both). Windows specifics:
   StormLib's library is named `StormLib` and needs `wininet` + `user32`; CascLib needs

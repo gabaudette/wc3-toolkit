@@ -10,6 +10,8 @@ repository.workspace = true
 mpq = { path = "../mpq" }
 wc3-data = { path = "../wc3-data" }
 thiserror = "2"
+base64 = "0.22"
+flate2 = "1"
 full_moon = { version = "3", default-features = false, features = ["lua53"] }
 
 [dev-dependencies]

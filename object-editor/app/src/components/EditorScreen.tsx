@@ -1,10 +1,20 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, open } from "@tauri-apps/plugin-dialog";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, errorMessage } from "../api";
-import type { Field, GameSummary, HotkeyClash, MapSummary, UnitDetail, UnitItem } from "../types";
-import { MAP_PATH_KEY, remembered } from "../ui";
+import type {
+  Field,
+  GameSummary,
+  HotkeyClash,
+  MapSummary,
+  TransferObject,
+  UnitDetail,
+  UnitItem,
+} from "../types";
+import { MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
 import { Button } from "./Button";
+import { ImportDialog } from "./ImportDialog";
+import { ShareDialog } from "./ShareDialog";
 import { UnitList } from "./UnitList";
 import { UnitPage } from "./UnitPage";
 
@@ -12,8 +22,6 @@ type EditorScreenProps = {
   game: GameSummary;
   initialMap: MapSummary | null;
 };
-
-const MAP_FILTERS = [{ name: "Warcraft III maps", extensions: ["w3m", "w3x"] }];
 
 /** Asks before throwing away unsaved changes. Resolves to `true` to discard them. */
 function confirmDiscard(map: MapSummary): Promise<boolean> {
@@ -49,7 +57,16 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [clashes, setClashes] = useState<HotkeyClash[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [dialog, setDialog] = useState<"share" | "import" | null>(null);
   const editable = map !== null;
+  const customUnits = useMemo(() => units.filter((u) => u.custom), [units]);
+  const shareFirst = useMemo(() => {
+    if (selected && customUnits.some((u) => u.id === selected)) {
+      return [selected];
+    }
+
+    return [];
+  }, [selected, customUnits]);
 
   // The close handler is registered once; it reads the latest map from here.
   const mapRef = useRef(map);
@@ -104,6 +121,20 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       setMap(await api.mapStatus());
       refreshList();
       setSelected(created.id);
+    } catch (e) {
+      fail(e);
+    }
+  }
+
+  async function imported(objects: TransferObject[]) {
+    setDialog(null);
+    try {
+      setMap(await api.mapStatus());
+      refreshList();
+      const firstUnit = objects.find((o) => o.kind === "unit" && !o.dependency);
+      if (firstUnit) {
+        setSelected(firstUnit.newId ?? firstUnit.id);
+      }
     } catch (e) {
       fail(e);
     }
@@ -190,6 +221,14 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         )}
         {!map && <span className="text-muted">Game data (read-only)</span>}
         <span className="flex-1" />
+        {map && (
+          <>
+            <Button onPress={() => setDialog("import")}>Import…</Button>
+            <Button disabled={customUnits.length === 0} onPress={() => setDialog("share")}>
+              Share…
+            </Button>
+          </>
+        )}
         <Button onPress={openOtherMap}>Open map…</Button>
         {map && (
           <Button primary disabled={!map.unsaved || saving} onPress={save}>
@@ -209,6 +248,19 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
           </Button>
         </div>
       )}
+
+      <ShareDialog
+        open={dialog === "share"}
+        units={customUnits}
+        initial={shareFirst}
+        onClose={() => setDialog(null)}
+      />
+      <ImportDialog
+        open={dialog === "import"}
+        mapsDir={game.mapsDir}
+        onImported={imported}
+        onClose={() => setDialog(null)}
+      />
 
       <div className="flex min-h-0 flex-1">
         <UnitList units={units} selected={selected} onSelect={setSelected} onError={setError} />

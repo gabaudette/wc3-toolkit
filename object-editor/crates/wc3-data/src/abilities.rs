@@ -117,6 +117,11 @@ impl AbilityDatabase {
     }
 
     /// Every ability ID in the game data, in table order.
+    /// Every ability field the metadata defines.
+    pub fn fields(&self) -> &[FieldMeta] {
+        &self.fields
+    }
+
     pub fn ids(&self) -> &[String] {
         &self.ids
     }

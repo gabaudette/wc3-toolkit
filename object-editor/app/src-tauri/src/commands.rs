@@ -9,6 +9,7 @@ use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
+use wc3_map::transfer::MapExtras;
 use wc3_map::units::MapUnits;
 use wc3_map::{FourCC, Map, save_files};
 
@@ -34,11 +35,11 @@ pub struct MapSummary {
     pub unsaved: bool,
 }
 
-fn fourcc(code: &str) -> Result<FourCC, String> {
+pub(crate) fn fourcc(code: &str) -> Result<FourCC, String> {
     FourCC::parse(code).ok_or(format!("“{code}” is not a four-character code."))
 }
 
-fn view(session: &Session) -> View<'_> {
+pub(crate) fn view(session: &Session) -> View<'_> {
     View {
         db: &session.db,
         guide: &session.guide,
@@ -94,15 +95,16 @@ pub fn open_map(state: State<'_, AppState>, path: String) -> Result<MapSummary, 
     let path = PathBuf::from(path);
     let map = Map::open(&path).map_err(|e| e.to_string())?;
     let units = MapUnits::load(&map).map_err(|e| e.to_string())?;
+    let extras = MapExtras::load(&map).map_err(|e| e.to_string())?;
     drop(map);
 
     state.with(|session| {
-        session.map = Some(OpenMap::new(path.clone(), units));
+        session.map = Some(OpenMap::new(path.clone(), units, extras));
         Ok(map_summary(session))
     })
 }
 
-fn map_summary(session: &Session) -> MapSummary {
+pub(crate) fn map_summary(session: &Session) -> MapSummary {
     let map = session.map.as_ref();
     MapSummary {
         path: map.map(|m| path_text(&m.path)).unwrap_or_default(),
@@ -233,7 +235,7 @@ pub fn create_unit(state: State<'_, AppState>, base: String) -> Result<UnitItem,
 pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
     state.with(|session| {
         let map = session.map.as_mut().ok_or(NO_MAP)?;
-        let files = map.units.files();
+        let files = map.files();
         save_files(&map.path, &map.path, &files).map_err(|e| e.to_string())?;
         map.saved_files = files;
         Ok(map_summary(session))
