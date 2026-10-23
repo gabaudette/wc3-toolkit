@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-23 · Practical API explanations (AGE-26)
+## 2026-10-23 · Practical API explanations (PR #34, AGE-26)
 
 - Added a separate authored API guide catalog for 26 unit, timer, group, trigger and location
   functions. Generation keeps existing symbol URLs and adds parameter meanings, return notes,
