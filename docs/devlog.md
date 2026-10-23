@@ -4,6 +4,22 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Documentation website (AGE-20)
+
+- Astro Starlight site in `website/`, with the Workshop direction selected from four design
+  studies: graphite, mint, DM Sans, and the existing gnome logo/favicon. Fourteen authored
+  pages cover installation, the first map, objects, sharing, the Lua harness, common tasks,
+  JASS/Lua conventions and the map format notes.
+- A local CASC export example reads script and field inputs. Only structured declarations
+  and field metadata are versioned; game script bodies and comments stay outside the repo.
+  The initial extraction records source hashes and its local date without claiming a patch
+  version. The generator emits 5,131 API and 1,378 field pages, joins the six live field
+  guides, preserves unverified markers and identifies metadata without an authored guide.
+- API URLs include the declaration kind: `rect` and `Rect` otherwise collide after URL
+  normalization. A small project-authored grammar highlights JASS. Pagefind indexes the
+  static build; CI validates parsing, types, the site build and local links/assets. Vercel
+  builds from the repository root so changes to the shared field guides rebuild the site.
+
 ## 2026-10-23 · Buffs and destructables (AGE-15, part 1)
 
 - Both have the shape items have: plain fields over one table plus profiles. Rather than copy

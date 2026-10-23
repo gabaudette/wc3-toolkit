@@ -1,0 +1,26 @@
+{
+  "name": "tinkerbench-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun run generate && astro dev",
+    "generate": "bun scripts/generate.ts",
+    "build": "bun run generate && astro build",
+    "check": "biome check --error-on-warnings . && astro check",
+    "test": "bun test",
+    "preview": "astro preview",
+    "refresh:api": "bun scripts/refresh-api.ts",
+    "check:links": "bun scripts/check-links.ts"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "0.42.6",
+    "@fontsource/dm-sans": "5.3.0",
+    "astro": "7.4.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "@biomejs/biome": "2.6.2",
+    "@types/bun": "1.4.4",
+    "typescript": "5.9.3"
+  }
+}

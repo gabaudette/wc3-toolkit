@@ -1,0 +1,42 @@
+{
+  "CreateUnit": {
+    "description": "Create one Footman for Player 1 at the map origin. These snippets run inside an initialized map, such as a trigger action.",
+    "jass": "local unit footman = CreateUnit(Player(0), 'hfoo', 0.0, 0.0, 270.0)",
+    "lua": "local footman = CreateUnit(Player(0), FourCC(\"hfoo\"), 0.0, 0.0, 270.0)"
+  },
+  "TimerStart": {
+    "description": "Run a one-shot callback after one second and destroy the timer when it fires. The JASS callback must be declared before the code that starts the timer.",
+    "jass": "function ExampleTimerElapsed takes nothing returns nothing\n    call DestroyTimer(GetExpiredTimer())\nendfunction\n\nfunction ExampleStartTimer takes nothing returns nothing\n    local timer t = CreateTimer()\n    call TimerStart(t, 1.0, false, function ExampleTimerElapsed)\n    set t = null\nendfunction",
+    "lua": "local t = CreateTimer()\nTimerStart(t, 1.0, false, function()\n    DestroyTimer(t)\nend)"
+  },
+  "GetSpellAbilityId": {
+    "description": "Inside a spell-effect trigger action, filter for a custom ability. Replace A000 with your map’s ability raw code.",
+    "jass": "if GetSpellAbilityId() == 'A000' then\n    // Add behavior for this spell here.\nendif",
+    "lua": "if GetSpellAbilityId() == FourCC(\"A000\") then\n    -- Add behavior for this spell here.\nend"
+  },
+  "DisplayTimedTextToPlayer": {
+    "description": "Show a message to Player 1 for ten seconds. Call after the loading screen; see the Lua harness guide for a delayed start example.",
+    "jass": "call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 10.0, \"Hello, map maker!\")",
+    "lua": "DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 10.0, \"Hello, map maker!\")"
+  },
+  "UnitAddAbility": {
+    "description": "Give a unit an existing custom ability. Replace A000 with the ability raw code; caster must be a unit already in your map.",
+    "jass": "call UnitAddAbility(caster, 'A000')",
+    "lua": "UnitAddAbility(caster, FourCC(\"A000\"))"
+  },
+  "RemoveLocation": {
+    "description": "Remove a temporary location once you have used it. The coordinates remain ordinary numbers.",
+    "jass": "local location point = Location(128.0, 256.0)\nlocal real x = GetLocationX(point)\ncall RemoveLocation(point)\nset point = null",
+    "lua": "local point = Location(128.0, 256.0)\nlocal x = GetLocationX(point)\nRemoveLocation(point)"
+  },
+  "Player": {
+    "description": "Player indices are zero-based: Player(0) is Player 1. Do not use this as a promise about which slots are occupied.",
+    "jass": "local player firstPlayer = Player(0)",
+    "lua": "local firstPlayer = Player(0)"
+  },
+  "DestroyGroup": {
+    "description": "Destroy a temporary unit group after use. Destroying the group does not remove its units.",
+    "jass": "local group temporary = CreateGroup()\ncall DestroyGroup(temporary)\nset temporary = null",
+    "lua": "local temporary = CreateGroup()\nDestroyGroup(temporary)"
+  }
+}

@@ -1,0 +1,16 @@
+---
+// biome-ignore lint/correctness/noUnusedImports: Used in the Astro template, which Biome does not analyze.
+import DefaultThemeProvider from "@astrojs/starlight/components/ThemeProvider.astro";
+---
+
+<script is:inline>
+  // Start in Workshop's graphite theme; preserve every explicit visitor preference.
+  try {
+    if (localStorage.getItem("starlight-theme") === null) {
+      localStorage.setItem("starlight-theme", "dark");
+    }
+  } catch {
+    // Storage can be blocked by browser privacy settings. Starlight then uses the system theme.
+  }
+</script>
+<DefaultThemeProvider />

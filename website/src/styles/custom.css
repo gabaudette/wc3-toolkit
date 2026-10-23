@@ -1,0 +1,77 @@
+@import "@fontsource/dm-sans/400.css";
+@import "@fontsource/dm-sans/500.css";
+@import "@fontsource/dm-sans/600.css";
+@import "@fontsource/dm-sans/700.css";
+
+/* Workshop: compact graphite surfaces, mint accents, practical typography. */
+:root {
+  --sl-font: "DM Sans", sans-serif;
+  --sl-color-accent-low: #183832;
+  --sl-color-accent: #7edcca;
+  --sl-color-accent-high: #a6ecde;
+  --sl-color-white: #e8eef0;
+  --sl-color-gray-1: #e8eef0;
+  --sl-color-gray-2: #b7c3ca;
+  --sl-color-gray-3: #a9b6bd;
+  --sl-color-gray-4: #71838c;
+  --sl-color-gray-5: #38464b;
+  --sl-color-gray-6: #1b2024;
+  --sl-color-black: #15181b;
+  --sl-content-width: 49rem;
+  --sl-text-h1: 2.4rem;
+  --sl-text-h2: 1.6rem;
+  --sl-text-h3: 1.2rem;
+  --sl-nav-height: 4.5rem;
+}
+
+:root[data-theme="light"] {
+  --sl-color-accent-low: #d9f0e9;
+  --sl-color-accent: #126653;
+  --sl-color-accent-high: #124b3e;
+  --sl-color-white: #17262a;
+  --sl-color-gray-1: #25373b;
+  --sl-color-gray-2: #3e545a;
+  --sl-color-gray-3: #52666b;
+  --sl-color-gray-4: #71858b;
+  --sl-color-gray-5: #cbd7d8;
+  --sl-color-gray-6: #edf2f1;
+  --sl-color-black: #fbfdfc;
+}
+
+h1,
+h2,
+h3,
+.site-title {
+  letter-spacing: -0.035em;
+  font-weight: 700;
+}
+
+.site-title {
+  font-size: 1.25rem;
+}
+
+.sl-markdown-content {
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.sl-markdown-content :is(.starlight-aside, pre) {
+  border-radius: 8px;
+}
+
+.sl-markdown-content table {
+  display: block;
+  overflow-x: auto;
+  font-size: 0.875rem;
+}
+
+:focus-visible {
+  outline: 2px solid #8bbdf8;
+  outline-offset: 3px;
+}
+
+@media (max-width: 40rem) {
+  :root {
+    --sl-text-h1: 2rem;
+  }
+}
