@@ -11,7 +11,8 @@ Every change must pass these checks with zero errors and zero warnings.
 Formatting and linting run before each commit, through [lefthook](lefthook.yml): rustfmt and
 Clippy when Rust files are staged, Biome and the TypeScript check when frontend files are.
 `bun install` in `object-editor/app` sets up the hook. CI does not repeat these checks; it
-builds and runs the tests on Linux and Windows. Fix what the hook reports with
+builds and runs the tests on Windows, and on Linux for every crate but the app (which needs
+system libraries that take minutes to install there). Fix what the hook reports with
 `cargo fmt --all` and `bun run lint:fix`, and read the Clippy output for the rest. Skip the
 hook only for work in progress that you will fix before pushing (`git commit --no-verify`).
 

@@ -19,8 +19,6 @@ permissions:
 
 env:
   BUN_VERSION: 1.4.2
-  # Build-time libraries Tauri needs on Linux.
-  TAURI_LINUX_DEPS: libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
   # No incremental builds in CI: nothing reuses them, and they bloat the cache.
   CARGO_INCREMENTAL: 0
 
@@ -50,11 +48,21 @@ jobs:
       - name: Build
         run: bun run build
 
+  # Linux tests every crate but the app: the app needs WebKit and other
+  # system libraries whose apt install alone took 12 to 17 minutes. Windows
+  # needs none and tests everything; the pre-commit Clippy builds the app on
+  # Linux.
   test:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            app: false
+            crates: --workspace --exclude wc3-object-editor
+          - os: windows-latest
+            app: true
+            crates: --workspace
 
     runs-on: ${{ matrix.os }}
 
@@ -62,18 +70,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      # Not cached: restoring cached .deb files left out the -dev files the
-      # packages depend on (glib-2.0), so the Tauri crates could not build.
-      - name: Install Tauri system libraries
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends $TAURI_LINUX_DEPS
-
       - name: Set up Bun
+        if: matrix.app
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Build the frontend (the app crate embeds it)
+        if: matrix.app
         working-directory: object-editor/app
         run: bun install --frozen-lockfile && bun run build
 
@@ -89,4 +93,4 @@ jobs:
 
       - name: Test
         working-directory: object-editor
-        run: cargo test --workspace
+        run: cargo test ${{ matrix.crates }}
