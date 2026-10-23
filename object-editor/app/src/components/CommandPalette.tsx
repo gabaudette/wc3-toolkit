@@ -13,7 +13,7 @@ import {
   SearchField,
 } from "react-aria-components";
 import { api } from "../api";
-import type { AbilitySummary, UnitItem } from "../types";
+import type { AbilitySummary, Catalog, UnitItem } from "../types";
 import { GameText, plainGameText } from "./GameText";
 import { UnitIcon } from "./UnitIcon";
 
@@ -32,7 +32,8 @@ type CommandPaletteProps = {
   units: UnitItem[];
   onOpenUnit: (id: string) => void;
   onOpenAbility: (id: string) => void;
-  onOpenItem: (id: string) => void;
+  /** Items, buffs and destructables. */
+  onOpenPlain: (catalog: Catalog, id: string) => void;
   onOpenUpgrade: (id: string) => void;
   onClose: () => void;
 };
@@ -46,6 +47,15 @@ type Entry = {
 };
 
 type Group = { name: string; entries: Entry[] };
+
+/** The tabs of objects without levels, in tab order, with their group names. */
+const PLAIN_GROUPS: { catalog: Catalog; name: string }[] = [
+  { catalog: "items", name: "Items" },
+  { catalog: "buffs", name: "Buffs" },
+  { catalog: "destructables", name: "Destructables" },
+];
+
+const NO_PLAIN: Record<Catalog, UnitItem[]> = { items: [], buffs: [], destructables: [] };
 
 /** Results shown per group; typing narrows them further. */
 const MAX_PER_GROUP = 8;
@@ -88,13 +98,13 @@ export function CommandPalette({
   units,
   onOpenUnit,
   onOpenAbility,
-  onOpenItem,
+  onOpenPlain,
   onOpenUpgrade,
   onClose,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [abilities, setAbilities] = useState<AbilitySummary[]>([]);
-  const [items, setItems] = useState<UnitItem[]>([]);
+  const [plain, setPlain] = useState<Record<Catalog, UnitItem[]>>(NO_PLAIN);
   const [upgrades, setUpgrades] = useState<UnitItem[]>([]);
 
   useEffect(() => {
@@ -103,15 +113,17 @@ export function CommandPalette({
     }
 
     setQuery("");
-    // Abilities, items and upgrades are only needed while searching; a failure leaves the group empty.
+    // Only needed while searching; a failure leaves the group empty.
     api
       .listAbilities()
       .then(setAbilities)
       .catch(() => setAbilities([]));
-    api
-      .listItems()
-      .then(setItems)
-      .catch(() => setItems([]));
+    for (const { catalog } of PLAIN_GROUPS) {
+      api
+        .listPlain(catalog)
+        .then((list) => setPlain((current) => ({ ...current, [catalog]: list })))
+        .catch(() => setPlain((current) => ({ ...current, [catalog]: [] })));
+    }
     api
       .listUpgrades()
       .then(setUpgrades)
@@ -151,16 +163,19 @@ export function CommandPalette({
         icon: a.icon,
         run: done(() => onOpenAbility(a.id)),
       }));
-    const itemEntries = matching(items, query, (i) => `${plainGameText(i.name)} ${i.id}`)
-      .filter(() => searched)
-      .slice(0, MAX_PER_GROUP)
-      .map((i) => ({
-        id: `item:${i.id}`,
-        label: i.name,
-        detail: i.id,
-        icon: i.icon,
-        run: done(() => onOpenItem(i.id)),
-      }));
+    const plainGroups = PLAIN_GROUPS.map(({ catalog, name }) => ({
+      name,
+      entries: matching(plain[catalog], query, (o) => `${plainGameText(o.name)} ${o.id}`)
+        .filter(() => searched)
+        .slice(0, MAX_PER_GROUP)
+        .map((o) => ({
+          id: `${catalog}:${o.id}`,
+          label: o.name,
+          detail: o.id,
+          icon: o.icon,
+          run: done(() => onOpenPlain(catalog, o.id)),
+        })),
+    }));
     const upgradeEntries = matching(upgrades, query, (u) => `${plainGameText(u.name)} ${u.id}`)
       .filter(() => searched)
       .slice(0, MAX_PER_GROUP)
@@ -176,19 +191,19 @@ export function CommandPalette({
       { name: "Commands", entries: commandEntries },
       { name: "Units", entries: unitEntries },
       { name: "Abilities", entries: abilityEntries },
-      { name: "Items", entries: itemEntries },
+      ...plainGroups,
       { name: "Upgrades", entries: upgradeEntries },
     ].filter((g) => g.entries.length > 0);
   }, [
     commands,
     units,
     abilities,
-    items,
+    plain,
     upgrades,
     query,
     onOpenUnit,
     onOpenAbility,
-    onOpenItem,
+    onOpenPlain,
     onOpenUpgrade,
     onClose,
   ]);

@@ -89,6 +89,8 @@ fn kind_label(kind: ObjectKind) -> &'static str {
         ObjectKind::Unit => "unit",
         ObjectKind::Building => "building",
         ObjectKind::Item => "item",
+        ObjectKind::Buff => "buff",
+        ObjectKind::Destructable => "destructable",
     }
 }
 

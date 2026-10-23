@@ -9,10 +9,10 @@ use serde::{Deserialize, Serialize};
 use tauri::State;
 use wc3_map::abilities::MapAbilities;
 use wc3_map::imports::{FileStatus, ImportedFile, file_statuses};
-use wc3_map::items::MapItems;
+use wc3_map::plain::{BUFFS, ITEMS, PlainObjects};
 use wc3_map::transfer::{
-    self, Bundle, BundledObject, Export, MapExtras, MapObjects, MapObjectsMut, ObjectType,
-    PlannedObject, References,
+    self, Bundle, BundledObject, Export, MapObjects, MapObjectsMut, ObjectType, PlannedObject,
+    References,
 };
 use wc3_map::units::MapUnits;
 use wc3_map::upgrades::MapUpgrades;
@@ -93,9 +93,9 @@ struct OtherMap {
     map: Map,
     units: MapUnits,
     abilities: MapAbilities,
-    items: MapItems,
+    items: PlainObjects,
     upgrades: MapUpgrades,
-    extras: MapExtras,
+    buffs: PlainObjects,
 }
 
 impl OtherMap {
@@ -104,9 +104,9 @@ impl OtherMap {
         Ok(Self {
             units: MapUnits::load(&map).map_err(|e| e.to_string())?,
             abilities: MapAbilities::load(&map).map_err(|e| e.to_string())?,
-            items: MapItems::load(&map).map_err(|e| e.to_string())?,
+            items: PlainObjects::load(&map, ITEMS).map_err(|e| e.to_string())?,
             upgrades: MapUpgrades::load(&map).map_err(|e| e.to_string())?,
-            extras: MapExtras::load(&map).map_err(|e| e.to_string())?,
+            buffs: PlainObjects::load(&map, BUFFS).map_err(|e| e.to_string())?,
             map,
         })
     }
@@ -121,7 +121,7 @@ impl OtherMap {
             abilities: &self.abilities,
             items: &self.items,
             upgrades: &self.upgrades,
-            extras: &self.extras,
+            buffs: &self.buffs,
         }
     }
 }
@@ -174,8 +174,8 @@ fn describe(
             )
         }
         ObjectType::Buff => (
-            own(BUFF_NAME).unwrap_or_else(|| base.clone()),
-            own(BUFF_ICON),
+            own(BUFF_NAME).unwrap_or_else(|| session.buffs.name(&base)),
+            own(BUFF_ICON).or_else(|| session.buffs.icon_path(&base, session.mode)),
         ),
         ObjectType::Item => (
             own(ITEM_NAME).unwrap_or_else(|| session.items.name(&base)),
@@ -214,7 +214,7 @@ fn export_open_map(session: &Session, chosen: &[FourCC]) -> Result<Export, Strin
         abilities: &map.abilities,
         items: &map.items,
         upgrades: &map.upgrades,
-        extras: &map.extras,
+        buffs: &map.buffs,
     };
     transfer::export(source, &references(session), chosen, &map.reader()).map_err(|e| e.to_string())
 }
@@ -357,7 +357,7 @@ fn planned(session: &Session, bundle: &Bundle) -> Result<Vec<PlannedObject>, Str
         abilities: &map.abilities,
         items: &map.items,
         upgrades: &map.upgrades,
-        extras: &map.extras,
+        buffs: &map.buffs,
     };
     let in_game = |ty: ObjectType, id: FourCC| match ty {
         ObjectType::Unit => session.db.contains(&id.to_string()),
@@ -447,7 +447,7 @@ pub fn import_objects(
                 abilities: &mut map.abilities,
                 items: &mut map.items,
                 upgrades: &mut map.upgrades,
-                extras: &mut map.extras,
+                buffs: &mut map.buffs,
             },
         );
         Ok(added)

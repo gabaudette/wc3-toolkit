@@ -9,7 +9,7 @@ use wc3_data::meta::{FieldMeta, ObjectKind};
 use wc3_data::strings::MapStrings;
 use wc3_data::units::UnitDatabase;
 use wc3_map::FourCC;
-use wc3_map::items::MapItems;
+use wc3_map::plain::PlainObjects;
 use wc3_map::units::{MapUnit, MapUnits};
 
 /// Category order on a unit page: what people edit most comes first.
@@ -23,10 +23,34 @@ const ATTRIBUTES: [(&str, &str); 3] = [("STR", "ustr"), ("AGI", "uagi"), ("INT",
 /// Text fields shown as multi-line boxes: unit and ability tooltips.
 const LONG_TEXT_FIELDS: &[&str] = &["utub", "upro", "ides", "aub1", "auu1", "arut"];
 const TRUE: &str = "1";
-const RACE: &str = "urac";
-const ITEM_CLASS: &str = "icla";
-const UNIT_ICON: &str = "uico";
-const ITEM_ICON: &str = "iico";
+/// The field each list row's filter chips read: race for units and buffs,
+/// class for items, category for destructables. The first one the database has wins.
+const FILTER_FIELDS: &[&str] = &["urac", "icla", "frac", "bcat"];
+/// The icon field: units, items, buffs. Destructables have none.
+const ICON_FIELDS: &[&str] = &["uico", "iico", "fart"];
+/// The stats a page shows at the top, by object kind (units have their own).
+const SUMMARIES: &[(&str, &[(&str, &str)])] = &[
+    (
+        "item",
+        &[
+            ("Class", "icla"),
+            ("Level", "ilev"),
+            ("Gold", "igol"),
+            ("Lumber", "ilum"),
+            ("Charges", "iuse"),
+        ],
+    ),
+    ("buff", &[("Race", "frac"), ("Effect", "feff")]),
+    (
+        "destructable",
+        &[
+            ("Category", "bcat"),
+            ("Hit points", "bhps"),
+            ("Armor", "barm"),
+            ("Variations", "bvar"),
+        ],
+    ),
+];
 const NOT_PLACEABLE: &str = "0";
 
 #[derive(Serialize)]
@@ -167,15 +191,15 @@ impl PlainChanges for MapUnits {
 }
 
 /// A map's items with the string table their text lives in.
-pub struct ItemChanges<'a> {
-    pub items: &'a MapItems,
+pub struct PlainObjectChanges<'a> {
+    pub objects: &'a PlainObjects,
     pub strings: &'a MapStrings,
 }
 
-impl PlainChanges for ItemChanges<'_> {
+impl PlainChanges for PlainObjectChanges<'_> {
     fn changed(&self) -> Vec<MapUnit> {
-        self.items
-            .items()
+        self.objects
+            .objects()
             .into_iter()
             .map(|i| MapUnit {
                 id: i.id,
@@ -187,7 +211,7 @@ impl PlainChanges for ItemChanges<'_> {
     }
 
     fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC> {
-        self.items.base_of(db, id)
+        self.objects.base_of(db, id)
     }
 
     fn raw_value(
@@ -197,20 +221,20 @@ impl PlainChanges for ItemChanges<'_> {
         field: &FieldMeta,
         mode: ArtMode,
     ) -> Option<String> {
-        self.items.raw_value(db, self.strings, id, field, mode)
+        self.objects.raw_value(db, self.strings, id, field, mode)
     }
 
     fn is_modified(&self, id: FourCC, field: &FieldMeta) -> bool {
-        self.items.is_modified(id, field)
+        self.objects.is_modified(id, field)
     }
 
     fn name(&self, db: &UnitDatabase, id: FourCC) -> String {
-        self.items.name(db, self.strings, id)
+        self.objects.name(db, self.strings, id)
     }
 }
 
 /// Read-only view of the game data with an optional map on top. Units by
-/// default; items with [`ItemChanges`] and the item database.
+/// default; items, buffs and destructables with [`PlainObjectChanges`] and their database.
 pub struct View<'a, M = MapUnits> {
     pub db: &'a UnitDatabase,
     pub guide: &'a FieldGuide,
@@ -290,10 +314,9 @@ impl<M: PlainChanges> View<'_, M> {
     /// The list row for a unit, given its entry in the map's units if it has one.
     fn item_with(&self, id: FourCC, map_unit: Option<&MapUnit>) -> Option<UnitItem> {
         let base = self.base(id)?;
-        let race = self
-            .db
-            .field(RACE)
-            .or_else(|| self.db.field(ITEM_CLASS))
+        let race = FILTER_FIELDS
+            .iter()
+            .find_map(|field| self.db.field(field))
             .map(|f| self.display(id, f))
             .unwrap_or_default();
 
@@ -306,9 +329,9 @@ impl<M: PlainChanges> View<'_, M> {
             group: self.group(id, map_unit.is_some()),
             custom: map_unit.is_some_and(|u| u.is_custom),
             changed_fields: map_unit.map_or(0, |u| u.modified_fields),
-            icon: self
-                .raw_by_id(id, UNIT_ICON)
-                .or_else(|| self.raw_by_id(id, ITEM_ICON)),
+            icon: ICON_FIELDS
+                .iter()
+                .find_map(|field| self.raw_by_id(id, field)),
         })
     }
 
@@ -317,7 +340,10 @@ impl<M: PlainChanges> View<'_, M> {
 
         if in_map {
             "map"
-        } else if self.db.kind(&id.to_string()) == ObjectKind::Item {
+        } else if matches!(
+            self.db.kind(&id.to_string()),
+            ObjectKind::Item | ObjectKind::Buff | ObjectKind::Destructable
+        ) {
             "game"
         } else if flag("uine").as_deref() == Some(NOT_PLACEABLE) {
             "hidden"
@@ -426,20 +452,14 @@ impl<M: PlainChanges> View<'_, M> {
     }
 
     fn summary(&self, id: FourCC, kind: &str) -> Vec<Stat> {
-        if kind == "item" {
-            return [
-                ("Class", "icla"),
-                ("Level", "ilev"),
-                ("Gold", "igol"),
-                ("Lumber", "ilum"),
-                ("Charges", "iuse"),
-            ]
-            .into_iter()
-            .map(|(label, field)| Stat {
-                label,
-                value: self.shown(id, field),
-            })
-            .collect();
+        if let Some((_, stats)) = SUMMARIES.iter().find(|(k, _)| *k == kind) {
+            return stats
+                .iter()
+                .map(|(label, field)| Stat {
+                    label,
+                    value: self.shown(id, field),
+                })
+                .collect();
         }
 
         let attributes = ATTRIBUTES;
@@ -611,6 +631,8 @@ pub fn kind_name(kind: ObjectKind) -> &'static str {
         ObjectKind::Unit => "unit",
         ObjectKind::Building => "building",
         ObjectKind::Item => "item",
+        ObjectKind::Buff => "buff",
+        ObjectKind::Destructable => "destructable",
     }
 }
 

@@ -1,10 +1,11 @@
-//! A map's item changes on top of the game's item data.
+//! A map's changes to objects without levels other than units: items, buffs
+//! and destructables, on top of the game's data (a [`UnitDatabase`] loaded
+//! for that catalog).
 //!
 //! Like units, Reforged splits them in two files: gameplay fields in
-//! `war3map.w3t` and cosmetic ("netsafe") fields such as names, tooltips and
-//! art in `war3mapSkin.w3t`. Items take their fields from the unit metadata
-//! (its `useItem` fields), so the item database is a [`UnitDatabase`] loaded
-//! with `UnitDatabase::load_items`.
+//! `war3map.w3t` (items), `.w3h` (buffs) or `.w3b` (destructables), and
+//! cosmetic ("netsafe") fields such as names, tooltips and art in the
+//! matching `war3mapSkin` file.
 //!
 //! Text fields refer to the map's string table, which [`MapUnits`] keeps:
 //! the methods that read or write text take it as an argument.
@@ -21,15 +22,58 @@ use wc3_data::units::UnitDatabase;
 
 use crate::transfer::{Tables, next_free_id};
 use crate::values::{is_translatable, parse_value};
-use crate::{Error, ITEM_SKINS_FILE, ITEMS_FILE, Map, Result};
+use crate::{
+    BUFF_SKINS_FILE, BUFFS_FILE, DESTRUCTABLE_SKINS_FILE, DESTRUCTABLES_FILE, Error,
+    ITEM_SKINS_FILE, ITEMS_FILE, Map, Result,
+};
 
-/// Custom items are numbered `I000`, `I001`, ... like the World Editor does.
-const ID_PREFIX: u8 = b'I';
-const NAME: &str = "unam";
+/// One kind of object without levels: its files, how custom IDs start and
+/// how the World Editor names it in string comments.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PlainKind {
+    data_file: &'static str,
+    skin_file: &'static str,
+    /// Custom objects are numbered `I000`, `I001`, ... like the World Editor does.
+    id_prefix: u8,
+    /// "Items", as string comments read: `Items: I000 (name), Name (Name)`.
+    label: &'static str,
+    /// "item", for messages.
+    singular: &'static str,
+    /// The field holding the object's name.
+    name_field: &'static str,
+}
 
-pub struct MapItems {
+pub const ITEMS: PlainKind = PlainKind {
+    data_file: ITEMS_FILE,
+    skin_file: ITEM_SKINS_FILE,
+    id_prefix: b'I',
+    label: "Items",
+    singular: "item",
+    name_field: "unam",
+};
+
+pub const BUFFS: PlainKind = PlainKind {
+    data_file: BUFFS_FILE,
+    skin_file: BUFF_SKINS_FILE,
+    id_prefix: b'B',
+    label: "Buffs",
+    singular: "buff",
+    name_field: "fnam",
+};
+
+pub const DESTRUCTABLES: PlainKind = PlainKind {
+    data_file: DESTRUCTABLES_FILE,
+    skin_file: DESTRUCTABLE_SKINS_FILE,
+    id_prefix: b'B',
+    label: "Destructables",
+    singular: "destructable",
+    name_field: "bnam",
+};
+
+pub struct PlainObjects {
+    kind: PlainKind,
     tables: Tables,
-    /// Item files the map had when loaded; others are only written once they
+    /// Files the map had when loaded; others are only written once they
     /// hold something, so untouched maps keep their files as they are.
     loaded: Vec<&'static str>,
     /// Strings this editor added since loading. Only these are removed again
@@ -37,17 +81,17 @@ pub struct MapItems {
     added_strings: Vec<u32>,
 }
 
-/// An item the map adds or changes.
+/// An object the map adds or changes.
 #[derive(Debug, Clone, PartialEq)]
-pub struct MapItem {
+pub struct PlainObject {
     pub id: FourCC,
     pub base: FourCC,
     pub is_custom: bool,
     pub modified_fields: usize,
 }
 
-impl MapItems {
-    pub fn load(map: &Map) -> Result<Self> {
+impl PlainObjects {
+    pub fn load(map: &Map, kind: PlainKind) -> Result<Self> {
         let mut loaded = Vec::new();
         let mut read = |file: &'static str| -> Result<ObjectData> {
             match map.object_data(file)? {
@@ -60,19 +104,21 @@ impl MapItems {
         };
 
         let tables = Tables {
-            data: read(ITEMS_FILE)?,
-            skin: read(ITEM_SKINS_FILE)?,
+            data: read(kind.data_file)?,
+            skin: read(kind.skin_file)?,
         };
         Ok(Self {
+            kind,
             tables,
             loaded,
             added_strings: Vec::new(),
         })
     }
 
-    /// No changes: the game's items as they are.
-    pub fn empty() -> Self {
+    /// No changes: the game's objects as they are.
+    pub fn empty(kind: PlainKind) -> Self {
         Self {
+            kind,
             tables: Tables {
                 data: ObjectData::empty(Layout::Plain),
                 skin: ObjectData::empty(Layout::Plain),
@@ -82,7 +128,7 @@ impl MapItems {
         }
     }
 
-    /// The item tables (gameplay, skin), for moving objects between maps.
+    /// The tables (gameplay, skin), for moving objects between maps.
     pub(crate) fn tables(&self) -> &Tables {
         &self.tables
     }
@@ -92,17 +138,18 @@ impl MapItems {
     }
 
     #[cfg(test)]
-    pub(crate) fn from_tables(tables: Tables) -> Self {
+    pub(crate) fn from_tables(kind: PlainKind, tables: Tables) -> Self {
         Self {
+            kind,
             tables,
             loaded: Vec::new(),
             added_strings: Vec::new(),
         }
     }
 
-    /// Custom items first, then changed game items, each listed once.
-    pub fn items(&self) -> Vec<MapItem> {
-        let mut items: Vec<MapItem> = Vec::new();
+    /// Custom objects first, then changed game objects, each listed once.
+    pub fn objects(&self) -> Vec<PlainObject> {
+        let mut objects: Vec<PlainObject> = Vec::new();
         let mut index: HashMap<FourCC, usize> = HashMap::new();
         let (data, skin) = (&self.tables.data, &self.tables.skin);
         let tables = [
@@ -118,10 +165,10 @@ impl MapItems {
                 let mods = entry.mods().count();
 
                 match index.get(&id) {
-                    Some(&i) => items[i].modified_fields += mods,
+                    Some(&i) => objects[i].modified_fields += mods,
                     None => {
-                        index.insert(id, items.len());
-                        items.push(MapItem {
+                        index.insert(id, objects.len());
+                        objects.push(PlainObject {
                             id,
                             base: entry.base,
                             is_custom,
@@ -132,16 +179,16 @@ impl MapItems {
             }
         }
 
-        items
+        objects
     }
 
-    /// Whether the map adds or changes this item.
+    /// Whether the map adds or changes this object.
     pub fn has(&self, id: FourCC) -> bool {
         self.tables.data.find(id).is_some() || self.tables.skin.find(id).is_some()
     }
 
-    /// The game item a map item is based on: the base of a custom item, or
-    /// the item itself. `None` when neither the map nor the game has the ID.
+    /// The game object a map object is based on: the base of a custom one, or
+    /// the object itself. `None` when neither the map nor the game has the ID.
     pub fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC> {
         match self
             .tables
@@ -154,7 +201,7 @@ impl MapItems {
         }
     }
 
-    /// Fields the Object Editor shows for items.
+    /// Fields the Object Editor shows for this object.
     pub fn fields<'a>(&self, db: &'a UnitDatabase, id: FourCC) -> Vec<&'a FieldMeta> {
         self.base_of(db, id)
             .map(|base| db.fields_for(&base.to_string()).collect())
@@ -170,7 +217,7 @@ impl MapItems {
         };
 
         // Look in the file the field belongs to first; maps saved by older
-        // editors keep every field in war3map.w3t.
+        // editors keep every field in the gameplay file.
         tables.into_iter().find_map(|data| {
             data.find(id)?
                 .mods()
@@ -185,7 +232,7 @@ impl MapItems {
     }
 
     /// The field's raw value: the map's change if there is one (with string
-    /// references resolved), otherwise the base item's game data.
+    /// references resolved), otherwise the base object's game data.
     pub fn raw_value(
         &self,
         db: &UnitDatabase,
@@ -206,15 +253,16 @@ impl MapItems {
     }
 
     pub fn name(&self, db: &UnitDatabase, strings: &MapStrings, id: FourCC) -> String {
-        db.field(NAME)
+        db.field(self.kind.name_field)
             .and_then(|field| self.raw_value(db, strings, id, field, ArtMode::Sd))
             .filter(|name| !name.is_empty())
+            .map(|name| db.display_text(&name))
             .or_else(|| self.base_of(db, id).map(|base| db.name(&base.to_string())))
             .unwrap_or_else(|| id.to_string())
     }
 
     /// Sets a field from text as typed in an editor. Text fields are stored in
-    /// the map's string table. Setting the base item's own value removes the
+    /// the map's string table. Setting the base object's own value removes the
     /// change instead.
     pub fn set(
         &mut self,
@@ -227,7 +275,10 @@ impl MapItems {
         let field_id = FourCC::parse(&field.id)
             .ok_or_else(|| Error::Invalid(format!("bad field ID {}", field.id)))?;
         let Some(base) = self.base_of(db, id) else {
-            return Err(Error::Invalid(format!("unknown item {id}")));
+            return Err(Error::Invalid(format!(
+                "unknown {} {id}",
+                self.kind.singular
+            )));
         };
 
         let parsed = parse_value(field, text)?;
@@ -266,7 +317,7 @@ impl MapItems {
         Ok(())
     }
 
-    /// Removes the map's change to a field so the base item's value applies
+    /// Removes the map's change to a field so the base object's value applies
     /// again. Returns `false` when the field was not changed.
     pub fn reset(&mut self, strings: &mut MapStrings, id: FourCC, field: &FieldMeta) -> bool {
         let Some(field_id) = FourCC::parse(&field.id) else {
@@ -284,7 +335,7 @@ impl MapItems {
                 }
             }
 
-            // A changed game item with no changes left is dropped entirely.
+            // A changed game object with no changes left is dropped entirely.
             data.original.retain(|e| e.mods().next().is_some());
         }
 
@@ -292,7 +343,7 @@ impl MapItems {
         removed
     }
 
-    /// Removes strings this editor added that no item field refers to anymore.
+    /// Removes strings this editor added that no field refers to anymore.
     fn drop_unused_strings(&mut self, strings: &mut MapStrings) {
         let referenced: Vec<u32> = self
             .tables
@@ -316,14 +367,17 @@ impl MapItems {
         });
     }
 
-    /// Creates a custom item copying `base` and returns its new ID, the next
-    /// free one of `I000`, `I001`, ...
+    /// Creates a custom object copying `base` and returns its new ID, the
+    /// next free one of `I000`, `I001`, ... (by the kind's first letter).
     pub fn create(&mut self, db: &UnitDatabase, base: FourCC) -> Result<FourCC> {
         if !db.contains(&base.to_string()) {
-            return Err(Error::Invalid(format!("unknown base item {base}")));
+            return Err(Error::Invalid(format!(
+                "unknown base {} {base}",
+                self.kind.singular
+            )));
         }
 
-        let id = next_free_id(ID_PREFIX, |id| {
+        let id = next_free_id(self.kind.id_prefix, |id| {
             !self.has(id) && !db.contains(&id.to_string())
         })
         .ok_or_else(|| Error::Invalid(format!("no free ID for {base}")))?;
@@ -361,7 +415,8 @@ impl MapItems {
         }
 
         let comment = format!(
-            "Items: {id} ({}), {} ({})",
+            "{}: {id} ({}), {} ({})",
+            self.kind.label,
             self.name(db, strings, id),
             db.field_name(field),
             field.field
@@ -374,11 +429,11 @@ impl MapItems {
         reference
     }
 
-    /// The item files to write: those the map had, and new ones that now hold something.
+    /// The files to write: those the map had, and new ones that now hold something.
     pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
         [
-            (ITEMS_FILE, &self.tables.data),
-            (ITEM_SKINS_FILE, &self.tables.skin),
+            (self.kind.data_file, &self.tables.data),
+            (self.kind.skin_file, &self.tables.skin),
         ]
         .into_iter()
         .filter(|(file, data)| {
@@ -389,8 +444,8 @@ impl MapItems {
     }
 }
 
-/// The item's entry in the gameplay or skin table, created when missing. A
-/// custom item missing from this table gets a custom entry with its base.
+/// The object's entry in the gameplay or skin table, created when missing. A
+/// custom object missing from this table gets a custom entry with its base.
 fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry {
     let custom_base = tables
         .both()
@@ -433,7 +488,7 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
     }
 }
 
-/// Whether `value` equals the base item's game value in both art modes.
+/// Whether `value` equals the base object's game value in both art modes.
 fn same_as_base(db: &UnitDatabase, base: FourCC, field: &FieldMeta, value: &Value) -> bool {
     let base = base.to_string();
     [ArtMode::Sd, ArtMode::Hd].iter().all(|mode| {

@@ -8,8 +8,8 @@ pub use wc3_data::strings::MapStrings;
 
 pub mod abilities;
 pub mod imports;
-pub mod items;
 pub mod lua;
+pub mod plain;
 pub mod transfer;
 pub mod units;
 pub mod upgrades;
@@ -24,6 +24,8 @@ pub const BUFFS_FILE: &str = "war3map.w3h";
 pub const BUFF_SKINS_FILE: &str = "war3mapSkin.w3h";
 pub const ITEMS_FILE: &str = "war3map.w3t";
 pub const ITEM_SKINS_FILE: &str = "war3mapSkin.w3t";
+pub const DESTRUCTABLES_FILE: &str = "war3map.w3b";
+pub const DESTRUCTABLE_SKINS_FILE: &str = "war3mapSkin.w3b";
 pub const UPGRADES_FILE: &str = "war3map.w3q";
 pub const UPGRADE_SKINS_FILE: &str = "war3mapSkin.w3q";
 

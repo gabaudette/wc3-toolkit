@@ -1,6 +1,9 @@
 // Mirrors the Rust types in src-tauri/src/view.rs and commands.rs.
 
-export type UnitKind = "hero" | "unit" | "building" | "item" | "upgrade";
+export type UnitKind = "hero" | "unit" | "building" | "item" | "upgrade" | "buff" | "destructable";
+
+/** Objects without levels other than units, which share the unit page. */
+export type Catalog = "items" | "buffs" | "destructables";
 
 /** "game" holds the game's own items, which have no melee or campaign split. */
 export type UnitGroup = "map" | "melee" | "campaign" | "special" | "hidden" | "game";

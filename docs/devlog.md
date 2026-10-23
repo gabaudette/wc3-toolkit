@@ -4,6 +4,37 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Buffs and destructables (AGE-15, part 1)
+
+- Both have the shape items have: plain fields over one table plus profiles. Rather than copy
+  the item code twice, `UnitDatabase` gained a catalog (units, items, buffs, destructables)
+  and one `load_catalog`, and `MapItems` became `PlainObjects`, configured by a `PlainKind`
+  (files, custom ID letter, the label string comments use, the name field).
+- Buffs: `AbilityBuffMetaData.slk` over `AbilityBuffData.slk`; their text and art sit in the
+  ability profiles next to the abilities (`[BHbd]` in `HumanAbilityStrings.txt`). Names come
+  from `EditorName`, else the tooltip title. Destructables: `DestructableMetaData.slk` over
+  `DestructableData.slk` and `DestructableSkin.txt`, named by editor string keys
+  (`WESTRING_DEST_SUMMER_TREE_WALL`), which the database now resolves.
+- Neither metadata file sets the unit/hero/item flags, so `ObjectKind::Buff` and
+  `ObjectKind::Destructable` apply every field.
+- `MapExtras`, which only kept buffs as stored for sharing, is gone: buffs are a
+  `PlainObjects` too, so the buffs abilities bring along can now be edited.
+- `OpenMap::load` reads every part of a map itself; `OpenMap::new` would have needed nine
+  arguments. The app's item commands became catalog-aware (`list_plain`, `set_plain_field`,
+  ...), and `ItemsPane` became `PlainPane`, used by three tabs.
+- A first draft of the plain-object commands used raw pointers to borrow the catalog's
+  objects and the string table at once; destructuring `OpenMap` gives two separate borrows
+  without `unsafe`.
+- Destructable categories come from `WorldEditData.txt` (`[DestructibleCategories]`, keyed by
+  letter: `D=WESTRING_DTYPE_DESTRUCTABLE,...`), read from the text because profiles lowercase
+  their keys. Tilesets stay raw: their letters differ only by case and choices match without
+  case. Destructable models carry neither extension nor variation number
+  (`AshenTree` → `AshenTree0.mdl` when there are several variations), so the preview adds them.
+- Profile text is quoted when long (`Buffubertip="..."`); `raw_value` now returns what is inside
+  the quotes, so value boxes no longer show them and typing the same text back is no change.
+- Field guides for all 27 buff and 57 destructable fields. Doodads come next: they have
+  per-variation values, so they need the level-table page.
+
 ## 2026-10-23 · Colors instead of color codes (AGE-22)
 
 - `GameText` renders names everywhere they are displayed: the four object lists, page headers

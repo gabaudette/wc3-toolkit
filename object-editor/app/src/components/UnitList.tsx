@@ -11,8 +11,9 @@ type Filter = { id: string; label: string };
 
 /** What differs between the lists of object types that share this list. */
 export type ListConfig = {
-  /** Nouns, lowercase: "unit", "units". */
+  /** Nouns, lowercase: "unit", "units", and the article before the singular ("a", "an"). */
   singular: string;
+  article: string;
   noun: string;
   placeholder: string;
   search: (query: string) => Promise<SearchHit[]>;
@@ -25,6 +26,7 @@ export type ListConfig = {
 
 export const UNIT_LIST: ListConfig = {
   singular: "unit",
+  article: "a",
   noun: "units",
   placeholder: "Search units: Paladin, Hpal, Metal…",
   search: api.searchUnits,
@@ -46,9 +48,10 @@ export const UNIT_LIST: ListConfig = {
 
 export const ITEM_LIST: ListConfig = {
   singular: "item",
+  article: "an",
   noun: "items",
   placeholder: "Search items: Claws, ratf…",
-  search: api.searchItems,
+  search: (query) => api.searchPlain("items", query),
   groups: [
     { id: "map", label: "This map" },
     { id: "game", label: "Game" },
@@ -60,6 +63,7 @@ export const ITEM_LIST: ListConfig = {
 
 export const UPGRADE_LIST: ListConfig = {
   singular: "upgrade",
+  article: "an",
   noun: "upgrades",
   placeholder: "Search upgrades: Swords, Rhme…",
   search: api.searchUpgrades,
@@ -70,6 +74,36 @@ export const UPGRADE_LIST: ListConfig = {
   defaultGroups: ["map", "game"],
   filters: null,
   filterOf: (upgrade) => upgrade.race,
+};
+
+export const BUFF_LIST: ListConfig = {
+  singular: "buff",
+  article: "a",
+  noun: "buffs",
+  placeholder: "Search buffs: Blizzard, BHbd…",
+  search: (query) => api.searchPlain("buffs", query),
+  groups: [
+    { id: "map", label: "This map" },
+    { id: "game", label: "Game" },
+  ],
+  defaultGroups: ["map", "game"],
+  filters: null,
+  filterOf: (buff) => buff.race,
+};
+
+export const DESTRUCTABLE_LIST: ListConfig = {
+  singular: "destructable",
+  article: "a",
+  noun: "destructables",
+  placeholder: "Search destructables: Tree, LTlt…",
+  search: (query) => api.searchPlain("destructables", query),
+  groups: [
+    { id: "map", label: "This map" },
+    { id: "game", label: "Game" },
+  ],
+  defaultGroups: ["map", "game"],
+  filters: null,
+  filterOf: (destructable) => destructable.race,
 };
 
 type UnitListProps = {

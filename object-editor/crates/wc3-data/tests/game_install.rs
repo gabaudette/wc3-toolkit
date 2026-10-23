@@ -226,6 +226,76 @@ fn the_item_guide_covers_every_item_field() -> TestResult {
 
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn the_buff_guide_covers_every_buff_field() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let db = UnitDatabase::load_buffs(&files)?;
+    let guide = FieldGuide::buffs()?;
+
+    let missing: Vec<&str> = db
+        .fields()
+        .iter()
+        .map(|f| f.id.as_str())
+        .filter(|id| guide.entry(id).is_none())
+        .collect();
+    let unknown: Vec<&str> = guide
+        .field_ids()
+        .filter(|id| db.field(id).is_none())
+        .collect();
+    let misplaced: Vec<String> = guide
+        .ordered()
+        .filter_map(|(id, category)| {
+            let field = db.field(id)?;
+            (field.category != category)
+                .then(|| format!("{id} is {} not {category}", field.category))
+        })
+        .collect();
+
+    assert!(missing.is_empty(), "no description: {missing:?}");
+    assert!(unknown.is_empty(), "not item fields: {unknown:?}");
+    assert!(misplaced.is_empty(), "{misplaced:?}");
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn the_destructable_guide_covers_every_destructable_field() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let db = UnitDatabase::load_destructables(&files)?;
+    let guide = FieldGuide::destructables()?;
+
+    let missing: Vec<&str> = db
+        .fields()
+        .iter()
+        .map(|f| f.id.as_str())
+        .filter(|id| guide.entry(id).is_none())
+        .collect();
+    let unknown: Vec<&str> = guide
+        .field_ids()
+        .filter(|id| db.field(id).is_none())
+        .collect();
+    let misplaced: Vec<String> = guide
+        .ordered()
+        .filter_map(|(id, category)| {
+            let field = db.field(id)?;
+            (field.category != category)
+                .then(|| format!("{id} is {} not {category}", field.category))
+        })
+        .collect();
+
+    assert!(missing.is_empty(), "no description: {missing:?}");
+    assert!(unknown.is_empty(), "not item fields: {unknown:?}");
+    assert!(misplaced.is_empty(), "{misplaced:?}");
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn the_upgrade_guide_covers_every_upgrade_field() -> TestResult {
     let dir = std::env::var_os(GAME_DIR_VAR)
         .map(PathBuf::from)
@@ -280,6 +350,49 @@ fn items_load_with_values() -> TestResult {
     assert!(
         db.icon_path("ratf", ArtMode::Sd)
             .is_some_and(|p| p.contains("ClawsOfAttack"))
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn buffs_and_destructables_load_with_names_and_values() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+
+    let buffs = UnitDatabase::load_buffs(&files)?;
+    assert!(buffs.ids().len() > 200, "only {} buffs", buffs.ids().len());
+    assert_eq!(buffs.kind("BHbd"), ObjectKind::Buff);
+    assert_eq!(buffs.name("BHbd"), "Blizzard");
+    assert_eq!(buffs.fields_for("BHbd").count(), buffs.fields().len());
+    let tooltip = buffs.field("fube").ok_or("no fube")?;
+    assert_eq!(
+        buffs.raw_value("BHbd", tooltip, ArtMode::Sd).as_deref(),
+        Some("This unit is being damaged by Blizzard."),
+        "quotes around profile text are not part of the value"
+    );
+    assert!(
+        buffs
+            .icon_path("BHbd", ArtMode::Sd)
+            .is_some_and(|p| p.contains("Blizzard"))
+    );
+
+    let destructables = UnitDatabase::load_destructables(&files)?;
+    assert!(destructables.ids().len() > 200);
+    assert_eq!(destructables.kind("LTlt"), ObjectKind::Destructable);
+    assert_eq!(destructables.name("LTlt"), "Summer Tree Wall");
+    let category = destructables.field("bcat").ok_or("no bcat")?;
+    assert_eq!(
+        destructables.display_value("LTlt", category, ArtMode::Sd),
+        "Trees/Destructibles"
+    );
+    let hit_points = destructables.field("bhps").ok_or("no bhps")?;
+    assert!(
+        destructables
+            .raw_value("LTlt", hit_points, ArtMode::Sd)
+            .is_some()
     );
     Ok(())
 }
