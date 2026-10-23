@@ -20,6 +20,27 @@ single line. Every pull request adds an entry here and to the changelog.
   static build; CI validates parsing, types, the site build and local links/assets. Vercel
   builds from the repository root so changes to the shared field guides rebuild the site.
 
+## 2026-10-23 · TGA textures (AGE-18) and the model preview (AGE-17)
+
+- `.tga` imports were found and bundled but not decoded. `tga.rs` reads true-color (24/32-bit)
+  and grayscale (8-bit) images, uncompressed and run-length encoded, either row order.
+  `decode_texture` now recognizes DDS and BLP by their magic and TGA, which has none, by a
+  validated header. None of the 135 maps nor Legion TD imports a `.tga`, so the tests are
+  synthetic plus one end to end (a map holding `BTNRed.tga`, found from a `.blp` path).
+- AGE-17 ("Missing shader uniform location: uRoughness" on Legion TD's bench) no longer
+  happens: Royal Presence (`u99r`) renders. The throw exists only in war3-model's TypeScript
+  source; the shipped 4.0.1 build skips a missing uniform, and the preview never loads
+  reflection maps, which is what runs that shader.
+- A sweep over every unit model (1852 loads, SD and HD, with their textures) found 99
+  failures, all "file not found". The `_de.w3mod:` layer holds about 6000 models, and those of
+  the newer campaign units (Roderick, Baron Rivendare, the Forsaken, the Scarlet Crusade)
+  exist nowhere else, so `read_art` now looks there last. `model_file` replaces any extension
+  with `.mdx`, as the game does, for the cinematic doodads that name `Empty.ma`. What is left
+  is not shipped by the game: the `IntentionallyLeftBlank` and `AbominationCIN` models (the
+  real file sits under `abomination\`) and the HD `TornadoBound_Diffuse` texture. The sweep
+  is now the real-install test `every_unit_model_loads_for_the_preview`, which lists those
+  three; the preview says "it is not in the game files or the map" for them.
+
 ## 2026-10-23 · Doodads (AGE-15, part 2)
 
 - Doodads are leveled by model variation: the tint (`dvr1`, `dvg1`, `dvb1`) is per variation,

@@ -2,10 +2,11 @@
 //!
 //! Data files and models name textures `*.blp` or `*.tif`, but Reforged ships
 //! them as `.dds` (DXT1, DXT5, or ATI2 for normal maps) in its SD and HD layers.
-//! Maps import `.blp` files too ([`crate::blp`]).
+//! Maps import `.blp` and `.tga` files too ([`crate::blp`], [`crate::tga`]).
 
 use crate::blp::{self, decode_blp};
 use crate::game::{ArtMode, GameFiles};
+use crate::tga::{decode_tga, is_tga};
 use crate::{Error, Result};
 
 const DDS_MAGIC: &[u8; 4] = b"DDS ";
@@ -75,13 +76,18 @@ pub fn dds_file(path: &str) -> String {
     format!("{stem}.dds")
 }
 
-/// Decodes a DDS or BLP1 texture, told apart by their first bytes. Maps can
-/// import either.
+/// Decodes a DDS, BLP1 or TGA texture. DDS and BLP files start with their
+/// own magic; TGA files have none, so they are recognized by their header.
+/// Maps can import any of them.
 pub fn decode_texture(data: &[u8]) -> Result<Image> {
-    if data.starts_with(blp::MAGIC) {
-        decode_blp(data)
-    } else {
+    if data.starts_with(DDS_MAGIC) {
         decode_dds(data)
+    } else if data.starts_with(blp::MAGIC) {
+        decode_blp(data)
+    } else if is_tga(data) {
+        decode_tga(data)
+    } else {
+        Err(Error::Image("not a DDS, BLP or TGA file".to_owned()))
     }
 }
 

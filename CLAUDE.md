@@ -62,7 +62,8 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
 - Reforged keeps SD/HD variants of some profile keys (`walk:sd`, `walk:hd`).
 - Icons are `.dds` (DXT1/DXT5) even where data files say `.blp`. SD icons are 64 px, HD 256 px.
   Some art exists in only one of SD/HD; `GameFiles::read_art` falls back to the other.
-- `_de.w3mod:` is another 256 px art layer of unknown purpose; it is not used yet.
+- `_de.w3mod:` is another HD art layer (about 6000 models); the newer campaign units' models
+  (Roderick, Scarlet Crusade, Forsaken) exist only there. `read_art` uses it last.
 - Editor strings can redirect to other keys (`WESTRING_UE_UNITRACE_HUMAN=WESTRING_RACE_HUMAN`)
   and flag labels read `Ground, &Ground` (display label, menu label). Strings come from both
   `WorldEditStrings.txt` and `WorldEditGameStrings.txt`.

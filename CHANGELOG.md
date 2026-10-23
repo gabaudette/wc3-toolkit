@@ -27,6 +27,10 @@ under "What's new".
 
 - Long game texts, like tooltips, showed quote marks around their value when edited.
 - Destructables available in several tilesets only showed the first one.
+- Textures and icons imported into a map as `.tga` files now show.
+- The model preview now shows the newer campaign units, such as Roderick, the Scarlet
+  Crusade and the Forsaken, and a few cinematic doodads. Models the game does not have say
+  so instead of showing a file error.
 - Internal improvements.
 
 ## 0.1.0 - 2026-10-23
