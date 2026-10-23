@@ -26,7 +26,14 @@ print_stderr = "warn"
 unreadable_literal = "warn"
 dbg_macro = "warn"
 
+# Debug info is most of target/'s size. Our code keeps file and line numbers,
+# so panics and backtraces still point at the source.
+[profile.dev]
+debug = "line-tables-only"
+
 # Dependencies (texture and PNG decoding) are optimized even in development
-# builds, so the editor stays responsive while our own code compiles fast.
+# builds, so the editor stays responsive while our own code compiles fast. Nobody
+# steps through them in a debugger, so they carry no debug info.
 [profile.dev.package."*"]
 opt-level = 2
+debug = false

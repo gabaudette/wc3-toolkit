@@ -19,6 +19,11 @@ single line. Every pull request adds an entry here and to the changelog.
   stay out: their license is personal and non-transferable, so installers cannot carry them.
 - **Pinned Rust.** `object-editor/rust-toolchain.toml` pins 1.99.1 for the pre-commit hook, CI
   and releases; CI installs it with `rustup toolchain install`. 1.99's Clippy found nothing new.
+- **Smaller builds.** The project folder had reached 38 GB: 22 GB of `target/` (debug info for
+  about 450 dependencies, separate builds for test and Clippy, and both Rust 1.97 and 1.99's
+  files, since Cargo never deletes stale ones) and 17 GB in three old, merged worktrees.
+  Development builds now keep only line tables for our code and no debug info for
+  dependencies; a fresh build, test and Clippy run takes 1.7 GB.
 - **Windows signing.** Not yet: the installer is unsigned and the docs explain the SmartScreen
   warning.
 - **Changelog and devlog.** This file and `CHANGELOG.md`, which the app bundles (`?raw` import)
