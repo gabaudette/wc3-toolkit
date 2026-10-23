@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Contributing section on the documentation website, with bug-report guidance, local editor
+  setup, documentation authoring and validation instructions.
 - API reference organized into 22 topics, with category pages, declaration counts and links
   from each symbol back to its topic. The complete alphabetical index is still available.
 - Screenshot tour of the Tinkerbench application, from loading game data and opening a map

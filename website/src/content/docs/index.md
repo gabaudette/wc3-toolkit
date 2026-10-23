@@ -59,6 +59,9 @@ Press **Ctrl K** (or **⌘ K**) to search. The published site searches guides, A
 
 ## About this guide
 
+Want to help? The [Contributing section](./contributing/) covers bug reports, local
+development, documentation changes and pull requests.
+
 The editor reads game data from your own legal Warcraft III: Reforged installation. This site contains project-authored guides, application screenshots and extracted declaration metadata. API and field metadata have a recorded source snapshot; they may differ from a newer patch.
 
 [Source and releases](https://github.com/gabaudette/wc3-toolkit). Warcraft and Blizzard Entertainment are trademarks or registered trademarks of Blizzard Entertainment, Inc. This project is not affiliated with or endorsed by Blizzard Entertainment.
