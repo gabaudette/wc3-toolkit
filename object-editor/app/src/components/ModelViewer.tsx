@@ -128,6 +128,44 @@ function forceFullPrecision(gl: WebGL2RenderingContext) {
     shaderSource(shader, source.replace(MEDIUM_PRECISION, HIGH_PRECISION));
 }
 
+type ShaderProgram = {
+  program: WebGLProgram;
+  uniforms: Record<string, WebGLUniformLocation | null>;
+};
+type ShaderNames = Record<string, string>;
+/** The part of war3-model's renderer `allowMissingUniforms` replaces (private in its types). */
+type ShaderBuilder = {
+  initShaderProgram: (
+    vertex: string,
+    fragment: string,
+    attributes: ShaderNames,
+    uniforms: ShaderNames,
+  ) => ShaderProgram;
+};
+
+/**
+ * Lets the renderer build shaders whose uniforms the driver dropped. For HD
+ * models war3-model also builds its reflection shaders, which the preview never
+ * runs, and throws when a uniform has no location: some drivers optimize
+ * `uRoughness` out of the reflection prefilter shader, so HD models failed with
+ * "Missing shader uniform location: uRoughness". A missing location stays
+ * `null`, which WebGL ignores when a value is set.
+ */
+function allowMissingUniforms(
+  renderer: ModelRenderer,
+  gl: WebGL2RenderingContext | WebGLRenderingContext,
+) {
+  const builder = renderer as unknown as ShaderBuilder;
+  const build = builder.initShaderProgram.bind(renderer);
+  builder.initShaderProgram = (vertex, fragment, attributes, uniforms) => {
+    const built = build(vertex, fragment, attributes, {});
+    for (const name of Object.keys(uniforms)) {
+      built.uniforms[name] = gl.getUniformLocation(built.program, name);
+    }
+    return built;
+  };
+}
+
 /**
  * Frees the renderer's GL objects. For SD models, war3-model's `destroy` throws
  * at its very end, where it frees reflection shaders that it only creates for
@@ -236,6 +274,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
 
       const model = parseMDX(await response.arrayBuffer());
       const renderer = new ModelRenderer(model);
+      allowMissingUniforms(renderer, context);
       renderer.initGL(context);
       renderer.setTeamColor(PLAYER_RED);
       renderer.setLightColor(LIGHT_COLOR);

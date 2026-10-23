@@ -26,8 +26,9 @@ const TRUE: &str = "1";
 /// The field each list row's filter chips read: race for units and buffs,
 /// class for items, category for destructables. The first one the database has wins.
 const FILTER_FIELDS: &[&str] = &["urac", "icla", "frac", "bcat"];
-/// The icon field: units, items, buffs. Destructables have none.
+/// The icon field: units, items, buffs. Destructables have none and show their category's.
 const ICON_FIELDS: &[&str] = &["uico", "iico", "fart"];
+const CATEGORY_FIELD: &str = "bcat";
 /// The stats a page shows at the top, by object kind (units have their own).
 const SUMMARIES: &[(&str, &[(&str, &str)])] = &[
     (
@@ -331,8 +332,18 @@ impl<M: PlainChanges> View<'_, M> {
             changed_fields: map_unit.map_or(0, |u| u.modified_fields),
             icon: ICON_FIELDS
                 .iter()
-                .find_map(|field| self.raw_by_id(id, field)),
+                .find_map(|field| self.raw_by_id(id, field))
+                .or_else(|| self.category_icon(id)),
         })
+    }
+
+    /// The editor's icon for the object's category (destructables).
+    fn category_icon(&self, id: FourCC) -> Option<String> {
+        let field = self.db.field(CATEGORY_FIELD)?;
+        let category = self.raw_by_id(id, CATEGORY_FIELD)?;
+        self.db
+            .choice_icon(&field.value_type, &category)
+            .map(str::to_owned)
     }
 
     fn group(&self, id: FourCC, in_map: bool) -> &'static str {
