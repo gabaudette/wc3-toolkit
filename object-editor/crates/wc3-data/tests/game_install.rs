@@ -14,6 +14,7 @@ use wc3_data::guide::FieldGuide;
 use wc3_data::icon::load_texture;
 use wc3_data::leveled::LeveledData;
 use wc3_data::meta::ObjectKind;
+use wc3_data::model::{load_model, texture_paths};
 use wc3_data::units::UnitDatabase;
 use wc3_data::upgrades::UpgradeDatabase;
 
@@ -134,6 +135,70 @@ fn every_unit_icon_loads() -> TestResult {
         failures.join("\n")
     );
     assert!(loaded > db.ids().len(), "only {loaded} icons loaded");
+
+    Ok(())
+}
+
+/// Files the game data names that the game does not ship: placeholders that
+/// draw nothing, a model whose folder was renamed, and one HD texture.
+const MISSING_IN_GAME: &[&str] = &[
+    "Doodads\\Terrain\\LOSBlocker\\IntentionallyLeftBlank",
+    "units\\undead\\AbominationCIN\\AbominationCIN",
+    "Abilities/Spells/Other/Tornado/TornadoBound_Diffuse.tif",
+];
+
+/// Every unit's model loads for the preview, with its textures, in SD and HD.
+/// Reflection maps are left out because the preview never draws them.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn every_unit_model_loads_for_the_preview() -> TestResult {
+    let (files, db) = open(GameOptions::default())?;
+    let model_field = db.field("umdl").ok_or("no model field")?;
+    let mut failures = Vec::new();
+    let mut loaded = 0;
+
+    for id in db.ids() {
+        for mode in [ArtMode::Sd, ArtMode::Hd] {
+            let Some(path) = db
+                .raw_value(id, model_field, mode)
+                .filter(|p| !p.is_empty())
+            else {
+                continue;
+            };
+
+            let model = match load_model(&files, &path, mode) {
+                Ok(model) => model,
+                Err(e) if e.is_not_found() && MISSING_IN_GAME.contains(&path.as_str()) => continue,
+                Err(e) => {
+                    failures.push(format!("{id} {mode:?} {path}: {e}"));
+                    continue;
+                }
+            };
+            loaded += 1;
+
+            for texture in texture_paths(&model) {
+                if texture.to_ascii_lowercase().contains("environmentmap") {
+                    continue;
+                }
+                match load_texture(&files, &texture, mode) {
+                    Err(e)
+                        if !(e.is_not_found() && MISSING_IN_GAME.contains(&texture.as_str())) =>
+                    {
+                        failures.push(format!("{id} {mode:?} {texture}: {e}"));
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+
+    assert!(
+        failures.is_empty(),
+        "{} failures:\n{}",
+        failures.len(),
+        failures.join("\n")
+    );
+    assert!(loaded > db.ids().len(), "only {loaded} models loaded");
 
     Ok(())
 }
