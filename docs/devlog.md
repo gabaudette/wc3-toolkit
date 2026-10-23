@@ -4,6 +4,21 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Colors instead of color codes (AGE-22)
+
+- `GameText` renders names everywhere they are displayed: the four object lists, page headers
+  and suffixes, ability cards, the ability picker, the Ctrl K palette, the share and import
+  lists, the base value column and the inspector. Its `singleLine` mode turns `|n` into a
+  space so list rows stay one line.
+- `plainGameText` strips the codes where only plain text fits: search matching, `textValue`
+  for the palette, screen reader labels, the bundle file name, hotkey clash names.
+- `readableColor` lightens colors that would fall under 4.5:1 against `surface-2` (selected
+  rows, the lightest panel text sits on), mixing in white 10% at a time so the hue stays.
+  Maps do color names nearly black.
+- A test caught `BACKGROUND_LUMINANCE` being computed at module load before the constants it
+  uses were initialized (a temporal dead zone), which would have crashed the app on start.
+- Editing is unchanged: text fields keep the raw codes, with the color menu and preview.
+
 ## 2026-10-23 · The pre-push check ran only for app changes
 
 - The changelog and devlog check had `root: object-editor/app/` in `lefthook.yml`. Lefthook

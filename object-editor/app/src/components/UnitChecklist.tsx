@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { UnitItem } from "../types";
+import { GameText, plainGameText } from "./GameText";
 import { UnitIcon } from "./UnitIcon";
 
 type UnitChecklistProps = {
@@ -15,7 +16,9 @@ export function UnitChecklist({ units, chosen, onChange }: UnitChecklistProps) {
     const needle = query.trim().toLowerCase();
     return units.filter(
       (u) =>
-        !needle || u.name.toLowerCase().includes(needle) || u.id.toLowerCase().includes(needle),
+        !needle ||
+        plainGameText(u.name).toLowerCase().includes(needle) ||
+        u.id.toLowerCase().includes(needle),
     );
   }, [units, query]);
 
@@ -64,7 +67,9 @@ export function UnitChecklist({ units, chosen, onChange }: UnitChecklistProps) {
                 onChange={() => toggle(unit.id)}
               />
               <UnitIcon path={unit.icon} size="small" />
-              <span className="min-w-0 flex-1 truncate">{unit.name}</span>
+              <span className="min-w-0 flex-1 truncate">
+                <GameText text={unit.name} singleLine />
+              </span>
               <span className="font-mono text-xs text-faint">{unit.id}</span>
             </label>
           </li>

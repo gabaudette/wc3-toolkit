@@ -2,6 +2,7 @@ import { AlertTriangle, FlipBackward } from "@untitledui/icons";
 import type { Field, HotkeyClash } from "../types";
 import { Button } from "./Button";
 import { rangeText } from "./FieldRow";
+import { GameText, plainGameText } from "./GameText";
 import { ModelViewer } from "./ModelViewer";
 
 type InspectorProps = {
@@ -49,7 +50,10 @@ function FieldHelp({
       )}
       <p className="text-sm text-muted">
         Base value{perLevel && " at level 1"}:{" "}
-        <span className="text-ink">{field.base || "empty"}</span>
+        <span className="text-ink">
+          {field.base && <GameText text={field.base} />}
+          {!field.base && "empty"}
+        </span>
       </p>
       {perLevel && (
         <p className="text-sm text-muted">Each level has its own value; reset them in the table.</p>
@@ -81,8 +85,8 @@ function Checks({ clashes }: { clashes: HotkeyClash[] }) {
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
           <span>
             Hotkey <kbd className="rounded-[3px] bg-well px-1 font-mono text-ink">{clash.key}</kbd>{" "}
-            is used by {clash.names.join(" and ")} ({clash.menu.toLowerCase()}). Only one of them
-            reacts to the key.
+            is used by {clash.names.map(plainGameText).join(" and ")} ({clash.menu.toLowerCase()}).
+            Only one of them reacts to the key.
           </span>
         </li>
       ))}

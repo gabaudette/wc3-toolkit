@@ -182,9 +182,11 @@ export function AbilityPage({
             <UnitIcon path={summary.icon} size="large" />
             <div className="min-w-0 flex-1">
               <h2 className="truncate font-display text-3xl font-bold text-gold-bright">
-                {summary.name}
+                <GameText text={summary.name} singleLine />
                 {summary.suffix && (
-                  <span className="ml-2 text-base font-normal text-faint">{summary.suffix}</span>
+                  <span className="ml-2 text-base font-normal text-faint">
+                    <GameText text={summary.suffix} singleLine />
+                  </span>
                 )}
               </h2>
               <p className="font-mono text-xs text-faint">

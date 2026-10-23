@@ -6,6 +6,7 @@ import { classes, FIELD_ROW_GRID } from "../ui";
 import { AbilityField } from "./AbilityField";
 import { ColoredTextInput } from "./ColoredTextInput";
 import { FlagsInput } from "./FlagsInput";
+import { GameText, plainGameText } from "./GameText";
 import { TextPreview } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
@@ -299,8 +300,8 @@ export function FieldRow({ field, editable, onChange, onReset, onInspect }: Fiel
         )}
       </div>
       <Editor field={field} editable={editable} onChange={onChange} />
-      <span className="truncate pt-1.5 text-sm text-faint" title={field.base}>
-        {field.base}
+      <span className="truncate pt-1.5 text-sm text-faint" title={plainGameText(field.base)}>
+        <GameText text={field.base} singleLine />
       </span>
       {field.modified && editable && (
         <button

@@ -4,6 +4,7 @@ import { api, errorMessage } from "../api";
 import type { AbilitySummary } from "../types";
 import { capitalized, classes, levelCount } from "../ui";
 import { Button } from "./Button";
+import { GameText, plainGameText } from "./GameText";
 import { UnitIcon } from "./UnitIcon";
 
 type Kind = "hero" | "unit" | "item";
@@ -68,7 +69,7 @@ export function AbilityPicker({ open, heroOnly, exclude, onPick, onClose }: Abil
       .filter(
         (a) =>
           !needle ||
-          a.name.toLowerCase().includes(needle) ||
+          plainGameText(a.name).toLowerCase().includes(needle) ||
           a.id.toLowerCase().includes(needle) ||
           (a.suffix ?? "").toLowerCase().includes(needle),
       )
@@ -135,8 +136,13 @@ export function AbilityPicker({ open, heroOnly, exclude, onPick, onClose }: Abil
                   <UnitIcon path={ability.icon} size="small" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate">
-                      {ability.name}
-                      {ability.suffix && <span className="text-faint"> {ability.suffix}</span>}
+                      <GameText text={ability.name} singleLine />
+                      {ability.suffix && (
+                        <span className="text-faint">
+                          {" "}
+                          <GameText text={ability.suffix} singleLine />
+                        </span>
+                      )}
                     </span>
                     <span className="block font-mono text-xs text-faint">
                       {ability.id} · {levelCount(ability.levels)}
