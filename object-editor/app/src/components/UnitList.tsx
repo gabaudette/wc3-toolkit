@@ -3,6 +3,7 @@ import { api, errorMessage } from "../api";
 import type { SearchHit, UnitGroup, UnitItem } from "../types";
 import { capitalized, classes } from "../ui";
 import { Chip, toggle } from "./Chip";
+import { ListFold, useFolded } from "./ListFold";
 import { UnitIcon } from "./UnitIcon";
 
 type Filter = { id: string; label: string };
@@ -92,6 +93,7 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
   const [groups, setGroups] = useState<UnitGroup[]>(config.defaultGroups);
   /** Filters turned off, so values that appear later start on. */
   const [hidden, setHidden] = useState<string[]>([]);
+  const [folded, toggleFolded] = useFolded(`wc3-object-editor.fold.${config.noun}`);
   const { search, filterOf } = config;
   const filters = useMemo(
     () => config.filters ?? filtersFrom(units, filterOf),
@@ -127,6 +129,50 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
 
     return units.filter(filtered).map((unit) => ({ unit, reason: "" }));
   }, [units, hits, groups, hidden, filterOf]);
+
+  // While searching every match shows; otherwise the map's own objects come
+  // first and the game's fold away under their header.
+  const own = shown.filter((r) => Boolean(hits) || r.unit.group === "map");
+  const game = shown.filter((r) => !hits && r.unit.group !== "map");
+  const mapHasNone = !units.some((u) => u.group === "map");
+  let visible = own.length + game.length;
+  if (folded) {
+    visible = own.length;
+  }
+
+  function row({ unit, reason }: { unit: UnitItem; reason: string }) {
+    return (
+      <li key={unit.id}>
+        <button
+          type="button"
+          onClick={() => onSelect(unit.id)}
+          aria-current={selected === unit.id}
+          className={classes(
+            "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2",
+            selected === unit.id && "bg-surface-2 shadow-[inset_2px_0_0_var(--color-glow)]",
+          )}
+        >
+          <UnitIcon path={unit.icon} size="small" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate">{unit.name}</span>
+            <span className="block truncate font-mono text-xs text-faint">
+              {unit.id}
+              {unit.custom && ` · based on ${unit.base}`}
+              {reason && ` · ${reason}`}
+            </span>
+          </span>
+          {unit.changedFields > 0 && (
+            <span
+              className="rounded bg-changed-soft px-1.5 text-xs text-changed"
+              title={`${unit.changedFields} changed fields`}
+            >
+              {unit.changedFields}
+            </span>
+          )}
+        </button>
+      </li>
+    );
+  }
 
   return (
     <aside
@@ -164,41 +210,28 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
             ))}
           </div>
         )}
-        <p className="text-xs text-faint">{shown.length} shown</p>
+        <p className="text-xs text-faint">
+          {visible} shown
+          {folded && game.length > 0 && ` · ${game.length} game ${config.noun} folded`}
+        </p>
       </div>
 
       <ul className="min-h-0 flex-1 overflow-y-auto" aria-label={capitalized(config.noun)}>
-        {shown.map(({ unit, reason }) => (
-          <li key={unit.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(unit.id)}
-              aria-current={selected === unit.id}
-              className={classes(
-                "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2",
-                selected === unit.id && "bg-surface-2 shadow-[inset_2px_0_0_var(--color-glow)]",
-              )}
-            >
-              <UnitIcon path={unit.icon} size="small" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate">{unit.name}</span>
-                <span className="block truncate font-mono text-xs text-faint">
-                  {unit.id}
-                  {unit.custom && ` · based on ${unit.base}`}
-                  {reason && ` · ${reason}`}
-                </span>
-              </span>
-              {unit.changedFields > 0 && (
-                <span
-                  className="rounded bg-changed-soft px-1.5 text-xs text-changed"
-                  title={`${unit.changedFields} changed fields`}
-                >
-                  {unit.changedFields}
-                </span>
-              )}
-            </button>
+        {own.map(row)}
+        {mapHasNone && folded && !hits && (
+          <li className="px-3 py-4 text-sm text-muted">
+            This map adds or changes no {config.noun} yet.
           </li>
-        ))}
+        )}
+        {game.length > 0 && (
+          <ListFold
+            label={`Game ${config.noun}`}
+            count={game.length}
+            folded={folded}
+            onToggle={toggleFolded}
+          />
+        )}
+        {!folded && game.map(row)}
       </ul>
     </aside>
   );

@@ -8,6 +8,9 @@ under "What's new".
 
 ### Added
 
+- Fold the game's own units, abilities, items or upgrades away in each list, so only what
+  your map adds or changes shows. Tinkerbench remembers your choice; search still finds
+  everything.
 - Installers: a Windows installer and Linux packages (.deb and AppImage), published on GitHub.
 - A new name, Tinkerbench, and a gnome for an icon. The version shows next to the name;
   click it to see what's new.

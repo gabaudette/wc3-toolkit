@@ -4,6 +4,16 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Fold the game's objects in the lists (AGE-21)
+
+- Each object list splits into the map's own objects (custom or changed: `group === "map"` for
+  units, items and upgrades, `inMap` for abilities) and a `ListFold` header over the game's.
+  Folding is per list (`wc3-object-editor.fold.<noun>` in local storage, through `useFolded`),
+  so Units can stay folded while Abilities stay open.
+- Searching ignores the fold: matches from the game still show, in one flat list.
+- The filter chips keep working inside each part. A map with no own objects says so instead of
+  showing an empty list.
+
 ## 2026-10-23 · Release builds, Tinkerbench, changelog and devlog (AGE-16)
 
 - **Release builds.** `.github/workflows/release.yml` runs on `v*` tags: it checks that the tag
