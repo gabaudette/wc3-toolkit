@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-23 · Commonly confused concepts (AGE-34)
+## 2026-10-23 · Commonly confused concepts (PR #38, AGE-34)
 
 - Added three authored comparisons: armor material versus defense category/base armor,
   unit removal versus death/group membership, and numeric coordinates versus allocated
