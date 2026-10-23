@@ -7,9 +7,14 @@ type UnitIconProps = {
   size: "small" | "large";
 };
 
-/** A unit's game icon, or a plain square when it has none or it fails to load. */
+/**
+ * A unit's game icon, or a plain square when it has none or it fails to load.
+ * Icons smaller than their box (the editor's 16 px category icons) are scaled
+ * up pixel by pixel instead of blurred.
+ */
 export function UnitIcon({ path, size }: UnitIconProps) {
   const [failed, setFailed] = useState(false);
+  const [pixelated, setPixelated] = useState(false);
   const box = classes(
     "shrink-0 rounded border border-line bg-surface-2",
     size === "small" && "size-8",
@@ -27,7 +32,8 @@ export function UnitIcon({ path, size }: UnitIconProps) {
       loading="lazy"
       draggable={false}
       onError={() => setFailed(true)}
-      className={box}
+      onLoad={(e) => setPixelated(e.currentTarget.naturalWidth < e.currentTarget.clientWidth)}
+      className={classes(box, pixelated && "[image-rendering:pixelated]")}
     />
   );
 }

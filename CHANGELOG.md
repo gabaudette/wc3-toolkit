@@ -19,6 +19,8 @@ under "What's new".
 
 ### Changed
 
+- Destructables and doodads show the World Editor's icon for their category (Props, Bridges,
+  Water, ...) in lists, on their page and in search, since the game gives them no icon.
 - Names with Warcraft color codes show in color everywhere: lists, page titles, search,
   ability cards, sharing and import, and the base value column. Colors too dark to read on the
   editor's panels are lightened a little. Text you edit still shows the codes.
@@ -31,6 +33,8 @@ under "What's new".
 - The model preview now shows the newer campaign units, such as Roderick, the Scarlet
   Crusade and the Forsaken, and a few cinematic doodads. Models the game does not have say
   so instead of showing a file error.
+- The model preview no longer fails with "Missing shader uniform location: uRoughness" on
+  some graphics drivers.
 - Internal improvements.
 
 ## 0.1.0 - 2026-10-23
