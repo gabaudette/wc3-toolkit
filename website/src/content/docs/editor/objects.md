@@ -16,6 +16,9 @@ The list search finds names, raw codes and field values. **Ctrl K** opens comman
 
 Fields are grouped by topic. Changed values are highlighted, and the base-value column shows what the game or base object supplies. Reset one field to remove its override. Focus a field or its information button to read its explanation in the inspector.
 
+Know the result you want but not the field name? [Which field do I change?](../../reference/field-tasks/)
+maps common goals to the right object tab, field labels and raw codes, with companion fields to check.
+
 **Armor Type** (`uarm`) controls the hit sound. **Defense Type** (`udty`) controls the damage table. Use the [field reference](../../reference/fields/) when a label is ambiguous.
 
 ## Ability levels

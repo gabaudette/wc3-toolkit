@@ -35,6 +35,10 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   The troubleshooting hub in `editor/troubleshooting.md` follows the current setup, field,
   save and import flows and preview messages. Recheck its advice when those controls or
   errors change; a source-level check does not establish in-game behavior.
+- `src/content/docs/reference/field-tasks.md`: authored goal-to-field index. It sits outside
+  the generated reference subdirectories. Recheck linked field labels, object types and
+  companion settings against `data/fields.toml` and the shared TOML explanations when
+  metadata changes. Its task combinations are source-reviewed, not in-game verification.
 - `public/screenshots/`: real desktop captures shared by the visual tour, startup guides,
   homepage and root README. Editor views are 1440 × 900; startup captures focus on their
   panels (600 × 420 and 600 × 600) to keep the controls readable. Sharing and import dialogs
