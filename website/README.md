@@ -48,8 +48,9 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   or Light. The preference is restored before paint and synchronized across snippets/tabs.
 
 A global Lua/JASS toggle in `ThemeSelect.astro` stores its choice before paint. Paired
-sections use `data-example-language`; their headings and table-of-contents items switch
-together. Single-language instructions such as the Lua harness stay readable.
+sections use `data-example-language`; code, explanatory prose, headings and table-of-contents
+items switch together. Shared API tables describe engine types. Single-language instructions
+such as the Lua harness stay readable.
 
 The content cache is keyed by the theme configuration and JASS grammar, so Markdown cannot
 retain stylesheet references from an older syntax-highlighting configuration.

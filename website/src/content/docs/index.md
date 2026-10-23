@@ -20,8 +20,8 @@ Tinkerbench is in early development. Use a copy of your map while trying the edi
 
 [Create a custom spell](./guides/custom-spell/) · [Build a hero](./guides/hero/) · [Make an item](./guides/item/) · [Write a trigger](./guides/triggers/)
 
-Choose **Lua** or **JASS** in the top bar (in the menu on mobile) to switch all paired
-examples. Browse the [code examples cookbook](./reference/examples/) for practical recipes.
+Choose **Lua** or **JASS** in the top bar (in the menu on mobile) to switch examples and
+language-specific explanations. Browse the [code examples cookbook](./reference/examples/) for practical recipes.
 
 ## Look it up
 

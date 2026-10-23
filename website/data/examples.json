@@ -115,7 +115,7 @@
     "title": "Run code once after a delay",
     "category": "Timers and triggers",
     "description": "Start a one-shot timer that shows a message after two seconds. Destroy the expired timer inside its callback.",
-    "usage": "Call `ExampleTimerStart()` once after map initialization. The JASS callback appears before the function that registers it.",
+    "usage": "Call `ExampleTimerStart()` once after map initialization.",
     "jass": "function ExampleTimerStartElapsed takes nothing returns nothing\n    local timer expired = GetExpiredTimer()\n    call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 5.0, \"Two seconds elapsed.\")\n    call DestroyTimer(expired)\n    set expired = null\nendfunction\n\nfunction ExampleTimerStart takes nothing returns nothing\n    local timer delayed = CreateTimer()\n    call TimerStart(delayed, 2.0, false, function ExampleTimerStartElapsed)\n    set delayed = null\nendfunction",
     "lua": "function ExampleTimerStart()\n    local delayed = CreateTimer()\n    TimerStart(delayed, 2.0, false, function()\n        DisplayTimedTextToPlayer(Player(0), 0, 0, 5, \"Two seconds elapsed.\")\n        DestroyTimer(delayed)\n    end)\nend"
   },
@@ -139,7 +139,7 @@
     "title": "Release a timer owned by your system",
     "category": "Timers and triggers",
     "description": "Pause and destroy an owned timer. Destroying it prevents further periodic callbacks.",
-    "usage": "Call `ExampleDestroyTimer(ownedTimer)` only for a timer your system owns, then set your stored reference to `null` in JASS or `nil` in Lua.",
+    "usage": "Call `ExampleDestroyTimer(ownedTimer)` only for a timer your system owns, then clear your stored reference.",
     "jass": "function ExampleDestroyTimer takes timer ownedTimer returns nothing\n    if ownedTimer != null then\n        call PauseTimer(ownedTimer)\n        call DestroyTimer(ownedTimer)\n    endif\nendfunction",
     "lua": "function ExampleDestroyTimer(ownedTimer)\n    if ownedTimer ~= nil then\n        PauseTimer(ownedTimer)\n        DestroyTimer(ownedTimer)\n    end\nend"
   },

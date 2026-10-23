@@ -116,8 +116,16 @@ for (const directory of ["api", "fields", "examples"]) {
 const apiIndex = [
   "This reference is generated from declarations in your installed game's `common.j` and `blizzard.j`. It includes native functions, Blizzard helpers, handle types and constants. Search by symbol name with **Ctrl K** (or **⌘ K**).",
   `**Source snapshot:** ${markdown(api.version)}. ${api.declarations.length.toLocaleString("en")} declarations. A newer game version may add or change APIs.`,
-  "Function names and argument order carry over to Lua. JASS types describe the engine's API; they do not become Lua type annotations. In JASS, pass callbacks as `function Name`; in Lua, pass a function value. Blizzard helpers can have their own behavior and overhead; inspect your local script when implementation details matter.",
-  "[Read the JASS and Lua introduction](../../scripting/languages/). Generated call syntax uses parameter names as placeholders; it is not a runnable example by itself. Authored examples are labeled separately.",
+  languageSection(
+    "jass",
+    "Pass callbacks as `function Name`, and declare each callback before the function that uses it. Declarations include parameter types and return types.",
+  ),
+  languageSection(
+    "lua",
+    "Use the function names and argument order shown in the call syntax, and pass callbacks as function values. Engine types describe expected values; they are not type annotations to paste into your code.",
+  ),
+  "Blizzard helpers can have their own behavior and overhead; inspect your local script when implementation details matter.",
+  "[Read scripting basics](../../scripting/languages/). Generated call syntax uses parameter names as placeholders; it is not a runnable example by itself. Authored examples are labeled separately.",
 ];
 
 for (const source of api.sources) {
@@ -151,12 +159,11 @@ for (const declaration of api.declarations) {
   }
   body.push(languageSection("lua", `## ${luaHeading}\n\n\`\`\`lua\n${lua}\n\`\`\``));
   if (declaration.kind === "type") {
-    body.push(
-      `Parent type: ${typeLink(from, declaration.returns)}. In Lua this is an engine handle, not a table you create yourself.`,
-    );
+    body.push(`Parent type: ${typeLink(from, declaration.returns)}.`);
+    body.push(languageSection("lua", "This is an engine handle, not a table you create yourself."));
   } else if (declaration.kind === "constant") {
     body.push(
-      `Value type: ${typeLink(from, declaration.returns)}. Use ${code(declaration.name)} by name in JASS or Lua. Its initialization value is not included in this declaration reference.`,
+      `Value type: ${typeLink(from, declaration.returns)}. Use ${code(declaration.name)} by name. Its initialization value is not included in this declaration reference.`,
     );
   } else {
     body.push(
@@ -165,14 +172,14 @@ for (const declaration of api.declarations) {
     body.push("## Parameters");
     if (declaration.parameters.length) {
       body.push(
-        `| Name | JASS type |\n| --- | --- |\n${declaration.parameters.map((parameter) => `| ${code(parameter.name)} | ${typeLink(from, parameter.type)} |`).join("\n")}`,
+        `| Name | Engine type |\n| --- | --- |\n${declaration.parameters.map((parameter) => `| ${code(parameter.name)} | ${typeLink(from, parameter.type)} |`).join("\n")}`,
       );
     } else {
       body.push("This function takes no arguments.");
     }
     let returns = typeLink(from, declaration.returns);
     if (declaration.returns === "nothing") {
-      returns = "No return value (`nothing` in JASS).";
+      returns = "No return value.";
     }
     body.push(`## Returns\n\n${returns}`);
     const example = examples[declaration.name];
@@ -199,7 +206,15 @@ await page(
 
 const exampleIndex = [
   "Choose **Lua** or **JASS** in the top bar (in the menu on mobile). Your choice applies to guides and API examples and is remembered across pages.",
-  "Each linked recipe includes both languages, its setup requirements, and cleanup where it owns temporary handles. Call the named entry point after map initialization. In the Lua harness, register a no-argument entry point with `Dev.OnStart(ExampleName)`; pass arguments inside a callback when needed.",
+  "Each linked recipe includes setup requirements and cleanup where it owns temporary handles. Call the named entry point after map initialization.",
+  languageSection(
+    "lua",
+    "In the Lua harness, register a no-argument entry point with `Dev.OnStart(ExampleName)`; pass arguments inside a callback when needed.",
+  ),
+  languageSection(
+    "jass",
+    "Add functions in declaration order, then call the named entry point from a map initialization trigger. Pass arguments when the recipe requires them.",
+  ),
   "Run gameplay changes from synchronized map code. Event-response functions need the event shown in their example. Replace custom raw codes such as `A000` with your map's actual codes. A sample trigger described as map-lifetime should be registered once.",
 ];
 for (const category of new Set(Object.values(examples).map((example) => example.category))) {
