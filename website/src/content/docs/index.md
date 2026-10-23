@@ -38,6 +38,7 @@ the workbench.
 - [Work with units and abilities](./editor/objects/): base values, levels and tooltips.
 - [Share your objects](./editor/sharing/) with share codes and bundle files.
 - [Add Lua modules](./editor/lua-harness/) without losing them when the World Editor saves.
+- [Troubleshoot a problem](./editor/troubleshooting/): loading, editing, saving, previews and imports.
 
 ## Make something
 

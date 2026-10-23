@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Troubleshooting hub for loading game data, editing and saving maps, missing previews and
+  import problems, with checks by symptom and a bug-report template.
 - Tinkerbench copyright footer throughout the documentation, with contributor attribution
   and a link to the MIT license.
 - Contributing section on the documentation website, with bug-report guidance, local editor

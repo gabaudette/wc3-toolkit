@@ -25,6 +25,10 @@ the editor’s intended improvements.
 
 ## Report a useful bug
 
+Try the [troubleshooting hub](../../editor/troubleshooting/) first. If the problem remains,
+its [report template](../../editor/troubleshooting/#report-an-unresolved-problem) helps collect
+the relevant version, raw codes, reproduction steps and error text.
+
 Include enough information for someone else to reproduce it:
 1. Your Tinkerbench version, operating system and Warcraft III version, if relevant.
 2. Whether you are using HD art, and whether the problem occurs with game data only or with

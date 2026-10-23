@@ -62,3 +62,6 @@ References embedded in handwritten scripts or arbitrary text cannot be safely re
 ## Missing assets
 
 Dependency discovery starts from art fields and follows model texture references. Protected maps may not list their contents, so the importer tries known names. An asset that cannot be discovered by reference may be missing from the bundle. Check the model, icon, tooltips and abilities in the destination map and in game.
+
+If an import [loses artwork or changes raw codes](../troubleshooting/#an-import-loses-artwork-or-changes-raw-codes),
+check the transfer format, preview warnings and destination-file conflicts before retrying.

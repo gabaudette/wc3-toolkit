@@ -30,4 +30,7 @@ Object fields may name `.blp` icons whose installed texture is actually DDS. SD 
 
 Use [bundle files](../../editor/sharing/) when transferring objects with imported assets, then verify the destination map’s model, icon and texture paths. Never commit extracted game assets to this repository.
 
+For a missing preview or a destination that keeps its own file, follow the
+[import troubleshooting checks](../../editor/troubleshooting/#an-import-loses-artwork-or-changes-raw-codes).
+
 See the [import discovery source](https://github.com/gabaudette/wc3-toolkit/blob/main/object-editor/crates/wc3-map/src/imports.rs).
