@@ -173,6 +173,8 @@ refers to the created unit. A handle is also not a plain table you construct you
 See [handles and cleanup](../../scripting/languages/#handles-and-cleanup) and [ownership](#ownership-and-cleanup)
 before releasing an engine resource.
 
+For a concrete example, [compare coordinates and location handles](../common-confusions/#coordinates-versus-location-handles).
+
 ## J–P
 
 ### JASS

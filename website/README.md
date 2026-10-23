@@ -44,6 +44,12 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   production search can point directly to them. Language-specific notes use the same paired
   sections as other guides. Recheck definitions against the linked guides and supported
   formats when app or reference terminology changes. This page is not generated.
+- `src/content/docs/reference/common-confusions.md`: authored decision guidance for armor
+  fields, unit removal/death and coordinates/location handles. Reuse the existing paired
+  API recipes by linking to them. The generator's `conceptComparisons` map adds backlinks
+  from selected API and unit-field pages; keep its anchors aligned with the authored
+  headings. Recheck field labels and choices against metadata and retain explicit notes
+  for game behavior that has not been tested. The page is not generated.
 - `public/screenshots/`: real desktop captures shared by the visual tour, startup guides,
   homepage and root README. Editor views are 1440 × 900; startup captures focus on their
   panels (600 × 420 and 600 × 600) to keep the controls readable. Sharing and import dialogs

@@ -32,6 +32,34 @@ type Example = {
   jass: string;
   lua: string;
 };
+type ConceptComparison = {
+  title: string;
+  anchor: string;
+  apis: string[];
+  unitFields: string[];
+};
+
+// Selected reference pages link to the authored comparisons, outside generated directories.
+const conceptComparisons: ConceptComparison[] = [
+  {
+    title: "Armor Type versus Defense Type",
+    anchor: "armor-type-versus-defense-type",
+    apis: [],
+    unitFields: ["uarm", "udty", "udef"],
+  },
+  {
+    title: "Removing versus killing a unit",
+    anchor: "removing-versus-killing-a-unit",
+    apis: ["RemoveUnit", "KillUnit", "GroupRemoveUnit"],
+    unitFields: [],
+  },
+  {
+    title: "Coordinates versus location handles",
+    anchor: "coordinates-versus-location-handles",
+    apis: ["GetUnitX", "GetUnitY", "GetUnitLoc", "Location", "RemoveLocation"],
+    unitFields: [],
+  },
+];
 
 const root = new URL("../", import.meta.url);
 const output = new URL("src/content/docs/reference/", root);
@@ -289,6 +317,12 @@ for (const declaration of api.declarations) {
     `**${declaration.kind}** · ${code(declaration.source)} line ${declaration.line} · [Browse the API](${link(from, "reference/api")})`,
     `Topic: [${category.title}](${link(from, categoryPath(category.id))}).`,
   ];
+  const comparison = conceptComparisons.find((entry) => entry.apis.includes(declaration.name));
+  if (comparison) {
+    body.push(
+      `Compare: [${comparison.title}](${link(from, "reference/common-confusions")}#${comparison.anchor}).`,
+    );
+  }
   if (guide) {
     body.push(
       guide.summary,
@@ -435,6 +469,7 @@ const fieldIndex = [
   "Know the goal but not the field? [Which field do I change?](../field-tasks/) maps common tasks to exact field labels and raw codes, including companion settings to check.",
   `**Metadata snapshot:** ${markdown(api.version)}. Guide descriptions are read directly from the editor's TOML files on every build.`,
   "Search by raw code (for example `uarm`) or display name. Start with [Armor Type](./unit/uarm/) versus [Defense Type](./unit/udty/): one changes the hit sound, the other changes combat damage.",
+  "[Compare armor fields, unit removal/death, and coordinates/location handles](../common-confusions/) for decision guidance and cleanup examples.",
 ];
 
 for (const kind of catalogs) {
@@ -490,6 +525,14 @@ for (const kind of catalogs) {
       body.push(
         "This field is present in the game's metadata. There is no project-authored explanation yet. For spell-specific data, the name and applicable base ability are the starting point; test its behavior in game.",
       );
+    }
+    if (kind === "unit") {
+      const comparison = conceptComparisons.find((entry) => entry.unitFields.includes(id));
+      if (comparison) {
+        body.push(
+          `Compare: [${comparison.title}](${link(`reference/fields/${kind}/${id.toLowerCase()}`, "reference/common-confusions")}#${comparison.anchor}).`,
+        );
+      }
     }
     if (field) {
       body.push(

@@ -162,6 +162,9 @@ attack is enabled before changing the target to compensate.
 or metal. Changing it does not select the defense category. For the other side of the damage
 table, see the attacker's [Attack 1 - Attack Type (`ua1t`)](../fields/unit/ua1t/).
 
+The [armor-field comparison](../common-confusions/#armor-type-versus-defense-type) walks
+through choosing a sound material, defense category or base armor amount.
+
 ## Costs, shops and charges
 
 ### Change training cost or build time

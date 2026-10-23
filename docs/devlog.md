@@ -4,6 +4,27 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Commonly confused concepts (PR #38, AGE-34)
+
+- Added three authored comparisons: armor material versus defense category/base armor,
+  unit removal versus death/group membership, and numeric coordinates versus allocated
+  location handles. Each includes decision guidance, common mistakes, reference links and
+  explicit limits on untested game behavior. Existing paired recipes supply complete examples.
+- Added JASS/Lua call and cleanup notes that follow the language toggle. Linked the guide
+  from the homepage, Object data sidebar, editing/scripting guides, field-task index and
+  glossary. A small generator mapping adds targeted backlinks from eight API and three
+  unit-field pages; the authored page stays outside generated directories.
+- Reviewed names, choices and signatures against the snapshot and existing authored guides.
+  Documented the backlink mapping and anchor maintenance; no app behavior changed.
+- Validation: all 122 existing tests pass; Biome and Astro report no diagnostics. Build
+  and local link/asset checks pass across 6,609 pages. An audit verifies all three comparison
+  anchors, 11 generated backlinks, exact field labels and 607 internal fragments across
+  18 pages. Browser checks cover desktop/mobile layouts in both themes, all three tables
+  at 320px without overflow, paired language notes, API/field backlink round trips and
+  existing recipe links. Each comparison is discoverable in Guides search; KillUnit,
+  RemoveUnit and uarm retain their exact reference first. No browser errors were reported.
+  Game behavior was not exercised; the page labels its source review and unverified cases.
+
 ## 2026-10-23 · Linked map-making glossary (PR #37, AGE-33)
 
 - Added 33 alphabetically grouped definitions spanning object editing, sharing, scripting

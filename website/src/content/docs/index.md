@@ -50,6 +50,7 @@ language-specific explanations. Browse the [code examples cookbook](./reference/
 ## Look it up
 
 - **[Map-making glossary](./reference/glossary/)** — definitions and examples for raw codes, custom objects, dependencies, handles and other terms used in the guides.
+- **[Commonly confused concepts](./reference/common-confusions/)** — compare armor fields, removing versus killing units, and coordinates versus location handles.
 - **[Which field do I change?](./reference/field-tasks/)** — start with a goal, from movement speed and attack range to item charges or model size.
 - **[API reference](./reference/api/)** — generated declarations, parameter types, call syntax and selected examples in your chosen language. Search an exact name like `CreateUnit`.
 - **[Object field reference](./reference/fields/)** — raw codes, meanings, values and gotchas from the same field guides as the editor.

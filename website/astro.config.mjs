@@ -92,7 +92,11 @@ export default defineConfig({
         },
         {
           label: "Object data",
-          items: [{ slug: "reference/field-tasks" }, { slug: "reference/fields" }],
+          items: [
+            { slug: "reference/field-tasks" },
+            { slug: "reference/common-confusions" },
+            { slug: "reference/fields" },
+          ],
         },
         { label: "Map formats", items: [{ autogenerate: { directory: "formats" } }] },
         {
