@@ -49,6 +49,9 @@ single line. Every pull request adds an entry here and to the changelog.
   Scripting explanations also follow the selection: raw codes, callback registration, empty
   references, cleanup and language resources. Shared API tables use engine type labels;
   language-specific setup is filtered on the API index and cookbook as well.
+- External web links open in a new tab across content, header and mobile navigation. A
+  shared handler preserves existing relationship attributes and adds `noopener noreferrer`,
+  including for links inserted after page load.
 
 ## 2026-10-23 · Category icons, and the real uRoughness fix (AGE-17)
 
