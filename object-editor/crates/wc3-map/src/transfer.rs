@@ -28,10 +28,13 @@ use wc3_data::strings::{MapStrings, reference_id};
 
 use crate::abilities::MapAbilities;
 use crate::imports::{ImportedFile, files_used};
+use crate::items::MapItems;
 use crate::units::MapUnits;
+use crate::upgrades::MapUpgrades;
 use crate::{
-    ABILITIES_FILE, ABILITY_SKINS_FILE, BUFF_SKINS_FILE, BUFFS_FILE, Error, ITEMS_FILE, Map,
-    Result, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, UPGRADES_FILE,
+    ABILITIES_FILE, ABILITY_SKINS_FILE, BUFF_SKINS_FILE, BUFFS_FILE, Error, ITEM_SKINS_FILE,
+    ITEMS_FILE, Map, Result, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, UPGRADE_SKINS_FILE,
+    UPGRADES_FILE,
 };
 
 const CODE_PREFIX: &str = "W3OBJ1:";
@@ -51,6 +54,8 @@ const ID_ALPHABET: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const ID_SUFFIX_LEN: u32 = 3;
 const ABILITY_PREFIX: u8 = b'A';
 const BUFF_PREFIX: u8 = b'B';
+const ITEM_PREFIX: u8 = b'I';
+const UPGRADE_PREFIX: u8 = b'R';
 
 /// Share codes may be wrapped or padded by whatever carried them.
 const BASE64: GeneralPurpose = GeneralPurpose::new(
@@ -66,10 +71,18 @@ pub enum ObjectType {
     Unit,
     Ability,
     Buff,
+    Item,
+    Upgrade,
 }
 
 impl ObjectType {
-    pub const ALL: [Self; 3] = [Self::Unit, Self::Ability, Self::Buff];
+    pub const ALL: [Self; 5] = [
+        Self::Unit,
+        Self::Ability,
+        Self::Buff,
+        Self::Item,
+        Self::Upgrade,
+    ];
 
     /// The gameplay file and the Reforged skin file holding this kind.
     fn files(self) -> (&'static str, &'static str) {
@@ -77,13 +90,15 @@ impl ObjectType {
             Self::Unit => (UNITS_FILE, UNIT_SKINS_FILE),
             Self::Ability => (ABILITIES_FILE, ABILITY_SKINS_FILE),
             Self::Buff => (BUFFS_FILE, BUFF_SKINS_FILE),
+            Self::Item => (ITEMS_FILE, ITEM_SKINS_FILE),
+            Self::Upgrade => (UPGRADES_FILE, UPGRADE_SKINS_FILE),
         }
     }
 
     fn layout(self) -> Layout {
         match self {
-            Self::Ability => Layout::Leveled,
-            Self::Unit | Self::Buff => Layout::Plain,
+            Self::Ability | Self::Upgrade => Layout::Leveled,
+            Self::Unit | Self::Buff | Self::Item => Layout::Plain,
         }
     }
 
@@ -93,6 +108,8 @@ impl ObjectType {
             Self::Unit => "Units",
             Self::Ability => "Abilities",
             Self::Buff => "Buffs",
+            Self::Item => "Items",
+            Self::Upgrade => "Upgrades",
         }
     }
 
@@ -103,6 +120,8 @@ impl ObjectType {
             Self::Unit => id.0[0],
             Self::Ability => ABILITY_PREFIX,
             Self::Buff => BUFF_PREFIX,
+            Self::Item => ITEM_PREFIX,
+            Self::Upgrade => UPGRADE_PREFIX,
         }
     }
 }
@@ -162,15 +181,13 @@ impl Tables {
     }
 }
 
-/// A map's buffs, kept as stored (the editor does not edit them yet), and the
-/// IDs of its custom items and upgrades, which do not move yet. Abilities are
-/// in [`MapAbilities`].
+/// A map's buffs, kept as stored (the editor does not edit them yet).
+/// Abilities, items and upgrades are in [`MapAbilities`], [`MapItems`] and
+/// [`MapUpgrades`].
 pub struct MapExtras {
     buffs: Tables,
     /// Files the map had when loaded; others are only written once they hold something.
     loaded: Vec<&'static str>,
-    custom_items: Vec<FourCC>,
-    custom_upgrades: Vec<FourCC>,
 }
 
 impl MapExtras {
@@ -194,19 +211,7 @@ impl MapExtras {
         };
 
         let buffs = tables(ObjectType::Buff)?;
-        let custom_ids = |file: &str| -> Result<Vec<FourCC>> {
-            Ok(map
-                .object_data(file)?
-                .map(|d| d.custom.iter().map(ObjectEntry::effective_id).collect())
-                .unwrap_or_default())
-        };
-
-        Ok(Self {
-            buffs,
-            loaded,
-            custom_items: custom_ids(ITEMS_FILE)?,
-            custom_upgrades: custom_ids(UPGRADES_FILE)?,
-        })
+        Ok(Self { buffs, loaded })
     }
 
     /// The buff files to write: those the map had, and new ones that imports
@@ -229,6 +234,8 @@ impl MapExtras {
 pub struct MapObjects<'a> {
     pub units: &'a MapUnits,
     pub abilities: &'a MapAbilities,
+    pub items: &'a MapItems,
+    pub upgrades: &'a MapUpgrades,
     pub extras: &'a MapExtras,
 }
 
@@ -241,57 +248,67 @@ impl MapObjects<'_> {
             }
             ObjectType::Ability => self.abilities.has(id),
             ObjectType::Buff => self.extras.buffs.has(id),
+            ObjectType::Item => self.items.has(id),
+            ObjectType::Upgrade => self.upgrades.has(id),
         }
     }
 }
 
-/// What a field's value refers to, from its metadata type.
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum Target {
-    Object(ObjectType),
-    /// Requirements list units and upgrades alike.
-    UnitOrUpgrade,
-    Item,
-    Upgrade,
+/// A map's movable objects, borrowed to add imported objects to.
+pub struct MapObjectsMut<'a> {
+    pub units: &'a mut MapUnits,
+    pub abilities: &'a mut MapAbilities,
+    pub items: &'a mut MapItems,
+    pub upgrades: &'a mut MapUpgrades,
+    pub extras: &'a mut MapExtras,
 }
 
-fn target_for(value_type: &str) -> Option<Target> {
+/// The kinds of objects a field's value can name, from its metadata type.
+/// Requirements (`techList`) name units and upgrades alike.
+fn targets_for(value_type: &str) -> Option<&'static [ObjectType]> {
     Some(match value_type {
-        "unitList" | "unitCode" | "unitSkinList" => Target::Object(ObjectType::Unit),
-        "abilityList" | "heroAbilityList" | "abilCode" => Target::Object(ObjectType::Ability),
-        "buffList" | "effectList" => Target::Object(ObjectType::Buff),
-        "techList" => Target::UnitOrUpgrade,
-        "itemList" => Target::Item,
-        "upgradeList" | "upgradeCode" => Target::Upgrade,
+        "unitList" | "unitCode" | "unitSkinList" => &[ObjectType::Unit],
+        "abilityList" | "heroAbilityList" | "abilCode" => &[ObjectType::Ability],
+        "buffList" | "effectList" => &[ObjectType::Buff],
+        "techList" => &[ObjectType::Unit, ObjectType::Upgrade],
+        "itemList" => &[ObjectType::Item],
+        "upgradeList" | "upgradeCode" => &[ObjectType::Upgrade],
         _ => return None,
     })
 }
 
-/// Which fields of units and abilities hold IDs of other objects.
+/// Which fields of units, abilities, items and upgrades hold IDs of other objects.
 pub struct References {
-    fields: HashMap<(ObjectType, FourCC), Target>,
+    fields: HashMap<(ObjectType, FourCC), &'static [ObjectType]>,
 }
 
 impl References {
-    pub fn new(unit_fields: &[FieldMeta], ability_fields: &[FieldMeta]) -> Self {
+    pub fn new(
+        unit_fields: &[FieldMeta],
+        ability_fields: &[FieldMeta],
+        item_fields: &[FieldMeta],
+        upgrade_fields: &[FieldMeta],
+    ) -> Self {
         let mut fields = HashMap::new();
         for (ty, metas) in [
             (ObjectType::Unit, unit_fields),
             (ObjectType::Ability, ability_fields),
+            (ObjectType::Item, item_fields),
+            (ObjectType::Upgrade, upgrade_fields),
         ] {
             for meta in metas {
-                if let (Some(id), Some(target)) =
-                    (FourCC::parse(&meta.id), target_for(&meta.value_type))
+                if let (Some(id), Some(targets)) =
+                    (FourCC::parse(&meta.id), targets_for(&meta.value_type))
                 {
-                    fields.insert((ty, id), target);
+                    fields.insert((ty, id), targets);
                 }
             }
         }
         Self { fields }
     }
 
-    fn target(&self, ty: ObjectType, field: FourCC) -> Option<Target> {
-        self.fields.get(&(ty, field)).copied()
+    fn targets(&self, ty: ObjectType, field: FourCC) -> &'static [ObjectType] {
+        self.fields.get(&(ty, field)).copied().unwrap_or_default()
     }
 }
 
@@ -311,6 +328,8 @@ pub struct Bundle {
     units: Tables,
     abilities: Tables,
     buffs: Tables,
+    items: Tables,
+    upgrades: Tables,
     strings: MapStrings,
     /// Files imported into the source map that the objects use.
     files: Vec<ImportedFile>,
@@ -338,6 +357,8 @@ impl Bundle {
             units: Tables::empty(ObjectType::Unit),
             abilities: Tables::empty(ObjectType::Ability),
             buffs: Tables::empty(ObjectType::Buff),
+            items: Tables::empty(ObjectType::Item),
+            upgrades: Tables::empty(ObjectType::Upgrade),
             strings: MapStrings::default(),
             files: Vec::new(),
         }
@@ -353,6 +374,8 @@ impl Bundle {
             ObjectType::Unit => &self.units,
             ObjectType::Ability => &self.abilities,
             ObjectType::Buff => &self.buffs,
+            ObjectType::Item => &self.items,
+            ObjectType::Upgrade => &self.upgrades,
         }
     }
 
@@ -361,6 +384,8 @@ impl Bundle {
             ObjectType::Unit => &mut self.units,
             ObjectType::Ability => &mut self.abilities,
             ObjectType::Buff => &mut self.buffs,
+            ObjectType::Item => &mut self.items,
+            ObjectType::Upgrade => &mut self.upgrades,
         }
     }
 
@@ -605,17 +630,8 @@ fn read_section(data: &[u8], pos: usize) -> Option<(&str, &[u8], usize)> {
     Some((name, data.get(start..end)?, end))
 }
 
-/// The kind of object a reference points at, when it can be bundled.
-fn object_target(target: Target) -> Option<ObjectType> {
-    match target {
-        Target::Object(ty) => Some(ty),
-        Target::UnitOrUpgrade => Some(ObjectType::Unit),
-        Target::Item | Target::Upgrade => None,
-    }
-}
-
-/// Bundles the given custom units with every custom unit, ability and buff
-/// they depend on, and the files imported into the source map that they use
+/// Bundles the given custom units with every custom unit, ability, buff,
+/// item and upgrade they depend on, and the files imported into the source map that they use
 /// (`read` reads a file from it by path). Warnings name what could not come along.
 pub fn export(
     source: MapObjects<'_>,
@@ -632,6 +648,8 @@ pub fn export(
         ObjectType::Unit => &source_units,
         ObjectType::Ability => source.abilities.tables(),
         ObjectType::Buff => &source.extras.buffs,
+        ObjectType::Item => source.items.tables(),
+        ObjectType::Upgrade => source.upgrades.tables(),
     };
 
     if let Some(id) = units.iter().find(|id| !source_units.is_custom(**id)) {
@@ -666,37 +684,21 @@ pub fn export(
                         m.value = Value::String(bundle.strings.add(text, None));
                     }
 
-                    let Some(target) = refs.target(ty, m.field) else {
-                        continue;
-                    };
+                    let targets = refs.targets(ty, m.field);
                     for code in list_ids(&m.value) {
-                        if let Some(other) = object_target(target)
-                            && tables(other).is_custom(code)
-                        {
-                            queue.push_back((other, code));
+                        if let Some(other) = targets.iter().find(|t| tables(**t).is_custom(code)) {
+                            queue.push_back((*other, code));
                             continue;
                         }
 
-                        let reason = match target {
-                            Target::Object(other) if tables(other).is_changed(code) => {
-                                Reason::Changed
-                            }
-                            Target::UnitOrUpgrade | Target::Upgrade
-                                if source.extras.custom_upgrades.contains(&code) =>
-                            {
-                                Reason::Upgrade
-                            }
-                            Target::Item if source.extras.custom_items.contains(&code) => {
-                                Reason::Item
-                            }
-                            _ => continue,
-                        };
+                        if !targets.iter().any(|t| tables(*t).is_changed(code)) {
+                            continue;
+                        }
                         match left_behind.iter_mut().find(|l| l.code == code) {
                             Some(known) if !known.users.contains(&id) => known.users.push(id),
                             Some(_) => {}
                             None => left_behind.push(LeftBehind {
                                 code,
-                                reason,
                                 users: vec![id],
                             }),
                         }
@@ -727,19 +729,10 @@ pub fn export(
     })
 }
 
-/// Why a referenced object stays in the source map.
-#[derive(Debug, Clone, Copy)]
-enum Reason {
-    /// An original game object the source map changes: the target gets the game's version.
-    Changed,
-    Upgrade,
-    Item,
-}
-
-/// A referenced object that does not come along, and who uses it.
+/// A game object the source map changes that a shared object refers to: it
+/// does not come along, so the target map gets the game's version.
 struct LeftBehind {
     code: FourCC,
-    reason: Reason,
     users: Vec<FourCC>,
 }
 
@@ -748,18 +741,10 @@ const NAMED_USERS: usize = 3;
 
 impl LeftBehind {
     fn message(&self) -> String {
-        let code = self.code;
-        let what = match self.reason {
-            Reason::Changed => format!("{code} is changed in this map; the game's version applies"),
-            Reason::Upgrade => {
-                format!(
-                    "{code} is a custom upgrade and stays behind: upgrades cannot be shared yet"
-                )
-            }
-            Reason::Item => {
-                format!("{code} is a custom item and stays behind: items cannot be shared yet")
-            }
-        };
+        let what = format!(
+            "{} is changed in this map; the game's version applies",
+            self.code
+        );
         let mut users: Vec<String> = self
             .users
             .iter()
@@ -839,10 +824,15 @@ pub fn apply(
     bundle: &Bundle,
     plan: &[PlannedObject],
     refs: &References,
-    units: &mut MapUnits,
-    abilities: &mut MapAbilities,
-    extras: &mut MapExtras,
+    target: MapObjectsMut<'_>,
 ) {
+    let MapObjectsMut {
+        units,
+        abilities,
+        items,
+        upgrades,
+        extras,
+    } = target;
     let renamed: HashMap<(ObjectType, FourCC), FourCC> =
         plan.iter().map(|p| ((p.ty, p.id), p.new_id)).collect();
     let (unit_data, unit_skin, strings) = units.parts_mut();
@@ -857,6 +847,14 @@ pub fn apply(
                 (&mut tables.data, &mut tables.skin)
             }
             ObjectType::Buff => (&mut extras.buffs.data, &mut extras.buffs.skin),
+            ObjectType::Item => {
+                let tables = items.tables_mut();
+                (&mut tables.data, &mut tables.skin)
+            }
+            ObjectType::Upgrade => {
+                let tables = upgrades.tables_mut();
+                (&mut tables.data, &mut tables.skin)
+            }
         };
         let comment = format!("{}: {}", ty.label(), planned.new_id);
 
@@ -880,14 +878,17 @@ pub fn apply(
                         m.value = Value::String(strings.add(text, Some(&comment)));
                     }
 
-                    if let Some(other) = refs.target(ty, m.field).and_then(object_target)
+                    let targets = refs.targets(ty, m.field);
+                    if !targets.is_empty()
                         && let Value::String(list) = &m.value
                     {
                         let rewritten: Vec<String> = list
                             .split(LIST_SEPARATOR)
                             .map(|code| {
                                 FourCC::parse(code.trim())
-                                    .and_then(|id| renamed.get(&(other, id)))
+                                    .and_then(|id| {
+                                        targets.iter().find_map(|t| renamed.get(&(*t, id)))
+                                    })
                                     .map_or_else(|| code.to_owned(), FourCC::to_string)
                             })
                             .collect();
@@ -910,6 +911,9 @@ mod tests {
     const ABILITIES: &str = "uabi";
     const TRAINS: &str = "utra";
     const ITEMS: &str = "umki";
+    const RESEARCHES: &str = "ures";
+    const ITEM_ABILITIES: &str = "iabi";
+    const UPGRADE_REQUIREMENTS: &str = "greq";
     const BUFFS: &str = "abuf";
     const ABILITY_NAME: &str = "anam";
     const MODEL: &str = "umdl";
@@ -948,59 +952,94 @@ mod tests {
     }
 
     fn refs() -> References {
-        let fields = [
-            (
-                (ObjectType::Unit, ABILITIES),
-                Target::Object(ObjectType::Ability),
-            ),
-            ((ObjectType::Unit, TRAINS), Target::Object(ObjectType::Unit)),
-            ((ObjectType::Unit, ITEMS), Target::Item),
-            (
-                (ObjectType::Ability, BUFFS),
-                Target::Object(ObjectType::Buff),
-            ),
+        let fields: [((ObjectType, &str), &'static [ObjectType]); 6] = [
+            ((ObjectType::Unit, ABILITIES), &[ObjectType::Ability]),
+            ((ObjectType::Unit, TRAINS), &[ObjectType::Unit]),
+            ((ObjectType::Unit, ITEMS), &[ObjectType::Item]),
+            ((ObjectType::Unit, RESEARCHES), &[ObjectType::Upgrade]),
+            ((ObjectType::Ability, BUFFS), &[ObjectType::Buff]),
+            ((ObjectType::Item, ITEM_ABILITIES), &[ObjectType::Ability]),
         ];
-        References {
-            fields: fields
-                .into_iter()
-                .map(|((ty, field), target)| ((ty, id(field)), target))
-                .collect(),
-        }
+        let mut fields: HashMap<(ObjectType, FourCC), &'static [ObjectType]> = fields
+            .into_iter()
+            .map(|((ty, field), targets)| ((ty, id(field)), targets))
+            .collect();
+        fields.insert(
+            (ObjectType::Upgrade, id(UPGRADE_REQUIREMENTS)),
+            &[ObjectType::Unit, ObjectType::Upgrade],
+        );
+        References { fields }
     }
 
-    fn extras(
-        mut abilities: Vec<ObjectEntry>,
-        buffs: Vec<ObjectEntry>,
-    ) -> (MapAbilities, MapExtras) {
-        // Ability files store a level and data column with every value.
-        for m in abilities
-            .iter_mut()
-            .flat_map(|e| &mut e.sets)
-            .flat_map(|s| &mut s.mods)
-        {
-            m.level = Some(0);
-            m.column = Some(0);
+    /// A map's movable objects, owned, for tests to borrow as [`MapObjects`].
+    struct Objects {
+        units: MapUnits,
+        abilities: MapAbilities,
+        items: MapItems,
+        upgrades: MapUpgrades,
+        extras: MapExtras,
+    }
+
+    impl Objects {
+        fn new(
+            units: MapUnits,
+            mut abilities: Vec<ObjectEntry>,
+            buffs: Vec<ObjectEntry>,
+            items: Vec<ObjectEntry>,
+            mut upgrades: Vec<ObjectEntry>,
+        ) -> Self {
+            // Leveled files store a level and data column with every value.
+            for m in abilities
+                .iter_mut()
+                .chain(upgrades.iter_mut())
+                .flat_map(|e| &mut e.sets)
+                .flat_map(|s| &mut s.mods)
+            {
+                m.level = Some(1);
+                m.column = Some(0);
+            }
+
+            Self {
+                units,
+                abilities: MapAbilities::from_tables(Tables {
+                    data: table(Layout::Leveled, abilities),
+                    skin: ObjectData::empty(Layout::Leveled),
+                }),
+                items: MapItems::from_tables(Tables {
+                    data: table(Layout::Plain, items),
+                    skin: ObjectData::empty(Layout::Plain),
+                }),
+                upgrades: MapUpgrades::from_tables(Tables {
+                    data: table(Layout::Leveled, upgrades),
+                    skin: ObjectData::empty(Layout::Leveled),
+                }),
+                extras: MapExtras {
+                    buffs: Tables {
+                        data: table(Layout::Plain, buffs),
+                        skin: ObjectData::empty(Layout::Plain),
+                    },
+                    loaded: Vec::new(),
+                },
+            }
         }
 
-        let abilities = MapAbilities::from_tables(Tables {
-            data: table(Layout::Leveled, abilities),
-            skin: ObjectData::empty(Layout::Leveled),
-        });
-        let extras = MapExtras {
-            buffs: Tables {
-                data: table(Layout::Plain, buffs),
-                skin: ObjectData::empty(Layout::Plain),
-            },
-            loaded: Vec::new(),
-            custom_items: vec![id("I000")],
-            custom_upgrades: Vec::new(),
-        };
-        (abilities, extras)
+        fn borrow(&self) -> MapObjects<'_> {
+            MapObjects {
+                units: &self.units,
+                abilities: &self.abilities,
+                items: &self.items,
+                upgrades: &self.upgrades,
+                extras: &self.extras,
+            }
+        }
     }
 
     /// A barracks (`h000`) training a custom footman (`h001`) whose ability
-    /// `A000` applies buff `B000`; the barracks also makes a custom item.
-    fn source() -> (MapUnits, MapAbilities, MapExtras) {
+    /// `A000` applies buff `B000`; the barracks also makes custom item `I000`,
+    /// which gives ability `A000`, and researches custom upgrade `R000`, which
+    /// requires the footman. The map also changes the game's `AHhb`, which the
+    /// footman has.
+    fn source() -> Objects {
         let mut strings = MapStrings::default();
         let name = strings.add("Elite Footman", None);
         let units = MapUnits::from_parts(
@@ -1013,6 +1052,7 @@ mod tests {
                         vec![
                             text(TRAINS, "h001,hfoo", FourCC::ZERO),
                             text(ITEMS, "I000", FourCC::ZERO),
+                            text(RESEARCHES, "R000", FourCC::ZERO),
                         ],
                     ),
                     entry(
@@ -1036,36 +1076,77 @@ mod tests {
             ),
             strings,
         );
-        let (abilities, extras) = extras(
+        let mut objects = Objects::new(
+            units,
             vec![entry(
                 "AHhb",
                 "A000",
                 vec![text(BUFFS, "B000", FourCC::ZERO)],
             )],
             vec![entry("BHbd", "B000", vec![])],
+            vec![entry(
+                "ratf",
+                "I000",
+                vec![text(ITEM_ABILITIES, "A000", FourCC::ZERO)],
+            )],
+            vec![entry(
+                "Rhme",
+                "R000",
+                vec![text(UPGRADE_REQUIREMENTS, "h001", FourCC::ZERO)],
+            )],
         );
-        (units, abilities, extras)
+        let mut changed = entry("AHhb", "AHhb", vec![]);
+        changed.id = FourCC::ZERO;
+        objects.abilities.tables_mut().data.original.push(changed);
+        objects
+    }
+
+    fn no_units() -> MapUnits {
+        MapUnits::from_parts(
+            ObjectData::empty(Layout::Plain),
+            ObjectData::empty(Layout::Plain),
+            MapStrings::default(),
+        )
+    }
+
+    /// A map with nothing in it but one custom ability and one custom item.
+    fn target_with(ability: &str, item: &str, units: MapUnits) -> Objects {
+        Objects::new(
+            units,
+            vec![entry(
+                "AHhb",
+                ability,
+                vec![text(ABILITY_NAME, "Mine", FourCC::ZERO)],
+            )],
+            Vec::new(),
+            vec![entry("ratf", item, vec![])],
+            Vec::new(),
+        )
     }
 
     #[test]
     fn exports_dependencies_and_warns_about_the_rest() {
-        let (units, abilities, extras) = source();
-        let export = export(
-            MapObjects {
-                units: &units,
-                abilities: &abilities,
-                extras: &extras,
-            },
-            &refs(),
-            &[id("h000")],
-            &no_files,
-        )
-        .unwrap();
+        let source = source();
+        let export = export(source.borrow(), &refs(), &[id("h000")], &no_files).unwrap();
 
-        let ids: Vec<String> = export.objects.iter().map(|o| o.id.to_string()).collect();
-        assert_eq!(ids, ["h000", "h001", "A000", "B000"]);
+        let objects: Vec<(ObjectType, String)> = export
+            .objects
+            .iter()
+            .map(|o| (o.ty, o.id.to_string()))
+            .collect();
+        assert_eq!(
+            objects,
+            [
+                (ObjectType::Unit, "h000".into()),
+                (ObjectType::Unit, "h001".into()),
+                (ObjectType::Item, "I000".into()),
+                (ObjectType::Upgrade, "R000".into()),
+                (ObjectType::Ability, "A000".into()),
+                (ObjectType::Buff, "B000".into()),
+            ]
+        );
         assert_eq!(export.warnings.len(), 1);
-        assert!(export.warnings[0].contains("I000"));
+        assert!(export.warnings[0].starts_with("AHhb is changed"));
         assert_eq!(
             export
                 .bundle
@@ -1077,30 +1158,16 @@ mod tests {
 
     #[test]
     fn only_custom_units_can_be_shared() {
-        let (units, abilities, extras) = source();
-        let objects = MapObjects {
-            units: &units,
-            abilities: &abilities,
-            extras: &extras,
-        };
-        assert!(export(objects, &refs(), &[id("hfoo")], &no_files).is_err());
+        let source = source();
+        assert!(export(source.borrow(), &refs(), &[id("hfoo")], &no_files).is_err());
     }
 
     #[test]
     fn share_codes_round_trip_and_reject_damage() {
-        let (units, abilities, extras) = source();
-        let bundle = export(
-            MapObjects {
-                units: &units,
-                abilities: &abilities,
-                extras: &extras,
-            },
-            &refs(),
-            &[id("h001")],
-            &no_files,
-        )
-        .unwrap()
-        .bundle;
+        let source = source();
+        let bundle = export(source.borrow(), &refs(), &[id("h000")], &no_files)
+            .unwrap()
+            .bundle;
         let code = bundle.to_code();
 
         assert!(code.starts_with(CODE_PREFIX));
@@ -1118,20 +1185,11 @@ mod tests {
 
     #[test]
     fn bundle_files_carry_imported_files_and_codes_do_not() {
-        let (units, abilities, extras) = source();
+        let source = source();
         let read = |path: &str| (path == "Elite.mdx").then(|| b"model".to_vec());
-        let bundle = export(
-            MapObjects {
-                units: &units,
-                abilities: &abilities,
-                extras: &extras,
-            },
-            &refs(),
-            &[id("h001")],
-            &read,
-        )
-        .unwrap()
-        .bundle;
+        let bundle = export(source.borrow(), &refs(), &[id("h001")], &read)
+            .unwrap()
+            .bundle;
 
         let paths: Vec<&str> = bundle.files().iter().map(|f| f.path.as_str()).collect();
         assert_eq!(paths, ["Elite.mdx"]);
@@ -1150,33 +1208,22 @@ mod tests {
 
     #[test]
     fn imports_with_free_ids_and_rewritten_references() {
-        let (units, abilities, extras) = source();
-        let bundle = export(
-            MapObjects {
-                units: &units,
-                abilities: &abilities,
-                extras: &extras,
-            },
-            &refs(),
-            &[id("h001")],
-            &no_files,
-        )
-        .unwrap()
-        .bundle;
+        let source = source();
+        let bundle = export(source.borrow(), &refs(), &[id("h000")], &no_files)
+            .unwrap()
+            .bundle;
 
-        // The target already has its own h001 and A000.
-        let mut target_units = MapUnits::from_parts(
-            table(Layout::Plain, vec![entry("hpea", "h001", vec![])]),
-            ObjectData::empty(Layout::Plain),
-            MapStrings::default(),
+        // The target already has its own h001, A000 and I000.
+        let mut target = target_with(
+            "A000",
+            "I000",
+            MapUnits::from_parts(
+                table(Layout::Plain, vec![entry("hpea", "h001", vec![])]),
+                ObjectData::empty(Layout::Plain),
+                MapStrings::default(),
+            ),
         );
-        let (mut target_abilities, mut target_extras) = extras_with_ability("A000");
-        let objects = MapObjects {
-            units: &target_units,
-            abilities: &target_abilities,
-            extras: &target_extras,
-        };
-        let planned = plan(&bundle, objects, &|_, _| false).unwrap();
+        let planned = plan(&bundle, target.borrow(), &|_, _| false).unwrap();
 
         let new_ids: Vec<(String, String)> = planned
             .iter()
@@ -1185,9 +1232,12 @@ mod tests {
         assert_eq!(
             new_ids,
             [
-                ("h001".into(), "h000".into()),
+                ("h000".into(), "h000".into()),
+                ("h001".into(), "h002".into()),
                 ("A000".into(), "A001".into()),
                 ("B000".into(), "B000".into()),
+                ("I000".into(), "I001".into()),
+                ("R000".into(), "R000".into()),
             ]
         );
 
@@ -1195,44 +1245,68 @@ mod tests {
             &bundle,
             &planned,
             &refs(),
-            &mut target_units,
-            &mut target_abilities,
-            &mut target_extras,
+            MapObjectsMut {
+                units: &mut target.units,
+                abilities: &mut target.abilities,
+                items: &mut target.items,
+                upgrades: &mut target.upgrades,
+                extras: &mut target.extras,
+            },
         );
 
-        let (data, skin, strings) = target_units.parts();
-        let imported = data.find(id("h000")).unwrap();
+        let (data, skin, strings) = target.units.parts();
+        let barracks: Vec<Value> = data
+            .find(id("h000"))
+            .unwrap()
+            .mods()
+            .map(|m| m.value.clone())
+            .collect();
+        assert_eq!(
+            barracks,
+            [
+                Value::String("h002,hfoo".into()),
+                Value::String("I001".into()),
+                Value::String("R000".into()),
+            ]
+        );
+        let imported = data.find(id("h002")).unwrap();
         let abilities = imported.mods().next().unwrap();
         assert_eq!(abilities.value, Value::String("A001,AHhb".into()));
-        let name = skin.find(id("h000")).unwrap().mods().next().unwrap();
-        assert_eq!(name.end, id("h000"));
+        let name = skin.find(id("h002")).unwrap().mods().next().unwrap();
+        assert_eq!(name.end, id("h002"));
         assert_eq!(strings.resolve(&name.value.to_string()), "Elite Footman");
-        let ability = target_abilities.tables().data.find(id("A001")).unwrap();
+        let ability = target.abilities.tables().data.find(id("A001")).unwrap();
         assert_eq!(
             ability.mods().next().unwrap().value,
             Value::String("B000".into())
         );
-        assert!(target_extras.buffs.data.find(id("B000")).is_some());
-    }
-
-    fn extras_with_ability(own: &str) -> (MapAbilities, MapExtras) {
-        extras(
-            vec![entry(
-                "AHhb",
-                own,
-                vec![text(ABILITY_NAME, "Mine", FourCC::ZERO)],
-            )],
-            Vec::new(),
-        )
+        let item = target.items.tables().data.find(id("I001")).unwrap();
+        assert_eq!(item.base, id("ratf"));
+        assert_eq!(
+            item.mods().next().unwrap().value,
+            Value::String("A001".into())
+        );
+        let upgrade = target.upgrades.tables().data.find(id("R000")).unwrap();
+        assert_eq!(
+            upgrade.mods().next().unwrap().value,
+            Value::String("h002".into())
+        );
+        assert!(target.extras.buffs.data.find(id("B000")).is_some());
     }
 
     #[test]
     fn writes_buff_files_only_when_needed() {
-        let (_, empty) = extras(Vec::new(), Vec::new());
-        assert!(empty.files().is_empty());
+        let empty = Objects::new(no_units(), Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        assert!(empty.extras.files().is_empty());
 
-        let (_, with_buff) = extras(Vec::new(), vec![entry("BHbd", "B000", vec![])]);
-        let names: Vec<&str> = with_buff.files().iter().map(|(n, _)| *n).collect();
+        let with_buff = Objects::new(
+            no_units(),
+            Vec::new(),
+            vec![entry("BHbd", "B000", vec![])],
+            Vec::new(),
+            Vec::new(),
+        );
+        let names: Vec<&str> = with_buff.extras.files().iter().map(|(n, _)| *n).collect();
         assert_eq!(names, [BUFFS_FILE]);
     }
 }

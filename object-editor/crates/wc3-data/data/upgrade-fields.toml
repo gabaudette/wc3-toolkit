@@ -1,0 +1,137 @@
+# Field guide for the Upgrades tab: what each upgrade field does, which fields
+# come first, and which are rarely needed. Written for this project (not taken
+# from the game). Mark anything not confirmed in game with `unverified = true`.
+#
+# Costs, research time and effects grow by level: level N costs
+# Base + (N - 1) × Increment, and an effect adds Base + (N - 1) × Increment.
+#
+# [order]      per category, the fields shown first, in this order. Fields not
+#              listed follow in the game's metadata order.
+# [[field]]    ids sharing one description; `advanced = true` folds the fields
+#              into the "Advanced" group of their category.
+
+[order]
+stats = [
+  "glvl", "gglb", "gglm", "glmb", "glmm", "gtib", "gtim", "grac", "gcls", "glob", "ginh",
+]
+data = [
+  "gef1", "gba1", "gmo1", "gco1", "gef2", "gba2", "gmo2", "gco2",
+  "gef3", "gba3", "gmo3", "gco3", "gef4", "gba4", "gmo4", "gco4",
+]
+text = ["gnam", "gtp1", "gub1", "ghk1", "gnsf"]
+art = ["gar1", "gbpx", "gbpy"]
+tech = ["greq", "grqc"]
+
+# --- Stats -------------------------------------------------------------------
+
+[[field]]
+ids = ["glvl"]
+description = "How many times the upgrade can be researched. Each level has its own name, tooltip, icon and requirements."
+
+[[field]]
+ids = ["gglb"]
+description = "Gold paid to research level 1."
+
+[[field]]
+ids = ["gglm"]
+description = "Gold added to the cost for each level after the first: level 2 costs Base + Increment."
+
+[[field]]
+ids = ["glmb"]
+description = "Lumber paid to research level 1."
+
+[[field]]
+ids = ["glmm"]
+description = "Lumber added to the cost for each level after the first."
+
+[[field]]
+ids = ["gtib"]
+description = "Seconds the research of level 1 takes."
+
+[[field]]
+ids = ["gtim"]
+description = "Seconds added to the research time for each level after the first."
+
+[[field]]
+ids = ["grac"]
+description = "The race the upgrade belongs to. The editor groups upgrades by it; it does not limit who can research it."
+
+[[field]]
+ids = ["gcls"]
+description = "Kind of upgrade (Armor, Melee, Ranged, Caster, ...). The game uses it to show the upgrade's level on the units it improves."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["glob"]
+description = "Whether the effects apply to every unit of the player instead of only the units that list this upgrade under \"Upgrades Used\"."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["ginh"]
+description = "Whether units given to another player keep the upgrade's effects."
+unverified = true
+advanced = true
+
+# --- Data --------------------------------------------------------------------
+
+[[field]]
+ids = ["gef1", "gef2", "gef3", "gef4"]
+description = "What the upgrade changes (attack damage, armor, hit points, an ability's level, ...). Each upgrade has up to four effects."
+
+[[field]]
+ids = ["gba1", "gba2", "gba3", "gba4"]
+description = "How much the effect adds at level 1."
+
+[[field]]
+ids = ["gmo1", "gmo2", "gmo3", "gmo4"]
+description = "How much the effect adds for each level after the first: level N adds Base + (N - 1) × Increment."
+
+[[field]]
+ids = ["gco1", "gco2", "gco3", "gco4"]
+description = "The ability or unit the effect works on, for effects that need one (such as raising an ability's level)."
+
+# --- Text --------------------------------------------------------------------
+
+[[field]]
+ids = ["gnam"]
+description = "The upgrade's name at each level."
+
+[[field]]
+ids = ["gtp1"]
+description = "The tooltip's first line at each level, usually \"Upgrade to <name>\". Color codes and |n line breaks work."
+
+[[field]]
+ids = ["gub1"]
+description = "The longer tooltip text at each level. Color codes and |n line breaks work."
+
+[[field]]
+ids = ["ghk1"]
+description = "Key that starts the research, at each level."
+
+[[field]]
+ids = ["gnsf"]
+description = "Text after the name in the editor only, to tell similar upgrades apart. Players never see it."
+advanced = true
+
+# --- Art ---------------------------------------------------------------------
+
+[[field]]
+ids = ["gar1"]
+description = "Icon of the research button at each level."
+
+[[field]]
+ids = ["gbpx", "gbpy"]
+description = "Position of the research button on the command card: column (0 to 3) and row (0 to 2)."
+
+# --- Techtree ----------------------------------------------------------------
+
+[[field]]
+ids = ["greq"]
+description = "Buildings, units or upgrades the player needs before researching each level, like a Keep for level 2."
+
+[[field]]
+ids = ["grqc"]
+description = "Levels of the required upgrades, in the same order as Requirements."
+advanced = true

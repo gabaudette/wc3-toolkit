@@ -8,9 +8,11 @@ pub use wc3_data::strings::MapStrings;
 
 pub mod abilities;
 pub mod imports;
+pub mod items;
 pub mod lua;
 pub mod transfer;
 pub mod units;
+pub mod upgrades;
 mod values;
 
 pub const STRINGS_FILE: &str = "war3map.wts";
@@ -21,7 +23,9 @@ pub const ABILITY_SKINS_FILE: &str = "war3mapSkin.w3a";
 pub const BUFFS_FILE: &str = "war3map.w3h";
 pub const BUFF_SKINS_FILE: &str = "war3mapSkin.w3h";
 pub const ITEMS_FILE: &str = "war3map.w3t";
+pub const ITEM_SKINS_FILE: &str = "war3mapSkin.w3t";
 pub const UPGRADES_FILE: &str = "war3map.w3q";
+pub const UPGRADE_SKINS_FILE: &str = "war3mapSkin.w3q";
 
 /// Object data files. Reforged splits each kind into
 /// gameplay data and a `Skin` file with names and art.

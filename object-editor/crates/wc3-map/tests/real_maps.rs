@@ -8,15 +8,22 @@ use std::path::{Path, PathBuf};
 use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::icon::decode_texture;
+use wc3_data::meta::FieldMeta;
 use wc3_data::model::preview_copy;
 use wc3_data::units::UnitDatabase;
+use wc3_data::upgrades::UpgradeDatabase;
 use wc3_map::abilities::{MapAbilities, MapPlaceholders};
 use wc3_map::imports::MapImports;
-use wc3_map::transfer::{self, Bundle, MapExtras, MapObjects, ObjectType, References};
+use wc3_map::items::MapItems;
+use wc3_map::transfer::{
+    self, Bundle, MapExtras, MapObjects, MapObjectsMut, ObjectType, References,
+};
 use wc3_map::units::MapUnits;
+use wc3_map::upgrades::MapUpgrades;
 use wc3_map::{
-    ABILITIES_FILE, ABILITY_SKINS_FILE, FourCC, Layout, Map, OBJECT_FILES, ObjectData,
-    STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, save_files,
+    ABILITIES_FILE, ABILITY_SKINS_FILE, FourCC, ITEM_SKINS_FILE, ITEMS_FILE, Layout, Map,
+    OBJECT_FILES, ObjectData, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, UPGRADE_SKINS_FILE,
+    UPGRADES_FILE, save_files,
 };
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -159,6 +166,68 @@ fn edited_units_save_and_read_back() -> TestResult {
     Ok(())
 }
 
+#[test]
+#[ignore = "needs WC3_GAME_DIR"]
+fn edited_items_save_and_read_back() -> TestResult {
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let db = UnitDatabase::load_items(&files)?;
+    let dir = tempfile::tempdir()?;
+    let path = dir.path().join("map.w3m");
+    mpq::Archive::create(&path, MAX_FILES)?.save()?;
+
+    let map = Map::open(&path)?;
+    let mut units = MapUnits::load(&map)?;
+    let mut items = MapItems::load(&map)?;
+    drop(map);
+    let claws = FourCC::parse("ratf").ok_or("bad id")?;
+    let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
+    let (gold, name, tooltip) = (field("igol")?, field("unam")?, field("utub")?);
+
+    // A text change that is reset again leaves no string behind.
+    let untouched = (units.files(), items.files());
+    items.set(&db, units.strings_mut(), claws, tooltip, "|cffffcc00New|r")?;
+    assert_ne!((units.files(), items.files()), untouched);
+    items.reset(units.strings_mut(), claws, tooltip);
+    assert_eq!(
+        (units.files(), items.files()),
+        untouched,
+        "reset left a string or entry behind"
+    );
+
+    let custom = items.create(&db, claws)?;
+    items.set(&db, units.strings_mut(), custom, gold, "250")?;
+    items.set(&db, units.strings_mut(), custom, name, "Claws of Testing")?;
+    let mut written = units.files();
+    written.extend(items.files());
+    save_files(&path, &path, &written)?;
+
+    let map = Map::open(&path)?;
+    let reloaded = MapItems::load(&map)?;
+    let strings = map.strings()?;
+    assert_eq!(custom.to_string(), "I000");
+    assert_eq!(reloaded.base_of(&db, custom), Some(claws));
+    assert_eq!(
+        reloaded
+            .raw_value(&db, &strings, custom, gold, ArtMode::Sd)
+            .as_deref(),
+        Some("250")
+    );
+    assert_eq!(reloaded.name(&db, &strings, custom), "Claws of Testing");
+    assert_eq!(field_ids(&map, ITEMS_FILE, custom)?, ["igol"]);
+    assert_eq!(field_ids(&map, ITEM_SKINS_FILE, custom)?, ["unam"]);
+
+    let mut edited = reloaded;
+    let mut strings = strings;
+    edited.set(&db, &mut strings, custom, gold, "800")?;
+    assert!(
+        !edited.is_modified(custom, gold),
+        "setting the base's own value is no change"
+    );
+    assert!(edited.reset(&mut strings, custom, name));
+    assert!(!edited.reset(&mut strings, custom, name));
+    Ok(())
+}
+
 fn level_and_column(
     map: &Map,
     file: &str,
@@ -289,10 +358,19 @@ fn custom_units_move_between_maps() -> TestResult {
     let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
     let db = UnitDatabase::load(&files)?;
     let abilities = AbilityDatabase::load(&files)?;
-    let refs = References::new(db.fields(), abilities.fields());
+    let items_db = UnitDatabase::load_items(&files)?;
+    let upgrades_db = UpgradeDatabase::load(&files)?;
+    let refs = References::new(
+        db.fields(),
+        abilities.fields(),
+        items_db.fields(),
+        upgrades_db.fields(),
+    );
     let in_game = |ty: ObjectType, id: FourCC| match ty {
         ObjectType::Unit => db.contains(&id.to_string()),
         ObjectType::Ability => abilities.contains(&id.to_string()),
+        ObjectType::Item => items_db.contains(&id.to_string()),
+        ObjectType::Upgrade => upgrades_db.contains(&id.to_string()),
         ObjectType::Buff => false,
     };
 
@@ -305,6 +383,8 @@ fn custom_units_move_between_maps() -> TestResult {
         let map = Map::open(path)?;
         let units = MapUnits::load(&map)?;
         let abilities = MapAbilities::load(&map)?;
+        let items = MapItems::load(&map)?;
+        let upgrades = MapUpgrades::load(&map)?;
         let extras = MapExtras::load(&map)?;
         let custom: Vec<FourCC> = units
             .units()
@@ -319,6 +399,8 @@ fn custom_units_move_between_maps() -> TestResult {
         let source = MapObjects {
             units: &units,
             abilities: &abilities,
+            items: &items,
+            upgrades: &upgrades,
             extras: &extras,
         };
         let export = transfer::export(source, &refs, &custom, &|path| {
@@ -344,10 +426,14 @@ fn custom_units_move_between_maps() -> TestResult {
 
         let mut target_units = MapUnits::load(&map)?;
         let mut target_abilities = MapAbilities::load(&map)?;
+        let mut target_items = MapItems::load(&map)?;
+        let mut target_upgrades = MapUpgrades::load(&map)?;
         let mut target_extras = MapExtras::load(&map)?;
         let target = MapObjects {
             units: &target_units,
             abilities: &target_abilities,
+            items: &target_items,
+            upgrades: &target_upgrades,
             extras: &target_extras,
         };
         let plan = transfer::plan(&bundle, target, &in_game)?;
@@ -360,9 +446,13 @@ fn custom_units_move_between_maps() -> TestResult {
             &bundle,
             &plan,
             &refs,
-            &mut target_units,
-            &mut target_abilities,
-            &mut target_extras,
+            MapObjectsMut {
+                units: &mut target_units,
+                abilities: &mut target_abilities,
+                items: &mut target_items,
+                upgrades: &mut target_upgrades,
+                extras: &mut target_extras,
+            },
         );
 
         // Protected maps cannot be rewritten, so the result goes into a new archive.
@@ -375,6 +465,8 @@ fn custom_units_move_between_maps() -> TestResult {
         }
         let mut written = target_units.files();
         written.extend(target_abilities.files());
+        written.extend(target_items.files());
+        written.extend(target_upgrades.files());
         written.extend(target_extras.files());
         let import_files = imports.files();
         written.extend(import_files.iter().map(|(p, b)| (p.as_str(), b.clone())));
@@ -393,7 +485,31 @@ fn custom_units_move_between_maps() -> TestResult {
         }
         let reread = MapUnits::load(&saved)?;
         let reread_abilities = MapAbilities::load(&saved)?;
+        let reread_items = MapItems::load(&saved)?;
+        let reread_upgrades = MapUpgrades::load(&saved)?;
         MapExtras::load(&saved)?;
+        for planned in plan.iter().filter(|p| p.ty == ObjectType::Upgrade) {
+            assert!(
+                reread_upgrades
+                    .upgrades()
+                    .iter()
+                    .any(|u| u.id == planned.new_id && u.is_custom),
+                "{}: upgrade {} is missing after saving",
+                path.display(),
+                planned.new_id
+            );
+        }
+        for planned in plan.iter().filter(|p| p.ty == ObjectType::Item) {
+            assert!(
+                reread_items
+                    .items()
+                    .iter()
+                    .any(|i| i.id == planned.new_id && i.is_custom),
+                "{}: item {} is missing after saving",
+                path.display(),
+                planned.new_id
+            );
+        }
         for planned in plan.iter().filter(|p| p.ty == ObjectType::Ability) {
             assert!(
                 reread_abilities
@@ -450,6 +566,255 @@ fn custom_units_move_between_maps() -> TestResult {
     Ok(())
 }
 
+fn field<'a>(db: &'a UnitDatabase, id: &str) -> Result<&'a FieldMeta, String> {
+    db.field(id).ok_or(format!("no {id}"))
+}
+
+/// A custom shop selling a custom item and researching a custom upgrade
+/// brings both along when shared, into a map that already has an item and an
+/// upgrade with the same IDs.
+#[test]
+#[ignore = "needs WC3_GAME_DIR"]
+fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let db = UnitDatabase::load(&files)?;
+    let abilities = AbilityDatabase::load(&files)?;
+    let items_db = UnitDatabase::load_items(&files)?;
+    let upgrades_db = UpgradeDatabase::load(&files)?;
+    let refs = References::new(
+        db.fields(),
+        abilities.fields(),
+        items_db.fields(),
+        upgrades_db.fields(),
+    );
+    let dir = tempfile::tempdir()?;
+
+    let source_path = dir.path().join("source.w3m");
+    mpq::Archive::create(&source_path, MAX_FILES)?.save()?;
+    let map = Map::open(&source_path)?;
+    let (mut units, mut items) = (MapUnits::load(&map)?, MapItems::load(&map)?);
+    let source_abilities = MapAbilities::load(&map)?;
+    let mut upgrades = MapUpgrades::load(&map)?;
+    let extras = MapExtras::load(&map)?;
+    let swords = FourCC::parse("Rhme").ok_or("bad id")?;
+    let upgrade = upgrades.create(&upgrades_db, swords)?;
+    let upgrade_name = upgrades_db.field("gnam").ok_or("no gnam")?;
+    upgrades.set(
+        &upgrades_db,
+        units.strings_mut(),
+        upgrade,
+        upgrade_name,
+        2,
+        "Swords of Sharing",
+    )?;
+    let item = items.create(&items_db, FourCC::parse("ratf").ok_or("bad id")?)?;
+    items.set(
+        &items_db,
+        units.strings_mut(),
+        item,
+        field(&items_db, "unam")?,
+        "Claws of Sharing",
+    )?;
+    let shop = units.create(&db, FourCC::parse("ngme").ok_or("bad id")?)?;
+    units.set(&db, shop, field(&db, "usei")?, &format!("{item},stwp"))?;
+    units.set(&db, shop, field(&db, "ures")?, &upgrade.to_string())?;
+
+    let source = MapObjects {
+        units: &units,
+        abilities: &source_abilities,
+        items: &items,
+        upgrades: &upgrades,
+        extras: &extras,
+    };
+    let export = transfer::export(source, &refs, &[shop], &|_| None)?;
+    assert!(export.warnings.is_empty(), "{:?}", export.warnings);
+    let bundle = Bundle::from_code(&export.bundle.to_code())?;
+
+    // The target already has its own I000 and R000.
+    let target_path = dir.path().join("target.w3m");
+    mpq::Archive::create(&target_path, MAX_FILES)?.save()?;
+    let map = Map::open(&target_path)?;
+    let mut target_units = MapUnits::load(&map)?;
+    let mut target_abilities = MapAbilities::load(&map)?;
+    let mut target_items = MapItems::load(&map)?;
+    let mut target_upgrades = MapUpgrades::load(&map)?;
+    let mut target_extras = MapExtras::load(&map)?;
+    drop(map);
+    target_items.create(&items_db, FourCC::parse("phea").ok_or("bad id")?)?;
+    target_upgrades.create(&upgrades_db, swords)?;
+    let target = MapObjects {
+        units: &target_units,
+        abilities: &target_abilities,
+        items: &target_items,
+        upgrades: &target_upgrades,
+        extras: &target_extras,
+    };
+    let in_game = |ty: ObjectType, id: FourCC| match ty {
+        ObjectType::Unit => db.contains(&id.to_string()),
+        ObjectType::Ability => abilities.contains(&id.to_string()),
+        ObjectType::Item => items_db.contains(&id.to_string()),
+        ObjectType::Upgrade => upgrades_db.contains(&id.to_string()),
+        ObjectType::Buff => false,
+    };
+    let plan = transfer::plan(&bundle, target, &in_game)?;
+    let new_item = plan
+        .iter()
+        .find(|p| p.ty == ObjectType::Item)
+        .ok_or("the item did not come along")?
+        .new_id;
+    let new_shop = plan
+        .iter()
+        .find(|p| p.ty == ObjectType::Unit)
+        .ok_or("the shop is missing")?
+        .new_id;
+    let new_upgrade = plan
+        .iter()
+        .find(|p| p.ty == ObjectType::Upgrade)
+        .ok_or("the upgrade did not come along")?
+        .new_id;
+    assert_eq!(
+        (new_item.to_string(), new_upgrade.to_string()),
+        ("I001".into(), "R001".into())
+    );
+    transfer::apply(
+        &bundle,
+        &plan,
+        &refs,
+        MapObjectsMut {
+            units: &mut target_units,
+            abilities: &mut target_abilities,
+            items: &mut target_items,
+            upgrades: &mut target_upgrades,
+            extras: &mut target_extras,
+        },
+    );
+    let mut written = target_units.files();
+    written.extend(target_items.files());
+    written.extend(target_upgrades.files());
+    save_files(&target_path, &target_path, &written)?;
+
+    let saved = Map::open(&target_path)?;
+    let (reread_units, reread_items) = (MapUnits::load(&saved)?, MapItems::load(&saved)?);
+    let reread_upgrades = MapUpgrades::load(&saved)?;
+    let strings = saved.strings()?;
+    assert_eq!(
+        reread_units
+            .raw_value(&db, new_shop, field(&db, "usei")?, ArtMode::Sd)
+            .as_deref(),
+        Some("I001,stwp")
+    );
+    assert_eq!(
+        reread_items.name(&items_db, &strings, new_item),
+        "Claws of Sharing"
+    );
+    assert_eq!(
+        reread_items.base_of(&items_db, new_item),
+        FourCC::parse("ratf")
+    );
+    assert_eq!(
+        reread_units
+            .raw_value(&db, new_shop, field(&db, "ures")?, ArtMode::Sd)
+            .as_deref(),
+        Some("R001")
+    );
+    assert_eq!(
+        reread_upgrades
+            .raw_value(
+                &upgrades_db,
+                &strings,
+                new_upgrade,
+                upgrade_name,
+                2,
+                ArtMode::Sd
+            )
+            .as_deref(),
+        Some("Swords of Sharing")
+    );
+    Ok(())
+}
+
+/// An upgrade's per-level fields save at their level and read back; plain
+/// fields save at level 0.
+#[test]
+#[ignore = "needs WC3_GAME_DIR"]
+fn edited_upgrades_save_and_read_back() -> TestResult {
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let db = UpgradeDatabase::load(&files)?;
+    let dir = tempfile::tempdir()?;
+    let path = dir.path().join("map.w3m");
+    mpq::Archive::create(&path, MAX_FILES)?.save()?;
+
+    let map = Map::open(&path)?;
+    let mut units = MapUnits::load(&map)?;
+    let mut upgrades = MapUpgrades::load(&map)?;
+    drop(map);
+    let swords = FourCC::parse("Rhme").ok_or("bad id")?;
+    let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
+    let (name, gold, levels, requirements) = (
+        field("gnam")?,
+        field("gglb")?,
+        field("glvl")?,
+        field("greq")?,
+    );
+
+    // A text change that is reset again leaves no string behind.
+    let untouched = (units.files(), upgrades.files());
+    upgrades.set(&db, units.strings_mut(), swords, name, 2, "|cffffcc00New|r")?;
+    assert_ne!((units.files(), upgrades.files()), untouched);
+    upgrades.reset(units.strings_mut(), swords, name, 2);
+    assert_eq!(
+        (units.files(), upgrades.files()),
+        untouched,
+        "reset left a string or entry behind"
+    );
+
+    let custom = upgrades.create(&db, swords)?;
+    upgrades.set(&db, units.strings_mut(), custom, gold, 0, "250")?;
+    upgrades.set(&db, units.strings_mut(), custom, levels, 0, "4")?;
+    upgrades.set(
+        &db,
+        units.strings_mut(),
+        custom,
+        name,
+        4,
+        "Adamantite Swords",
+    )?;
+    upgrades.set(&db, units.strings_mut(), custom, requirements, 4, "hcas")?;
+    let mut written = units.files();
+    written.extend(upgrades.files());
+    save_files(&path, &path, &written)?;
+
+    let map = Map::open(&path)?;
+    let reloaded = MapUpgrades::load(&map)?;
+    let strings = map.strings()?;
+    assert_eq!(custom.to_string(), "R000");
+    assert_eq!(reloaded.levels(&db, custom), 4);
+    let value = |field, level| reloaded.raw_value(&db, &strings, custom, field, level, ArtMode::Sd);
+    assert_eq!(value(gold, 0).as_deref(), Some("250"));
+    assert_eq!(value(name, 1).as_deref(), Some("Iron Forged Swords"));
+    assert_eq!(value(name, 4).as_deref(), Some("Adamantite Swords"));
+    assert_eq!(value(requirements, 4).as_deref(), Some("hcas"));
+    assert_eq!(
+        level_and_column(&map, UPGRADES_FILE, custom, "glvl")?,
+        [(0, 0)]
+    );
+    assert_eq!(
+        level_and_column(&map, UPGRADE_SKINS_FILE, custom, "gnam")?,
+        [(4, 0)]
+    );
+
+    let mut edited = reloaded;
+    let mut strings = strings;
+    edited.set(&db, &mut strings, custom, gold, 0, "100")?;
+    assert!(
+        !edited.is_modified(custom, gold, 0),
+        "setting the base's own value is no change"
+    );
+    assert!(edited.reset(&mut strings, custom, name, 4));
+    assert!(!edited.reset(&mut strings, custom, name, 4));
+    Ok(())
+}
+
 /// Every model and texture the maps' custom units import decodes for the
 /// editor's previews.
 #[test]
@@ -458,7 +823,14 @@ fn imported_art_decodes() -> TestResult {
     let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
     let db = UnitDatabase::load(&files)?;
     let abilities = AbilityDatabase::load(&files)?;
-    let refs = References::new(db.fields(), abilities.fields());
+    let items = UnitDatabase::load_items(&files)?;
+    let upgrades_db = UpgradeDatabase::load(&files)?;
+    let refs = References::new(
+        db.fields(),
+        abilities.fields(),
+        items.fields(),
+        upgrades_db.fields(),
+    );
 
     let mut maps = Vec::new();
     find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
@@ -477,6 +849,8 @@ fn imported_art_decodes() -> TestResult {
         let source = MapObjects {
             units: &units,
             abilities: &MapAbilities::load(&map)?,
+            items: &MapItems::load(&map)?,
+            upgrades: &MapUpgrades::load(&map)?,
             extras: &MapExtras::load(&map)?,
         };
         let export = transfer::export(source, &refs, &custom, &|file| {

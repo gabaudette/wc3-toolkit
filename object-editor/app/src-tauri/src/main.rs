@@ -9,9 +9,11 @@ mod abilities;
 mod commands;
 mod hotkeys;
 mod icons;
+mod items;
 mod platform;
 mod state;
 mod transfer;
+mod upgrades;
 mod view;
 
 use std::process::ExitCode;
@@ -44,6 +46,18 @@ fn main() -> ExitCode {
             commands::reset_field,
             commands::create_unit,
             commands::save_map,
+            items::list_items,
+            items::item_detail,
+            items::search_items,
+            items::set_item_field,
+            items::reset_item_field,
+            items::create_item,
+            upgrades::list_upgrades,
+            upgrades::upgrade_detail,
+            upgrades::search_upgrades,
+            upgrades::set_upgrade_field,
+            upgrades::reset_upgrade_field,
+            upgrades::create_upgrade,
             transfer::share_code,
             transfer::save_bundle,
             transfer::map_custom_units,

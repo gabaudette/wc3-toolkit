@@ -8,14 +8,25 @@ import { UnitIcon } from "./UnitIcon";
 
 type UnitPageProps = {
   detail: UnitDetail;
-  clashes: HotkeyClash[];
+  /** Hotkey clashes; leave out for objects the check does not cover. */
+  clashes?: HotkeyClash[];
   editable: boolean;
   onChange: (field: string, value: string) => void;
   onReset: (field: string) => void;
   onCreateCopy: () => void;
 };
 
-const MODEL_FIELD = "umdl";
+/** The field holding the model, by noun. */
+const MODEL_FIELD: Record<string, string> = { unit: "umdl", item: "ifil" };
+
+/** "item" for items, "unit" for heroes, units and buildings. */
+function nounOf(item: UnitDetail["item"]): string {
+  if (item.kind === "item") {
+    return "item";
+  }
+
+  return "unit";
+}
 
 /** Sections open by default; the rest start folded to keep the page short. */
 const OPEN_BY_DEFAULT = ["stats", "combat", "abil", "text"];
@@ -54,10 +65,11 @@ export function UnitPage({
   const [openAdvanced, setOpenAdvanced] = useState<string[]>([]);
   const [inspected, setInspected] = useState<string | null>(null);
   const { item } = detail;
+  const noun = nounOf(item);
   const allFields = detail.sections.flatMap((s) => s.fields);
   const inspectedField = allFields.find((f) => f.id === inspected) ?? null;
   const changedCount = allFields.filter((f) => f.modified).length;
-  const modelPath = allFields.find((f) => f.id === MODEL_FIELD)?.raw || null;
+  const modelPath = allFields.find((f) => f.id === MODEL_FIELD[noun])?.raw || null;
   const searching = Boolean(filter) || changedOnly;
 
   const sections = useMemo(
@@ -110,7 +122,7 @@ export function UnitPage({
                 <Button onPress={onCreateCopy}>
                   <span className="flex items-center gap-1.5">
                     <Copy01 className="size-4" aria-hidden="true" />
-                    New unit based on this
+                    New {noun} based on this
                   </span>
                 </Button>
               )}
@@ -148,7 +160,7 @@ export function UnitPage({
             </div>
 
             {!editable && (
-              <p className="text-sm text-faint">Browsing game data. Open a map to edit units.</p>
+              <p className="text-sm text-faint">Browsing game data. Open a map to edit {noun}s.</p>
             )}
           </div>
         </header>
@@ -190,7 +202,7 @@ export function UnitPage({
         modelPath={modelPath}
         field={inspectedField}
         editable={editable}
-        clashes={clashes}
+        {...(clashes && { clashes })}
         onReset={onReset}
       />
     </div>

@@ -10,8 +10,19 @@ import { LevelText } from "./LevelText";
 import { AdvancedGroup, FieldHeader, FieldRows, matches, SectionToggle, toggled } from "./Sections";
 import { UnitIcon } from "./UnitIcon";
 
+/** The object types this page shows: abilities, and upgrades shaped like them. */
+type Noun = "ability" | "upgrade";
+
+const PLURALS: Record<Noun, string> = { ability: "abilities", upgrade: "upgrades" };
+const FILTER_EXAMPLES: Record<Noun, string> = {
+  ability: "Filter fields: cooldown, damage, icon…",
+  upgrade: "Filter fields: gold, effect, icon…",
+};
+
 type AbilityPageProps = {
   detail: AbilityDetail;
+  /** Defaults to "ability". */
+  noun?: Noun;
   editable: boolean;
   /** `level` is 0 for fields without levels. */
   onChange: (field: string, level: number, value: string) => void;
@@ -73,10 +84,12 @@ function baseLabel(detail: AbilityDetail): string {
   return "Game value";
 }
 
-function facts(detail: AbilityDetail): string {
+function facts(detail: AbilityDetail, noun: Noun): string {
   const { summary, hotkey, requiredLevel } = detail.card;
   let kind = "Unit ability";
-  if (summary.hero) {
+  if (noun === "upgrade") {
+    kind = "Upgrade";
+  } else if (summary.hero) {
     kind = "Hero ability";
   } else if (summary.item) {
     kind = "Item ability";
@@ -95,6 +108,7 @@ function facts(detail: AbilityDetail): string {
 
 export function AbilityPage({
   detail,
+  noun = "ability",
   editable,
   onChange,
   onFill,
@@ -177,13 +191,13 @@ export function AbilityPage({
                 {summary.id}
                 {summary.custom && ` · based on ${summary.base}`}
               </p>
-              <p className="text-sm text-muted">{facts(detail)}</p>
+              <p className="text-sm text-muted">{facts(detail, noun)}</p>
             </div>
             {editable && (
               <Button onPress={onCreateCopy}>
                 <span className="flex items-center gap-1.5">
                   <Copy01 className="size-4" aria-hidden="true" />
-                  New ability based on this
+                  New {noun} based on this
                 </span>
               </Button>
             )}
@@ -200,7 +214,7 @@ export function AbilityPage({
               type="search"
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              placeholder="Filter fields: cooldown, damage, icon…"
+              placeholder={FILTER_EXAMPLES[noun]}
               aria-label="Filter fields"
               className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
             />
@@ -215,7 +229,9 @@ export function AbilityPage({
           </div>
 
           {!editable && (
-            <p className="text-sm text-faint">Browsing game data. Open a map to edit abilities.</p>
+            <p className="text-sm text-faint">
+              Browsing game data. Open a map to edit {PLURALS[noun]}.
+            </p>
           )}
           {editable && (
             <ul

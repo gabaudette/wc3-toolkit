@@ -1,5 +1,7 @@
 // Small UI helpers shared by components.
 
+import type { Field, UnitDetail } from "./types";
+
 /** Joins class names, skipping falsy entries (instead of ternaries in JSX). */
 export function classes(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(" ");
@@ -78,3 +80,20 @@ export function fileSize(bytes: number): string {
 export const GAME_DIR_KEY = "wc3-object-editor.gameDir";
 export const MAP_PATH_KEY = "wc3-object-editor.mapPath";
 export const HD_KEY = "wc3-object-editor.hd";
+
+/** The page with one field replaced by its new state after an edit. */
+export function replaceField(detail: UnitDetail, updated: Field): UnitDetail {
+  return {
+    ...detail,
+    sections: detail.sections.map((section) => ({
+      ...section,
+      fields: section.fields.map((f) => {
+        if (f.id === updated.id) {
+          return updated;
+        }
+
+        return f;
+      }),
+    })),
+  };
+}

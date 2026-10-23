@@ -28,6 +28,12 @@ const TABLES: &[(&str, &str)] = &[
 ];
 
 const PROFILE_SOURCE: &str = "Profile";
+/// Items: values, then functions (art, requirements), skins and text.
+const ITEM_SOURCE: &str = "ItemData";
+const ITEM_TABLE: &str = "units\\itemdata.slk";
+const ITEM_FUNC: &str = "units\\itemfunc.txt";
+const ITEM_SKIN: &str = "units\\itemskin.txt";
+const ITEM_STRINGS: &[&str] = &["units\\itemstrings.txt", "units\\itemskinstrings.txt"];
 const RACES: &[&str] = &["campaign", "human", "neutral", "nightelf", "orc", "undead"];
 
 /// Text files that only name other objects (abilities, items, upgrades), used
@@ -88,6 +94,8 @@ impl EnumValue {
 }
 
 pub struct UnitDatabase {
+    /// Loaded with [`UnitDatabase::load_items`]: every object is an item.
+    items: bool,
     fields: Vec<FieldMeta>,
     tables: HashMap<String, Slk>,
     profile: Profile,
@@ -124,6 +132,7 @@ impl UnitDatabase {
         let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
 
         Ok(Self {
+            items: false,
             fields,
             tables,
             profile: load_unit_profile(files)?,
@@ -141,7 +150,8 @@ impl UnitDatabase {
     }
 
     pub fn contains(&self, id: &str) -> bool {
-        self.tables.get("unitdata").is_some_and(|t| t.has_row(id))
+        let main = if self.items { "itemdata" } else { "unitdata" };
+        self.tables.get(main).is_some_and(|t| t.has_row(id))
     }
 
     /// All unit, hero and building fields.
@@ -162,8 +172,52 @@ impl UnitDatabase {
         })
     }
 
+    /// Items: the same metadata as units (its `useItem` fields), with values
+    /// from `ItemData` and the item profiles. Choices, editor strings and
+    /// names are shared with units.
+    pub fn load_items(files: &GameFiles) -> Result<Self> {
+        let metadata = load_slk(files.read_base(METADATA)?, METADATA)?;
+        let fields: Vec<FieldMeta> = parse_metadata(&metadata)
+            .map_err(|e| e.in_file(METADATA))?
+            .into_iter()
+            .filter(|f| f.use_item)
+            .collect();
+
+        let table = load_slk(files.read_balanced(ITEM_TABLE)?, ITEM_TABLE)?;
+        let ids = table.keys().map(str::to_owned).collect();
+        let mut tables = HashMap::new();
+        tables.insert(ITEM_SOURCE.to_ascii_lowercase(), table);
+
+        let editor_strings = load_profile(files, EDITOR_STRINGS, GameFiles::read_localized)?;
+        let editor_data = load_profile(files, &[EDITOR_DATA], GameFiles::read_base)?;
+        let enums = parse_enums(&editor_data, &editor_strings);
+        let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
+
+        let mut profile = load_profile(files, &[ITEM_FUNC], GameFiles::read_balanced)?;
+        profile.merge_text(&decode_text(files.read_base(ITEM_SKIN)?, ITEM_SKIN)?);
+        for path in ITEM_STRINGS {
+            profile.merge_text(&decode_text(files.read_localized(path)?, path)?);
+        }
+
+        Ok(Self {
+            items: true,
+            fields,
+            tables,
+            profile,
+            names: load_name_profile(files)?,
+            editor_strings,
+            enums,
+            commands,
+            ids,
+        })
+    }
+
     /// Buildings are flagged in `UnitBalance`; hero IDs start with an uppercase letter.
     pub fn kind(&self, id: &str) -> ObjectKind {
+        if self.items {
+            return ObjectKind::Item;
+        }
+
         let is_building = self
             .tables
             .get("unitbalance")

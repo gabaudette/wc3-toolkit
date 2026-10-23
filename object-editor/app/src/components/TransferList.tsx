@@ -18,6 +18,8 @@ const KIND_LABELS: Record<TransferKind, string> = {
   unit: "Unit",
   ability: "Ability",
   buff: "Buff",
+  item: "Item",
+  upgrade: "Upgrade",
 };
 
 /**
