@@ -41,3 +41,7 @@ Reopen the saved map in the World Editor and test it in Warcraft III. The Footma
 ## What the editor saves
 
 Tinkerbench writes object changes and the map’s string table. It does not become your terrain or trigger editor. Avoid keeping the same map open in two editors: a later save can overwrite the other tool’s work.
+
+If [saving fails](../troubleshooting/#saving-the-map-fails) or
+[the result differs in game](../troubleshooting/#my-changes-disappear-or-do-not-show-in-game),
+follow the troubleshooting checks before repeating the edit.

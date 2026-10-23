@@ -4,6 +4,26 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Troubleshooting hub (PR #33, AGE-24)
+
+- Added a symptom index and recovery steps for game detection/loading, read-only browsing,
+  missing objects or fields, map opening/saving, changes not appearing in game, artwork and
+  import previews. Linked the hub from Start here, the homepage and the relevant guides.
+- Checked advice against setup, platform detection, field commit behavior, save-file handling,
+  model/icon loaders and transfer previews. The install validator requires both Data and
+  .build.info even though its error mentions only Data; installation and tour text now name
+  both. Explained directory write access, unsaved edit preservation, renderer versus missing
+  artwork states, object-only share codes and destination-file conflicts without promising
+  that a successful preview establishes game behavior.
+- Added a report template and links to the contribution guide, plus maintenance notes for
+  future UI/error changes. No editor behavior or spell-creation workflow changed.
+- Validation: 89 tests pass; Biome and Astro report no diagnostics; build and local link/asset
+  checks pass across 6,605 pages. A separate audit checks 200 internal fragment links across
+  the hub and related guides. Browser checks cover sidebar navigation, symptom jumps,
+  a Pagefind search for WebGL, and desktop/mobile layouts without page overflow or errors.
+  Recovery advice was reviewed against the implementation; game failure scenarios were not
+  exercised as part of this documentation change.
+
 ## 2026-10-23 · Documentation copyright footer (PR #32)
 
 - Added a Starlight Footer override with a centered, muted Tinkerbench copyright notice,

@@ -30,6 +30,9 @@ Tooltips use Warcraft color codes (`|cAARRGGBB` and `|r`) and placeholders such 
 
 The model viewer and icons read imported map assets first, then the installation. A missing preview can mean the referenced file is absent from the installation or imports.
 
+For **No model**, missing textures, blank icons or renderer errors, use the
+[artwork troubleshooting checks](../troubleshooting/#a-model-or-icon-is-missing).
+
 ## Other tabs
 
 Items, upgrades, buffs, destructables and doodads have their own tabs. Items use plain fields; upgrades expose base/step effects and per-level text. Their reference pages explain the differences. Doodad tint fields are edited per model variation; other doodad fields are shared. The current writer assumes variation levels start at 1 with data column 0; that convention still needs confirmation against a World Editor save.

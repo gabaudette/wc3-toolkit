@@ -22,7 +22,7 @@ The Windows installer is unsigned. Windows may show **Windows protected your PC*
 
 1. Start Tinkerbench.
 2. Under **Warcraft III folder**, choose **Browse…**.
-3. Select the installation directory containing `Data/`. A Maps folder is not a game installation.
+3. Select the installation directory containing `Data/` and `.build.info`. A Maps folder is not a game installation.
 4. Choose whether to use **HD (Reforged) art values and icons**, then select **Load game data**.
 5. Wait for the unit count to confirm the game data loaded and the **2. Map** section to appear.
 6. Choose **Open a map…** to open a copy of a `.w3m` or `.w3x` map, or **Browse game data only**
@@ -55,6 +55,9 @@ The workspace pins its Rust version in `object-editor/rust-toolchain.toml`.
 
 ## If the game will not load
 
-Check that the selected folder contains `Data/`, that the installation is complete, and that your user can read it. Copy the editor’s error message when [reporting a problem](https://github.com/gabaudette/wc3-toolkit/issues).
+Start with [game-folder detection](../troubleshooting/#the-game-folder-is-not-detected) or
+[game-data loading checks](../troubleshooting/#the-game-data-will-not-load). The troubleshooting
+hub explains the required `Data/` and `.build.info` markers and what to include if loading
+still fails.
 
 Continue with [your first map](../first-map/).
