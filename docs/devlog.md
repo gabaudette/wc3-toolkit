@@ -4,6 +4,23 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Application screenshots and visual tour
+
+- Captured the running Tauri application at 1440 × 900 using xdotool and ImageMagick’s
+  window capture: the Paladin editor, command search, filtered field inspector and Holy Light
+  level table. The captures browse the existing test map without editing or saving it.
+- Added a visual tour to the Start here navigation, with descriptions of the editor’s three
+  columns, search, field overrides, level-table keys, saving and sharing. Linked full-size
+  screenshots have descriptive alt text, fixed dimensions and lazy loading below the first
+  image. Relative asset links work with the site’s optional base path.
+- Reused the unit-editor capture in a homepage showcase and the root README. Images live
+  under `website/public/screenshots/` so both entry points use the same source, with capture
+  and refresh notes in the website README.
+- Validation: 54 documentation tests pass; Biome and Astro report no diagnostics; the
+  production build and local link/asset checks pass for 6,578 pages. Browser checks cover
+  the homepage-to-tour link, all four images, full-size image navigation, desktop dark/light
+  themes and a 390 px mobile viewport without page overflow or browser errors.
+
 ## 2026-10-23 · Documentation website (PR #27, AGE-20)
 
 - Astro Starlight site in `website/`, with the Workshop direction selected from four design

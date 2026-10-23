@@ -8,9 +8,30 @@ Make a unit, change a spell, understand a field. This is the working handbook fo
 
 Tinkerbench is in early development. Use a copy of your map while trying the editor.
 
+## Meet Tinkerbench
+
+Browse your map’s objects, edit their fields, and see what each value means without leaving
+the workbench.
+
+<figure class="app-screenshot">
+  <a href="./screenshots/unit-editor.png">
+    <img src="./screenshots/unit-editor.png" alt="Tinkerbench with the Paladin selected: searchable objects on the left, grouped fields in the center, and a 3D model and field explanation on the right." width="1440" height="900" fetchpriority="high" />
+  </a>
+  <figcaption>The unit editor, running with a real Warcraft III installation. Select the screenshot to see it at full size.</figcaption>
+</figure>
+
+- **Find an object quickly.** Search by name or raw code, or use **Ctrl K** across object types.
+- **Understand your changes.** Read field explanations beside the values, compare with the base,
+  and preview models and tooltips.
+- **Balance spells by level.** Edit mana cost, cooldown and other values in a table with a column
+  for each level.
+
+[Take the visual tour](./editor/visual-tour/) · [Install Tinkerbench](./editor/install/) · [Download a release](https://github.com/gabaudette/wc3-toolkit/releases)
+
 ## Start at the workbench
 
 - [Install Tinkerbench](./editor/install/) and connect your Warcraft III installation.
+- [Take the visual tour](./editor/visual-tour/): find your way around the application with screenshots.
 - [Edit your first map](./editor/first-map/): change a unit, save, and test in game.
 - [Work with units and abilities](./editor/objects/): base values, levels and tooltips.
 - [Share your objects](./editor/sharing/) with share codes and bundle files.
