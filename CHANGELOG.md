@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Comparisons for Armor Type versus Defense Type, removing versus killing units, and
+  coordinates versus location handles, with decision tables, cleanup notes and linked examples.
 - A linked map-making glossary with 33 definitions, examples and reference links, including
   raw codes, custom objects, dependencies, handles, natives and Blizzard helpers.
 - Website search filters for guides, APIs and object fields, with result-type labels and

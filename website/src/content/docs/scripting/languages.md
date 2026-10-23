@@ -91,6 +91,9 @@ Omit arguments for a function that takes none. Use `nil` for an empty reference,
 
 Units, timers, groups, locations and triggers are engine handles. Clearing a variable does not destroy its engine object. Destroy temporary timers and groups and remove locations when they are no longer needed. Do not destroy shared handles that another system owns.
 
+For concrete decisions, compare [removing versus killing a unit](../../reference/common-confusions/#removing-versus-killing-a-unit)
+and [coordinates versus location handles](../../reference/common-confusions/#coordinates-versus-location-handles).
+
 <section data-example-language="jass">
 
 Clear local handle references with `null` when appropriate after releasing the owned resource. In the timer example, clearing the local reference does not stop the timer; the expiry callback destroys it.

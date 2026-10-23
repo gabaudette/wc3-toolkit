@@ -21,6 +21,8 @@ maps common goals to the right object tab, field labels and raw codes, with comp
 
 **Armor Type** (`uarm`) controls the hit sound. **Defense Type** (`udty`) controls the damage table. Use the [field reference](../../reference/fields/) when a label is ambiguous.
 
+For help choosing, [compare Armor Type, Defense Type and Defense Base](../../reference/common-confusions/#armor-type-versus-defense-type).
+
 ## Ability levels
 
 Abilities have shared fields and per-level fields. The level table edits values such as mana cost and cooldown independently for each level. Spell-specific data depends on the ability’s base code: the same data column can mean different things for different spells.
