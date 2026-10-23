@@ -12,6 +12,11 @@ single line. Every pull request adds an entry here and to the changelog.
   the existing test map without editing or saving it; startup uses a separate app instance.
   Editor captures use the full 1440 × 900 window; startup captures focus on the setup panel
   at 600 × 420 and 600 × 600 so the controls stay readable inside the documentation.
+- Sharing guide captures show the generated code, selected unit, object preview and bundle
+  export button, followed by an import preview demonstrating H000 → H001 collision handling.
+  The dialog captures focus on their controls at 680 × 540 and 680 × 420. The import was
+  previewed and canceled without applying it. Steps now explicitly generate the code before
+  reviewing its object list and use Preview before importing a code or bundle.
 - Added a visual tour to the Start here navigation, with descriptions of the editor’s three
   columns, game loading, map opening, search, field overrides, level-table keys, saving and
   sharing. Installation and first-map guides reuse the two startup captures and explicitly
@@ -23,7 +28,7 @@ single line. Every pull request adds an entry here and to the changelog.
   and refresh notes in the website README.
 - Validation: 54 documentation tests pass; Biome and Astro report no diagnostics; the
   production build and local link/asset checks pass for 6,578 pages. Browser checks cover
-  the homepage-to-tour link, all six images, full-size image navigation, desktop dark/light
+  the homepage-to-tour link, all eight images, full-size image navigation, desktop dark/light
   themes and a 390 px mobile viewport without page overflow or browser errors.
 
 ## 2026-10-23 · Documentation website (PR #27, AGE-20)
