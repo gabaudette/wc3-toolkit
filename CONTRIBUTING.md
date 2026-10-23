@@ -8,13 +8,15 @@ to this repository; the rule IDs refer to those documents.
 
 Every change must pass these checks with zero errors and zero warnings.
 
-Formatting and linting run before each commit, through [lefthook](lefthook.yml): rustfmt and
-Clippy when Rust files are staged, Biome and the TypeScript check when frontend files are.
-`bun install` in `object-editor/app` sets up the hook. CI does not repeat these checks; it
-builds and runs the tests on Windows, and on Linux for every crate but the app (which needs
+Every check runs before each commit, through [lefthook](lefthook.yml): rustfmt, Clippy and
+`cargo test --workspace` when Rust files are staged; Biome, the TypeScript check, the frontend
+tests and the build when frontend files are. After a small change the whole hook takes a few
+seconds. `bun install` in `object-editor/app` sets it up. CI does not lint; it builds and runs
+the tests on a clean machine: on Windows, and on Linux for every crate but the app (which needs
 system libraries that take minutes to install there). Fix what the hook reports with
-`cargo fmt --all` and `bun run lint:fix`, and read the Clippy output for the rest. Skip the
-hook only for work in progress that you will fix before pushing (`git commit --no-verify`).
+`cargo fmt --all` and `bun run lint:fix`, and read the Clippy and test output for the rest.
+Skip the hook only for work in progress that you will fix before pushing
+(`git commit --no-verify`).
 
 Run the checks by hand from `object-editor/`:
 
