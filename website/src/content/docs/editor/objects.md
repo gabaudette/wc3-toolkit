@@ -6,7 +6,7 @@ description: "Understand base objects, custom IDs, changed fields, levels and to
 
 ## Game objects and custom objects
 
-A game object is identified by a four-character raw code, such as `hfoo` for Footman. A custom object has its own code and copies a base object. Changes are stored as field overrides; unchanged fields inherit their base values.
+A game object is identified by a four-character [raw code](../../reference/glossary/#raw-code), such as `hfoo` for Footman. A [custom object](../../reference/glossary/#custom-object) has its own code and copies a [base object](../../reference/glossary/#base-object). Changes are stored as [field overrides](../../reference/glossary/#field-override); unchanged fields inherit their base values.
 
 Open a map before editing. Without a map, the editor browses game data read-only. Use the create action in an object list to make a custom object from a selected base. Keep the assigned raw code when you refer to it in scripts.
 

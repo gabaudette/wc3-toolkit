@@ -6,12 +6,15 @@ description: "Understand game API calls, raw codes, callbacks and handles in you
 
 Choose your map’s script language in the World Editor. This guide follows the language selected in the top bar.
 
+New to the terminology? The [map-making glossary](../../reference/glossary/) explains
+parameters, callbacks, handles and the difference between an object ID and a runtime unit.
+
 The [API reference](../../reference/api/) is generated from the installed `common.j` and `blizzard.j` declarations. It documents function signatures and engine types; individual examples explain how to use selected functions.
 
 ## Read an API page
 
-- **Native** means an engine-provided function.
-- **Function** means a helper declared in Blizzard’s script library. Its body is not reproduced here.
+- **Native** means an [engine-provided function](../../reference/glossary/#native).
+- **Function** means a [helper declared in Blizzard’s script library](../../reference/glossary/#blizzard-helper). Its body is not reproduced here.
 - **Type** shows a game handle’s parent type.
 - **Constant** shows a named value and its engine type. Initializers are not included.
 

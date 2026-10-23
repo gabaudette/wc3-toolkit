@@ -18,7 +18,7 @@ These are implementation notes from the toolkit, not an official Blizzard format
 | `war3map.w3h` | Buffs and effects        | No             |
 | `war3map.w3q` | Upgrades                 | Yes            |
 
-An object file stores changes to original objects and definitions of custom objects. Each modification has a four-character field ID and a typed value. Custom objects identify the base they inherit from.
+An object file stores [field overrides](../../reference/glossary/#field-override) for original objects and definitions of [custom objects](../../reference/glossary/#custom-object). Each modification has a four-character [field ID](../../reference/glossary/#field) and a typed value. Custom objects identify the base they inherit from.
 
 ## Versions and levels
 

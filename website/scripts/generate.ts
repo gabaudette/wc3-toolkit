@@ -143,6 +143,7 @@ const apiIndex = [
   ),
   "Blizzard helpers can have their own behavior and overhead; inspect your local script when implementation details matter.",
   "[Read scripting basics](../../scripting/languages/). Generated call syntax uses parameter names as placeholders; it is not a runnable example by itself. Authored examples are labeled separately.",
+  "Need a definition? The [map-making glossary](../glossary/) explains raw codes, natives, Blizzard helpers and handle ownership.",
 ];
 
 const alphabeticalIndex: string[] = [

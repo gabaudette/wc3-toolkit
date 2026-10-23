@@ -4,7 +4,7 @@ title: "Share codes and bundles"
 description: "Move custom units and their dependencies between maps."
 ---
 
-Sharing starts from custom units. The transfer code follows their referenced custom units, abilities, buffs, items and upgrades so that a unit does not arrive with missing object definitions.
+Sharing starts from [custom units](../../reference/glossary/#custom-object). The transfer code follows their referenced custom units, abilities, buffs, items and upgrades so that a unit does not arrive with missing object definitions. These referenced objects are [dependencies](../../reference/glossary/#dependency).
 
 Select either screenshot to open it at full size.
 
