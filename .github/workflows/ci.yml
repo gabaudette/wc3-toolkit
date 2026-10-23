@@ -62,13 +62,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      # Cached .deb files: apt mirrors are sometimes very slow (17 minutes once).
+      # Not cached: restoring cached .deb files left out the -dev files the
+      # packages depend on (glib-2.0), so the Tauri crates could not build.
       - name: Install Tauri system libraries
         if: runner.os == 'Linux'
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: ${{ env.TAURI_LINUX_DEPS }}
-          version: 1
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends $TAURI_LINUX_DEPS
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
