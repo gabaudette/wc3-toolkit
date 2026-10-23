@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-23 · Search by content type (AGE-32)
+## 2026-10-23 · Search by content type (PR #36, AGE-32)
 
 - Added Pagefind Content filters and result-type metadata through the MarkdownContent
   override. Classification follows collection IDs; curated API pages and their practical
