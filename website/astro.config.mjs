@@ -3,7 +3,7 @@ import { defineConfig } from "astro/config";
 import jass from "./scripts/jass-language.mjs";
 
 export default defineConfig({
-  site: process.env.DOCS_SITE || "https://wc3-toolkit-docs.vercel.app",
+  site: process.env.DOCS_SITE || "https://tinkerbench-docs.vercel.app",
   base: process.env.DOCS_BASE || "/",
   integrations: [
     starlight({

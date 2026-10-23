@@ -80,7 +80,7 @@ produce production deployments and pull requests produce previews. Field guides 
 outside the website directory, so use the repository root as the Vercel project root.
 No adapter, game files, runtime backend or deployment token in GitHub Actions is needed.
 
-Default canonical URL: `https://wc3-toolkit-docs.vercel.app`. Set `DOCS_SITE` to change it.
+Default canonical URL: `https://tinkerbench-docs.vercel.app`. Set `DOCS_SITE` to change it.
 `DOCS_BASE` supports a subpath such as `/wc3-toolkit` for a static host like GitHub Pages;
 set it consistently for the build and `check:links`. The default is `/`.
 

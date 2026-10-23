@@ -8,7 +8,7 @@ under "What's new".
 
 ### Added
 
-- Documentation website: editor guides, JASS and Lua API declarations, and a searchable
+- [Documentation website](https://tinkerbench-docs.vercel.app): editor guides, JASS and Lua API declarations, and a searchable
   reference for object fields.
 - Buffs tab: browse, search, edit and create custom buffs and effects, with a chip per race.
 - Destructables tab: trees, gates, crates and rocks, with a chip per category and their model

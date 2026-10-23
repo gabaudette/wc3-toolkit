@@ -9,7 +9,8 @@ single line. Every pull request adds an entry here and to the changelog.
 - Astro Starlight site in `website/`, with the Workshop direction selected from four design
   studies: graphite, mint, DM Sans, and the existing gnome logo/favicon. Fourteen authored
   pages cover installation, the first map, objects, sharing, the Lua harness, common tasks,
-  JASS/Lua conventions and the map format notes.
+  JASS/Lua conventions and the map format notes. The public URL is
+  `https://tinkerbench-docs.vercel.app`, also used for canonical links and sitemaps.
 - A local CASC export example reads script and field inputs. Only structured declarations
   and field metadata are versioned; game script bodies and comments stay outside the repo.
   The initial extraction records source hashes and its local date without claiming a patch
