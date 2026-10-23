@@ -13,7 +13,7 @@ import {
   SearchField,
 } from "react-aria-components";
 import { api } from "../api";
-import type { AbilitySummary, Catalog, UnitItem } from "../types";
+import type { AbilitySummary, Catalog, LeveledCatalog, UnitItem } from "../types";
 import { GameText, plainGameText } from "./GameText";
 import { UnitIcon } from "./UnitIcon";
 
@@ -34,7 +34,8 @@ type CommandPaletteProps = {
   onOpenAbility: (id: string) => void;
   /** Items, buffs and destructables. */
   onOpenPlain: (catalog: Catalog, id: string) => void;
-  onOpenUpgrade: (id: string) => void;
+  /** Upgrades and doodads. */
+  onOpenLeveled: (catalog: LeveledCatalog, id: string) => void;
   onClose: () => void;
 };
 
@@ -56,6 +57,13 @@ const PLAIN_GROUPS: { catalog: Catalog; name: string }[] = [
 ];
 
 const NO_PLAIN: Record<Catalog, UnitItem[]> = { items: [], buffs: [], destructables: [] };
+
+const LEVELED_GROUPS: { catalog: LeveledCatalog; name: string }[] = [
+  { catalog: "upgrades", name: "Upgrades" },
+  { catalog: "doodads", name: "Doodads" },
+];
+
+const NO_LEVELED: Record<LeveledCatalog, UnitItem[]> = { upgrades: [], doodads: [] };
 
 /** Results shown per group; typing narrows them further. */
 const MAX_PER_GROUP = 8;
@@ -99,13 +107,13 @@ export function CommandPalette({
   onOpenUnit,
   onOpenAbility,
   onOpenPlain,
-  onOpenUpgrade,
+  onOpenLeveled,
   onClose,
 }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [abilities, setAbilities] = useState<AbilitySummary[]>([]);
   const [plain, setPlain] = useState<Record<Catalog, UnitItem[]>>(NO_PLAIN);
-  const [upgrades, setUpgrades] = useState<UnitItem[]>([]);
+  const [leveled, setLeveled] = useState<Record<LeveledCatalog, UnitItem[]>>(NO_LEVELED);
 
   useEffect(() => {
     if (!open) {
@@ -124,10 +132,12 @@ export function CommandPalette({
         .then((list) => setPlain((current) => ({ ...current, [catalog]: list })))
         .catch(() => setPlain((current) => ({ ...current, [catalog]: [] })));
     }
-    api
-      .listUpgrades()
-      .then(setUpgrades)
-      .catch(() => setUpgrades([]));
+    for (const { catalog } of LEVELED_GROUPS) {
+      api
+        .listLeveled(catalog)
+        .then((list) => setLeveled((current) => ({ ...current, [catalog]: list })))
+        .catch(() => setLeveled((current) => ({ ...current, [catalog]: [] })));
+    }
   }, [open]);
 
   const groups = useMemo<Group[]>(() => {
@@ -176,35 +186,38 @@ export function CommandPalette({
           run: done(() => onOpenPlain(catalog, o.id)),
         })),
     }));
-    const upgradeEntries = matching(upgrades, query, (u) => `${plainGameText(u.name)} ${u.id}`)
-      .filter(() => searched)
-      .slice(0, MAX_PER_GROUP)
-      .map((u) => ({
-        id: `upgrade:${u.id}`,
-        label: u.name,
-        detail: u.id,
-        icon: u.icon,
-        run: done(() => onOpenUpgrade(u.id)),
-      }));
+    const leveledGroups = LEVELED_GROUPS.map(({ catalog, name }) => ({
+      name,
+      entries: matching(leveled[catalog], query, (o) => `${plainGameText(o.name)} ${o.id}`)
+        .filter(() => searched)
+        .slice(0, MAX_PER_GROUP)
+        .map((o) => ({
+          id: `${catalog}:${o.id}`,
+          label: o.name,
+          detail: o.id,
+          icon: o.icon,
+          run: done(() => onOpenLeveled(catalog, o.id)),
+        })),
+    }));
 
     return [
       { name: "Commands", entries: commandEntries },
       { name: "Units", entries: unitEntries },
       { name: "Abilities", entries: abilityEntries },
       ...plainGroups,
-      { name: "Upgrades", entries: upgradeEntries },
+      ...leveledGroups,
     ].filter((g) => g.entries.length > 0);
   }, [
     commands,
     units,
     abilities,
     plain,
-    upgrades,
+    leveled,
     query,
     onOpenUnit,
     onOpenAbility,
     onOpenPlain,
-    onOpenUpgrade,
+    onOpenLeveled,
     onClose,
   ]);
 

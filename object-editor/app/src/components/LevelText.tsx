@@ -11,6 +11,8 @@ type LevelTextProps = {
   editable: boolean;
   onChange: (level: number, value: string) => void;
   onReset: (level: number) => void;
+  /** What a level is called: "Level", or "Variation" for doodads. */
+  levelName?: string;
   /** Shows the field in the page's inspector, when the page has one. */
   onInspect?: (field: Field) => void;
 };
@@ -26,12 +28,21 @@ type LevelInputProps = {
   field: LevelField;
   cell: LevelCell;
   level: number;
+  levelName: string;
   editable: boolean;
   onChange: (value: string) => void;
   onReset: () => void;
 };
 
-function LevelInput({ field, cell, level, editable, onChange, onReset }: LevelInputProps) {
+function LevelInput({
+  field,
+  cell,
+  level,
+  levelName,
+  editable,
+  onChange,
+  onReset,
+}: LevelInputProps) {
   const [draft, setDraft] = useState(cell.raw);
   const multiline = field.field.control === "longText";
 
@@ -53,7 +64,7 @@ function LevelInput({ field, cell, level, editable, onChange, onReset }: LevelIn
           !cell.modified && "text-faint",
         )}
       >
-        Level {level}
+        {levelName} {level}
       </span>
       <div>
         <ColoredTextInput
@@ -88,7 +99,14 @@ function LevelInput({ field, cell, level, editable, onChange, onReset }: LevelIn
 }
 
 /** A text field with one value per level (tooltips), each level under the field's name. */
-export function LevelText({ field, editable, onChange, onReset, onInspect }: LevelTextProps) {
+export function LevelText({
+  field,
+  editable,
+  onChange,
+  onReset,
+  levelName = "Level",
+  onInspect,
+}: LevelTextProps) {
   const [showInfo, setShowInfo] = useState(false);
   const meta = field.field;
   const changed = field.cells.some((c) => c.modified);
@@ -136,6 +154,7 @@ export function LevelText({ field, editable, onChange, onReset, onInspect }: Lev
             field={field}
             cell={cell}
             level={level}
+            levelName={levelName}
             editable={editable}
             onChange={(value) => onChange(level, value)}
             onReset={() => onReset(level)}

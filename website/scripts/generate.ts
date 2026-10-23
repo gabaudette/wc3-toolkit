@@ -35,7 +35,7 @@ const fields = Bun.TOML.parse(await Bun.file(new URL("data/fields.toml", root)).
 const examples: Record<string, Example> = await Bun.file(
   new URL("data/examples.json", root),
 ).json();
-const catalogs = ["unit", "ability", "item", "upgrade", "buff", "destructable"];
+const catalogs = ["unit", "ability", "item", "upgrade", "buff", "destructable", "doodad"];
 const markdown = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\|/g, "\\|");
 const code = (value: string) => `\`${value.replace(/`/g, "")}\``;
@@ -175,7 +175,7 @@ await page(
 
 let fieldCount = 0;
 const fieldIndex = [
-  "Every field in the six project-authored field guides gets its own searchable page. Metadata adds names, types, ranges and choices from the local installation snapshot. Spell-specific ability data fields are also listed, with a clear note where no authored explanation exists.",
+  "Every field in the seven project-authored field guides gets its own searchable page. Metadata adds names, types, ranges and choices from the local installation snapshot. Spell-specific ability data fields are also listed, with a clear note where no authored explanation exists.",
   `**Metadata snapshot:** ${markdown(api.version)}. Guide descriptions are read directly from the editor's TOML files on every build.`,
   "Search by raw code (for example `uarm`) or display name. Start with [Armor Type](./unit/uarm/) versus [Defense Type](./unit/udty/): one changes the hit sound, the other changes combat damage.",
 ];

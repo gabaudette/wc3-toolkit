@@ -5,7 +5,9 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 use wc3_data::abilities::AbilityDatabase;
+use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{GameFiles, GameOptions};
+use wc3_data::leveled::LeveledData;
 use wc3_data::meta::FieldMeta;
 use wc3_data::units::UnitDatabase;
 use wc3_data::upgrades::UpgradeDatabase;
@@ -70,6 +72,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let destructables = UnitDatabase::load_destructables(&files)?;
     let abilities = AbilityDatabase::load(&files)?;
     let upgrades = UpgradeDatabase::load(&files)?;
+    let doodads = DoodadDatabase::load(&files)?;
     let mut catalogs = BTreeMap::new();
 
     for (kind, database) in [
@@ -100,6 +103,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .fields()
             .iter()
             .map(|meta| describe(meta, upgrades.field_name(meta), &units))
+            .collect(),
+    );
+
+    catalogs.insert(
+        "doodad",
+        doodads
+            .fields()
+            .iter()
+            .map(|meta| describe(meta, doodads.field_name(meta), &units))
             .collect(),
     );
 

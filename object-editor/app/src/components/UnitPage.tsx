@@ -1,6 +1,7 @@
 import { Copy01 } from "@untitledui/icons";
 import { useMemo, useState } from "react";
 import type { Field, HotkeyClash, Section, UnitDetail } from "../types";
+import { variationModel } from "../ui";
 import { Button } from "./Button";
 import { GameText } from "./GameText";
 import { Inspector } from "./Inspector";
@@ -21,25 +22,16 @@ type UnitPageProps = {
 const MODEL_FIELD: Record<string, string> = { unit: "umdl", item: "ifil", destructable: "bfil" };
 
 const VARIATIONS_FIELD = "bvar";
-const MODEL_EXTENSION = /\.md[lx]$/i;
 
-/**
- * The model the preview loads. Destructables name their model without the
- * extension and number its variations (`AshenTree` → `AshenTree0.mdl`).
- */
+/** The model the preview loads; destructables number their variations. */
 function modelFile(noun: string, fields: Field[]): string | null {
   const raw = fields.find((f) => f.id === MODEL_FIELD[noun])?.raw;
-  if (!raw || noun !== "destructable" || MODEL_EXTENSION.test(raw)) {
+  if (!raw || noun !== "destructable") {
     return raw || null;
   }
 
   const variations = Number(fields.find((f) => f.id === VARIATIONS_FIELD)?.raw ?? "1");
-  let file = raw;
-  if (variations > 1) {
-    file = `${file}0`;
-  }
-
-  return `${file}.mdl`;
+  return variationModel(raw, variations);
 }
 
 /** Kinds that name themselves; heroes, units and buildings are all "unit". */

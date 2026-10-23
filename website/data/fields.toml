@@ -11558,7 +11558,7 @@ per_level = false
 cosmetic = false
 applies_to = []
 excludes = []
-choices = []
+choices = ["D: Trees/Destructibles", "P: Pathing Blockers", "B: Bridges/Ramps"]
 
 [[destructable]]
 id = "btil"
@@ -12160,6 +12160,473 @@ min = "0"
 max = "1"
 per_level = false
 cosmetic = true
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dnam"
+name = "Name"
+value_type = "string"
+max = "TTName"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dcat"
+name = "Category"
+value_type = "doodadCategory"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = ["O: Props", "S: Structures", "W: Water", "C: Cliff/Terrain", "E: Environment", "Z: Cinematic"]
+
+[[doodad]]
+id = "dtil"
+name = "Tilesets"
+value_type = "tilesetList"
+max = "TTDesc"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dtsp"
+name = "Has Tileset Specific Data"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dfil"
+name = "Model File"
+value_type = "model"
+max = "TTDesc"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dsnd"
+name = "Looping Sound"
+value_type = "soundLabel"
+max = "TTDesc"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dsel"
+name = "Selection Size"
+value_type = "unreal"
+min = "0"
+max = "99999"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "ddes"
+name = "Default Scale"
+value_type = "unreal"
+min = "0.01"
+max = "100"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dmis"
+name = "Minimum Scale"
+value_type = "unreal"
+min = "0.01"
+max = "100"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dmas"
+name = "Maximum Scale"
+value_type = "unreal"
+min = "0.01"
+max = "100"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dcpr"
+name = "Can Place Random Scale"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "duch"
+name = "Use Click Helper"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dimc"
+name = "Ignore Model Clicks"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dmap"
+name = "Maximum Pitch Angle (degrees)"
+value_type = "unreal"
+min = "0"
+max = "99999"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dmar"
+name = "Max Roll Angle (degrees)"
+value_type = "unreal"
+min = "0"
+max = "99999"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dvis"
+name = "Visibility Radius"
+value_type = "unreal"
+min = "0"
+max = "99999"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dwlk"
+name = "Walkable"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dvar"
+name = "Variations"
+value_type = "int"
+min = "1"
+max = "10"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "donc"
+name = "Placeable on Cliffs"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "donw"
+name = "Placeable on Water"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dflt"
+name = "Floats"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dshd"
+name = "Has a Shadow (SD)"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dsh2"
+name = "Has a Shadow (HD)"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dshf"
+name = "Show in Fog of War"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "danf"
+name = "Animate in Fog of War"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dfxr"
+name = "Fixed Rotation"
+value_type = "unreal"
+min = "-1"
+max = "360"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dptx"
+name = "Pathing Texture"
+value_type = "pathingTexture"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dsmm"
+name = "Minimap - Show"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dumc"
+name = "Minimap - Use Custom Color"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dmmr"
+name = "Minimap Color 1 (Red)"
+value_type = "int"
+min = "0"
+max = "255"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dmmg"
+name = "Minimap Color 2 (Green)"
+value_type = "int"
+min = "0"
+max = "255"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dmmb"
+name = "Minimap Color 3 (Blue)"
+value_type = "int"
+min = "0"
+max = "255"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dvr1"
+name = "Tinting Color 1 (Red)"
+value_type = "int"
+min = "0"
+max = "255"
+per_level = true
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dvg1"
+name = "Tinting Color 2 (Green)"
+value_type = "int"
+min = "0"
+max = "255"
+per_level = true
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dvb1"
+name = "Tinting Color 3 (Blue)"
+value_type = "int"
+min = "0"
+max = "255"
+per_level = true
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dusr"
+name = "On User-Specified List"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "doct"
+name = "Occlusion Type (HD)"
+value_type = "occlusionType2"
+max = "TTDesc"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = ["Auto: Auto", "Occluder: Occluder", "No occlusion: No occlusion"]
+
+[[doodad]]
+id = "ddec"
+name = "Is a Decal (HD)"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "decs"
+name = "Decal Sort Priority (HD)"
+value_type = "int"
+min = "-2147483647"
+max = "2147483647"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dtco"
+name = "Team Color"
+value_type = "teamColor"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = ["-1: Match Owning Player", "0: Player 1 (Red)", "1: Player 2 (Blue)", "2: Player 3 (Teal)", "3: Player 4 (Purple)", "4: Player 5 (Yellow)", "5: Player 6 (Orange)", "6: Player 7 (Green)", "7: Player 8 (Pink)", "8: Player 9 (Gray)", "9: Player 10 (Light Blue)", "10: Player 11 (Dark Green)", "11: Player 12 (Brown)", "12: Player 13 (Maroon)", "13: Player 14 (Navy)", "14: Player 15 (Turquoise)", "15: Player 16 (Violet)", "16: Player 17 (Wheat)", "17: Player 18 (Peach)", "18: Player 19 (Mint)", "19: Player 20 (Lavender)", "20: Player 21 (Coal)", "21: Player 22 (Snow)", "22: Player 23 (Emerald)", "23: Player 24 (Peanut)", "24: Neutral Hostile"]
+
+[[doodad]]
+id = "dtcc"
+name = "Allow Custom Team Color"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dwat"
+name = "Is Water (HD)"
+value_type = "bool"
+per_level = false
+cosmetic = false
+applies_to = []
+excludes = []
+choices = []
+
+[[doodad]]
+id = "dcuw"
+name = "Cull Underwater (HD)"
+value_type = "bool"
+per_level = false
+cosmetic = false
 applies_to = []
 excludes = []
 choices = []

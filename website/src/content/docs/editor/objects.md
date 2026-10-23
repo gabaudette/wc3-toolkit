@@ -32,4 +32,4 @@ The model viewer and icons read imported map assets first, then the installation
 
 ## Other tabs
 
-Items, upgrades, buffs and destructables have their own tabs. Items use plain fields; upgrades expose base/step effects and per-level text. Their reference pages explain the differences. The toolkit can read doodad object files, but a doodad editing tab is not currently implemented.
+Items, upgrades, buffs, destructables and doodads have their own tabs. Items use plain fields; upgrades expose base/step effects and per-level text. Their reference pages explain the differences. Doodad tint fields are edited per model variation; other doodad fields are shared. The current writer assumes variation levels start at 1 with data column 0; that convention still needs confirmation against a World Editor save.

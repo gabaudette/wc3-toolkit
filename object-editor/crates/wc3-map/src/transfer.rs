@@ -28,9 +28,9 @@ use wc3_data::strings::{MapStrings, reference_id};
 
 use crate::abilities::MapAbilities;
 use crate::imports::{ImportedFile, files_used};
+use crate::leveled::LeveledObjects;
 use crate::plain::PlainObjects;
 use crate::units::MapUnits;
-use crate::upgrades::MapUpgrades;
 use crate::{
     ABILITIES_FILE, ABILITY_SKINS_FILE, BUFF_SKINS_FILE, BUFFS_FILE, Error, ITEM_SKINS_FILE,
     ITEMS_FILE, Result, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, UPGRADE_SKINS_FILE,
@@ -183,7 +183,7 @@ pub struct MapObjects<'a> {
     pub units: &'a MapUnits,
     pub abilities: &'a MapAbilities,
     pub items: &'a PlainObjects,
-    pub upgrades: &'a MapUpgrades,
+    pub upgrades: &'a LeveledObjects,
     pub buffs: &'a PlainObjects,
 }
 
@@ -207,7 +207,7 @@ pub struct MapObjectsMut<'a> {
     pub units: &'a mut MapUnits,
     pub abilities: &'a mut MapAbilities,
     pub items: &'a mut PlainObjects,
-    pub upgrades: &'a mut MapUpgrades,
+    pub upgrades: &'a mut LeveledObjects,
     pub buffs: &'a mut PlainObjects,
 }
 
@@ -928,7 +928,7 @@ mod tests {
         units: MapUnits,
         abilities: MapAbilities,
         items: PlainObjects,
-        upgrades: MapUpgrades,
+        upgrades: LeveledObjects,
         buffs: PlainObjects,
     }
 
@@ -964,10 +964,13 @@ mod tests {
                         skin: ObjectData::empty(Layout::Plain),
                     },
                 ),
-                upgrades: MapUpgrades::from_tables(Tables {
-                    data: table(Layout::Leveled, upgrades),
-                    skin: ObjectData::empty(Layout::Leveled),
-                }),
+                upgrades: LeveledObjects::from_tables(
+                    crate::leveled::UPGRADES,
+                    Tables {
+                        data: table(Layout::Leveled, upgrades),
+                        skin: ObjectData::empty(Layout::Leveled),
+                    },
+                ),
                 buffs: PlainObjects::from_tables(
                     plain::BUFFS,
                     Tables {

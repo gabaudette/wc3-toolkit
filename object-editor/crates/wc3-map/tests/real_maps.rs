@@ -6,22 +6,25 @@
 use std::path::{Path, PathBuf};
 
 use wc3_data::abilities::AbilityDatabase;
+use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::icon::decode_texture;
+use wc3_data::leveled::LeveledData;
 use wc3_data::meta::FieldMeta;
 use wc3_data::model::preview_copy;
 use wc3_data::units::UnitDatabase;
 use wc3_data::upgrades::UpgradeDatabase;
 use wc3_map::abilities::{MapAbilities, MapPlaceholders};
 use wc3_map::imports::MapImports;
+use wc3_map::leveled::{DOODADS, LeveledObjects, UPGRADES};
 use wc3_map::plain::{BUFFS, DESTRUCTABLES, ITEMS, PlainKind, PlainObjects};
 use wc3_map::transfer::{self, Bundle, MapObjects, MapObjectsMut, ObjectType, References};
 use wc3_map::units::MapUnits;
-use wc3_map::upgrades::MapUpgrades;
 use wc3_map::{
     ABILITIES_FILE, ABILITY_SKINS_FILE, BUFF_SKINS_FILE, BUFFS_FILE, DESTRUCTABLE_SKINS_FILE,
-    DESTRUCTABLES_FILE, FourCC, ITEM_SKINS_FILE, ITEMS_FILE, Layout, Map, OBJECT_FILES, ObjectData,
-    STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, UPGRADE_SKINS_FILE, UPGRADES_FILE, save_files,
+    DESTRUCTABLES_FILE, DOODADS_FILE, FourCC, ITEM_SKINS_FILE, ITEMS_FILE, Layout, Map,
+    OBJECT_FILES, ObjectData, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, UPGRADE_SKINS_FILE,
+    UPGRADES_FILE, save_files,
 };
 
 type TestResult = Result<(), Box<dyn std::error::Error>>;
@@ -461,7 +464,7 @@ fn custom_units_move_between_maps() -> TestResult {
         let units = MapUnits::load(&map)?;
         let abilities = MapAbilities::load(&map)?;
         let items = PlainObjects::load(&map, ITEMS)?;
-        let upgrades = MapUpgrades::load(&map)?;
+        let upgrades = LeveledObjects::load(&map, UPGRADES)?;
         let buffs = PlainObjects::load(&map, BUFFS)?;
         let custom: Vec<FourCC> = units
             .units()
@@ -504,7 +507,7 @@ fn custom_units_move_between_maps() -> TestResult {
         let mut target_units = MapUnits::load(&map)?;
         let mut target_abilities = MapAbilities::load(&map)?;
         let mut target_items = PlainObjects::load(&map, ITEMS)?;
-        let mut target_upgrades = MapUpgrades::load(&map)?;
+        let mut target_upgrades = LeveledObjects::load(&map, UPGRADES)?;
         let mut target_buffs = PlainObjects::load(&map, BUFFS)?;
         let target = MapObjects {
             units: &target_units,
@@ -563,12 +566,12 @@ fn custom_units_move_between_maps() -> TestResult {
         let reread = MapUnits::load(&saved)?;
         let reread_abilities = MapAbilities::load(&saved)?;
         let reread_items = PlainObjects::load(&saved, ITEMS)?;
-        let reread_upgrades = MapUpgrades::load(&saved)?;
+        let reread_upgrades = LeveledObjects::load(&saved, UPGRADES)?;
         PlainObjects::load(&saved, BUFFS)?;
         for planned in plan.iter().filter(|p| p.ty == ObjectType::Upgrade) {
             assert!(
                 reread_upgrades
-                    .upgrades()
+                    .objects()
                     .iter()
                     .any(|u| u.id == planned.new_id && u.is_custom),
                 "{}: upgrade {} is missing after saving",
@@ -671,7 +674,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
     let map = Map::open(&source_path)?;
     let (mut units, mut items) = (MapUnits::load(&map)?, PlainObjects::load(&map, ITEMS)?);
     let source_abilities = MapAbilities::load(&map)?;
-    let mut upgrades = MapUpgrades::load(&map)?;
+    let mut upgrades = LeveledObjects::load(&map, UPGRADES)?;
     let buffs = PlainObjects::load(&map, BUFFS)?;
     let swords = FourCC::parse("Rhme").ok_or("bad id")?;
     let upgrade = upgrades.create(&upgrades_db, swords)?;
@@ -714,7 +717,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
     let mut target_units = MapUnits::load(&map)?;
     let mut target_abilities = MapAbilities::load(&map)?;
     let mut target_items = PlainObjects::load(&map, ITEMS)?;
-    let mut target_upgrades = MapUpgrades::load(&map)?;
+    let mut target_upgrades = LeveledObjects::load(&map, UPGRADES)?;
     let mut target_buffs = PlainObjects::load(&map, BUFFS)?;
     drop(map);
     target_items.create(&items_db, FourCC::parse("phea").ok_or("bad id")?)?;
@@ -773,7 +776,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
     let saved = Map::open(&target_path)?;
     let (reread_units, reread_items) =
         (MapUnits::load(&saved)?, PlainObjects::load(&saved, ITEMS)?);
-    let reread_upgrades = MapUpgrades::load(&saved)?;
+    let reread_upgrades = LeveledObjects::load(&saved, UPGRADES)?;
     let strings = saved.strings()?;
     assert_eq!(
         reread_units
@@ -811,6 +814,52 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
     Ok(())
 }
 
+/// A doodad's per-variation tint saves at its variation (the first being 1)
+/// and reads back; plain fields save at level 0.
+#[test]
+#[ignore = "needs WC3_GAME_DIR"]
+fn edited_doodads_save_and_read_back() -> TestResult {
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let db = DoodadDatabase::load(&files)?;
+    let dir = tempfile::tempdir()?;
+    let path = dir.path().join("map.w3m");
+    mpq::Archive::create(&path, MAX_FILES)?.save()?;
+
+    let map = Map::open(&path)?;
+    let mut units = MapUnits::load(&map)?;
+    let mut doodads = LeveledObjects::load(&map, DOODADS)?;
+    drop(map);
+    let mushrooms = FourCC::parse("APms").ok_or("bad id")?;
+    let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
+    let (red, scale) = (field("dvr1")?, field("ddes")?);
+
+    let custom = doodads.create(&db, mushrooms)?;
+    doodads.set(&db, units.strings_mut(), custom, red, 2, "100")?;
+    doodads.set(&db, units.strings_mut(), custom, scale, 0, "1.5")?;
+    let mut written = units.files();
+    written.extend(doodads.files());
+    save_files(&path, &path, &written)?;
+
+    let map = Map::open(&path)?;
+    let reloaded = LeveledObjects::load(&map, DOODADS)?;
+    let strings = map.strings()?;
+    assert_eq!(custom.to_string(), "D000");
+    assert_eq!(reloaded.levels(&db, custom), 4);
+    let value = |field, level| reloaded.raw_value(&db, &strings, custom, field, level, ArtMode::Sd);
+    assert_eq!(value(red, 2).as_deref(), Some("100"));
+    assert_eq!(value(red, 1).as_deref(), Some("255"));
+    assert_eq!(value(scale, 0).as_deref(), Some("1.5"));
+    assert_eq!(
+        level_and_column(&map, DOODADS_FILE, custom, "dvr1")?,
+        [(2, 0)]
+    );
+    assert_eq!(
+        level_and_column(&map, DOODADS_FILE, custom, "ddes")?,
+        [(0, 0)]
+    );
+    Ok(())
+}
+
 /// An upgrade's per-level fields save at their level and read back; plain
 /// fields save at level 0.
 #[test]
@@ -824,7 +873,7 @@ fn edited_upgrades_save_and_read_back() -> TestResult {
 
     let map = Map::open(&path)?;
     let mut units = MapUnits::load(&map)?;
-    let mut upgrades = MapUpgrades::load(&map)?;
+    let mut upgrades = LeveledObjects::load(&map, UPGRADES)?;
     drop(map);
     let swords = FourCC::parse("Rhme").ok_or("bad id")?;
     let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
@@ -863,7 +912,7 @@ fn edited_upgrades_save_and_read_back() -> TestResult {
     save_files(&path, &path, &written)?;
 
     let map = Map::open(&path)?;
-    let reloaded = MapUpgrades::load(&map)?;
+    let reloaded = LeveledObjects::load(&map, UPGRADES)?;
     let strings = map.strings()?;
     assert_eq!(custom.to_string(), "R000");
     assert_eq!(reloaded.levels(&db, custom), 4);
@@ -928,7 +977,7 @@ fn imported_art_decodes() -> TestResult {
             units: &units,
             abilities: &MapAbilities::load(&map)?,
             items: &PlainObjects::load(&map, ITEMS)?,
-            upgrades: &MapUpgrades::load(&map)?,
+            upgrades: &LeveledObjects::load(&map, UPGRADES)?,
             buffs: &PlainObjects::load(&map, BUFFS)?,
         };
         let export = transfer::export(source, &refs, &custom, &|file| {

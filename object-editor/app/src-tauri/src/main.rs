@@ -9,11 +9,11 @@ mod abilities;
 mod commands;
 mod hotkeys;
 mod icons;
+mod leveled;
 mod plain;
 mod platform;
 mod state;
 mod transfer;
-mod upgrades;
 mod view;
 
 use std::process::ExitCode;
@@ -52,12 +52,12 @@ fn main() -> ExitCode {
             plain::set_plain_field,
             plain::reset_plain_field,
             plain::create_plain,
-            upgrades::list_upgrades,
-            upgrades::upgrade_detail,
-            upgrades::search_upgrades,
-            upgrades::set_upgrade_field,
-            upgrades::reset_upgrade_field,
-            upgrades::create_upgrade,
+            leveled::list_leveled,
+            leveled::leveled_detail,
+            leveled::search_leveled,
+            leveled::set_leveled_field,
+            leveled::reset_leveled_field,
+            leveled::create_leveled,
             transfer::share_code,
             transfer::save_bundle,
             transfer::map_custom_units,

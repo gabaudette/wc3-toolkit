@@ -11,6 +11,7 @@ import type {
   HotkeyClash,
   ImportPreview,
   ImportSource,
+  LeveledCatalog,
   MapSummary,
   SearchHit,
   SharePreview,
@@ -74,15 +75,23 @@ export const api = {
     invoke<Field>("reset_plain_field", { catalog, id, field }),
   createPlain: (catalog: Catalog, base: string) =>
     invoke<UnitItem>("create_plain", { catalog, base }),
-  listUpgrades: () => invoke<UnitItem[]>("list_upgrades"),
-  upgradeDetail: (id: string) => invoke<AbilityDetail>("upgrade_detail", { id }),
-  searchUpgrades: (query: string) => invoke<SearchHit[]>("search_upgrades", { query }),
+  listLeveled: (catalog: LeveledCatalog) => invoke<UnitItem[]>("list_leveled", { catalog }),
+  leveledDetail: (catalog: LeveledCatalog, id: string) =>
+    invoke<AbilityDetail>("leveled_detail", { catalog, id }),
+  searchLeveled: (catalog: LeveledCatalog, query: string) =>
+    invoke<SearchHit[]>("search_leveled", { catalog, query }),
   /** `level` is 0 for fields without levels. */
-  setUpgradeField: (id: string, field: string, level: number, value: string) =>
-    invoke<AbilityDetail>("set_upgrade_field", { id, field, level, value }),
-  resetUpgradeField: (id: string, field: string, level: number) =>
-    invoke<AbilityDetail>("reset_upgrade_field", { id, field, level }),
-  createUpgrade: (base: string) => invoke<UnitItem>("create_upgrade", { base }),
+  setLeveledField: (
+    catalog: LeveledCatalog,
+    id: string,
+    field: string,
+    level: number,
+    value: string,
+  ) => invoke<AbilityDetail>("set_leveled_field", { catalog, id, field, level, value }),
+  resetLeveledField: (catalog: LeveledCatalog, id: string, field: string, level: number) =>
+    invoke<AbilityDetail>("reset_leveled_field", { catalog, id, field, level }),
+  createLeveled: (catalog: LeveledCatalog, base: string) =>
+    invoke<UnitItem>("create_leveled", { catalog, base }),
   saveMap: () => invoke<MapSummary>("save_map"),
   shareCode: (ids: string[]) => invoke<SharePreview>("share_code", { ids }),
   saveBundle: (ids: string[], path: string) => invoke<void>("save_bundle", { ids, path }),

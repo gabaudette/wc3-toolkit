@@ -12,6 +12,7 @@ use std::collections::HashMap;
 use crate::Result;
 use crate::abilities::{load_slk, merge_optional};
 use crate::game::{ArtMode, GameFiles, decode_text};
+use crate::leveled::LeveledData;
 use crate::meta::{FieldMeta, parse_metadata};
 use crate::profile::{Profile, split_list, unquote};
 use crate::slk::Slk;
@@ -201,4 +202,34 @@ fn list_item(whole: &str, index: usize) -> Option<String> {
 /// The value, unless the game marks it empty (`-`, `_` or nothing).
 fn present(value: &str) -> Option<String> {
     (!value.is_empty() && value != "-" && value != "_").then(|| value.to_owned())
+}
+
+impl LeveledData for UpgradeDatabase {
+    fn fields(&self) -> &[FieldMeta] {
+        UpgradeDatabase::fields(self)
+    }
+
+    fn field(&self, field_id: &str) -> Option<&FieldMeta> {
+        UpgradeDatabase::field(self, field_id)
+    }
+
+    fn field_name(&self, field: &FieldMeta) -> String {
+        UpgradeDatabase::field_name(self, field)
+    }
+
+    fn category_label(&self, category: &str) -> String {
+        UpgradeDatabase::category_label(self, category)
+    }
+
+    fn ids(&self) -> &[String] {
+        UpgradeDatabase::ids(self)
+    }
+
+    fn contains(&self, id: &str) -> bool {
+        UpgradeDatabase::contains(self, id)
+    }
+
+    fn raw_value(&self, id: &str, field: &FieldMeta, level: u32, mode: ArtMode) -> Option<String> {
+        UpgradeDatabase::raw_value(self, id, field, level, mode)
+    }
 }

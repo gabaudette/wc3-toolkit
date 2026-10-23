@@ -1,9 +1,13 @@
-//! A map's upgrade changes on top of the game's upgrade data.
+//! A map's changes to objects whose fields can have a value per level, on top
+//! of the game's data: upgrades (per research level) and doodads (per model
+//! variation). Abilities, whose data columns also matter, have their own code.
 //!
-//! Gameplay fields go in `war3map.w3q` and cosmetic ("netsafe") fields such as
-//! names, tooltips and icons in `war3mapSkin.w3q`. Every change stores a level:
-//! 1, 2, ... for fields with a value per level, 0 for the others. The data
-//! column is always 0.
+//! Gameplay fields go in `war3map.w3q` (upgrades) or `.w3d` (doodads) and
+//! cosmetic ("netsafe") fields such as names, tooltips and icons in the
+//! matching `war3mapSkin` file. Every change stores a level: 1, 2, ... for
+//! fields with a value per level, 0 for the others. The data column is always 0.
+//! Doodads store their variation as the level, the first variation being 1
+//! (assumed like ability levels; no map seen so far changes a variation).
 //!
 //! Text fields refer to the map's string table, which [`MapUnits`] keeps:
 //! the methods that read or write text take it as an argument.
@@ -13,27 +17,65 @@
 use std::collections::HashMap;
 
 use wc3_data::game::ArtMode;
+use wc3_data::leveled::LeveledData;
 use wc3_data::meta::FieldMeta;
 use wc3_data::objects::{FourCC, Layout, ModSet, Modification, ObjectData, ObjectEntry, Value};
 use wc3_data::strings::{MapStrings, reference_id};
-use wc3_data::upgrades::UpgradeDatabase;
 
 use crate::transfer::{Tables, next_free_id};
 use crate::values::{is_translatable, parse_value};
-use crate::{Error, Map, Result, UPGRADE_SKINS_FILE, UPGRADES_FILE};
+use crate::{
+    DOODAD_SKINS_FILE, DOODADS_FILE, Error, Map, Result, UPGRADE_SKINS_FILE, UPGRADES_FILE,
+};
 
-/// Custom upgrades are numbered `R000`, `R001`, ... like the World Editor does.
-const ID_PREFIX: u8 = b'R';
+/// One kind of object with levels: its files, how custom IDs start, how the
+/// World Editor names it in string comments, and the fields that describe it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LeveledKind {
+    data_file: &'static str,
+    skin_file: &'static str,
+    /// Custom objects are numbered `R000`, `R001`, ... like the World Editor does.
+    id_prefix: u8,
+    /// "Upgrades", as string comments read.
+    label: &'static str,
+    /// "upgrade", for messages.
+    singular: &'static str,
+    name_field: &'static str,
+    icon_field: Option<&'static str>,
+    /// The field list rows are filtered by: race, category.
+    filter_field: &'static str,
+    /// The field holding the number of levels or variations.
+    levels_field: &'static str,
+}
 
-/// Fields the editor reads to describe an upgrade.
-const NAME: &str = "gnam";
-const ICON: &str = "gar1";
-const RACE: &str = "grac";
-const LEVELS: &str = "glvl";
+pub const UPGRADES: LeveledKind = LeveledKind {
+    data_file: UPGRADES_FILE,
+    skin_file: UPGRADE_SKINS_FILE,
+    id_prefix: b'R',
+    label: "Upgrades",
+    singular: "upgrade",
+    name_field: "gnam",
+    icon_field: Some("gar1"),
+    filter_field: "grac",
+    levels_field: "glvl",
+};
 
-pub struct MapUpgrades {
+pub const DOODADS: LeveledKind = LeveledKind {
+    data_file: DOODADS_FILE,
+    skin_file: DOODAD_SKINS_FILE,
+    id_prefix: b'D',
+    label: "Doodads",
+    singular: "doodad",
+    name_field: "dnam",
+    icon_field: None,
+    filter_field: "dcat",
+    levels_field: "dvar",
+};
+
+pub struct LeveledObjects {
+    kind: LeveledKind,
     tables: Tables,
-    /// Upgrade files the map had when loaded; others are only written once
+    /// Files the map had when loaded; others are only written once
     /// they hold something, so untouched maps keep their files as they are.
     loaded: Vec<&'static str>,
     /// Strings this editor added since loading. Only these are removed again
@@ -41,9 +83,9 @@ pub struct MapUpgrades {
     added_strings: Vec<u32>,
 }
 
-/// An upgrade the map adds or changes.
+/// An object the map adds or changes.
 #[derive(Debug, Clone, PartialEq)]
-pub struct MapUpgrade {
+pub struct LeveledObject {
     pub id: FourCC,
     pub base: FourCC,
     pub is_custom: bool,
@@ -52,15 +94,16 @@ pub struct MapUpgrade {
 
 /// What a list entry shows, with the map's changes applied.
 #[derive(Debug, Clone, PartialEq)]
-pub struct UpgradeInfo {
+pub struct LeveledInfo {
     pub name: String,
     pub icon: Option<String>,
-    pub race: String,
+    /// The raw value list rows are filtered by (race, category).
+    pub filter: String,
     pub levels: u32,
 }
 
-impl MapUpgrades {
-    pub fn load(map: &Map) -> Result<Self> {
+impl LeveledObjects {
+    pub fn load(map: &Map, kind: LeveledKind) -> Result<Self> {
         let mut loaded = Vec::new();
         let mut read = |file: &'static str| -> Result<ObjectData> {
             match map.object_data(file)? {
@@ -73,19 +116,21 @@ impl MapUpgrades {
         };
 
         let tables = Tables {
-            data: read(UPGRADES_FILE)?,
-            skin: read(UPGRADE_SKINS_FILE)?,
+            data: read(kind.data_file)?,
+            skin: read(kind.skin_file)?,
         };
         Ok(Self {
+            kind,
             tables,
             loaded,
             added_strings: Vec::new(),
         })
     }
 
-    /// No changes: the game's upgrades as they are.
-    pub fn empty() -> Self {
+    /// No changes: the game's objects as they are.
+    pub fn empty(kind: LeveledKind) -> Self {
         Self {
+            kind,
             tables: Tables {
                 data: ObjectData::empty(Layout::Leveled),
                 skin: ObjectData::empty(Layout::Leveled),
@@ -95,7 +140,7 @@ impl MapUpgrades {
         }
     }
 
-    /// The upgrade tables (gameplay, skin), for moving objects between maps.
+    /// The tables (gameplay, skin), for moving objects between maps.
     pub(crate) fn tables(&self) -> &Tables {
         &self.tables
     }
@@ -105,17 +150,18 @@ impl MapUpgrades {
     }
 
     #[cfg(test)]
-    pub(crate) fn from_tables(tables: Tables) -> Self {
+    pub(crate) fn from_tables(kind: LeveledKind, tables: Tables) -> Self {
         Self {
+            kind,
             tables,
             loaded: Vec::new(),
             added_strings: Vec::new(),
         }
     }
 
-    /// Custom upgrades first, then changed game upgrades, each listed once.
-    pub fn upgrades(&self) -> Vec<MapUpgrade> {
-        let mut upgrades: Vec<MapUpgrade> = Vec::new();
+    /// Custom objects first, then changed game objects, each listed once.
+    pub fn objects(&self) -> Vec<LeveledObject> {
+        let mut objects: Vec<LeveledObject> = Vec::new();
         let mut index: HashMap<FourCC, usize> = HashMap::new();
         let (data, skin) = (&self.tables.data, &self.tables.skin);
         let tables = [
@@ -131,10 +177,10 @@ impl MapUpgrades {
                 let mods = entry.mods().count();
 
                 match index.get(&id) {
-                    Some(&i) => upgrades[i].modified_fields += mods,
+                    Some(&i) => objects[i].modified_fields += mods,
                     None => {
-                        index.insert(id, upgrades.len());
-                        upgrades.push(MapUpgrade {
+                        index.insert(id, objects.len());
+                        objects.push(LeveledObject {
                             id,
                             base: entry.base,
                             is_custom,
@@ -145,10 +191,10 @@ impl MapUpgrades {
             }
         }
 
-        upgrades
+        objects
     }
 
-    /// The upgrade's entries in both tables, found once for several lookups.
+    /// The object's entries in both tables, found once for several lookups.
     fn find(&self, id: FourCC) -> Found<'_> {
         Found {
             id,
@@ -157,21 +203,21 @@ impl MapUpgrades {
         }
     }
 
-    /// Whether the map adds or changes this upgrade.
+    /// Whether the map adds or changes this object.
     pub fn has(&self, id: FourCC) -> bool {
         self.find(id).in_map()
     }
 
-    /// The game upgrade a map upgrade is based on: the base of a custom
-    /// upgrade, or the upgrade itself. `None` when neither the map nor the
+    /// The game object a map object is based on: the base of a custom one, or
+    /// the object itself. `None` when neither the map nor the
     /// game has the ID.
-    pub fn base_of(&self, db: &UpgradeDatabase, id: FourCC) -> Option<FourCC> {
+    pub fn base_of(&self, db: &dyn LeveledData, id: FourCC) -> Option<FourCC> {
         self.find(id).base(db)
     }
 
     /// The number of levels, at least 1.
-    pub fn levels(&self, db: &UpgradeDatabase, id: FourCC) -> u32 {
-        self.find(id).levels(db)
+    pub fn levels(&self, db: &dyn LeveledData, id: FourCC) -> u32 {
+        self.find(id).levels(db, self.kind.levels_field)
     }
 
     /// The map's change to a field at `level` (ignored for fields without levels).
@@ -184,10 +230,10 @@ impl MapUpgrades {
     }
 
     /// The field's raw value at `level`: the map's change if there is one
-    /// (with string references resolved), otherwise the base upgrade's game data.
+    /// (with string references resolved), otherwise the base object's game data.
     pub fn raw_value(
         &self,
-        db: &UpgradeDatabase,
+        db: &dyn LeveledData,
         strings: &MapStrings,
         id: FourCC,
         field: &FieldMeta,
@@ -197,10 +243,13 @@ impl MapUpgrades {
         self.find(id).raw_value(db, strings, field, level, mode)
     }
 
-    /// The level 1 name.
-    pub fn name(&self, db: &UpgradeDatabase, strings: &MapStrings, id: FourCC) -> String {
-        db.field(NAME)
-            .and_then(|field| self.raw_value(db, strings, id, field, 1, ArtMode::Sd))
+    /// The name (the level 1 name where names have levels).
+    pub fn name(&self, db: &dyn LeveledData, strings: &MapStrings, id: FourCC) -> String {
+        db.field(self.kind.name_field)
+            .and_then(|field| {
+                self.raw_value(db, strings, id, field, first_level(field), ArtMode::Sd)
+            })
+            .filter(|name| !name.is_empty())
             .unwrap_or_else(|| id.to_string())
     }
 
@@ -208,33 +257,33 @@ impl MapUpgrades {
     /// neither the map nor the game has the ID.
     pub fn info(
         &self,
-        db: &UpgradeDatabase,
+        db: &dyn LeveledData,
         strings: &MapStrings,
         id: FourCC,
         mode: ArtMode,
-    ) -> Option<UpgradeInfo> {
+    ) -> Option<LeveledInfo> {
         let found = self.find(id);
         found.base(db)?;
-        let text = |field_id: &str, level: u32| {
+        let text = |field_id: &str| {
             db.field(field_id)
-                .and_then(|field| found.raw_value(db, strings, field, level, mode))
+                .and_then(|field| found.raw_value(db, strings, field, first_level(field), mode))
                 .filter(|v| !v.is_empty())
         };
 
-        Some(UpgradeInfo {
-            name: text(NAME, 1).unwrap_or_else(|| id.to_string()),
-            icon: text(ICON, 1),
-            race: text(RACE, 0).unwrap_or_default(),
-            levels: found.levels(db),
+        Some(LeveledInfo {
+            name: text(self.kind.name_field).unwrap_or_else(|| id.to_string()),
+            icon: self.kind.icon_field.and_then(text),
+            filter: text(self.kind.filter_field).unwrap_or_default(),
+            levels: found.levels(db, self.kind.levels_field),
         })
     }
 
     /// Sets a field at `level` (ignored for fields without levels) from text
     /// as typed in an editor. Text fields are stored in the map's string table.
-    /// Setting the base upgrade's own value removes the change instead.
+    /// Setting the base object's own value removes the change instead.
     pub fn set(
         &mut self,
-        db: &UpgradeDatabase,
+        db: &dyn LeveledData,
         strings: &mut MapStrings,
         id: FourCC,
         field: &FieldMeta,
@@ -244,7 +293,10 @@ impl MapUpgrades {
         let field_id = FourCC::parse(&field.id)
             .ok_or_else(|| Error::Invalid(format!("bad field ID {}", field.id)))?;
         let Some(base) = self.base_of(db, id) else {
-            return Err(Error::Invalid(format!("unknown upgrade {id}")));
+            return Err(Error::Invalid(format!(
+                "unknown {} {id}",
+                self.kind.singular
+            )));
         };
 
         if field.per_level && level == 0 {
@@ -293,7 +345,7 @@ impl MapUpgrades {
     }
 
     /// Removes the map's change to a field at `level` (every change, for
-    /// fields without levels) so the base upgrade's value applies again.
+    /// fields without levels) so the base object's value applies again.
     /// Returns `false` when the field was not changed.
     pub fn reset(
         &mut self,
@@ -318,7 +370,7 @@ impl MapUpgrades {
                 }
             }
 
-            // A changed game upgrade with no changes left is dropped entirely.
+            // A changed game object with no changes left is dropped entirely.
             data.original.retain(|e| e.mods().next().is_some());
         }
 
@@ -326,7 +378,7 @@ impl MapUpgrades {
         removed
     }
 
-    /// Removes strings this editor added that no upgrade field refers to anymore.
+    /// Removes strings this editor added that no field refers to anymore.
     fn drop_unused_strings(&mut self, strings: &mut MapStrings) {
         let referenced: Vec<u32> = self
             .tables
@@ -350,14 +402,17 @@ impl MapUpgrades {
         });
     }
 
-    /// Creates a custom upgrade copying `base` and returns its new ID, the
-    /// next free one of `R000`, `R001`, ...
-    pub fn create(&mut self, db: &UpgradeDatabase, base: FourCC) -> Result<FourCC> {
+    /// Creates a custom object copying `base` and returns its new ID, the
+    /// next free one of `R000`, `R001`, ... (by the kind's first letter).
+    pub fn create(&mut self, db: &dyn LeveledData, base: FourCC) -> Result<FourCC> {
         if !db.contains(&base.to_string()) {
-            return Err(Error::Invalid(format!("unknown base upgrade {base}")));
+            return Err(Error::Invalid(format!(
+                "unknown base {} {base}",
+                self.kind.singular
+            )));
         }
 
-        let id = next_free_id(ID_PREFIX, |id| {
+        let id = next_free_id(self.kind.id_prefix, |id| {
             !self.has(id) && !db.contains(&id.to_string())
         })
         .ok_or_else(|| Error::Invalid(format!("no free ID for {base}")))?;
@@ -379,7 +434,7 @@ impl MapUpgrades {
     /// with a comment like the World Editor's: `Upgrades: R000 (name), Name (Name), level 1`.
     fn store_string(
         &mut self,
-        db: &UpgradeDatabase,
+        db: &dyn LeveledData,
         strings: &mut MapStrings,
         id: FourCC,
         field: &FieldMeta,
@@ -396,7 +451,8 @@ impl MapUpgrades {
         }
 
         let mut comment = format!(
-            "Upgrades: {id} ({}), {} ({})",
+            "{}: {id} ({}), {} ({})",
+            self.kind.label,
             self.name(db, strings, id),
             db.field_name(field),
             field.field
@@ -413,12 +469,12 @@ impl MapUpgrades {
         reference
     }
 
-    /// The upgrade files to write: those the map had, and new ones that now
+    /// The files to write: those the map had, and new ones that now
     /// hold something.
     pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
         [
-            (UPGRADES_FILE, &self.tables.data),
-            (UPGRADE_SKINS_FILE, &self.tables.skin),
+            (self.kind.data_file, &self.tables.data),
+            (self.kind.skin_file, &self.tables.skin),
         ]
         .into_iter()
         .filter(|(file, data)| {
@@ -429,7 +485,7 @@ impl MapUpgrades {
     }
 }
 
-/// An upgrade's entries in the gameplay and skin tables.
+/// An object's entries in the gameplay and skin tables.
 struct Found<'a> {
     id: FourCC,
     data: Option<&'a ObjectEntry>,
@@ -441,7 +497,7 @@ impl<'a> Found<'a> {
         self.data.is_some() || self.skin.is_some()
     }
 
-    fn base(&self, db: &UpgradeDatabase) -> Option<FourCC> {
+    fn base(&self, db: &dyn LeveledData) -> Option<FourCC> {
         match self.data.or(self.skin) {
             Some(entry) => Some(entry.base),
             None => db.contains(&self.id.to_string()).then_some(self.id),
@@ -457,7 +513,7 @@ impl<'a> Found<'a> {
         };
 
         // Look in the file the field belongs to first; maps saved by older
-        // editors keep every field in war3map.w3q.
+        // editors keep every field in the gameplay file.
         entries.into_iter().flatten().find_map(|entry| {
             entry
                 .mods()
@@ -469,7 +525,7 @@ impl<'a> Found<'a> {
 
     fn raw_value(
         &self,
-        db: &UpgradeDatabase,
+        db: &dyn LeveledData,
         strings: &MapStrings,
         field: &FieldMeta,
         level: u32,
@@ -486,8 +542,8 @@ impl<'a> Found<'a> {
         db.raw_value(&base.to_string(), field, level, mode)
     }
 
-    fn levels(&self, db: &UpgradeDatabase) -> u32 {
-        let Some(field) = db.field(LEVELS) else {
+    fn levels(&self, db: &dyn LeveledData, levels_field: &str) -> u32 {
+        let Some(field) = db.field(levels_field) else {
             return 1;
         };
         let changed = self.modification(field, 0).map(Value::to_string);
@@ -499,14 +555,19 @@ impl<'a> Found<'a> {
     }
 }
 
+/// The level a field is read at to describe an object: 1 where it has levels.
+fn first_level(field: &FieldMeta) -> u32 {
+    u32::from(field.per_level)
+}
+
 /// Whether a stored change is the one for `level`. Fields without levels
 /// match any level: maps store them at level 0, but not every editor did.
 fn at_level(field: &FieldMeta, m: &Modification, level: u32) -> bool {
     !field.per_level || m.level == Some(level)
 }
 
-/// The upgrade's entry in the gameplay or skin table, created when missing.
-/// A custom upgrade missing from this table gets a custom entry with its base.
+/// The object's entry in the gameplay or skin table, created when missing.
+/// A custom object missing from this table gets a custom entry with its base.
 fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry {
     let custom_base = tables
         .both()
@@ -549,10 +610,10 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
     }
 }
 
-/// Whether `value` equals the base upgrade's game value at `level` in both
+/// Whether `value` equals the base object's game value at `level` in both
 /// art modes (some art differs between SD and HD; those always keep the change).
 fn same_as_base(
-    db: &UpgradeDatabase,
+    db: &dyn LeveledData,
     base: FourCC,
     field: &FieldMeta,
     level: u32,
