@@ -53,6 +53,7 @@ jobs:
   # needs none and tests everything; the pre-commit Clippy builds the app on
   # Linux.
   test:
+    name: test (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
