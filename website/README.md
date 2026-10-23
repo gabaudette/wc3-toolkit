@@ -32,8 +32,10 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
 ## Author content
 
 - `src/content/docs/`: editor guides, tutorials, language introduction and map format notes.
-- `public/screenshots/`: real 1440 × 900 desktop captures shared by the visual tour, homepage
-  and root README. Capture only the Tinkerbench window with `import -window <window-id>`;
+- `public/screenshots/`: real desktop captures shared by the visual tour, startup guides,
+  homepage and root README. Editor views are 1440 × 900; startup captures focus on their
+  panels (600 × 420 and 600 × 600) to keep the controls readable. Capture only the Tinkerbench
+  window with `import -window <window-id>`;
   `xdotool search --name '^Tinkerbench$'` finds it on X11. Use a test map, let data and models
   finish loading, and move the pointer away from the content before capturing. Keep filenames
   stable when refreshing the UI. Screenshots show game art in context; do not export or add

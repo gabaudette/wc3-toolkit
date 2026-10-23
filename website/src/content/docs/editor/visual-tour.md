@@ -1,22 +1,58 @@
 ---
 
 title: "Visual tour"
-description: "A screenshot guide to Tinkerbench: find objects, understand fields, edit ability levels, and save your map."
+description: "A screenshot guide to Tinkerbench: load the game, open a map, find objects, edit fields and ability levels, and save your work."
 ---
 
 Get to know the workbench before [editing your first map](../first-map/). These are screenshots
 of the running desktop application, with a test map and a local Warcraft III: Reforged
 installation. Select any screenshot to open the full-size image.
 
-If you have not connected the game yet, start with [installation](../install/). Open a copy of
-your map with **Open map…** to enable editing. Without a map, you can browse game objects
-read-only.
+If you have not installed Tinkerbench yet, start with [installation](../install/).
 
-## 1. Find your way around
+## 1. Load the game
+
+When Tinkerbench starts, it asks for your Warcraft III installation. Choose **Browse…** under
+**1. Warcraft III folder**, then select the game directory containing `Data/`. You can also
+type or paste the folder’s path. Tinkerbench may already fill it in from detection or your
+previous session.
+
+<figure class="app-screenshot">
+  <a href="../../screenshots/load-game.png">
+    <img src="../../screenshots/load-game.png" alt="Tinkerbench’s first startup screen with a Warcraft III folder path, Browse button, HD art checkbox and Load game data button." width="600" height="420" />
+  </a>
+  <figcaption>Choose your game installation, select the art mode, then load its object data.</figcaption>
+</figure>
+
+Enable **Use HD (Reforged) art values and icons** if you want HD art, then select
+**Load game data**. Wait for the loaded unit count and the **2. Map** section to appear.
+The path in these screenshots is a local Linux/Proton installation; choose your own game
+folder. Your Maps folder is a separate location.
+
+## 2. Open a map
+
+After the game data loads, choose **Open a map…** and select a copy of a `.w3m` or `.w3x`
+map. If you previously opened a map, **Reopen** offers that file directly.
+
+<figure class="app-screenshot">
+  <a href="../../screenshots/open-map.png">
+    <img src="../../screenshots/open-map.png" alt="Tinkerbench’s startup screen after loading 928 units, with a Map section offering Reopen test.w3m, Open a map and Browse game data only." width="600" height="600" loading="lazy" />
+  </a>
+  <figcaption>Once the game is loaded, open a map to edit it or browse the game data read-only.</figcaption>
+</figure>
+
+**Browse game data only** opens the workbench without a map. You can inspect objects, fields
+and previews, but editing requires an open map. Use **Open map…** in the workbench’s top bar
+when you are ready.
+
+Close the map in the World Editor before saving changes from Tinkerbench. For a small test
+map to follow along with, see [your first map](../first-map/).
+
+## 3. Find your way around
 
 <figure class="app-screenshot">
   <a href="../../screenshots/unit-editor.png">
-    <img src="../../screenshots/unit-editor.png" alt="Paladin selected in the Units tab, with object search on the left, stats and grouped fields in the center, and its model and hit point explanation in the inspector." width="1440" height="900" />
+    <img src="../../screenshots/unit-editor.png" alt="Paladin selected in the Units tab, with object search on the left, stats and grouped fields in the center, and its model and hit point explanation in the inspector." width="1440" height="900" loading="lazy" />
   </a>
   <figcaption>The Paladin’s page brings its identity, values, model and field help into one view.</figcaption>
 </figure>
@@ -33,7 +69,7 @@ For a separate unit type, select a base object and choose **New unit based on th
 object gets its own raw code. Editing a game object directly changes that type wherever your
 map uses it.
 
-## 2. Jump straight to an object
+## 4. Jump straight to an object
 
 Press **Ctrl K**, or select the search box in the top bar. Type a name such as `holy light`
 or a raw code such as `AHhb`, then select the matching result. This search reaches across
@@ -50,7 +86,7 @@ The left column’s search stays within the current tab. It also matches field v
 helps find objects that reference a particular model or ability. Search still finds game
 objects when their group is folded.
 
-## 3. Understand a field before changing it
+## 5. Understand a field before changing it
 
 On the Paladin’s page, type `hit points` in **Filter fields**. Select the information button
 beside **Hit Points Maximum (Base)** (`uhpm`) to read its explanation in the inspector.
@@ -70,7 +106,7 @@ The screenshot shows unchanged game data. The Paladin’s `100` base hit points 
 life gained from Strength. For a first experiment with fewer moving parts, follow the
 [Footman walkthrough](../first-map/).
 
-## 4. Compare ability levels side by side
+## 6. Compare ability levels side by side
 
 Open **Abilities**, find **Holy Light** (`AHhb`), and select it. The page starts with its
 resolved tooltip and puts per-level numbers in a table. Select the information button beside
@@ -97,7 +133,7 @@ Use the table’s keyboard controls:
 Committing a cell updates the map in the editor. Save the map to write those changes to disk.
 For a complete spell workflow, continue with [create a custom spell](../../guides/custom-spell/).
 
-## 5. Save, test and share
+## 7. Save, test and share
 
 Select **Save**, or press **Ctrl S**, to save the open map. Close that map in the World Editor
 before saving from Tinkerbench, then reopen it and test the result in game.

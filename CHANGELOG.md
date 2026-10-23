@@ -8,8 +8,8 @@ under "What's new".
 
 ### Added
 
-- Screenshot tour of the Tinkerbench application, with a preview on the documentation
-  homepage and in the README.
+- Screenshot tour of the Tinkerbench application, from loading game data and opening a map
+  to editing objects, with a preview on the documentation homepage and in the README.
 - Documentation cookbook with 43 JASS/Lua code recipes, and a global language toggle that
   remembers your choice across examples and explanations, with language-neutral navigation.
 - Code snippet theme picker in the documentation, with six color themes and a remembered

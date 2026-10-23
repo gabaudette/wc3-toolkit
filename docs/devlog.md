@@ -6,11 +6,16 @@ single line. Every pull request adds an entry here and to the changelog.
 
 ## 2026-10-23 · Application screenshots and visual tour (PR #29)
 
-- Captured the running Tauri application at 1440 × 900 using xdotool and ImageMagick’s
-  window capture: the Paladin editor, command search, filtered field inspector and Holy Light
-  level table. The captures browse the existing test map without editing or saving it.
+- Captured the running Tauri application using xdotool and ImageMagick’s
+  window capture: both startup stages (load game data and open a map), the Paladin editor,
+  command search, filtered field inspector and Holy Light level table. The captures browse
+  the existing test map without editing or saving it; startup uses a separate app instance.
+  Editor captures use the full 1440 × 900 window; startup captures focus on the setup panel
+  at 600 × 420 and 600 × 600 so the controls stay readable inside the documentation.
 - Added a visual tour to the Start here navigation, with descriptions of the editor’s three
-  columns, search, field overrides, level-table keys, saving and sharing. Linked full-size
+  columns, game loading, map opening, search, field overrides, level-table keys, saving and
+  sharing. Installation and first-map guides reuse the two startup captures and explicitly
+  explain the Load game data action before choosing a map. Linked full-size
   screenshots have descriptive alt text, fixed dimensions and lazy loading below the first
   image. Relative asset links work with the site’s optional base path.
 - Reused the unit-editor capture in a homepage showcase and the root README. Images live
@@ -18,7 +23,7 @@ single line. Every pull request adds an entry here and to the changelog.
   and refresh notes in the website README.
 - Validation: 54 documentation tests pass; Biome and Astro report no diagnostics; the
   production build and local link/asset checks pass for 6,578 pages. Browser checks cover
-  the homepage-to-tour link, all four images, full-size image navigation, desktop dark/light
+  the homepage-to-tour link, all six images, full-size image navigation, desktop dark/light
   themes and a 390 px mobile viewport without page overflow or browser errors.
 
 ## 2026-10-23 · Documentation website (PR #27, AGE-20)
