@@ -23,6 +23,7 @@ under "What's new".
 
 ### Changed
 
+- Documentation uses the app icon as its PNG favicon.
 - External links in the documentation open in a new tab.
 - Destructables and doodads show the World Editor's icon for their category (Props, Bridges,
   Water, ...) in lists, on their page and in search, since the game gives them no icon.

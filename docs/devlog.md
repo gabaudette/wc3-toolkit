@@ -11,6 +11,8 @@ single line. Every pull request adds an entry here and to the changelog.
   pages cover installation, the first map, objects, sharing, the Lua harness, common tasks,
   JASS/Lua conventions and the map format notes. The public URL is
   `https://tinkerbench-docs.vercel.app`, also used for canonical links and sitemaps.
+  The favicon points directly to the app icon’s 128 px PNG, using a new URL so browsers can
+  replace a cached favicon. The ICO remains available for browsers that request it directly.
 - A local CASC export example reads script and field inputs. Only structured declarations
   and field metadata are versioned; game script bodies and comments stay outside the repo.
   The initial extraction records source hashes and its local date without claiming a patch

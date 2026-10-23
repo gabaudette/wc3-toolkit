@@ -34,7 +34,7 @@ export default defineConfig({
     starlight({
       title: "Tinkerbench · Field guide",
       logo: { src: "./src/assets/tinkerbench.png", alt: "Tinkerbench gnome" },
-      favicon: "/favicon.ico",
+      favicon: "/icon-128.png",
       disable404Route: true,
       expressiveCode: {
         shiki: { langs: [jass] },
