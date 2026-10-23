@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-23 · Find object fields by goal (AGE-31)
+## 2026-10-23 · Find object fields by goal (PR #35, AGE-31)
 
 - Added an authored “Which field do I change?” guide with 19 tasks across movement, life,
   mana, vision, combat, costs, shops and appearance. Tasks name the correct object tab and
