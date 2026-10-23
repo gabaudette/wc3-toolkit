@@ -77,6 +77,40 @@ in them must rewrite byte for byte. Building also needs CMake (for the bundled S
 Never commit Blizzard game files or assets (models, textures, icons, data tables). Tools read
 them from the user's own installation at runtime.
 
+## Changelog and devlog
+
+Every pull request updates both, and the pre-push hook refuses a branch that changes neither
+compared with `main`:
+
+- [CHANGELOG.md](CHANGELOG.md) is for the people who use Tinkerbench, and the app shows it under
+  "What's new" (click the version next to the name). Add plain-language entries under
+  `## Unreleased`, in `### Added`, `### Changed` or `### Fixed`. A pull request that is only
+  about speed is one line, "Performance improvements."; one that is only technical (CI,
+  refactoring, tests, tooling) is "Internal improvements." Do not repeat a line already there.
+- [docs/devlog.md](docs/devlog.md) is the technical story, newest first: one entry per pull
+  request with the date, its number, what changed, why, and what was learned.
+
+The changelog dialog understands only `##`, `###`, `- ` items (wrapped lines indented) and
+inline code, bold and links.
+
+## Releases
+
+The version lives in one place: `version` in `object-editor/Cargo.toml` (the app, its
+installers and the version shown in the editor all read it). To release:
+
+1. Set the new version in `object-editor/Cargo.toml`, rename `## Unreleased` in
+   `CHANGELOG.md` to `## 0.2.0 - <date>` (start a new empty `## Unreleased` above it), and
+   commit both on `main`.
+2. Tag that commit and push the tag: `git tag v0.2.0 && git push origin v0.2.0`.
+3. The Release workflow checks that the tag matches the version, builds the Windows
+   installer (NSIS) and the Linux packages (`.deb`, AppImage), and attaches them to a
+   **draft** release.
+4. Install and try them on Windows and Linux, then publish the draft on GitHub.
+
+The Windows installer is not signed: Windows shows a SmartScreen warning ("Windows protected
+your PC") until a code signing certificate is added. The install notes explain how to get past
+it. The release notes come from `.github/release-notes.md`.
+
 ## Commits
 
 Use conventional commit prefixes: `feat:`, `fix:`, `docs:`, `style:`, `refactor:`, `test:`,

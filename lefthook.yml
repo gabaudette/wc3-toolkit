@@ -40,3 +40,11 @@ pre-commit:
       root: object-editor/
       glob: *rust
       run: cargo test --workspace
+
+# Every pushed branch updates CHANGELOG.md (for users) and docs/devlog.md
+# (technical details) compared with main.
+pre-push:
+  jobs:
+    - name: changelog and devlog
+      root: object-editor/app/
+      run: bun scripts/check-logs.ts

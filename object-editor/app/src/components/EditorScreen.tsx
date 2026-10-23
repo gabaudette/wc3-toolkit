@@ -14,6 +14,7 @@ import type {
 } from "../types";
 import { classes, MAP_FILTERS, MAP_PATH_KEY, remembered, replaceField } from "../ui";
 import { AbilitiesPane } from "./AbilitiesPane";
+import { AppVersion } from "./AppVersion";
 import { Button } from "./Button";
 import { CommandPalette, type PaletteCommand } from "./CommandPalette";
 import { ImportDialog } from "./ImportDialog";
@@ -267,7 +268,8 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     // form element sits past its bottom edge.
     <div className="relative flex h-full flex-col gap-2.5 overflow-hidden p-2.5">
       <header className="frame flex flex-wrap items-center gap-3 bg-surface-1 px-4 py-2">
-        <h1 className="font-display text-2xl font-bold tracking-wide text-gold">Object Editor</h1>
+        <h1 className="font-display text-2xl font-bold tracking-wide text-gold">Tinkerbench</h1>
+        <AppVersion />
         <span className="flex-1" />
         <button
           type="button"

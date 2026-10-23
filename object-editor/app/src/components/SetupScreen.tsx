@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { api, errorMessage } from "../api";
 import type { GameSummary, MapSummary } from "../types";
 import { GAME_DIR_KEY, HD_KEY, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
+import { AppVersion } from "./AppVersion";
 import { Button } from "./Button";
 
 type SetupScreenProps = {
@@ -87,9 +88,13 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
     <main className="mx-auto flex h-full max-w-xl flex-col justify-center px-6">
       <div className="frame flex flex-col gap-8 bg-surface-1 p-8">
         <header>
-          <h1 className="font-display text-4xl font-bold text-gold">Object Editor</h1>
+          <h1 className="flex items-baseline gap-3 font-display text-4xl font-bold text-gold">
+            Tinkerbench
+            <AppVersion />
+          </h1>
           <p className="mt-1 text-muted">
-            Reads the game data from your own Warcraft III install. Nothing is uploaded anywhere.
+            An Object Editor for Warcraft III Reforged maps. It reads the game data from your own
+            Warcraft III install; nothing is uploaded anywhere.
           </p>
         </header>
 

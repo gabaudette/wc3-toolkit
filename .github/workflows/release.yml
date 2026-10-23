@@ -1,0 +1,96 @@
+# Builds the installers when a version tag (v0.2.0) is pushed and attaches
+# them to a draft GitHub Release. Try them, then publish the release by hand.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  BUN_VERSION: 1.4.2
+
+jobs:
+  # The tag must match the version in object-editor/Cargo.toml, which the
+  # app shows and the installers carry.
+  release:
+    runs-on: ubuntu-latest
+
+    outputs:
+      id: ${{ steps.create.outputs.id }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Check the tag matches the version
+        run: |
+          version=$(sed -n 's/^version = "\(.*\)"$/\1/p' object-editor/Cargo.toml | head -n 1)
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version $version in object-editor/Cargo.toml."
+            exit 1
+          fi
+
+      - name: Create the draft release
+        id: create
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --draft --verify-tag \
+            --title "Tinkerbench $GITHUB_REF_NAME" \
+            --notes-file .github/release-notes.md
+          echo "id=$(gh release view "$GITHUB_REF_NAME" --json databaseId --jq .databaseId)" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: release
+    name: build (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # The oldest supported Ubuntu, so the AppImage and .deb run on older systems too.
+        os: [ubuntu-22.04, windows-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Tauri system libraries
+        if: runner.os == 'Linux'
+        run: >-
+          sudo apt-get update && sudo apt-get install -y --no-install-recommends
+          libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev
+          librsvg2-dev file
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install frontend dependencies
+        working-directory: object-editor/app
+        run: bun install --frozen-lockfile
+
+      # The version pinned in object-editor/rust-toolchain.toml.
+      - name: Set up Rust
+        working-directory: object-editor
+        run: rustup toolchain install
+
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: object-editor
+
+      # Builds the frontend, then the installers (NSIS on Windows, .deb and
+      # AppImage on Linux), and uploads them to the draft release.
+      - name: Build and upload the installers
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          projectPath: object-editor/app
+          tauriScript: bun run tauri
+          releaseId: ${{ needs.release.outputs.id }}
