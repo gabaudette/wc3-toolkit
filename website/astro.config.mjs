@@ -45,6 +45,7 @@ export default defineConfig({
       description: "Warcraft III map making: Tinkerbench, JASS and Lua, and object data explained.",
       customCss: ["./src/styles/custom.css"],
       components: {
+        Footer: "./src/components/Footer.astro",
         ThemeProvider: "./src/components/ThemeProvider.astro",
         MarkdownContent: "./src/components/MarkdownContent.astro",
         ThemeSelect: "./src/components/ThemeSelect.astro",

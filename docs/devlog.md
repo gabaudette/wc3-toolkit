@@ -4,6 +4,18 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Documentation copyright footer
+
+- Added a Starlight Footer override with a centered, muted Tinkerbench copyright notice,
+  the existing license’s Gabriel Audette and wc3-toolkit contributor attribution, and a
+  link to the MIT license. The year comes from UTC build time.
+- Retained edit/last-updated metadata, previous/next navigation and optional Starlight
+  credits by wrapping the existing footer component rather than duplicating its behavior.
+- Validation: all 89 tests pass and Biome and Astro report no diagnostics; the production build and local link
+  checks pass across 6,604 pages. A built-site audit confirms exactly one copyright notice
+  per documentation page. Browser checks verify centered text, license links, preserved
+  pagination and mobile wrapping without page overflow or browser errors.
+
 ## 2026-10-23 · Website contribution guides (PR #31)
 
 - Added a dedicated Contributing sidebar section with an overview, local-development guide

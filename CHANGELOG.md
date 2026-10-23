@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Tinkerbench copyright footer throughout the documentation, with contributor attribution
+  and a link to the MIT license.
 - Contributing section on the documentation website, with bug-report guidance, local editor
   setup, documentation authoring and validation instructions.
 - API reference organized into 22 topics, with category pages, declaration counts and links

@@ -1,0 +1,31 @@
+---
+// biome-ignore lint/correctness/noUnusedImports: Used in the Astro template, which Biome does not analyze.
+import DefaultFooter from "@astrojs/starlight/components/Footer.astro";
+
+// biome-ignore lint/correctness/noUnusedVariables: Used in the Astro template, which Biome does not analyze.
+const year = new Date().getUTCFullYear();
+---
+
+<div role="contentinfo" aria-label="Site footer">
+  <DefaultFooter />
+  <p class="copyright">
+    © {year} Tinkerbench. Gabriel Audette and wc3-toolkit contributors.{" "}
+    <a href="https://github.com/gabaudette/wc3-toolkit/blob/main/LICENSE">MIT License</a>.
+  </p>
+</div>
+
+<style>
+  .copyright {
+    margin: 1.5rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--sl-color-gray-5);
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+    line-height: 1.7;
+    text-align: center;
+  }
+
+  .copyright a {
+    color: inherit;
+  }
+</style>
