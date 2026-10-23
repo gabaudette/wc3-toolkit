@@ -196,7 +196,10 @@ export function ModelViewer({ path }: ModelViewerProps) {
   const [status, setStatus] = useState<Status>(resetStatus(path));
   const [sequences, setSequences] = useState<Animation[]>([]);
   const [sequence, setSequence] = useState(0);
-  const [turning, setTurning] = useState(true);
+  // Turning is motion the viewer did not ask for: off when the system asks for less.
+  const [turning, setTurning] = useState(
+    () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
   const [missingTextures, setMissingTextures] = useState(0);
   const turningRef = useRef(turning);
   turningRef.current = turning;
@@ -365,7 +368,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
 
   return (
     <div className="flex w-72 shrink-0 flex-col gap-1.5">
-      <div className="relative aspect-square overflow-hidden rounded-md border border-line bg-surface-0">
+      <div className="relative aspect-square overflow-hidden rounded-[3px] border border-line bg-surface-0">
         <canvas
           ref={canvasRef}
           width={576}
@@ -401,7 +404,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
             value={sequence}
             onChange={(e) => pickSequence(Number(e.target.value))}
             aria-label="Animation"
-            className="min-w-0 flex-1 rounded border border-line bg-surface-0 px-1.5 py-1 outline-none focus:border-gold"
+            className="min-w-0 flex-1 rounded border border-field bg-well px-1.5 py-1 outline-none focus:border-glow"
           >
             {sequences.map((animation) => (
               <option key={`${animation.start}-${animation.name}`} value={animation.index}>

@@ -178,7 +178,7 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
           rows={CODE_ROWS}
           placeholder="Paste a W3OBJ1:… code"
           aria-label="Share code"
-          className="break-all rounded-md border border-line bg-surface-0 px-3 py-2 font-mono text-xs outline-none focus:border-gold"
+          className="break-all rounded-[3px] border border-field bg-well px-3 py-2 font-mono text-xs outline-none focus:border-glow"
         />
       )}
 

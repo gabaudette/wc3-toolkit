@@ -1,6 +1,6 @@
 import { FlipBackward, InfoCircle } from "@untitledui/icons";
 import { useEffect, useState } from "react";
-import type { LevelCell, LevelField } from "../types";
+import type { Field, LevelCell, LevelField } from "../types";
 import { classes } from "../ui";
 import { ColoredTextInput } from "./ColoredTextInput";
 import { Description } from "./FieldRow";
@@ -11,6 +11,8 @@ type LevelTextProps = {
   editable: boolean;
   onChange: (level: number, value: string) => void;
   onReset: (level: number) => void;
+  /** Shows the field in the page's inspector, when the page has one. */
+  onInspect?: (field: Field) => void;
 };
 
 const LONG_TEXT_ROWS = 3;
@@ -18,7 +20,7 @@ const LONG_TEXT_ROWS = 3;
 const FORMATTED = /[|<]/;
 
 const inputClass =
-  "w-full rounded border border-line bg-surface-0 px-2 py-1 outline-none focus:border-gold read-only:opacity-70";
+  "w-full rounded border border-field bg-well px-2 py-1 outline-none focus:border-glow read-only:opacity-70";
 
 type LevelInputProps = {
   field: LevelField;
@@ -86,7 +88,7 @@ function LevelInput({ field, cell, level, editable, onChange, onReset }: LevelIn
 }
 
 /** A text field with one value per level (tooltips), each level under the field's name. */
-export function LevelText({ field, editable, onChange, onReset }: LevelTextProps) {
+export function LevelText({ field, editable, onChange, onReset, onInspect }: LevelTextProps) {
   const [showInfo, setShowInfo] = useState(false);
   const meta = field.field;
   const changed = field.cells.some((c) => c.modified);
@@ -104,12 +106,19 @@ export function LevelText({ field, editable, onChange, onReset }: LevelTextProps
         {meta.description && (
           <button
             type="button"
-            onClick={() => setShowInfo(!showInfo)}
+            onClick={() => {
+              if (onInspect) {
+                onInspect(meta);
+                return;
+              }
+
+              setShowInfo(!showInfo);
+            }}
             aria-expanded={showInfo}
             aria-label={`What ${meta.name} does`}
             title="What this field does"
             className={classes(
-              "self-center rounded p-0.5 hover:text-ink",
+              "self-center -my-1 rounded p-1.5 hover:text-ink",
               showInfo && "text-gold",
               !showInfo && "text-faint",
             )}

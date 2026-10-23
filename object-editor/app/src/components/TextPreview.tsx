@@ -35,7 +35,7 @@ export function TextPreview({ text }: { text: string }) {
   }
 
   return (
-    <div className="mt-1 rounded border border-line bg-[#05070d] px-2.5 py-1.5 text-sm leading-relaxed text-ink">
+    <div className="mt-1 rounded border border-line bg-well px-2.5 py-1.5 text-sm leading-relaxed text-ink">
       <p className="mb-0.5 text-[10px] uppercase tracking-wide text-faint">In game</p>
       <GameText text={filled} />
     </div>

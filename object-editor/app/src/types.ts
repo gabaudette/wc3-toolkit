@@ -41,6 +41,8 @@ export type Field = {
   display: string;
   raw: string;
   modified: boolean;
+  /** The base object's value, formatted like `display`. */
+  base: string;
   valueType: string;
   control: FieldControl;
   options: Choice[];

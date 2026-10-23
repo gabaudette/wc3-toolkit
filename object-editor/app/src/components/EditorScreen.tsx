@@ -1,5 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ask, open } from "@tauri-apps/plugin-dialog";
+import { SearchLg } from "@untitledui/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, errorMessage } from "../api";
 import type {
@@ -14,6 +15,7 @@ import type {
 import { classes, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
 import { AbilitiesPane } from "./AbilitiesPane";
 import { Button } from "./Button";
+import { CommandPalette, type PaletteCommand } from "./CommandPalette";
 import { ImportDialog } from "./ImportDialog";
 import { OpenAbilityContext } from "./openAbility";
 import { ShareDialog } from "./ShareDialog";
@@ -66,7 +68,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [clashes, setClashes] = useState<HotkeyClash[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [dialog, setDialog] = useState<"share" | "import" | null>(null);
+  const [dialog, setDialog] = useState<"share" | "import" | "search" | null>(null);
   const [tab, setTab] = useState<Tab>("units");
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
   /** Bumped when the map is replaced or imported into, so the ability list reloads. */
@@ -202,6 +204,26 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     }
   }
 
+  const commands: PaletteCommand[] = [];
+  if (map?.unsaved) {
+    commands.push({ id: "save", label: "Save the map", shortcut: "Ctrl S", run: save });
+  }
+  commands.push({ id: "open", label: "Open a map…", run: openOtherMap });
+  if (map) {
+    commands.push({ id: "import", label: "Import objects…", run: () => setDialog("import") });
+  }
+  if (map && customUnits.length > 0) {
+    commands.push({ id: "share", label: "Share units…", run: () => setDialog("share") });
+  }
+  for (const t of TABS.filter((other) => other.id !== tab)) {
+    commands.push({ id: `tab-${t.id}`, label: `Go to ${t.label}`, run: () => setTab(t.id) });
+  }
+
+  function openUnit(id: string) {
+    setTab("units");
+    setSelected(id);
+  }
+
   useEffect(() => {
     const appWindow = getCurrentWindow();
     const unlisten = appWindow.onCloseRequested(async (event) => {
@@ -227,6 +249,11 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         e.preventDefault();
         save();
       }
+
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        setDialog("search");
+      }
     }
 
     window.addEventListener("keydown", onKey);
@@ -234,35 +261,33 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   }, [map, save]);
 
   return (
-    <div className="flex h-full flex-col">
-      <header className="flex items-center gap-3 border-b border-line bg-surface-1 px-4 py-2">
-        <h1 className="font-semibold">WC3 Object Editor</h1>
-        <nav className="flex gap-1 rounded-md bg-surface-0 p-0.5" aria-label="Object types">
-          {TABS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => setTab(t.id)}
-              aria-pressed={tab === t.id}
-              className={classes(
-                "rounded px-3 py-1 text-sm",
-                tab === t.id && "bg-surface-2 text-ink",
-                tab !== t.id && "text-muted hover:text-ink",
-              )}
-            >
-              {t.label}
-            </button>
-          ))}
-        </nav>
-        <span className="text-faint">·</span>
+    <div className="flex h-full flex-col gap-2.5 p-2.5">
+      <header className="frame flex flex-wrap items-center gap-3 bg-surface-1 px-4 py-2">
+        <h1 className="font-display text-2xl font-bold tracking-wide text-gold">Object Editor</h1>
+        <span className="flex-1" />
+        <button
+          type="button"
+          onClick={() => setDialog("search")}
+          className="flex w-[22rem] max-w-full items-center gap-2.5 rounded-[3px] border border-field bg-well px-3 py-1.5 text-left text-muted hover:border-frame"
+        >
+          <SearchLg className="size-4" aria-hidden="true" />
+          <span className="flex-1">Search units, abilities, commands…</span>
+          <kbd className="rounded-[3px] border border-line-strong px-1.5 font-sans text-xs text-ink">
+            Ctrl K
+          </kbd>
+        </button>
+        <span className="flex-1" />
         {map && (
-          <span className="min-w-0 truncate font-mono text-xs text-muted" title={map.path}>
+          <span
+            aria-live="polite"
+            className="min-w-0 truncate font-mono text-xs text-muted"
+            title={map.path}
+          >
             {map.name}
-            {map.unsaved && <span className="ml-2 text-gold">● unsaved</span>}
+            {map.unsaved && <span className="ml-2 font-sans text-gold">● unsaved</span>}
           </span>
         )}
         {!map && <span className="text-muted">Game data (read-only)</span>}
-        <span className="flex-1" />
         {map && (
           <>
             <Button onPress={() => setDialog("import")}>Import…</Button>
@@ -279,10 +304,28 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         )}
       </header>
 
+      <nav className="flex gap-6 border-b border-line px-2" aria-label="Object types">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            aria-current={tab === t.id && "page"}
+            className={classes(
+              "py-1.5 font-display text-lg font-bold",
+              tab === t.id && "text-gold-bright shadow-[inset_0_-2px_0_var(--color-gold)]",
+              tab !== t.id && "text-muted hover:text-ink",
+            )}
+          >
+            {t.label}
+          </button>
+        ))}
+      </nav>
+
       {error && (
         <div
           role="alert"
-          className="flex items-center gap-3 border-b border-danger/40 bg-danger/10 px-4 py-2 text-danger"
+          className="flex items-center gap-3 rounded-[3px] border border-danger/40 bg-danger/10 px-4 py-2 text-danger"
         >
           <span className="flex-1">{error}</span>
           <Button small onPress={() => setError(null)}>
@@ -303,39 +346,49 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         onImported={imported}
         onClose={() => setDialog(null)}
       />
+      <CommandPalette
+        open={dialog === "search"}
+        commands={commands}
+        units={units}
+        onOpenUnit={openUnit}
+        onOpenAbility={openAbility}
+        onClose={() => setDialog(null)}
+      />
 
-      {tab === "abilities" && (
-        <AbilitiesPane
-          key={revision}
-          editable={editable}
-          selected={selectedAbility}
-          onSelect={setSelectedAbility}
-          onMapChanged={refreshMap}
-          onError={setError}
-        />
-      )}
+      <main className="flex min-h-0 flex-1 flex-col">
+        {tab === "abilities" && (
+          <AbilitiesPane
+            key={revision}
+            editable={editable}
+            selected={selectedAbility}
+            onSelect={setSelectedAbility}
+            onMapChanged={refreshMap}
+            onError={setError}
+          />
+        )}
 
-      <div className={classes("flex min-h-0 flex-1", tab !== "units" && "hidden")}>
-        <UnitList units={units} selected={selected} onSelect={setSelected} onError={setError} />
-        {detail && tab === "units" && (
-          <OpenAbilityContext value={openAbility}>
-            <UnitPage
-              key={detail.item.id}
-              detail={detail}
-              clashes={clashes}
-              editable={editable}
-              onChange={(field, value) => applyField(api.setField(detail.item.id, field, value))}
-              onReset={(field) => applyField(api.resetField(detail.item.id, field))}
-              onCreateCopy={createCopy}
-            />
-          </OpenAbilityContext>
-        )}
-        {!detail && (
-          <p className="m-auto text-muted">
-            Pick a unit on the left. {game.units} game units loaded.
-          </p>
-        )}
-      </div>
+        <div className={classes("flex min-h-0 flex-1 gap-2.5", tab !== "units" && "hidden")}>
+          <UnitList units={units} selected={selected} onSelect={setSelected} onError={setError} />
+          {detail && tab === "units" && (
+            <OpenAbilityContext value={openAbility}>
+              <UnitPage
+                key={detail.item.id}
+                detail={detail}
+                clashes={clashes}
+                editable={editable}
+                onChange={(field, value) => applyField(api.setField(detail.item.id, field, value))}
+                onReset={(field) => applyField(api.resetField(detail.item.id, field))}
+                onCreateCopy={createCopy}
+              />
+            </OpenAbilityContext>
+          )}
+          {!detail && (
+            <p className="m-auto text-muted">
+              Pick a unit on the left. {game.units} game units loaded.
+            </p>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

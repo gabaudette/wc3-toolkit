@@ -79,6 +79,9 @@ pub struct Field {
     /// The stored value, as typed into an editor.
     pub raw: String,
     pub modified: bool,
+    /// The base object's value, formatted like `display`: the game object a
+    /// custom one copies, or the game's own value for a changed original.
+    pub base: String,
     pub value_type: String,
     /// `bool`, `number`, `text`, `longText`, `select`, `flags` (bit flags),
     /// `flagList` (a list of choices, like targets), `codes` or `abilities`.
@@ -240,6 +243,9 @@ impl View<'_> {
 
     pub fn field(&self, id: FourCC, field: &FieldMeta) -> Field {
         let raw = self.raw(id, field);
+        let base = self
+            .base(id)
+            .and_then(|base| self.db.raw_value(&base.to_string(), field, self.mode));
         build_field(
             self.db,
             field,
@@ -250,6 +256,7 @@ impl View<'_> {
                 display: self.db.format_value(field, raw.clone()),
                 raw: raw.unwrap_or_default(),
                 modified: self.modified(id, field),
+                base: base_text(self.db, field, base),
             },
         )
     }
@@ -419,6 +426,17 @@ pub struct FieldValue {
     pub display: String,
     pub raw: String,
     pub modified: bool,
+    pub base: String,
+}
+
+/// How the base column shows a value: numbers as stored (`0.25`, not the
+/// editor's `0.250`), so they compare with the value box; choices and lists
+/// by their labels.
+pub fn base_text(db: &UnitDatabase, field: &FieldMeta, raw: Option<String>) -> String {
+    match field.value_type.as_str() {
+        "int" | "real" | "unreal" => raw.unwrap_or_default(),
+        _ => db.format_value(field, raw),
+    }
 }
 
 /// A field row for any object kind. Choices come from the unit database,
@@ -451,6 +469,7 @@ pub fn build_field(
         display: value.display,
         raw: value.raw,
         modified: value.modified,
+        base: value.base,
         value_type: field.value_type.clone(),
         control,
         options: options

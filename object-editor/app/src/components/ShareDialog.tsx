@@ -133,14 +133,17 @@ export function ShareDialog({ open, units, initial, onClose }: ShareDialogProps)
             rows={3}
             aria-label="Share code"
             onFocus={(e) => e.currentTarget.select()}
-            className="break-all rounded-md border border-line bg-surface-0 px-3 py-2 font-mono text-xs outline-none focus:border-gold"
+            className="break-all rounded-[3px] border border-field bg-well px-3 py-2 font-mono text-xs outline-none focus:border-glow"
           />
           <TransferList
             objects={preview.objects}
             files={preview.files}
             warnings={preview.warnings}
           />
-          {saved && <p className="text-sm text-muted">Saved {saved.split(/[\\/]/).pop()}.</p>}
+          <p role="status" className="text-sm text-muted">
+            {saved && `Saved ${saved.split(/[\\/]/).pop()}.`}
+            {copied && <span className="sr-only">Code copied.</span>}
+          </p>
         </>
       )}
     </DialogShell>

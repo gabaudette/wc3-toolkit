@@ -2,7 +2,7 @@ import { FlipBackward, InfoCircle } from "@untitledui/icons";
 import { type KeyboardEvent, useEffect, useState } from "react";
 import { Switch } from "react-aria-components";
 import type { Field } from "../types";
-import { classes } from "../ui";
+import { classes, FIELD_ROW_GRID } from "../ui";
 import { AbilityField } from "./AbilityField";
 import { ColoredTextInput } from "./ColoredTextInput";
 import { FlagsInput } from "./FlagsInput";
@@ -14,6 +14,9 @@ type FieldRowProps = {
   editable: boolean;
   onChange: (value: string) => void;
   onReset: () => void;
+  /** Shows the field in the page's inspector (on focus or its info button);
+   * without one, the info button folds out the description in place. */
+  onInspect?: (field: Field) => void;
 };
 
 const TRUE = "1";
@@ -25,7 +28,7 @@ const ICON_TYPE = "icon";
 const LONG_TEXT_ROWS = 3;
 
 const inputClass =
-  "w-full rounded border border-line bg-surface-0 px-2 py-1 outline-none focus:border-gold read-only:opacity-70";
+  "w-full rounded border border-field bg-well px-2 py-1 outline-none focus:border-glow read-only:opacity-70";
 
 function numberStep(field: Field): number {
   if (field.integer) {
@@ -91,7 +94,7 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
         }}
         className="group flex items-center gap-2 text-muted"
       >
-        <span className="h-5 w-9 rounded-full border border-line bg-surface-0 p-0.5 transition-colors group-data-[selected]:border-gold group-data-[selected]:bg-gold-soft">
+        <span className="h-5 w-9 rounded-full border border-field bg-well p-0.5 transition-colors group-data-[selected]:border-gold group-data-[selected]:bg-gold-soft">
           <span className="block size-3.5 rounded-full bg-faint transition-transform group-data-[selected]:translate-x-4 group-data-[selected]:bg-gold" />
         </span>
         {field.display}
@@ -213,7 +216,7 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
 const numberFormat = new Intl.NumberFormat();
 
 /** "Range 1 – 500,000", "At most 5" or nothing, from the field's limits. */
-function rangeText(field: Field): string | null {
+export function rangeText(field: Field): string | null {
   const { min, max } = field;
   if (min !== null && max !== null) {
     return `Range ${numberFormat.format(min)} – ${numberFormat.format(max)}`;
@@ -234,14 +237,14 @@ export function Description({ field }: { field: Field }) {
   const range = rangeText(field);
 
   return (
-    <div className="col-span-3 mb-1 rounded bg-surface-1 px-3 py-2 text-sm leading-relaxed text-muted">
+    <div className="col-span-4 mb-1 rounded bg-surface-2 px-3 py-2 text-sm leading-relaxed text-muted">
       <p>{field.description}</p>
       {(range || field.unverified) && (
         <p className="mt-1 flex flex-wrap items-center gap-3 text-xs text-faint">
           {range && <span>{range}</span>}
           {field.unverified && (
             <span className="rounded bg-gold-soft px-1.5 py-0.5 text-gold">
-              Unverified: not yet confirmed in game
+              Not yet confirmed in game
             </span>
           )}
         </p>
@@ -250,14 +253,27 @@ export function Description({ field }: { field: Field }) {
   );
 }
 
-export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) {
+export function FieldRow({ field, editable, onChange, onReset, onInspect }: FieldRowProps) {
   const [showInfo, setShowInfo] = useState(false);
 
+  function info() {
+    if (onInspect) {
+      onInspect(field);
+      return;
+    }
+
+    setShowInfo(!showInfo);
+  }
+
   return (
-    <div
+    // A row groups one field's controls; focusing any of them inspects the field.
+    <fieldset
+      aria-label={field.name}
+      onFocus={() => onInspect?.(field)}
       className={classes(
-        "grid grid-cols-[minmax(0,1fr)_minmax(12rem,24rem)_1.75rem] items-start gap-x-3 border-b border-line/60 px-3 py-1",
-        field.modified && "border-l-2 border-l-changed bg-changed-soft/40",
+        FIELD_ROW_GRID,
+        "m-0 min-w-0 border-b border-line/60 px-4 py-1",
+        field.modified && "bg-changed-soft shadow-[inset_2px_0_0_var(--color-changed)]",
       )}
     >
       <div className="flex min-w-0 items-baseline gap-2 pt-1">
@@ -268,12 +284,12 @@ export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) 
         {field.description && (
           <button
             type="button"
-            onClick={() => setShowInfo(!showInfo)}
+            onClick={info}
             aria-expanded={showInfo}
             aria-label={`What ${field.name} does`}
             title="What this field does"
             className={classes(
-              "shrink-0 self-center rounded p-0.5 hover:text-ink",
+              "shrink-0 self-center -my-1 rounded p-1.5 hover:text-ink",
               showInfo && "text-gold",
               !showInfo && "text-faint",
             )}
@@ -283,6 +299,9 @@ export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) 
         )}
       </div>
       <Editor field={field} editable={editable} onChange={onChange} />
+      <span className="truncate pt-1.5 text-sm text-faint" title={field.base}>
+        {field.base}
+      </span>
       {field.modified && editable && (
         <button
           type="button"
@@ -298,6 +317,6 @@ export function FieldRow({ field, editable, onChange, onReset }: FieldRowProps) 
       {field.control === "abilities" && (
         <AbilityField field={field} editable={editable} onChange={onChange} />
       )}
-    </div>
+    </fieldset>
   );
 }

@@ -33,7 +33,10 @@ export function TransferList({ objects, files, warnings }: TransferListProps) {
         {objectCount(objects.length)}
         {dependencies > 0 && `, ${dependencies} brought along because the chosen units use them`}.
       </p>
-      <ul className="max-h-64 overflow-y-auto rounded-md border border-line" aria-label="Objects">
+      <ul
+        className="max-h-64 overflow-y-auto rounded-[3px] border border-line"
+        aria-label="Objects"
+      >
         {objects.map((object) => (
           <li
             key={`${object.kind}-${object.id}`}
@@ -42,7 +45,7 @@ export function TransferList({ objects, files, warnings }: TransferListProps) {
             <UnitIcon path={object.icon} size="small" />
             <span className="min-w-0 flex-1 truncate">
               {object.name}
-              {object.dependency && <span className="text-faint"> · used by the selection</span>}
+              {object.dependency && <span className="text-faint"> · brought along</span>}
             </span>
             <span className="text-xs text-faint">{KIND_LABELS[object.kind]}</span>
             <span className="font-mono text-xs text-muted">
@@ -60,7 +63,7 @@ export function TransferList({ objects, files, warnings }: TransferListProps) {
             {files.length} imported file{files.length > 1 && "s"} (models, textures, icons)
           </p>
           <ul
-            className="max-h-40 overflow-y-auto rounded-md border border-line"
+            className="max-h-40 overflow-y-auto rounded-[3px] border border-line"
             aria-label="Imported files"
           >
             {files.map((file) => (
@@ -85,7 +88,7 @@ export function TransferList({ objects, files, warnings }: TransferListProps) {
         </>
       )}
       {warnings.length > 0 && (
-        <div className="rounded-md border border-gold/40 bg-gold-soft p-2 text-xs">
+        <div className="rounded-[3px] border border-gold/40 bg-gold-soft p-2 text-xs">
           <p className="mb-1 font-medium text-gold">Not included</p>
           <ul className="flex max-h-32 list-disc flex-col gap-0.5 overflow-y-auto pl-4 text-muted">
             {warnings.map((warning) => (

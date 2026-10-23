@@ -1,18 +1,41 @@
 @import "tailwindcss";
 
+/*
+ * Arcane: Warcraft III Reforged's menus. Deep navy surfaces, fine gold
+ * double-line frames, gold for headings and changes, a teal glow for
+ * selection and focus. Decided in AGE-23; the mockups live on the
+ * "WC3 Editor Redesign Directions" canvas.
+ *
+ * Every text color passes 4.5:1 on every surface it is used on.
+ */
 @theme {
-  --color-surface-0: #0b1020;
-  --color-surface-1: #111832;
-  --color-surface-2: #18213f;
-  --color-line: #263156;
-  --color-ink: #e6e9f2;
-  --color-muted: #96a0bd;
-  --color-faint: #66708f;
-  --color-gold: #e3b552;
-  --color-gold-soft: #3b3220;
-  --color-changed: #6ea8ff;
-  --color-changed-soft: #17284a;
-  --color-danger: #ff7a7a;
+  /* Ground, panels, raised and selected rows. */
+  --color-surface-0: #060a13;
+  --color-surface-1: #0d1424;
+  --color-surface-2: #142039;
+  --color-well: #08101f;
+  --color-line: #1d2a45;
+  --color-line-strong: #2c3c60;
+  /* Edges of controls (text boxes, selects, switches, buttons): at least
+     3.36:1 on every surface, so controls are visible (WCAG 1.4.11). */
+  --color-field: #5f7299;
+  --color-ink: #e8ecf5;
+  --color-muted: #a9b4cc;
+  --color-faint: #8f9bb5;
+  /* Gold: headings, the brand, the primary action and changed values. */
+  --color-gold: #e2c27d;
+  --color-gold-bright: #f3dba6;
+  --color-gold-soft: #2a2414;
+  --color-frame: #8a7444;
+  --color-frame-inner: #3b3420;
+  --color-changed: #e2c27d;
+  --color-changed-soft: #1c1a12;
+  /* Teal glow: selection and keyboard focus. */
+  --color-glow: #6fd3e0;
+  --color-danger: #ff8a8a;
+
+  --font-sans: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Cormorant SC", "Cormorant Garamond", Georgia, serif;
   --font-mono: ui-monospace, "SF Mono", "Cascadia Code", Consolas, monospace;
 }
 
@@ -36,6 +59,28 @@ body {
   margin: 0;
   background: var(--color-surface-0);
   color: var(--color-ink);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   font-size: 14px;
+}
+
+/* Keyboard focus glows teal everywhere; mouse focus stays quiet. */
+:focus-visible {
+  outline: 2px solid var(--color-glow);
+  outline-offset: 1px;
+}
+
+@layer components {
+  /* The gold double-line frame of the game's menus: an outer gold line, a gap
+     the panel's own color, then a darker inner line. */
+  .frame {
+    border: 1px solid var(--color-frame);
+    box-shadow:
+      inset 0 0 0 3px var(--color-surface-1),
+      inset 0 0 0 4px var(--color-frame-inner);
+  }
+
+  /* A quieter panel edge for secondary panels. */
+  .panel {
+    border: 1px solid var(--color-line-strong);
+  }
 }

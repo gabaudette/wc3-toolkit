@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { type Cell, moved, typesCharacter } from "../grid";
-import type { LevelCell, LevelField } from "../types";
+import type { Field, LevelCell, LevelField } from "../types";
 import { classes } from "../ui";
 import { Description } from "./FieldRow";
 import { FlagsInput } from "./FlagsInput";
@@ -23,6 +23,8 @@ type LevelTableProps = {
   /** Sets `level` and every later level to `value`. */
   onFill: (field: string, level: number, value: string) => void;
   onReset: (field: string, level: number) => void;
+  /** Shows a row's field in the page's inspector, when the page has one. */
+  onInspect?: (field: Field) => void;
 };
 
 /**
@@ -148,7 +150,7 @@ function FlagsPopover({ anchor, label, onKey, onCommit, children }: FlagsPopover
         }
       }}
       style={placement ?? undefined}
-      className="fixed z-30 w-72 rounded-md border border-line bg-surface-1 p-2 text-left shadow-lg"
+      className="fixed z-30 w-72 rounded-[3px] border border-line bg-surface-1 p-2 text-left shadow-lg"
     >
       {children}
       <p className="mt-1.5 text-xs text-faint">Enter applies, Esc cancels.</p>
@@ -236,7 +238,14 @@ function CellEditor({
  * applies and moves to the next level; Ctrl+Enter applies to every later
  * level too; Escape cancels; Delete resets the cell to the base value.
  */
-export function LevelTable({ fields, editable, onChange, onFill, onReset }: LevelTableProps) {
+export function LevelTable({
+  fields,
+  editable,
+  onChange,
+  onFill,
+  onReset,
+  onInspect,
+}: LevelTableProps) {
   const [active, setActive] = useState<Cell>({ row: 0, column: 0 });
   const [editing, setEditing] = useState<Editing | null>(null);
   const [info, setInfo] = useState<string[]>([]);
@@ -387,7 +396,13 @@ export function LevelTable({ fields, editable, onChange, onFill, onReset }: Leve
     }
   }
 
-  function toggleInfo(id: string) {
+  function toggleInfo(field: Field) {
+    if (onInspect) {
+      onInspect(field);
+      return;
+    }
+
+    const id = field.id;
     if (info.includes(id)) {
       setInfo(info.filter((i) => i !== id));
     } else {
@@ -439,12 +454,12 @@ export function LevelTable({ fields, editable, onChange, onFill, onReset }: Leve
                       {meta.description && (
                         <button
                           type="button"
-                          onClick={() => toggleInfo(meta.id)}
+                          onClick={() => toggleInfo(meta)}
                           aria-expanded={showInfo}
                           aria-label={`What ${meta.name} does`}
                           title="What this field does"
                           className={classes(
-                            "shrink-0 self-center rounded p-0.5 hover:text-ink",
+                            "shrink-0 self-center -my-1 rounded p-1.5 hover:text-ink",
                             showInfo && "text-gold",
                             !showInfo && "text-faint",
                           )}
@@ -490,7 +505,10 @@ export function LevelTable({ fields, editable, onChange, onFill, onReset }: Leve
                             role="button"
                             tabIndex={rovingIndex(isActive)}
                             hidden={isEditing && isTyped(field)}
-                            onFocus={() => setActive(position)}
+                            onFocus={() => {
+                              setActive(position);
+                              onInspect?.(meta);
+                            }}
                             onClick={() => startEditing(position, null)}
                             onKeyDown={(e) => cellKeyDown(e, position)}
                             aria-label={`${meta.name}, level ${column + 1}: ${cell.display}`}

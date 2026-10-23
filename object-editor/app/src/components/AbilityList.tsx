@@ -87,15 +87,18 @@ export function AbilityList({ abilities, selected, onSelect, onError }: AbilityL
   }, [abilities, hits, kinds, origins]);
 
   return (
-    <aside className="flex min-h-0 w-[22rem] shrink-0 flex-col border-r border-line bg-surface-1">
+    <aside
+      aria-label="Ability list"
+      className="panel flex min-h-0 w-72 shrink-0 flex-col rounded-[3px] bg-surface-1"
+    >
       <div className="flex flex-col gap-2 border-b border-line p-3">
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search: name, code (AHhb), value (75, 0.5)"
+          placeholder="Search abilities: Holy Light, AHhb, 75…"
           aria-label="Search abilities"
-          className="rounded-md border border-line bg-surface-0 px-3 py-1.5 outline-none focus:border-gold"
+          className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
         />
         <div className="flex flex-wrap gap-1">
           {KINDS.map((k) => (
@@ -128,7 +131,7 @@ export function AbilityList({ abilities, selected, onSelect, onError }: AbilityL
               aria-current={selected === ability.id}
               className={classes(
                 "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2",
-                selected === ability.id && "bg-surface-2",
+                selected === ability.id && "bg-surface-2 shadow-[inset_2px_0_0_var(--color-glow)]",
               )}
             >
               <UnitIcon path={ability.icon} size="small" />

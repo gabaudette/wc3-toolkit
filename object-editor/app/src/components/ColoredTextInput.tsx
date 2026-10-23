@@ -130,7 +130,7 @@ export function ColoredTextInput({
               e.preventDefault();
             }
           }}
-          className="absolute -top-9 right-0 z-20 flex items-center gap-1 rounded-md border border-line bg-surface-2 px-1.5 py-1 shadow-xl"
+          className="absolute -top-9 right-0 z-20 flex items-center gap-1 rounded-[3px] border border-line bg-surface-2 px-1.5 py-1 shadow-xl"
         >
           {SWATCHES.map((swatch) => (
             <button

@@ -9,7 +9,7 @@ import {
   rgbToHex,
 } from "../fieldGroups";
 import type { DamageBonus, Field } from "../types";
-import { classes } from "../ui";
+import { classes, FIELD_ROW_GRID } from "../ui";
 
 type FieldGroupRowProps = {
   group: FieldGroup;
@@ -21,7 +21,7 @@ type FieldGroupRowProps = {
 };
 
 const numberClass =
-  "w-full rounded border border-line bg-surface-0 px-2 py-1 font-mono outline-none focus:border-gold read-only:opacity-70";
+  "w-full rounded border border-field bg-well px-2 py-1 font-mono outline-none focus:border-glow read-only:opacity-70";
 
 function numberOf(field: Field | undefined): number {
   const value = Number(field?.raw ?? "");
@@ -125,7 +125,7 @@ function ColorPicker({
       disabled={!editable}
       onChange={(e) => pick(e.target.value)}
       aria-label="Tint color"
-      className="h-8 w-12 shrink-0 cursor-pointer rounded border border-line bg-surface-0"
+      className="h-8 w-12 shrink-0 cursor-pointer rounded border border-field bg-well"
     />
   );
 }
@@ -183,12 +183,14 @@ export function FieldGroupRow({
 }: FieldGroupRowProps) {
   const modified = fields.filter((f) => f.modified);
   const description = fields.find((f) => f.description)?.description;
+  const bases = fields.map((f) => f.base).join(" / ");
 
   return (
     <div
       className={classes(
-        "grid grid-cols-[minmax(0,1fr)_minmax(12rem,24rem)_1.75rem] items-start gap-x-3 border-b border-line/60 px-3 py-1.5",
-        modified.length > 0 && "border-l-2 border-l-changed bg-changed-soft/40",
+        FIELD_ROW_GRID,
+        "border-b border-line/60 px-4 py-1.5",
+        modified.length > 0 && "bg-changed-soft shadow-[inset_2px_0_0_var(--color-changed)]",
       )}
     >
       <div className="min-w-0 pt-1">
@@ -222,6 +224,10 @@ export function FieldGroupRow({
           <DiceResult group={group} fields={fields} damageBonus={damageBonus} />
         )}
       </div>
+
+      <span className="truncate pt-1.5 text-sm text-faint" title={bases}>
+        {bases}
+      </span>
 
       {modified.length > 0 && editable && (
         <button
