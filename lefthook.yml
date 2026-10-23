@@ -1,0 +1,29 @@
+# Git hooks (lefthook). Formatting and linting run here, before each commit,
+# instead of in CI. `bun install` in object-editor/app installs the hooks.
+# Fix what they report with `cargo fmt --all` and `bun run lint:fix`; read the
+# Clippy output for the rest.
+
+glob_matcher: doublestar
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: rust format
+      root: object-editor/
+      glob: "**/*.rs"
+      run: cargo fmt-check
+
+    - name: rust lint
+      root: object-editor/
+      glob:
+        - "**/*.rs"
+        - "**/Cargo.toml"
+        - "**/Cargo.lock"
+        - ".cargo/config.toml"
+      run: cargo lint
+
+    - name: frontend lint
+      root: object-editor/app/
+      glob:
+        - "**/*.{ts,tsx,js,css,json,jsonc,html}"
+      run: bun run check

@@ -1,3 +1,5 @@
+# Builds and tests. Formatting and linting run before each commit instead
+# (lefthook.yml), so CI does not repeat them.
 name: CI
 
 on:
@@ -32,46 +34,11 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint and type-check
-        run: bun run check
-
       - name: Test
         run: bun run test
 
       - name: Build
         run: bun run build
-
-  lint:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Install Tauri system libraries
-        run: sudo apt-get update && sudo apt-get install -y $TAURI_LINUX_DEPS
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Build the frontend (the app crate embeds it)
-        working-directory: object-editor/app
-        run: bun install --frozen-lockfile && bun run build
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-
-      - name: Format
-        working-directory: object-editor
-        run: cargo fmt-check
-
-      - name: Lint
-        working-directory: object-editor
-        run: cargo lint
 
   test:
     strategy:

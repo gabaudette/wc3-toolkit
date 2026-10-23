@@ -9,6 +9,7 @@
     "check": "bun run lint && tsc --noEmit",
     "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write .",
+    "prepare": "lefthook install",
     "tauri": "tauri",
     "test": "bun test"
   },
@@ -32,6 +33,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.2",
+    "lefthook": "2.1.17",
     "tailwindcss": "4.3.3",
     "typescript": "7.0.2",
     "vite": "8.3.5"
