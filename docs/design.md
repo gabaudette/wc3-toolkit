@@ -85,10 +85,12 @@ would also need a CSP change.
   control in a row, or its info button, inspects that field. Per-level fields show their
   level 1 base and reset in their table.
 - **Command palette** (`CommandPalette`, Ctrl K): commands, units and, once something is
-  typed, abilities, at most 8 per group. Arrows move, Enter runs, Escape closes.
+  typed, abilities, items and upgrades, at most 8 per group. Arrows move, Enter runs, Escape closes.
 - **Object types** are tabs in the display font (`aria-current="page"` on the open one). New
-  object types (items, upgrades, buffs, doodads, destructables) add a tab, a list and a page on
-  these same pieces.
+  object types add a tab, a list and a page on these same pieces: items use the unit list
+  (`UnitList` with `ITEM_LIST`, a chip per item class) and the unit page; upgrades use the unit
+  list (`UPGRADE_LIST`, a chip per race) and the ability page, for its per-level tables. Buffs,
+  doodads and destructables are next.
 
 ## Accessibility
 

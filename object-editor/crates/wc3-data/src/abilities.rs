@@ -459,12 +459,16 @@ fn format_number(raw: &str) -> String {
     trimmed.to_owned()
 }
 
-fn load_slk(data: Vec<u8>, path: &str) -> Result<Slk> {
+pub(crate) fn load_slk(data: Vec<u8>, path: &str) -> Result<Slk> {
     Slk::parse(&decode_text(data, path)?).map_err(|e| e.in_file(path))
 }
 
 /// Merges a text file that not every install or locale has.
-fn merge_optional(profile: &mut Profile, data: Result<Vec<u8>>, path: &str) -> Result<()> {
+pub(crate) fn merge_optional(
+    profile: &mut Profile,
+    data: Result<Vec<u8>>,
+    path: &str,
+) -> Result<()> {
     match data {
         Ok(bytes) => {
             profile.merge_text(&decode_text(bytes, path)?);

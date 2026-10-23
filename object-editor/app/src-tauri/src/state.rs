@@ -8,11 +8,14 @@ use wc3_data::abilities::AbilityDatabase;
 use wc3_data::game::{ArtMode, GameFiles};
 use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
+use wc3_data::upgrades::UpgradeDatabase;
 use wc3_map::Map;
 use wc3_map::abilities::MapAbilities;
 use wc3_map::imports::{MapImports, candidates};
+use wc3_map::items::MapItems;
 use wc3_map::transfer::MapExtras;
 use wc3_map::units::MapUnits;
+use wc3_map::upgrades::MapUpgrades;
 
 pub struct Session {
     pub files: GameFiles,
@@ -20,6 +23,11 @@ pub struct Session {
     pub guide: FieldGuide,
     pub abilities: AbilityDatabase,
     pub ability_guide: FieldGuide,
+    /// Items: the unit metadata's item fields over the item tables.
+    pub items: UnitDatabase,
+    pub item_guide: FieldGuide,
+    pub upgrades: UpgradeDatabase,
+    pub upgrade_guide: FieldGuide,
     pub mode: ArtMode,
     pub map: Option<OpenMap>,
     /// PNG bytes by `(art mode, game path)`, so each icon is decoded once.
@@ -31,6 +39,8 @@ pub struct OpenMap {
     /// Units, and the map's string table.
     pub units: MapUnits,
     pub abilities: MapAbilities,
+    pub items: MapItems,
+    pub upgrades: MapUpgrades,
     /// Buffs: only imports change them.
     pub extras: MapExtras,
     /// The import list, and files imports queued for the next save.
@@ -47,6 +57,8 @@ impl OpenMap {
         path: PathBuf,
         units: MapUnits,
         abilities: MapAbilities,
+        items: MapItems,
+        upgrades: MapUpgrades,
         extras: MapExtras,
         imports: MapImports,
     ) -> Self {
@@ -54,6 +66,8 @@ impl OpenMap {
             path,
             units,
             abilities,
+            items,
+            upgrades,
             extras,
             imports,
             saved_files: Vec::new(),
@@ -67,6 +81,8 @@ impl OpenMap {
     pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
         let mut files = self.units.files();
         files.extend(self.abilities.files());
+        files.extend(self.items.files());
+        files.extend(self.upgrades.files());
         files.extend(self.extras.files());
         files
     }
@@ -155,6 +171,8 @@ mod tests {
             path.clone(),
             MapUnits::load(&map)?,
             MapAbilities::load(&map)?,
+            MapItems::load(&map)?,
+            MapUpgrades::load(&map)?,
             MapExtras::load(&map)?,
             imports,
         );

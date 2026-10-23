@@ -1,8 +1,9 @@
 // Mirrors the Rust types in src-tauri/src/view.rs and commands.rs.
 
-export type UnitKind = "hero" | "unit" | "building" | "item";
+export type UnitKind = "hero" | "unit" | "building" | "item" | "upgrade";
 
-export type UnitGroup = "map" | "melee" | "campaign" | "special" | "hidden";
+/** "game" holds the game's own items, which have no melee or campaign split. */
+export type UnitGroup = "map" | "melee" | "campaign" | "special" | "hidden" | "game";
 
 export type UnitItem = {
   id: string;
@@ -160,7 +161,7 @@ export type AbilityDetail = {
 };
 
 /** Objects that move between maps: custom units and what they use. */
-export type TransferKind = "unit" | "ability" | "buff";
+export type TransferKind = "unit" | "ability" | "buff" | "item" | "upgrade";
 
 export type TransferObject = {
   kind: TransferKind;

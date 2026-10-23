@@ -1,0 +1,240 @@
+# Field guide for the Items tab: what each item field does, which fields come
+# first, and which are rarely needed. Written for this project (not taken from
+# the game). Items use the unit metadata's item fields; a few of them (name,
+# tooltips, hotkey, button position, requirements) are shared with units but
+# are described here for items. Mark anything not confirmed in game with
+# `unverified = true`.
+#
+# [order]      per category, the fields shown first, in this order. Fields not
+#              listed follow in the game's metadata order.
+# [[field]]    ids sharing one description; `advanced = true` folds the fields
+#              into the "Advanced" group of their category.
+
+[order]
+stats = [
+  "icla", "ilev", "igol", "ilum", "iusa", "iuse", "ipow", "iper", "idro", "idrp",
+  "isel", "ipaw", "isto", "istr", "isst", "isit", "ista", "icid", "iicd", "ihtp",
+  "iinv", "iprn", "ilvo", "ipri", "imor", "iequ", "itag",
+]
+abil = ["iabi"]
+text = ["unam", "utip", "utub", "ides", "uhot", "unsf"]
+art = [
+  "iico", "ubpx", "ubpy", "ifil", "isca", "iclr", "iclg", "iclb", "itco", "itcc", "issc",
+]
+tech = ["ureq", "urqa"]
+combat = ["iarm"]
+
+# --- Stats -------------------------------------------------------------------
+
+[[field]]
+ids = ["icla"]
+description = "The item's class (Permanent, Charged, Power Up, Artifact, Purchasable, Campaign, Miscellaneous). Random item drops and triggers pick items by class and level."
+
+[[field]]
+ids = ["ilev"]
+description = "The item's level. Random item drops and \"random item of level\" triggers pick by it; it does not change what the item does."
+
+[[field]]
+ids = ["ilvo"]
+description = "A second level used when the item is picked at random without a class. Older maps rely on it; most items match their Level."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["igol"]
+description = "Gold paid to buy the item from a shop. Selling it to a shop returns part of this."
+
+[[field]]
+ids = ["ilum"]
+description = "Lumber paid to buy the item from a shop."
+
+[[field]]
+ids = ["iusa"]
+description = "Whether the hero clicks the item to use it (potions, wands, scrolls). Items that only give passive bonuses leave this off."
+
+[[field]]
+ids = ["iuse"]
+description = "Uses before the item runs out; 0 means unlimited. Charged items show the number on their icon."
+
+[[field]]
+ids = ["ipow"]
+description = "Whether picking the item up uses it at once instead of putting it in the inventory, like tomes and runes."
+
+[[field]]
+ids = ["iper"]
+description = "Whether the item disappears when its last charge is used."
+
+[[field]]
+ids = ["idro"]
+description = "Whether the hero can drop the item or give it to another unit."
+
+[[field]]
+ids = ["idrp"]
+description = "Whether the item falls to the ground when the hero carrying it dies."
+
+[[field]]
+ids = ["isel"]
+description = "Whether shops can offer this item for sale."
+
+[[field]]
+ids = ["ipaw"]
+description = "Whether heroes can sell this item to a shop."
+
+[[field]]
+ids = ["isto"]
+description = "How many a shop can hold at once."
+
+[[field]]
+ids = ["istr"]
+description = "Seconds before a shop restocks one more after selling one."
+
+[[field]]
+ids = ["isst"]
+description = "Seconds after the game starts before the item first appears in shops."
+advanced = true
+
+[[field]]
+ids = ["isit"]
+description = "How many a shop has once the start delay is over."
+advanced = true
+
+[[field]]
+ids = ["ista"]
+description = "How many items of this kind stack into one inventory slot; 0 means they do not stack."
+unverified = true
+
+[[field]]
+ids = ["icid"]
+description = "Items in the same cooldown group share their cooldown: using one starts the cooldown of the others. It names an ability, usually the item's own."
+advanced = true
+
+[[field]]
+ids = ["iicd"]
+description = "Whether using the item ignores the cooldown group, so it can be used while others of its group are cooling down."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["ihtp"]
+description = "Hit points of the item while it lies on the ground, where attacks and spells can destroy it."
+
+[[field]]
+ids = ["iinv"]
+description = "Whether the item cannot be destroyed while it lies on the ground."
+
+[[field]]
+ids = ["iprn"]
+description = "Whether the item can come out of random item drops and random item triggers."
+
+[[field]]
+ids = ["ipri"]
+description = "Priority used by the computer players when they choose items to buy or keep."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["imor"]
+description = "Whether the item can be the target of transformation effects, such as polymorphing items."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["iequ"]
+description = "Equipment type added in Reforged, for items worn by the hero model."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["itag"]
+description = "A tag added in Reforged that groups items for the game's own rules."
+unverified = true
+advanced = true
+
+# --- Abilities ---------------------------------------------------------------
+
+[[field]]
+ids = ["iabi"]
+description = "The abilities the item gives its carrier (item abilities, such as Item Damage Bonus or Item Heal). This is what the item actually does."
+
+# --- Text --------------------------------------------------------------------
+
+[[field]]
+ids = ["unam"]
+description = "The item's name, shown in its tooltip and in the inventory."
+
+[[field]]
+ids = ["utip"]
+description = "The tooltip's first line in shops, usually \"Purchase <name>\". Color codes and |n line breaks work."
+
+[[field]]
+ids = ["utub"]
+description = "The longer tooltip text, shown in shops and in the inventory. Color codes and |n line breaks work."
+
+[[field]]
+ids = ["ides"]
+description = "A short description shown when the item lies on the ground or in some menus."
+
+[[field]]
+ids = ["uhot"]
+description = "Key that buys the item from a shop."
+
+[[field]]
+ids = ["unsf"]
+description = "Text after the name in the editor only (like \"(Campaign)\"), to tell similar items apart. Players never see it."
+advanced = true
+
+# --- Art ---------------------------------------------------------------------
+
+[[field]]
+ids = ["iico"]
+description = "Icon of the item in the inventory and in shops."
+
+[[field]]
+ids = ["ubpx", "ubpy"]
+description = "Position of the item's button in a shop's command card: column (0 to 3) and row (0 to 2)."
+
+[[field]]
+ids = ["ifil"]
+description = "Model shown when the item lies on the ground."
+
+[[field]]
+ids = ["isca"]
+description = "Size of the ground model; 1 is its normal size."
+
+[[field]]
+ids = ["iclr", "iclg", "iclb"]
+description = "Tint of the ground model, red, green and blue from 0 to 255; 255 everywhere keeps its colors."
+
+[[field]]
+ids = ["itco"]
+description = "Team color of the ground model when it has team-colored parts."
+advanced = true
+
+[[field]]
+ids = ["itcc"]
+description = "Whether the ground model may use a custom team color instead of the team's."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["issc"]
+description = "Size of the selection circle in the editor only."
+advanced = true
+
+# --- Techtree ----------------------------------------------------------------
+
+[[field]]
+ids = ["ureq"]
+description = "Buildings, units or upgrades the player needs before a shop sells the item."
+
+[[field]]
+ids = ["urqa"]
+description = "Levels of the required upgrades, in the same order as Requirements."
+advanced = true
+
+# --- Combat ------------------------------------------------------------------
+
+[[field]]
+ids = ["iarm"]
+description = "Sound the item makes when attacked on the ground (Wood, Metal, ...). It does not change damage taken."
+advanced = true

@@ -6,8 +6,10 @@ use serde::Serialize;
 use wc3_data::game::ArtMode;
 use wc3_data::guide::{FieldGuide, GuideEntry};
 use wc3_data::meta::{FieldMeta, ObjectKind};
+use wc3_data::strings::MapStrings;
 use wc3_data::units::UnitDatabase;
 use wc3_map::FourCC;
+use wc3_map::items::MapItems;
 use wc3_map::units::{MapUnit, MapUnits};
 
 /// Category order on a unit page: what people edit most comes first.
@@ -21,6 +23,10 @@ const ATTRIBUTES: [(&str, &str); 3] = [("STR", "ustr"), ("AGI", "uagi"), ("INT",
 /// Text fields shown as multi-line boxes: unit and ability tooltips.
 const LONG_TEXT_FIELDS: &[&str] = &["utub", "upro", "ides", "aub1", "auu1", "arut"];
 const TRUE: &str = "1";
+const RACE: &str = "urac";
+const ITEM_CLASS: &str = "icla";
+const UNIT_ICON: &str = "uico";
+const ITEM_ICON: &str = "iico";
 const NOT_PLACEABLE: &str = "0";
 
 #[derive(Serialize)]
@@ -116,15 +122,103 @@ pub struct SearchHit {
     pub reason: String,
 }
 
-/// Read-only view of the game data with an optional map on top.
-pub struct View<'a> {
+/// A map's changes to one kind of plain object (no levels): units, or items.
+pub trait PlainChanges {
+    /// The objects the map adds or changes.
+    fn changed(&self) -> Vec<MapUnit>;
+    fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC>;
+    fn raw_value(
+        &self,
+        db: &UnitDatabase,
+        id: FourCC,
+        field: &FieldMeta,
+        mode: ArtMode,
+    ) -> Option<String>;
+    fn is_modified(&self, id: FourCC, field: &FieldMeta) -> bool;
+    fn name(&self, db: &UnitDatabase, id: FourCC) -> String;
+}
+
+impl PlainChanges for MapUnits {
+    fn changed(&self) -> Vec<MapUnit> {
+        self.units()
+    }
+
+    fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC> {
+        MapUnits::base_of(self, db, id)
+    }
+
+    fn raw_value(
+        &self,
+        db: &UnitDatabase,
+        id: FourCC,
+        field: &FieldMeta,
+        mode: ArtMode,
+    ) -> Option<String> {
+        MapUnits::raw_value(self, db, id, field, mode)
+    }
+
+    fn is_modified(&self, id: FourCC, field: &FieldMeta) -> bool {
+        MapUnits::is_modified(self, id, field)
+    }
+
+    fn name(&self, db: &UnitDatabase, id: FourCC) -> String {
+        MapUnits::name(self, db, id)
+    }
+}
+
+/// A map's items with the string table their text lives in.
+pub struct ItemChanges<'a> {
+    pub items: &'a MapItems,
+    pub strings: &'a MapStrings,
+}
+
+impl PlainChanges for ItemChanges<'_> {
+    fn changed(&self) -> Vec<MapUnit> {
+        self.items
+            .items()
+            .into_iter()
+            .map(|i| MapUnit {
+                id: i.id,
+                base: i.base,
+                is_custom: i.is_custom,
+                modified_fields: i.modified_fields,
+            })
+            .collect()
+    }
+
+    fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC> {
+        self.items.base_of(db, id)
+    }
+
+    fn raw_value(
+        &self,
+        db: &UnitDatabase,
+        id: FourCC,
+        field: &FieldMeta,
+        mode: ArtMode,
+    ) -> Option<String> {
+        self.items.raw_value(db, self.strings, id, field, mode)
+    }
+
+    fn is_modified(&self, id: FourCC, field: &FieldMeta) -> bool {
+        self.items.is_modified(id, field)
+    }
+
+    fn name(&self, db: &UnitDatabase, id: FourCC) -> String {
+        self.items.name(db, self.strings, id)
+    }
+}
+
+/// Read-only view of the game data with an optional map on top. Units by
+/// default; items with [`ItemChanges`] and the item database.
+pub struct View<'a, M = MapUnits> {
     pub db: &'a UnitDatabase,
     pub guide: &'a FieldGuide,
-    pub map: Option<&'a MapUnits>,
+    pub map: Option<&'a M>,
     pub mode: ArtMode,
 }
 
-impl View<'_> {
+impl<M: PlainChanges> View<'_, M> {
     /// The map's units first, then every game unit, each once.
     pub fn ids(&self) -> Vec<FourCC> {
         self.ids_after(&self.map_units())
@@ -133,7 +227,7 @@ impl View<'_> {
     /// The units the map adds or changes. Rebuilt on every call, so callers
     /// going through many units compute it once.
     fn map_units(&self) -> Vec<MapUnit> {
-        self.map.map(MapUnits::units).unwrap_or_default()
+        self.map.map(M::changed).unwrap_or_default()
     }
 
     /// The given map units first, then every game unit, each once.
@@ -198,7 +292,8 @@ impl View<'_> {
         let base = self.base(id)?;
         let race = self
             .db
-            .field("urac")
+            .field(RACE)
+            .or_else(|| self.db.field(ITEM_CLASS))
             .map(|f| self.display(id, f))
             .unwrap_or_default();
 
@@ -211,7 +306,9 @@ impl View<'_> {
             group: self.group(id, map_unit.is_some()),
             custom: map_unit.is_some_and(|u| u.is_custom),
             changed_fields: map_unit.map_or(0, |u| u.modified_fields),
-            icon: self.raw_by_id(id, "uico"),
+            icon: self
+                .raw_by_id(id, UNIT_ICON)
+                .or_else(|| self.raw_by_id(id, ITEM_ICON)),
         })
     }
 
@@ -220,6 +317,8 @@ impl View<'_> {
 
         if in_map {
             "map"
+        } else if self.db.kind(&id.to_string()) == ObjectKind::Item {
+            "game"
         } else if flag("uine").as_deref() == Some(NOT_PLACEABLE) {
             "hidden"
         } else if flag("ucam").as_deref() == Some(TRUE) {
@@ -327,6 +426,22 @@ impl View<'_> {
     }
 
     fn summary(&self, id: FourCC, kind: &str) -> Vec<Stat> {
+        if kind == "item" {
+            return [
+                ("Class", "icla"),
+                ("Level", "ilev"),
+                ("Gold", "igol"),
+                ("Lumber", "ilum"),
+                ("Charges", "iuse"),
+            ]
+            .into_iter()
+            .map(|(label, field)| Stat {
+                label,
+                value: self.shown(id, field),
+            })
+            .collect();
+        }
+
         let attributes = ATTRIBUTES;
         let is_hero = kind == "hero";
         let hero_bonus = if is_hero {
@@ -529,7 +644,7 @@ mod tests {
     fn paladin_page_matches_the_game_data() -> TestResult {
         let db = database()?;
         let guide = FieldGuide::units()?;
-        let view = View {
+        let view: View<'_> = View {
             db: &db,
             guide: &guide,
             map: None,
@@ -588,7 +703,7 @@ mod tests {
     fn search_finds_names_codes_and_values() -> TestResult {
         let db = database()?;
         let guide = FieldGuide::units()?;
-        let view = View {
+        let view: View<'_> = View {
             db: &db,
             guide: &guide,
             map: None,

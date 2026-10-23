@@ -13,6 +13,10 @@ const UNIT_GUIDE: &str = include_str!("../data/unit-fields.toml");
 const UNIT_GUIDE_FILE: &str = "data/unit-fields.toml";
 const ABILITY_GUIDE: &str = include_str!("../data/ability-fields.toml");
 const ABILITY_GUIDE_FILE: &str = "data/ability-fields.toml";
+const ITEM_GUIDE: &str = include_str!("../data/item-fields.toml");
+const ITEM_GUIDE_FILE: &str = "data/item-fields.toml";
+const UPGRADE_GUIDE: &str = include_str!("../data/upgrade-fields.toml");
+const UPGRADE_GUIDE_FILE: &str = "data/upgrade-fields.toml";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GuideEntry {
@@ -63,6 +67,16 @@ impl FieldGuide {
     /// The guide for abilities' generic fields.
     pub fn abilities() -> Result<Self> {
         Self::parse(ABILITY_GUIDE).map_err(|e| e.in_file(ABILITY_GUIDE_FILE))
+    }
+
+    /// The guide for items.
+    pub fn items() -> Result<Self> {
+        Self::parse(ITEM_GUIDE).map_err(|e| e.in_file(ITEM_GUIDE_FILE))
+    }
+
+    /// The guide for upgrades.
+    pub fn upgrades() -> Result<Self> {
+        Self::parse(UPGRADE_GUIDE).map_err(|e| e.in_file(UPGRADE_GUIDE_FILE))
     }
 
     pub fn parse(text: &str) -> Result<Self> {

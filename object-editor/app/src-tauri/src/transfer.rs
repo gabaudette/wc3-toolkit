@@ -9,11 +9,13 @@ use serde::{Deserialize, Serialize};
 use tauri::State;
 use wc3_map::abilities::MapAbilities;
 use wc3_map::imports::{FileStatus, ImportedFile, file_statuses};
+use wc3_map::items::MapItems;
 use wc3_map::transfer::{
-    self, Bundle, BundledObject, Export, MapExtras, MapObjects, ObjectType, PlannedObject,
-    References,
+    self, Bundle, BundledObject, Export, MapExtras, MapObjects, MapObjectsMut, ObjectType,
+    PlannedObject, References,
 };
 use wc3_map::units::MapUnits;
+use wc3_map::upgrades::MapUpgrades;
 use wc3_map::{FourCC, Map};
 
 use crate::commands::{fourcc, view};
@@ -26,6 +28,10 @@ const ABILITY_NAME: &str = "anam";
 const ABILITY_ICON: &str = "aart";
 const BUFF_NAME: &str = "fnam";
 const BUFF_ICON: &str = "fart";
+const ITEM_NAME: &str = "unam";
+const ITEM_ICON: &str = "iico";
+const UPGRADE_NAME: &str = "gnam";
+const UPGRADE_ICON: &str = "gar1";
 
 /// An object about to move, as the window lists it.
 #[derive(Serialize)]
@@ -87,6 +93,8 @@ struct OtherMap {
     map: Map,
     units: MapUnits,
     abilities: MapAbilities,
+    items: MapItems,
+    upgrades: MapUpgrades,
     extras: MapExtras,
 }
 
@@ -96,6 +104,8 @@ impl OtherMap {
         Ok(Self {
             units: MapUnits::load(&map).map_err(|e| e.to_string())?,
             abilities: MapAbilities::load(&map).map_err(|e| e.to_string())?,
+            items: MapItems::load(&map).map_err(|e| e.to_string())?,
+            upgrades: MapUpgrades::load(&map).map_err(|e| e.to_string())?,
             extras: MapExtras::load(&map).map_err(|e| e.to_string())?,
             map,
         })
@@ -109,13 +119,20 @@ impl OtherMap {
         MapObjects {
             units: &self.units,
             abilities: &self.abilities,
+            items: &self.items,
+            upgrades: &self.upgrades,
             extras: &self.extras,
         }
     }
 }
 
 fn references(session: &Session) -> References {
-    References::new(session.db.fields(), session.abilities.fields())
+    References::new(
+        session.db.fields(),
+        session.abilities.fields(),
+        session.items.fields(),
+        session.upgrades.fields(),
+    )
 }
 
 fn kind_name(ty: ObjectType) -> &'static str {
@@ -123,6 +140,8 @@ fn kind_name(ty: ObjectType) -> &'static str {
         ObjectType::Unit => "unit",
         ObjectType::Ability => "ability",
         ObjectType::Buff => "buff",
+        ObjectType::Item => "item",
+        ObjectType::Upgrade => "upgrade",
     }
 }
 
@@ -158,6 +177,14 @@ fn describe(
             own(BUFF_NAME).unwrap_or_else(|| base.clone()),
             own(BUFF_ICON),
         ),
+        ObjectType::Item => (
+            own(ITEM_NAME).unwrap_or_else(|| session.items.name(&base)),
+            own(ITEM_ICON).or_else(|| session.items.icon_path(&base, session.mode)),
+        ),
+        ObjectType::Upgrade => (
+            own(UPGRADE_NAME).unwrap_or_else(|| session.upgrades.name(&base)),
+            own(UPGRADE_ICON).or_else(|| session.upgrades.icon_path(&base, session.mode)),
+        ),
     };
 
     TransferObject {
@@ -185,6 +212,8 @@ fn export_open_map(session: &Session, chosen: &[FourCC]) -> Result<Export, Strin
     let source = MapObjects {
         units: &map.units,
         abilities: &map.abilities,
+        items: &map.items,
+        upgrades: &map.upgrades,
         extras: &map.extras,
     };
     transfer::export(source, &references(session), chosen, &map.reader()).map_err(|e| e.to_string())
@@ -326,11 +355,15 @@ fn planned(session: &Session, bundle: &Bundle) -> Result<Vec<PlannedObject>, Str
     let target = MapObjects {
         units: &map.units,
         abilities: &map.abilities,
+        items: &map.items,
+        upgrades: &map.upgrades,
         extras: &map.extras,
     };
     let in_game = |ty: ObjectType, id: FourCC| match ty {
         ObjectType::Unit => session.db.contains(&id.to_string()),
         ObjectType::Ability => session.abilities.contains(&id.to_string()),
+        ObjectType::Item => session.items.contains(&id.to_string()),
+        ObjectType::Upgrade => session.upgrades.contains(&id.to_string()),
         // Game buffs use letter codes (`BHbd`); custom ones use digits (`B000`).
         ObjectType::Buff => false,
     };
@@ -409,9 +442,13 @@ pub fn import_objects(
             &bundle,
             &plan,
             &refs,
-            &mut map.units,
-            &mut map.abilities,
-            &mut map.extras,
+            MapObjectsMut {
+                units: &mut map.units,
+                abilities: &mut map.abilities,
+                items: &mut map.items,
+                upgrades: &mut map.upgrades,
+                extras: &mut map.extras,
+            },
         );
         Ok(added)
     })

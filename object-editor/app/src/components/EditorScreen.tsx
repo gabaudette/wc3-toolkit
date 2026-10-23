@@ -12,21 +12,25 @@ import type {
   UnitDetail,
   UnitItem,
 } from "../types";
-import { classes, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
+import { classes, MAP_FILTERS, MAP_PATH_KEY, remembered, replaceField } from "../ui";
 import { AbilitiesPane } from "./AbilitiesPane";
 import { Button } from "./Button";
 import { CommandPalette, type PaletteCommand } from "./CommandPalette";
 import { ImportDialog } from "./ImportDialog";
+import { ItemsPane } from "./ItemsPane";
 import { OpenAbilityContext } from "./openAbility";
 import { ShareDialog } from "./ShareDialog";
-import { UnitList } from "./UnitList";
+import { UNIT_LIST, UnitList } from "./UnitList";
 import { UnitPage } from "./UnitPage";
+import { UpgradesPane } from "./UpgradesPane";
 
-type Tab = "units" | "abilities";
+type Tab = "units" | "abilities" | "items" | "upgrades";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "units", label: "Units" },
   { id: "abilities", label: "Abilities" },
+  { id: "items", label: "Items" },
+  { id: "upgrades", label: "Upgrades" },
 ];
 
 type EditorScreenProps = {
@@ -44,22 +48,6 @@ function confirmDiscard(map: MapSummary): Promise<boolean> {
   });
 }
 
-function replaceField(detail: UnitDetail, updated: Field): UnitDetail {
-  return {
-    ...detail,
-    sections: detail.sections.map((section) => ({
-      ...section,
-      fields: section.fields.map((f) => {
-        if (f.id === updated.id) {
-          return updated;
-        }
-
-        return f;
-      }),
-    })),
-  };
-}
-
 export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [map, setMap] = useState(initialMap);
   const [units, setUnits] = useState<UnitItem[]>([]);
@@ -71,6 +59,8 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [dialog, setDialog] = useState<"share" | "import" | "search" | null>(null);
   const [tab, setTab] = useState<Tab>("units");
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [selectedUpgrade, setSelectedUpgrade] = useState<string | null>(null);
   /** Bumped when the map is replaced or imported into, so the ability list reloads. */
   const [revision, setRevision] = useState(0);
   const editable = map !== null;
@@ -96,6 +86,16 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const openAbility = useCallback((id: string) => {
     setSelectedAbility(id);
     setTab("abilities");
+  }, []);
+
+  const openItem = useCallback((id: string) => {
+    setSelectedItem(id);
+    setTab("items");
+  }, []);
+
+  const openUpgrade = useCallback((id: string) => {
+    setSelectedUpgrade(id);
+    setTab("upgrades");
   }, []);
 
   const refreshList = useCallback(() => {
@@ -197,6 +197,8 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       setSelected(null);
       setDetail(null);
       setSelectedAbility(null);
+      setSelectedItem(null);
+      setSelectedUpgrade(null);
       setRevision((r) => r + 1);
       refreshList();
     } catch (e) {
@@ -261,7 +263,9 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   }, [map, save]);
 
   return (
-    <div className="flex h-full flex-col gap-2.5 p-2.5">
+    // Panels scroll on their own; the window never does, even when a hidden
+    // form element sits past its bottom edge.
+    <div className="relative flex h-full flex-col gap-2.5 overflow-hidden p-2.5">
       <header className="frame flex flex-wrap items-center gap-3 bg-surface-1 px-4 py-2">
         <h1 className="font-display text-2xl font-bold tracking-wide text-gold">Object Editor</h1>
         <span className="flex-1" />
@@ -271,7 +275,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
           className="flex w-[22rem] max-w-full items-center gap-2.5 rounded-[3px] border border-field bg-well px-3 py-1.5 text-left text-muted hover:border-frame"
         >
           <SearchLg className="size-4" aria-hidden="true" />
-          <span className="flex-1">Search units, abilities, commands…</span>
+          <span className="flex-1 truncate">Search objects and commands…</span>
           <kbd className="rounded-[3px] border border-line-strong px-1.5 font-sans text-xs text-ink">
             Ctrl K
           </kbd>
@@ -352,6 +356,8 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         units={units}
         onOpenUnit={openUnit}
         onOpenAbility={openAbility}
+        onOpenItem={openItem}
+        onOpenUpgrade={openUpgrade}
         onClose={() => setDialog(null)}
       />
 
@@ -367,8 +373,36 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
           />
         )}
 
+        {tab === "upgrades" && (
+          <UpgradesPane
+            key={revision}
+            editable={editable}
+            selected={selectedUpgrade}
+            onSelect={setSelectedUpgrade}
+            onMapChanged={refreshMap}
+            onError={setError}
+          />
+        )}
+
+        {tab === "items" && (
+          <ItemsPane
+            key={revision}
+            editable={editable}
+            selected={selectedItem}
+            onSelect={setSelectedItem}
+            onMapChanged={refreshMap}
+            onError={setError}
+          />
+        )}
+
         <div className={classes("flex min-h-0 flex-1 gap-2.5", tab !== "units" && "hidden")}>
-          <UnitList units={units} selected={selected} onSelect={setSelected} onError={setError} />
+          <UnitList
+            config={UNIT_LIST}
+            units={units}
+            selected={selected}
+            onSelect={setSelected}
+            onError={setError}
+          />
           {detail && tab === "units" && (
             <OpenAbilityContext value={openAbility}>
               <UnitPage

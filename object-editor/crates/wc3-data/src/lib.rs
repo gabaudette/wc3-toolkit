@@ -13,6 +13,7 @@ pub mod profile;
 pub mod slk;
 pub mod strings;
 pub mod units;
+pub mod upgrades;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

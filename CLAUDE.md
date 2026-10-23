@@ -6,7 +6,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
 
 - `object-editor/` — Rust workspace (Tauri app later). `crates/casc` reads the game's CASC
   storage via the vendored CascLib; `crates/wc3-data` loads game data: `game` (layered file
-  access), `units` (every unit with all Object Editor fields and editor-style display values),
+  access), `units` (every unit with all Object Editor fields and editor-style display values;
+  `UnitDatabase::load_items` is the same over the item tables), `upgrades`,
   `icon` (DDS → RGBA/PNG), `blp` (BLP1, JPEG or paletted, as maps import), plus the
   SLK/profile/metadata parsers. `wc3data` is a CLI inspector
   (`cargo run --release -p wc3-data --bin wc3data -- unit Hpal`). It also has the map formats:
@@ -14,10 +15,11 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `crates/mpq` reads/writes map archives via the vendored StormLib (built with CMake).
   `crates/wc3-map` opens maps, saves through a temp copy (`save_files`), and `units::MapUnits`
   applies a map's unit changes over the game data and edits them; `abilities::MapAbilities`
-  does the same for abilities (per level), and owns the ability tables `transfer` reads and
-  imports into. The map's string table lives in `MapUnits`; ability text goes through
-  `MapUnits::strings_mut`. `transfer` moves custom
-  units with the custom units, abilities and buffs they reference between maps: share codes
+  does the same for abilities (per level), `items::MapItems` for items and
+  `upgrades::MapUpgrades` for upgrades (per level); each owns the tables `transfer` reads and
+  imports into. The map's string table lives in `MapUnits`; ability, item and upgrade text goes
+  through `MapUnits::strings_mut`. `transfer` moves custom units with the custom units,
+  abilities, buffs, items and upgrades they reference between maps: share codes
   (`W3OBJ1:` + base64 of deflated object files) and imports, renaming taken IDs and every
   reference to them (found through field metadata types). Bundle files (`.w3obj`) also carry
   the files imported into the source map that the objects use; `imports` finds them by trying
@@ -67,6 +69,13 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
   `data/ability-fields.toml` is the guide for the 70 generic ability fields (not the
   spell-specific data fields, whose editor names already explain them). Tooltip placeholders `<ID,Column[,%]>` can point at ability,
   upgrade (`base1`, `mod1`) or unit tables (`realHP`, `mindmg1`); all game tooltips resolve.
+- Items use the unit metadata's fields marked `useItem` over `ItemData.slk` and the item
+  profiles (`ItemFunc.txt`, `ItemSkin.txt`, `ItemStrings.txt`); guide in `data/item-fields.toml`.
+- Upgrades (`wc3-data::upgrades`): `UpgradeData.slk` has one value for all levels, as a base and
+  a step per level (`goldbase`/`goldmod`, `base1`/`mod1`). Names, tooltips, hotkeys and icons
+  are per-level profile lists; requirements use a key per level instead (`Requires` for level 1,
+  `Requires1` for level 2). The editor fills the `%s` in `Effect 1 - %s` itself. Guide in
+  `data/upgrade-fields.toml`.
 - Reforged moved some SLK columns into skin profile files; lookups fall back to the profile.
 
 ## Map format notes
@@ -75,7 +84,9 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
   modifications into sets with a flags word (meaning of the flags not yet known; maps seen so
   far use 0). Leveled files (`.w3d/.w3a/.w3q`) store `type, level, column` after the field ID —
   type first. In `.w3a`, fields without levels use level 0 column 0; per-level fields use
-  level 1.. and the data column (`DataA` = 1, generic ones like `Cool` = 0).
+  level 1.. and the data column (`DataA` = 1, generic ones like `Cool` = 0). `.w3q` is the same
+  with the data column always 0. The World Editor stores some upgrade choices (class, effect)
+  as `TRIGSTR` references.
 - Bit flags (`stackFlags`, `versionFlags`, ...) and numbered choices (`attackBits`,
   `defenseTypeInt`, ...) are stored as integers; `FieldMeta::is_integer` lists them.
   `UnitEditorData.txt` gives other accepted spellings as `NN_Alt` (`invu` = invulnerable).

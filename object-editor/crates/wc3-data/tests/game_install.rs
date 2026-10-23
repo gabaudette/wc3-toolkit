@@ -13,6 +13,7 @@ use wc3_data::guide::FieldGuide;
 use wc3_data::icon::load_texture;
 use wc3_data::meta::ObjectKind;
 use wc3_data::units::UnitDatabase;
+use wc3_data::upgrades::UpgradeDatabase;
 
 const GAME_DIR_VAR: &str = "WC3_GAME_DIR";
 const SD_ICON_SIZE: u32 = 64;
@@ -183,6 +184,134 @@ fn the_field_guide_covers_every_unit_field() -> TestResult {
     assert!(missing.is_empty(), "no description: {missing:?}");
     assert!(unknown.is_empty(), "not unit fields: {unknown:?}");
     assert!(misplaced.is_empty(), "{misplaced:?}");
+    Ok(())
+}
+
+/// The item guide describes every item field and nothing else, and lists each
+/// ordered field under its real category.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn the_item_guide_covers_every_item_field() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let db = UnitDatabase::load_items(&files)?;
+    let guide = FieldGuide::items()?;
+
+    let missing: Vec<&str> = db
+        .fields()
+        .iter()
+        .map(|f| f.id.as_str())
+        .filter(|id| guide.entry(id).is_none())
+        .collect();
+    let unknown: Vec<&str> = guide
+        .field_ids()
+        .filter(|id| db.field(id).is_none())
+        .collect();
+    let misplaced: Vec<String> = guide
+        .ordered()
+        .filter_map(|(id, category)| {
+            let field = db.field(id)?;
+            (field.category != category)
+                .then(|| format!("{id} is {} not {category}", field.category))
+        })
+        .collect();
+
+    assert!(missing.is_empty(), "no description: {missing:?}");
+    assert!(unknown.is_empty(), "not item fields: {unknown:?}");
+    assert!(misplaced.is_empty(), "{misplaced:?}");
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn the_upgrade_guide_covers_every_upgrade_field() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let db = UpgradeDatabase::load(&files)?;
+    let guide = FieldGuide::upgrades()?;
+
+    let missing: Vec<&str> = db
+        .fields()
+        .iter()
+        .map(|f| f.id.as_str())
+        .filter(|id| guide.entry(id).is_none())
+        .collect();
+    let unknown: Vec<&str> = guide
+        .field_ids()
+        .filter(|id| db.field(id).is_none())
+        .collect();
+    let misplaced: Vec<String> = guide
+        .ordered()
+        .filter_map(|(id, category)| {
+            let field = db.field(id)?;
+            (field.category != category)
+                .then(|| format!("{id} is {} not {category}", field.category))
+        })
+        .collect();
+
+    assert!(missing.is_empty(), "no description: {missing:?}");
+    assert!(unknown.is_empty(), "not item fields: {unknown:?}");
+    assert!(misplaced.is_empty(), "{misplaced:?}");
+    Ok(())
+}
+
+/// Items load with their names, values and icons.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn items_load_with_values() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let db = UnitDatabase::load_items(&files)?;
+    let gold = db.field("igol").ok_or("no igol")?;
+
+    assert!(db.ids().len() > 500, "only {} items", db.ids().len());
+    assert_eq!(db.name("ratf"), "Claws of Attack +15");
+    assert_eq!(db.kind("ratf"), ObjectKind::Item);
+    assert_eq!(
+        db.raw_value("ratf", gold, ArtMode::Sd).as_deref(),
+        Some("800")
+    );
+    assert!(
+        db.icon_path("ratf", ArtMode::Sd)
+            .is_some_and(|p| p.contains("ClawsOfAttack"))
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn upgrades_load_with_values_per_level() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let db = UpgradeDatabase::load(&files)?;
+    let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
+    let at = |id: &str, level: u32| -> Result<Option<String>, String> {
+        Ok(db.raw_value("Rhme", field(id)?, level, ArtMode::Sd))
+    };
+
+    assert!(db.ids().len() > 50, "only {} upgrades", db.ids().len());
+    assert_eq!(db.name("Rhme"), "Iron Forged Swords");
+    assert_eq!(db.levels("Rhme"), 3);
+    assert_eq!(at("gnam", 3)?.as_deref(), Some("Mithril Forged Swords"));
+    assert_eq!(at("gglb", 0)?.as_deref(), Some("100"));
+    assert_eq!(at("gef1", 0)?.as_deref(), Some("ratd"));
+    assert_eq!(
+        (at("greq", 1)?, at("greq", 2)?.as_deref()),
+        (None, Some("hkee"))
+    );
+    assert_eq!(db.field_name(field("gmo1")?), "Effect 1 - Increment");
+    assert!(
+        db.icon_path("Rhme", ArtMode::Sd)
+            .is_some_and(|p| p.contains("SteelMelee"))
+    );
     Ok(())
 }
 

@@ -61,6 +61,22 @@ export const api = {
     invoke<Field>("set_field", { id, field, value }),
   resetField: (id: string, field: string) => invoke<Field>("reset_field", { id, field }),
   createUnit: (base: string) => invoke<UnitItem>("create_unit", { base }),
+  listItems: () => invoke<UnitItem[]>("list_items"),
+  itemDetail: (id: string) => invoke<UnitDetail>("item_detail", { id }),
+  searchItems: (query: string) => invoke<SearchHit[]>("search_items", { query }),
+  setItemField: (id: string, field: string, value: string) =>
+    invoke<Field>("set_item_field", { id, field, value }),
+  resetItemField: (id: string, field: string) => invoke<Field>("reset_item_field", { id, field }),
+  createItem: (base: string) => invoke<UnitItem>("create_item", { base }),
+  listUpgrades: () => invoke<UnitItem[]>("list_upgrades"),
+  upgradeDetail: (id: string) => invoke<AbilityDetail>("upgrade_detail", { id }),
+  searchUpgrades: (query: string) => invoke<SearchHit[]>("search_upgrades", { query }),
+  /** `level` is 0 for fields without levels. */
+  setUpgradeField: (id: string, field: string, level: number, value: string) =>
+    invoke<AbilityDetail>("set_upgrade_field", { id, field, level, value }),
+  resetUpgradeField: (id: string, field: string, level: number) =>
+    invoke<AbilityDetail>("reset_upgrade_field", { id, field, level }),
+  createUpgrade: (base: string) => invoke<UnitItem>("create_upgrade", { base }),
   saveMap: () => invoke<MapSummary>("save_map"),
   shareCode: (ids: string[]) => invoke<SharePreview>("share_code", { ids }),
   saveBundle: (ids: string[], path: string) => invoke<void>("save_bundle", { ids, path }),
