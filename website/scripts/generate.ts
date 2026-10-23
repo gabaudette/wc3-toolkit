@@ -1,5 +1,6 @@
 import { mkdir, readdir, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
+import { API_CATEGORIES, categoryFor } from "./api-categories";
 import type { Declaration } from "./jass";
 import { signatures } from "./jass";
 
@@ -128,8 +129,11 @@ const apiIndex = [
   "[Read scripting basics](../../scripting/languages/). Generated call syntax uses parameter names as placeholders; it is not a runnable example by itself. Authored examples are labeled separately.",
 ];
 
+const alphabeticalIndex: string[] = [
+  "[Browse by topic](../). This complete index groups declarations by script and kind, then sorts each group alphabetically.",
+];
 for (const source of api.sources) {
-  apiIndex.push(
+  alphabeticalIndex.push(
     `## ${source.name}\n\nSource SHA-256: ${code(source.sha256)}. Implementations and source comments are not included.`,
   );
   const declarations = api.declarations
@@ -140,17 +144,101 @@ for (const source of api.sources) {
     if (!members.length) {
       continue;
     }
-    apiIndex.push(
-      `### ${kind} (${members.length})\n\n${members.map((entry) => `- [${code(entry.name)}](./${slug(entry)}/)`).join("\n")}`,
+    alphabeticalIndex.push(
+      `### ${kind} (${members.length})\n\n${members.map((entry) => `- [${code(entry.name)}](${link("reference/api/alphabetical", apiPath(entry))})`).join("\n")}`,
     );
   }
 }
 
+const categoryPath = (id: string) => `reference/api/topics/${id}`;
+const sortedCategories = [...API_CATEGORIES].sort((a, b) => a.title.localeCompare(b.title));
+const categories = sortedCategories.map((category) => ({
+  ...category,
+  members: api.declarations
+    .filter((entry) => categoryFor(entry).id === category.id)
+    .sort((a, b) => a.name.localeCompare(b.name)),
+}));
+const kindLabels = {
+  native: "Native functions",
+  function: "Blizzard helpers",
+  type: "Handle types",
+  constant: "Constants",
+};
+
+function countLabel(count: number, singular: string) {
+  let label = singular;
+  if (count !== 1) {
+    label += "s";
+  }
+  return `${count.toLocaleString("en")} ${label}`;
+}
+
+for (const category of categories) {
+  const from = categoryPath(category.id);
+  const body = [
+    category.description,
+    `**${category.members.length.toLocaleString("en")} declarations** · [All API topics](${link(from, "reference/api")}) · [Full alphabetical index](${link(from, "reference/api/alphabetical")})`,
+    "Functions, types and constants are grouped below. Select a symbol for its declaration, parameter types and Lua call syntax.",
+  ];
+  for (const kind of ["native", "function", "type", "constant"] as const) {
+    const members = category.members.filter((entry) => entry.kind === kind);
+    if (!members.length) {
+      continue;
+    }
+    body.push(`## ${kindLabels[kind]} (${members.length})`);
+    // Large constant catalogs remain available without burying the callable APIs.
+    let list = members
+      .map((entry) => `- [${code(entry.name)}](${link(from, apiPath(entry))})`)
+      .join("\n");
+    if (kind === "constant") {
+      list = `<details>\n<summary>Browse ${members.length} constants</summary>\n\n${list}\n\n</details>`;
+    }
+    body.push(list);
+  }
+  await page(
+    `api/topics/${category.id}/index`,
+    category.title,
+    category.description,
+    body.join("\n\n"),
+  );
+}
+
+const topicCards = categories.map((category) => {
+  const callableCount = category.members.filter(
+    (entry) => entry.kind === "native" || entry.kind === "function",
+  ).length;
+  const constantCount = category.members.filter((entry) => entry.kind === "constant").length;
+  const typeCount = category.members.filter((entry) => entry.kind === "type").length;
+  const counts: string[] = [];
+  if (callableCount) {
+    counts.push(countLabel(callableCount, "function"));
+  }
+  if (typeCount) {
+    counts.push(countLabel(typeCount, "type"));
+  }
+  if (constantCount) {
+    counts.push(countLabel(constantCount, "constant"));
+  }
+  return `<li><a class="api-topic-card" href="${link("reference/api", categoryPath(category.id))}"><strong>${markdown(category.title)}</strong><span>${markdown(category.description)}</span><small>${counts.join(" · ")}</small></a></li>`;
+});
+const categorizedIndex = [
+  "Find native functions, Blizzard helpers, handle types and constants by what you are working on. Each topic brings declarations from `common.j` and `blizzard.j` together.",
+  `${api.declarations.length.toLocaleString("en")} declarations · ${categories.length} topics · [Full alphabetical index](./alphabetical/) · [Code examples](../examples/)`,
+  "## Browse by topic",
+  `<ul class="api-topic-grid" role="list">\n${topicCards.join("\n")}\n</ul>`,
+  "## Using the reference",
+  ...apiIndex,
+  "## Source snapshots",
+  ...api.sources.map((source) => `- ${code(source.name)} · SHA-256: ${code(source.sha256)}`),
+];
+
 for (const declaration of api.declarations) {
   const from = apiPath(declaration);
   const { jass, lua } = signatures(declaration);
+  const category = categoryFor(declaration);
   const body = [
     `**${declaration.kind}** · ${code(declaration.source)} line ${declaration.line} · [Browse the API](${link(from, "reference/api")})`,
+    `Topic: [${category.title}](${link(from, categoryPath(category.id))}).`,
     languageSection("jass", `## JASS declaration\n\n\`\`\`jass\n${jass}\n\`\`\``),
   ];
   let luaHeading = "Lua call syntax";
@@ -200,8 +288,14 @@ for (const declaration of api.declarations) {
 await page(
   "api/index",
   "API reference",
-  "Search native functions, Blizzard helpers, handle types and constants.",
-  apiIndex.join("\n\n"),
+  "Browse Warcraft III native functions, Blizzard helpers, handle types and constants by topic.",
+  categorizedIndex.join("\n\n"),
+);
+await page(
+  "api/alphabetical/index",
+  "API alphabetical index",
+  "All Warcraft III API declarations, alphabetically grouped by source file and kind.",
+  alphabeticalIndex.join("\n\n"),
 );
 
 const exampleIndex = [
