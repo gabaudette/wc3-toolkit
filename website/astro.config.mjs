@@ -81,6 +81,14 @@ export default defineConfig({
         },
         { label: "Object data", items: [{ slug: "reference/fields" }] },
         { label: "Map formats", items: [{ autogenerate: { directory: "formats" } }] },
+        {
+          label: "Contributing",
+          items: [
+            { slug: "contributing" },
+            { slug: "contributing/development" },
+            { slug: "contributing/documentation" },
+          ],
+        },
       ],
     }),
   ],

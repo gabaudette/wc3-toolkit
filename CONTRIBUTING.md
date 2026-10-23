@@ -1,5 +1,8 @@
 # Contributing
 
+For a guided introduction, read the [website’s Contributing section](https://tinkerbench-docs.vercel.app/contributing/):
+bug reports, local development and documentation contributions.
+
 Contributions are welcome. This project follows the AGE Studio engineering standards, included
 in full in [docs/standards/](docs/standards/README.md). The rules below summarize how they apply
 to this repository; the rule IDs refer to those documents.

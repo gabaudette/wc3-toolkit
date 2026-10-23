@@ -4,6 +4,20 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Website contribution guides
+
+- Added a dedicated Contributing sidebar section with an overview, local-development guide
+  and documentation-contribution guide. The overview covers reproducible bug reports and
+  focused pull requests; the development page explains frontend-before-Rust validation and
+  real-install tests. The documentation page distinguishes authored input from generated
+  output and documents the sequential site checks and production-search preview.
+- Linked the section from the homepage and root CONTRIBUTING.md. The repository’s existing
+  contribution rules and engineering standards remain the detailed source of truth.
+- Validation: all 54 documentation tests pass, Biome and Astro report no diagnostics, and
+  the build and local link/asset checks pass across 6,581 pages. Browser checks cover the
+  sidebar, all three pages, the pull-request anchor and 390 px mobile layouts without page
+  overflow or browser errors.
+
 ## 2026-10-23 · Application screenshots and visual tour (PR #29)
 
 - Captured the running Tauri application using xdotool and ImageMagick’s

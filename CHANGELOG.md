@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Contributing section on the documentation website, with bug-report guidance, local editor
+  setup, documentation authoring and validation instructions.
 - Screenshot tour of the Tinkerbench application, from loading game data and opening a map
   to editing and sharing objects, with a preview on the documentation homepage and in the README.
   Each screenshot notes that the image is subject to change.
