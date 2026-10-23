@@ -108,6 +108,13 @@ impl LeveledView<'_> {
             .filter(|t| !t.is_empty())
     }
 
+    fn category_icon(&self, field_id: &str, category: &str) -> Option<String> {
+        let field = self.db.field(field_id)?;
+        self.units
+            .choice_icon(&field.value_type, category)
+            .map(str::to_owned)
+    }
+
     /// The map's objects first, then every game object, each once.
     fn ids_after(&self, map_upgrades: &[LeveledObject]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_upgrades.iter().map(|u| u.id).collect();
@@ -141,7 +148,10 @@ impl LeveledView<'_> {
             group: if entry.is_some() { "map" } else { "game" },
             custom: entry.is_some_and(|e| e.is_custom),
             changed_fields: entry.map_or(0, |e| e.modified_fields),
-            icon: info.icon,
+            // Doodads have no icon of their own; the editor shows their category's.
+            icon: info
+                .icon
+                .or_else(|| self.category_icon(describe.filter, &info.filter)),
         })
     }
 

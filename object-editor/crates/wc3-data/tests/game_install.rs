@@ -396,6 +396,27 @@ fn the_upgrade_guide_covers_every_upgrade_field() -> TestResult {
     Ok(())
 }
 
+/// Destructables and doodads have no icon of their own; the editor's icon for
+/// their category stands in, so every category has one that loads.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn every_category_has_an_icon() -> TestResult {
+    let (files, db) = open(GameOptions::default())?;
+    for value_type in ["destructableCategory", "doodadCategory"] {
+        let choices = db.enum_values(value_type).ok_or(value_type)?;
+        assert!(!choices.is_empty(), "no {value_type} choices");
+        for choice in choices {
+            let path = db
+                .choice_icon(value_type, &choice.value)
+                .ok_or(format!("{value_type} {} has no icon", choice.value))?;
+            let image = load_texture(&files, path, ArtMode::Hd)?;
+            assert!(image.width > 0, "{path}");
+        }
+    }
+
+    Ok(())
+}
+
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn the_doodad_guide_covers_every_doodad_field() -> TestResult {

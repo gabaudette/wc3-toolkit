@@ -122,6 +122,9 @@ pub struct EnumValue {
     pub label: String,
     /// Other spellings the game accepts, e.g. `invu` for `invulnerable`.
     pub aliases: Vec<String>,
+    /// The editor's icon for the choice: destructable and doodad categories have one,
+    /// e.g. `ReplaceableTextures\WorldEditUI\Doodad-Prop`.
+    pub icon: Option<String>,
 }
 
 impl EnumValue {
@@ -471,6 +474,15 @@ impl UnitDatabase {
         self.enums.get(value_type).map(Vec::as_slice)
     }
 
+    /// The editor's icon for a choice, such as a destructable or doodad category's.
+    pub fn choice_icon(&self, value_type: &str, value: &str) -> Option<&str> {
+        self.enum_values(value_type)?
+            .iter()
+            .find(|choice| choice.matches(value))?
+            .icon
+            .as_deref()
+    }
+
     /// Hotkey of a unit or upgrade from the game's text files, e.g. `F` for the Footman.
     pub fn hotkey(&self, id: &str) -> Option<char> {
         [&self.profile, &self.names]
@@ -664,12 +676,17 @@ fn letter_choices(text: &str, section: &str, editor_strings: &Profile) -> Vec<En
         .filter(|line| !line.starts_with("//"))
         .filter_map(|line| {
             let (value, rest) = line.split_once('=')?;
-            let key = split_list(rest).into_iter().next()?;
+            let mut parts = split_list(rest).into_iter();
+            let key = parts.next()?;
             Some(EnumValue {
                 value: value.trim().to_owned(),
                 label: resolve_string(editor_strings, key.trim())
                     .unwrap_or_else(|| value.trim().to_owned()),
                 aliases: Vec::new(),
+                icon: parts
+                    .next()
+                    .map(|icon| icon.trim().to_owned())
+                    .filter(|icon| !icon.is_empty()),
             })
         })
         .collect()
@@ -709,6 +726,7 @@ fn parse_enums(editor_data: &Profile, editor_strings: &Profile) -> HashMap<Strin
                         value,
                         label,
                         aliases,
+                        icon: None,
                     })
                 })
                 .collect();
@@ -799,7 +817,27 @@ fn load_name_profile(files: &GameFiles) -> Result<Profile> {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_hotkey;
+    use super::{Profile, letter_choices, parse_hotkey};
+
+    #[test]
+    fn category_choices_keep_their_icons() {
+        let text = "[Other]\nX=1\n[DoodadCategories]\n// comment\n\
+                    O=WESTRING_PROPS,ReplaceableTextures\\WorldEditUI\\Doodad-Prop\nZ=Cinematic\n";
+        let mut strings = Profile::new();
+        strings.merge_text("[WorldEditStrings]\nWESTRING_PROPS=Props\n");
+        let choices = letter_choices(text, "DoodadCategories", &strings);
+
+        assert_eq!(choices.len(), 2);
+        assert_eq!(
+            (choices[0].value.as_str(), choices[0].label.as_str()),
+            ("O", "Props")
+        );
+        assert_eq!(
+            choices[0].icon.as_deref(),
+            Some("ReplaceableTextures\\WorldEditUI\\Doodad-Prop")
+        );
+        assert_eq!(choices[1].icon, None);
+    }
 
     #[test]
     fn hotkeys_are_single_letters_or_digits() {

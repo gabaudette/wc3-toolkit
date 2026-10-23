@@ -4,6 +4,24 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Category icons, and the real uRoughness fix (AGE-17)
+
+- Destructables and doodads have no icon field. `WorldEditData.txt` gives each category an icon
+  after its label (`O=WESTRING_DTYPE_PROPS,ReplaceableTextures\WorldEditUI\Doodad-Prop`):
+  16 px pixel-art tiles the World Editor uses in its trees. `EnumValue` now keeps that icon,
+  `UnitDatabase::choice_icon` looks it up, and list rows fall back to it (`bcat` for
+  destructables, `dcat` through the units database for doodads). Pages and the command palette
+  read the rows, so they get it too. `UnitIcon` scales an image smaller than its box with
+  `image-rendering: pixelated` instead of blurring it.
+- The last entry's AGE-17 analysis was wrong. war3-model 4.0.1's shipped `initShaderProgram`
+  does throw on a missing uniform; the bench rendered then by luck. For HD models on WebGL2 it
+  also builds the reflection shaders, which the preview never runs, and this machine's driver
+  drops `uRoughness` from the prefilter shader, so every HD model failed in a fresh window.
+  `ModelViewer` now wraps the renderer's `initShaderProgram` (private in its types): it builds
+  with no required uniforms, then looks each one up and keeps a missing one as `null`, which
+  WebGL ignores when a value is set. Checked in the app: Archmage, a tree wall and doodads
+  render in a fresh window.
+
 ## 2026-10-23 · TGA textures (AGE-18) and the model preview (AGE-17)
 
 - `.tga` imports were found and bundled but not decoded. `tga.rs` reads true-color (24/32-bit)
