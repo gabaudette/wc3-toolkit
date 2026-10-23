@@ -14,6 +14,7 @@ import {
 } from "react-aria-components";
 import { api } from "../api";
 import type { AbilitySummary, UnitItem } from "../types";
+import { GameText, plainGameText } from "./GameText";
 import { UnitIcon } from "./UnitIcon";
 
 /** A command the palette can run, such as saving the map. */
@@ -129,7 +130,7 @@ export function CommandPalette({
       icon: null,
       run: done(c.run),
     }));
-    const unitEntries = matching(units, query, (u) => `${u.name} ${u.id}`)
+    const unitEntries = matching(units, query, (u) => `${plainGameText(u.name)} ${u.id}`)
       .slice(0, MAX_PER_GROUP)
       .map((u) => ({
         id: `unit:${u.id}`,
@@ -140,7 +141,7 @@ export function CommandPalette({
       }));
     // Abilities, items and upgrades only show once something is typed: there are hundreds.
     const searched = query.trim() !== "";
-    const abilityEntries = matching(abilities, query, (a) => `${a.name} ${a.id}`)
+    const abilityEntries = matching(abilities, query, (a) => `${plainGameText(a.name)} ${a.id}`)
       .filter(() => searched)
       .slice(0, MAX_PER_GROUP)
       .map((a) => ({
@@ -150,7 +151,7 @@ export function CommandPalette({
         icon: a.icon,
         run: done(() => onOpenAbility(a.id)),
       }));
-    const itemEntries = matching(items, query, (i) => `${i.name} ${i.id}`)
+    const itemEntries = matching(items, query, (i) => `${plainGameText(i.name)} ${i.id}`)
       .filter(() => searched)
       .slice(0, MAX_PER_GROUP)
       .map((i) => ({
@@ -160,7 +161,7 @@ export function CommandPalette({
         icon: i.icon,
         run: done(() => onOpenItem(i.id)),
       }));
-    const upgradeEntries = matching(upgrades, query, (u) => `${u.name} ${u.id}`)
+    const upgradeEntries = matching(upgrades, query, (u) => `${plainGameText(u.name)} ${u.id}`)
       .filter(() => searched)
       .slice(0, MAX_PER_GROUP)
       .map((u) => ({
@@ -237,11 +238,13 @@ export function CommandPalette({
                     <MenuItem
                       key={entry.id}
                       id={entry.id}
-                      textValue={entry.label}
+                      textValue={plainGameText(entry.label)}
                       className="flex cursor-default items-center gap-3 rounded-[3px] px-2.5 py-1.5 text-ink outline-none data-[focused]:bg-surface-2 data-[focused]:shadow-[inset_2px_0_0_var(--color-glow)]"
                     >
                       {entry.icon !== null && <UnitIcon path={entry.icon} size="small" />}
-                      <span className="min-w-0 flex-1 truncate">{entry.label}</span>
+                      <span className="min-w-0 flex-1 truncate">
+                        <GameText text={entry.label} singleLine />
+                      </span>
                       <span className="font-mono text-xs text-faint">{entry.detail}</span>
                     </MenuItem>
                   ))}

@@ -5,6 +5,7 @@ import type { SharePreview, UnitItem } from "../types";
 import { BUNDLE_FILTERS } from "../ui";
 import { Button } from "./Button";
 import { DialogShell } from "./DialogShell";
+import { plainGameText } from "./GameText";
 import { TransferList } from "./TransferList";
 import { UnitChecklist } from "./UnitChecklist";
 
@@ -64,7 +65,7 @@ export function ShareDialog({ open, units, initial, onClose }: ShareDialogProps)
     const path = await save({
       title: "Save bundle file",
       filters: BUNDLE_FILTERS,
-      defaultPath: `${first?.name ?? "units"}${BUNDLE_EXTENSION}`,
+      defaultPath: `${plainGameText(first?.name ?? "units")}${BUNDLE_EXTENSION}`,
     });
     if (!path) {
       return;

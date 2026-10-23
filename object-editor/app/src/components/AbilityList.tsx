@@ -3,6 +3,7 @@ import { api, errorMessage } from "../api";
 import type { AbilitySummary, SearchHit } from "../types";
 import { classes } from "../ui";
 import { Chip, toggle } from "./Chip";
+import { GameText } from "./GameText";
 import { ListFold, useFolded } from "./ListFold";
 import { UnitIcon } from "./UnitIcon";
 
@@ -113,8 +114,12 @@ export function AbilityList({ abilities, selected, onSelect, onError }: AbilityL
           <UnitIcon path={ability.icon} size="small" />
           <span className="min-w-0 flex-1">
             <span className="block truncate">
-              {ability.name}
-              {ability.suffix && <span className="ml-1 text-faint">{ability.suffix}</span>}
+              <GameText text={ability.name} singleLine />
+              {ability.suffix && (
+                <span className="ml-1 text-faint">
+                  <GameText text={ability.suffix} singleLine />
+                </span>
+              )}
             </span>
             <span className="block truncate font-mono text-xs text-faint">
               {ability.id}

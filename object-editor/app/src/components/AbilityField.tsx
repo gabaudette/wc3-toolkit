@@ -5,7 +5,7 @@ import type { AbilityCard, Field } from "../types";
 import { levelCount } from "../ui";
 import { AbilityPicker } from "./AbilityPicker";
 import { Button } from "./Button";
-import { GameText } from "./GameText";
+import { GameText, plainGameText } from "./GameText";
 import { OpenAbilityContext } from "./openAbility";
 import { UnitIcon } from "./UnitIcon";
 
@@ -39,7 +39,7 @@ function Card({ card, onRemove }: { card: AbilityCard; onRemove: (() => void) | 
         <UnitIcon path={summary.icon} size="small" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">
-            {summary.name}
+            <GameText text={summary.name} singleLine />
             <span className="ml-2 font-mono text-xs font-normal text-faint">{summary.id}</span>
           </p>
           {card.known && <p className="text-xs text-muted">{facts.join(" · ")}</p>}
@@ -72,7 +72,7 @@ function Card({ card, onRemove }: { card: AbilityCard; onRemove: (() => void) | 
           <button
             type="button"
             onClick={onRemove}
-            aria-label={`Remove ${summary.name}`}
+            aria-label={`Remove ${plainGameText(summary.name)}`}
             title="Remove"
             className="rounded p-1 text-faint hover:bg-surface-2 hover:text-danger"
           >

@@ -2,6 +2,7 @@ import { Copy01 } from "@untitledui/icons";
 import { useMemo, useState } from "react";
 import type { Field, HotkeyClash, Section, UnitDetail } from "../types";
 import { Button } from "./Button";
+import { GameText } from "./GameText";
 import { Inspector } from "./Inspector";
 import { AdvancedGroup, FieldHeader, FieldRows, matches, SectionToggle, toggled } from "./Sections";
 import { UnitIcon } from "./UnitIcon";
@@ -110,7 +111,7 @@ export function UnitPage({
               <UnitIcon path={item.icon} size="large" />
               <div className="min-w-0 flex-1">
                 <h2 className="truncate font-display text-3xl font-bold text-gold-bright">
-                  {item.name}
+                  <GameText text={item.name} singleLine />
                 </h2>
                 <p className="font-mono text-xs text-faint">
                   {item.id}

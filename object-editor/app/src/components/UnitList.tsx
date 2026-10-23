@@ -3,6 +3,7 @@ import { api, errorMessage } from "../api";
 import type { SearchHit, UnitGroup, UnitItem } from "../types";
 import { capitalized, classes } from "../ui";
 import { Chip, toggle } from "./Chip";
+import { GameText } from "./GameText";
 import { ListFold, useFolded } from "./ListFold";
 import { UnitIcon } from "./UnitIcon";
 
@@ -154,7 +155,9 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
         >
           <UnitIcon path={unit.icon} size="small" />
           <span className="min-w-0 flex-1">
-            <span className="block truncate">{unit.name}</span>
+            <span className="block truncate">
+              <GameText text={unit.name} singleLine />
+            </span>
             <span className="block truncate font-mono text-xs text-faint">
               {unit.id}
               {unit.custom && ` · based on ${unit.base}`}

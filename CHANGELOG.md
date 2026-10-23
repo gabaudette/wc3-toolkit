@@ -6,6 +6,12 @@ under "What's new".
 
 ## Unreleased
 
+### Changed
+
+- Names with Warcraft color codes show in color everywhere: lists, page titles, search,
+  ability cards, sharing and import, and the base value column. Colors too dark to read on the
+  editor's panels are lightened a little. Text you edit still shows the codes.
+
 ### Fixed
 
 - Internal improvements.
