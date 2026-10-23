@@ -4,6 +4,57 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Documentation website (PR #27, AGE-20)
+
+- Astro Starlight site in `website/`, with the Workshop direction selected from four design
+  studies: graphite, mint, DM Sans, and the existing gnome logo/favicon. Fourteen authored
+  pages cover installation, the first map, objects, sharing, the Lua harness, common tasks,
+  JASS/Lua conventions and the map format notes. The public URL is
+  `https://tinkerbench-docs.vercel.app`, also used for canonical links and sitemaps.
+  The favicon points directly to the app icon’s 128 px PNG, using a new URL so browsers can
+  replace a cached favicon. The ICO remains available for browsers that request it directly.
+- A local CASC export example reads script and field inputs. Only structured declarations
+  and field metadata are versioned; game script bodies and comments stay outside the repo.
+  The initial extraction records source hashes and its local date without claiming a patch
+  version. The generator emits 5,131 API and 1,421 field pages, joins the seven live field
+  guides, preserves unverified markers and identifies metadata without an authored guide.
+- API URLs include the declaration kind: `rect` and `Rect` otherwise collide after URL
+  normalization. A small project-authored grammar highlights JASS. Pagefind indexes the
+  static build; CI validates parsing, types, the site build and local links/assets. Vercel
+  builds from the repository root so changes to the shared field guides rebuild the site.
+  A checked Build Output API package includes the static files and routing explicitly; the
+  generic project preset had reported success while producing an empty deployment.
+- Vercel's ignored-build script compares against the last successful branch deployment and
+  watches the website, shared field guides and hosting configuration. It skips unrelated
+  edits, preserves multi-commit changes, and builds if history is unavailable. Integration
+  tests exercise real Git commits. A project-level guard also skips branches without docs,
+  preventing unrelated main pushes from replacing the live site before this PR merges.
+- Expressive Code emits GitHub Dark/Light, Dracula, One Dark Pro, Nord and Catppuccin Mocha
+  variants, selected with a separate `data-code-theme` attribute. “Follow site theme” maps
+  to the GitHub variant matching Starlight's dark/light choice.
+- A native, labeled picker above each snippet synchronizes the whole page. Local storage
+  restores the choice before paint and across pages; blocked storage still allows changing
+  the current page. Copy buttons and code content are preserved.
+- The content cache is keyed by themes, selectors and the JASS grammar: cached Markdown
+  otherwise kept references to the previous highlighting stylesheet after a palette change.
+
+- Expanded the authored example catalog from 8 to 43 complete paired recipes and generated
+  a categorized cookbook from the same source. Each recipe documents setup, an entry point
+  and owned-handle cleanup. All JASS recipes pass PJass with the installed common.j and
+  blizzard.j; all Lua versions pass Lua 5.3 syntax checks. CI validates the catalog and Lua
+  syntax with luaparse, and checks that JASS entry points are distinct and present.
+- A remembered global Lua/JASS toggle in the header/mobile menu hides the other language’s
+  sections, including setup prose and table-of-contents items. Both variants remain in static
+  output for search and no-JavaScript reading. Language choice and code palette are separate.
+  The sidebar uses “Scripting”, “Scripting basics” and “API reference” so navigation applies
+  to either selected language.
+  Scripting explanations also follow the selection: raw codes, callback registration, empty
+  references, cleanup and language resources. Shared API tables use engine type labels;
+  language-specific setup is filtered on the API index and cookbook as well.
+- External web links open in a new tab across content, header and mobile navigation. A
+  shared handler preserves existing relationship attributes and adds `noopener noreferrer`,
+  including for links inserted after page load.
+
 ## 2026-10-23 · Category icons, and the real uRoughness fix (AGE-17)
 
 - Destructables and doodads have no icon field. `WorldEditData.txt` gives each category an icon

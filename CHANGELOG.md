@@ -8,6 +8,12 @@ under "What's new".
 
 ### Added
 
+- Documentation cookbook with 43 JASS/Lua code recipes, and a global language toggle that
+  remembers your choice across examples and explanations, with language-neutral navigation.
+- Code snippet theme picker in the documentation, with six color themes and a remembered
+  choice across pages.
+- [Documentation website](https://tinkerbench-docs.vercel.app): editor guides, JASS and Lua API declarations, and a searchable
+  reference for object fields.
 - Buffs tab: browse, search, edit and create custom buffs and effects, with a chip per race.
 - Destructables tab: trees, gates, crates and rocks, with a chip per category and their model
   in the inspector.
@@ -17,6 +23,8 @@ under "What's new".
 
 ### Changed
 
+- Documentation uses the app icon as its PNG favicon.
+- External links in the documentation open in a new tab.
 - Destructables and doodads show the World Editor's icon for their category (Props, Bridges,
   Water, ...) in lists, on their page and in search, since the game gives them no icon.
 - Names with Warcraft color codes show in color everywhere: lists, page titles, search,

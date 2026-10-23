@@ -1,0 +1,16 @@
+---
+// biome-ignore lint/correctness/noUnusedImports: Used in the Astro template, which Biome does not analyze.
+import DefaultThemeSelect from "@astrojs/starlight/components/ThemeSelect.astro";
+---
+
+<div class="reader-preferences">
+  <div class="code-language-toggle" role="group" aria-label="Code language">
+    <button type="button" data-code-language-option="lua" aria-pressed="true">Lua</button>
+    <button type="button" data-code-language-option="jass" aria-pressed="false">JASS</button>
+  </div>
+  <DefaultThemeSelect />
+</div>
+
+<script>
+  import "../codeLanguagePicker";
+</script>

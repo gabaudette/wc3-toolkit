@@ -4,6 +4,10 @@ Open-source tools for Warcraft III: Reforged map creation.
 
 > **Status: early development.** Nothing here is ready for everyday use yet.
 
+Read the **[Tinkerbench field guide](https://tinkerbench-docs.vercel.app)** for installation,
+first-map tutorials, JASS/Lua API declarations and the object field reference.
+The documentation source and local build instructions are in [website/](website/README.md).
+
 ## Tools
 
 ### Tinkerbench, the Object Editor (`object-editor/`, in progress)

@@ -1,0 +1,9 @@
+---
+// biome-ignore lint/correctness/noUnusedImports: Used in the Astro template, which Biome does not analyze.
+import StarlightPage from "@astrojs/starlight/components/StarlightPage.astro";
+---
+
+<StarlightPage frontmatter={{ title: "Page not found", description: "Find your way back to the Tinkerbench field guide." }}>
+  <p>This page may have moved. Search for a guide, raw field code or API symbol.</p>
+  <p><a href={import.meta.env.BASE_URL}>Return to the field guide</a></p>
+</StarlightPage>
