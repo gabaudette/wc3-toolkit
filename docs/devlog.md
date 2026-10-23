@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-23 · Website contribution guides
+## 2026-10-23 · Website contribution guides (PR #31)
 
 - Added a dedicated Contributing sidebar section with an overview, local-development guide
   and documentation-contribution guide. The overview covers reproducible bug reports and
