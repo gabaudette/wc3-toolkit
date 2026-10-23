@@ -2,9 +2,17 @@
 # (lefthook.yml), so CI does not repeat them.
 name: CI
 
+# Pull requests run once (as pull_request); push only runs for main.
 on:
   push:
+    branches: [main]
   pull_request:
+
+# A newer push to a pull request cancels its run still going; main keeps a
+# result for every merge.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -13,6 +21,8 @@ env:
   BUN_VERSION: 1.4.2
   # Build-time libraries Tauri needs on Linux.
   TAURI_LINUX_DEPS: libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+  # No incremental builds in CI: nothing reuses them, and they bloat the cache.
+  CARGO_INCREMENTAL: 0
 
 jobs:
   frontend:
@@ -52,9 +62,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
+      # Cached .deb files: apt mirrors are sometimes very slow (17 minutes once).
       - name: Install Tauri system libraries
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y $TAURI_LINUX_DEPS
+        uses: awalsh128/cache-apt-pkgs-action@v1
+        with:
+          packages: ${{ env.TAURI_LINUX_DEPS }}
+          version: 1
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -67,6 +81,13 @@ jobs:
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
+
+      # Caches the Cargo registry and target/ (dependencies and the bundled C
+      # libraries), keyed by OS, toolchain and Cargo.lock.
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: object-editor
 
       - name: Test
         working-directory: object-editor
