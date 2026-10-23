@@ -66,7 +66,7 @@ export const UPGRADE_LIST: ListConfig = {
   article: "an",
   noun: "upgrades",
   placeholder: "Search upgrades: Swords, Rhme…",
-  search: api.searchUpgrades,
+  search: (query) => api.searchLeveled("upgrades", query),
   groups: [
     { id: "map", label: "This map" },
     { id: "game", label: "Game" },
@@ -74,6 +74,21 @@ export const UPGRADE_LIST: ListConfig = {
   defaultGroups: ["map", "game"],
   filters: null,
   filterOf: (upgrade) => upgrade.race,
+};
+
+export const DOODAD_LIST: ListConfig = {
+  singular: "doodad",
+  article: "a",
+  noun: "doodads",
+  placeholder: "Search doodads: Mushrooms, APms…",
+  search: (query) => api.searchLeveled("doodads", query),
+  groups: [
+    { id: "map", label: "This map" },
+    { id: "game", label: "Game" },
+  ],
+  defaultGroups: ["map", "game"],
+  filters: null,
+  filterOf: (doodad) => doodad.race,
 };
 
 export const BUFF_LIST: ListConfig = {

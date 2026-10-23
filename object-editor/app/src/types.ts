@@ -1,6 +1,17 @@
 // Mirrors the Rust types in src-tauri/src/view.rs and commands.rs.
 
-export type UnitKind = "hero" | "unit" | "building" | "item" | "upgrade" | "buff" | "destructable";
+export type UnitKind =
+  | "hero"
+  | "unit"
+  | "building"
+  | "item"
+  | "upgrade"
+  | "buff"
+  | "destructable"
+  | "doodad";
+
+/** Objects with a value per level (upgrades) or per variation (doodads), on the ability page. */
+export type LeveledCatalog = "upgrades" | "doodads";
 
 /** Objects without levels other than units, which share the unit page. */
 export type Catalog = "items" | "buffs" | "destructables";

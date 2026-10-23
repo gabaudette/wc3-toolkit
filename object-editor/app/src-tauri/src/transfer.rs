@@ -9,13 +9,13 @@ use serde::{Deserialize, Serialize};
 use tauri::State;
 use wc3_map::abilities::MapAbilities;
 use wc3_map::imports::{FileStatus, ImportedFile, file_statuses};
+use wc3_map::leveled::{LeveledObjects, UPGRADES};
 use wc3_map::plain::{BUFFS, ITEMS, PlainObjects};
 use wc3_map::transfer::{
     self, Bundle, BundledObject, Export, MapObjects, MapObjectsMut, ObjectType, PlannedObject,
     References,
 };
 use wc3_map::units::MapUnits;
-use wc3_map::upgrades::MapUpgrades;
 use wc3_map::{FourCC, Map};
 
 use crate::commands::{fourcc, view};
@@ -94,7 +94,7 @@ struct OtherMap {
     units: MapUnits,
     abilities: MapAbilities,
     items: PlainObjects,
-    upgrades: MapUpgrades,
+    upgrades: LeveledObjects,
     buffs: PlainObjects,
 }
 
@@ -105,7 +105,7 @@ impl OtherMap {
             units: MapUnits::load(&map).map_err(|e| e.to_string())?,
             abilities: MapAbilities::load(&map).map_err(|e| e.to_string())?,
             items: PlainObjects::load(&map, ITEMS).map_err(|e| e.to_string())?,
-            upgrades: MapUpgrades::load(&map).map_err(|e| e.to_string())?,
+            upgrades: LeveledObjects::load(&map, UPGRADES).map_err(|e| e.to_string())?,
             buffs: PlainObjects::load(&map, BUFFS).map_err(|e| e.to_string())?,
             map,
         })

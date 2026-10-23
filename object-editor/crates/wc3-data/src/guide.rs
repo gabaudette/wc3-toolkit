@@ -21,6 +21,8 @@ const BUFF_GUIDE: &str = include_str!("../data/buff-fields.toml");
 const BUFF_GUIDE_FILE: &str = "data/buff-fields.toml";
 const DESTRUCTABLE_GUIDE: &str = include_str!("../data/destructable-fields.toml");
 const DESTRUCTABLE_GUIDE_FILE: &str = "data/destructable-fields.toml";
+const DOODAD_GUIDE: &str = include_str!("../data/doodad-fields.toml");
+const DOODAD_GUIDE_FILE: &str = "data/doodad-fields.toml";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GuideEntry {
@@ -91,6 +93,11 @@ impl FieldGuide {
     /// The guide for destructables.
     pub fn destructables() -> Result<Self> {
         Self::parse(DESTRUCTABLE_GUIDE).map_err(|e| e.in_file(DESTRUCTABLE_GUIDE_FILE))
+    }
+
+    /// The guide for doodads.
+    pub fn doodads() -> Result<Self> {
+        Self::parse(DOODAD_GUIDE).map_err(|e| e.in_file(DOODAD_GUIDE_FILE))
     }
 
     pub fn parse(text: &str) -> Result<Self> {

@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use serde::Serialize;
 use tauri::State;
 use wc3_data::abilities::AbilityDatabase;
+use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::guide::FieldGuide;
 use wc3_data::meta::FieldMeta;
@@ -101,6 +102,8 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
     let buff_guide = FieldGuide::buffs().map_err(|e| e.to_string())?;
     let destructables = UnitDatabase::load_destructables(&files).map_err(|e| e.to_string())?;
     let destructable_guide = FieldGuide::destructables().map_err(|e| e.to_string())?;
+    let doodads = DoodadDatabase::load(&files).map_err(|e| e.to_string())?;
+    let doodad_guide = FieldGuide::doodads().map_err(|e| e.to_string())?;
     let upgrades = UpgradeDatabase::load(&files).map_err(|e| e.to_string())?;
     let upgrade_guide = FieldGuide::upgrades().map_err(|e| e.to_string())?;
     let summary = GameSummary {
@@ -122,6 +125,8 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
         buff_guide,
         destructables,
         destructable_guide,
+        doodads,
+        doodad_guide,
         upgrades,
         upgrade_guide,
         mode,

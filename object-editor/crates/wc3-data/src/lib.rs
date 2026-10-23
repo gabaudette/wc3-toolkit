@@ -3,9 +3,11 @@
 
 pub mod abilities;
 pub mod blp;
+pub mod doodads;
 pub mod game;
 pub mod guide;
 pub mod icon;
+pub mod leveled;
 pub mod meta;
 pub mod model;
 pub mod objects;
