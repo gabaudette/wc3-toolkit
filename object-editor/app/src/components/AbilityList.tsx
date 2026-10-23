@@ -3,6 +3,7 @@ import { api, errorMessage } from "../api";
 import type { AbilitySummary, SearchHit } from "../types";
 import { classes } from "../ui";
 import { Chip, toggle } from "./Chip";
+import { ListFold, useFolded } from "./ListFold";
 import { UnitIcon } from "./UnitIcon";
 
 type AbilityListProps = {
@@ -53,6 +54,7 @@ export function AbilityList({ abilities, selected, onSelect, onError }: AbilityL
   const [hits, setHits] = useState<SearchHit[] | null>(null);
   const [kinds, setKinds] = useState<Kind[]>(["hero", "unit", "item"]);
   const [origins, setOrigins] = useState<Origin[]>(["map", "game"]);
+  const [folded, toggleFolded] = useFolded("wc3-object-editor.fold.abilities");
 
   // Searches again when the list changes, so edited and new abilities show up.
   useEffect(() => {
@@ -85,6 +87,53 @@ export function AbilityList({ abilities, selected, onSelect, onError }: AbilityL
 
     return abilities.filter(kept).map((ability) => ({ ability, reason: "" }));
   }, [abilities, hits, kinds, origins]);
+
+  // While searching every match shows; otherwise the map's own abilities come
+  // first and the game's fold away under their header.
+  const own = shown.filter((r) => Boolean(hits) || r.ability.inMap);
+  const game = shown.filter((r) => !hits && !r.ability.inMap);
+  const mapHasNone = !abilities.some((a) => a.inMap);
+  let visible = own.length + game.length;
+  if (folded) {
+    visible = own.length;
+  }
+
+  function row({ ability, reason }: { ability: AbilitySummary; reason: string }) {
+    return (
+      <li key={ability.id}>
+        <button
+          type="button"
+          onClick={() => onSelect(ability.id)}
+          aria-current={selected === ability.id}
+          className={classes(
+            "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2",
+            selected === ability.id && "bg-surface-2 shadow-[inset_2px_0_0_var(--color-glow)]",
+          )}
+        >
+          <UnitIcon path={ability.icon} size="small" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate">
+              {ability.name}
+              {ability.suffix && <span className="ml-1 text-faint">{ability.suffix}</span>}
+            </span>
+            <span className="block truncate font-mono text-xs text-faint">
+              {ability.id}
+              {ability.custom && ` · based on ${ability.base}`}
+              {reason && ` · ${reason}`}
+            </span>
+          </span>
+          {ability.changedFields > 0 && (
+            <span
+              className="rounded bg-changed-soft px-1.5 text-xs text-changed"
+              title={`${ability.changedFields} changed values`}
+            >
+              {ability.changedFields}
+            </span>
+          )}
+        </button>
+      </li>
+    );
+  }
 
   return (
     <aside
@@ -119,44 +168,28 @@ export function AbilityList({ abilities, selected, onSelect, onError }: AbilityL
             />
           ))}
         </div>
-        <p className="text-xs text-faint">{shown.length} shown</p>
+        <p className="text-xs text-faint">
+          {visible} shown
+          {folded && game.length > 0 && ` · ${game.length} game abilities folded`}
+        </p>
       </div>
 
       <ul className="min-h-0 flex-1 overflow-y-auto" aria-label="Abilities">
-        {shown.map(({ ability, reason }) => (
-          <li key={ability.id}>
-            <button
-              type="button"
-              onClick={() => onSelect(ability.id)}
-              aria-current={selected === ability.id}
-              className={classes(
-                "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2",
-                selected === ability.id && "bg-surface-2 shadow-[inset_2px_0_0_var(--color-glow)]",
-              )}
-            >
-              <UnitIcon path={ability.icon} size="small" />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate">
-                  {ability.name}
-                  {ability.suffix && <span className="ml-1 text-faint">{ability.suffix}</span>}
-                </span>
-                <span className="block truncate font-mono text-xs text-faint">
-                  {ability.id}
-                  {ability.custom && ` · based on ${ability.base}`}
-                  {reason && ` · ${reason}`}
-                </span>
-              </span>
-              {ability.changedFields > 0 && (
-                <span
-                  className="rounded bg-changed-soft px-1.5 text-xs text-changed"
-                  title={`${ability.changedFields} changed values`}
-                >
-                  {ability.changedFields}
-                </span>
-              )}
-            </button>
+        {own.map(row)}
+        {mapHasNone && folded && !hits && (
+          <li className="px-3 py-4 text-sm text-muted">
+            This map adds or changes no abilities yet.
           </li>
-        ))}
+        )}
+        {game.length > 0 && (
+          <ListFold
+            label="Game abilities"
+            count={game.length}
+            folded={folded}
+            onToggle={toggleFolded}
+          />
+        )}
+        {!folded && game.map(row)}
       </ul>
     </aside>
   );
