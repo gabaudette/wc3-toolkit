@@ -47,6 +47,12 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
 - `data/fields.toml`: display names, types, limits, choices and applicability extracted from
   the local installation. Includes spell-specific fields beyond the authored guides.
 - `data/api.json`: API declaration metadata, source hashes and the snapshot version label.
+- `scripts/api-categories.ts`: authored browse topics, ordered symbol-name rules and
+  engine-type ownership. The generator creates a topic overview, one page per topic and a
+  complete alphabetical index without changing existing symbol URLs. Topic rules run before
+  callable parameter/return-type fallbacks so, for example, saving a unit handle stays under
+  storage. Tests cover cross-topic operations and new symbols. Update these rules when new
+  API families need a more specific home than Runtime and general utilities.
 - `data/examples.json`: paired, complete JASS and Lua recipes with titles, categories and
   usage instructions. The API pages and generated examples cookbook use this same source.
   `examples.test.ts` checks Lua 5.3 syntax, named entry points, API references and duplicate

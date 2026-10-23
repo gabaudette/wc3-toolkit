@@ -32,7 +32,7 @@ The Windows installer is unsigned. Windows may show **Windows protected your PC*
   <a href="../../screenshots/load-game.png">
     <img src="../../screenshots/load-game.png" alt="Tinkerbench’s startup screen showing the Warcraft III folder, Browse, the HD art option and Load game data." width="600" height="420" loading="lazy" />
   </a>
-  <figcaption>The first startup step connects your local game installation. Select the screenshot to see it at full size.<br />Image subject to change.</figcaption>
+  <figcaption>The first startup step connects your local game installation. Select the screenshot to see it at full size.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 The [visual tour](../visual-tour/#2-open-a-map) shows the next screen and its map-opening options.

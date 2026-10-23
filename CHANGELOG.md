@@ -10,6 +10,8 @@ under "What's new".
 
 - Contributing section on the documentation website, with bug-report guidance, local editor
   setup, documentation authoring and validation instructions.
+- API reference organized into 22 topics, with category pages, declaration counts and links
+  from each symbol back to its topic. The complete alphabetical index is still available.
 - Screenshot tour of the Tinkerbench application, from loading game data and opening a map
   to editing and sharing objects, with a preview on the documentation homepage and in the README.
   Each screenshot notes that the image is subject to change.
@@ -28,6 +30,10 @@ under "What's new".
 
 ### Changed
 
+- Documentation navbar title is now “Tinkerbench”. Theme, code-theme and search controls use
+  a subtle focus underline instead of a blue outer outline. The homepage’s early-development
+  notice appears in an inline warning callout.
+- Screenshot change notices are centered and muted beneath their images.
 - Documentation uses the app icon as its PNG favicon.
 - External links in the documentation open in a new tab.
 - Destructables and doodads show the World Editor's icon for their category (Props, Bridges,

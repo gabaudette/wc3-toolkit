@@ -13,10 +13,33 @@ single line. Every pull request adds an entry here and to the changelog.
   output and documents the sequential site checks and production-search preview.
 - Linked the section from the homepage and root CONTRIBUTING.md. The repository’s existing
   contribution rules and engineering standards remain the detailed source of truth.
-- Validation: all 54 documentation tests pass, Biome and Astro report no diagnostics, and
-  the build and local link/asset checks pass across 6,581 pages. Browser checks cover the
+- Validation: all 89 documentation tests pass, Biome and Astro report no diagnostics, and
+  the build and local link/asset checks pass across 6,604 pages. Browser checks cover the
   sidebar, all three pages, the pull-request anchor and 390 px mobile layouts without page
   overflow or browser errors.
+
+## 2026-10-23 · Categorized API reference (PR #30)
+
+- Replaced the 5,131-declaration API landing list with 22 topic cards linking to generated
+  topic pages. Each page groups native functions, Blizzard helpers, handle types and constants;
+  constants are collapsible. The former source/kind listing remains as a separate alphabetical
+  index, and every original symbol URL is preserved with a link back to its topic.
+- Classification uses authored ordered name rules and engine-type ownership. Operation
+  precedence keeps handle persistence under storage, event registration under triggers and
+  ability changes under abilities even when the API also mentions a unit. Unrecognized future
+  names use engine signatures before falling back to general utilities. Tests cover these
+  boundaries, constant families, unique category IDs and unique engine-type ownership.
+- Shortened the site title to Tinkerbench. Removed the outer blue focus outline from the
+  site-theme selector, snippet-theme picker and search input; a mint underline retains a
+  visible focus cue without the surrounding ring.
+- Turned the homepage’s early-development message into a static Starlight caution callout.
+- Screenshot change notices now use a centered, muted span beneath each descriptive caption;
+  the root README also centers its notice with smaller text.
+- Validation: 89 tests pass; lint and Astro checks report no diagnostics. The production build
+  and link check pass across 6,601 pages. A coverage audit confirms all 5,131 original symbol
+  pages and alphabetical entries remain and each symbol belongs to exactly one topic.
+  Browser checks cover topic-to-symbol navigation, constant expansion, desktop dark/light
+  and 390 px mobile layouts, all three focus controls, the warning callout and notice styling.
 
 ## 2026-10-23 · Application screenshots and visual tour (PR #29)
 
