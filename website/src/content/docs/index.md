@@ -26,6 +26,9 @@ Tinkerbench is in early development. Use a copy of your map while trying the edi
 - **[Object field reference](./reference/fields/)** — raw codes, meanings, values and gotchas from the same field guides as the editor.
 - **[Map formats](./formats/object-data/)** — object files, strings, imports and protected maps, based on the toolkit’s readers and writers.
 
+Use **Code theme** above any snippet to choose its colors. The choice applies to all snippets
+and is remembered across pages. **Follow site theme** matches the site’s dark or light mode.
+
 Press **Ctrl K** (or **⌘ K**) to search. The published site searches guides, API symbols and raw field codes together.
 
 ## About this guide

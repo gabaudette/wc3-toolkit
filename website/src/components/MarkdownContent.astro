@@ -1,0 +1,10 @@
+---
+// biome-ignore lint/correctness/noUnusedImports: Used in the Astro template, which Biome does not analyze.
+import DefaultMarkdownContent from "@astrojs/starlight/components/MarkdownContent.astro";
+---
+
+<DefaultMarkdownContent><slot /></DefaultMarkdownContent>
+
+<script>
+  import "../codeThemePicker";
+</script>

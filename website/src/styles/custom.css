@@ -65,6 +65,41 @@ h3,
   font-size: 0.875rem;
 }
 
+.code-theme-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 0.75rem;
+  background: var(--sl-color-gray-6);
+  border: 1px solid var(--sl-color-gray-5);
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+}
+
+.code-theme-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--sl-color-gray-2);
+  font-size: 0.75rem;
+}
+
+.code-theme-select {
+  max-width: 12rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.5rem;
+  color: var(--sl-color-white);
+  background: var(--sl-color-black);
+  border: 1px solid var(--sl-color-gray-4);
+  border-radius: 4px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.code-snippet .expressive-code .frame {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
 :focus-visible {
   outline: 2px solid #8bbdf8;
   outline-offset: 3px;

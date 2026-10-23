@@ -1,9 +1,16 @@
 ---
 // biome-ignore lint/correctness/noUnusedImports: Used in the Astro template, which Biome does not analyze.
 import DefaultThemeProvider from "@astrojs/starlight/components/ThemeProvider.astro";
+import { CODE_THEME_STORAGE_KEY, CODE_THEMES } from "../codeThemes";
+
+// biome-ignore lint/correctness/noUnusedVariables: Passed into the inline Astro script below.
+const codeThemeConfig = {
+  ids: CODE_THEMES.map((theme) => theme.id),
+  storageKey: CODE_THEME_STORAGE_KEY,
+};
 ---
 
-<script is:inline>
+<script is:inline define:vars={{ codeThemeConfig }}>
   // Start in Workshop's graphite theme; preserve every explicit visitor preference.
   try {
     if (localStorage.getItem("starlight-theme") === null) {
@@ -11,6 +18,16 @@ import DefaultThemeProvider from "@astrojs/starlight/components/ThemeProvider.as
     }
   } catch {
     // Storage can be blocked by browser privacy settings. Starlight then uses the system theme.
+  }
+  try {
+    const stored = localStorage.getItem(codeThemeConfig.storageKey);
+    let codeTheme = "auto";
+    if (codeThemeConfig.ids.includes(stored)) {
+      codeTheme = stored;
+    }
+    document.documentElement.dataset.codeTheme = codeTheme;
+  } catch {
+    document.documentElement.dataset.codeTheme = "auto";
   }
 </script>
 <DefaultThemeProvider />

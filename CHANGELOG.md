@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Code snippet theme picker in the documentation, with six color themes and a remembered
+  choice across pages.
 - [Documentation website](https://tinkerbench-docs.vercel.app): editor guides, JASS and Lua API declarations, and a searchable
   reference for object fields.
 - Buffs tab: browse, search, edit and create custom buffs and effects, with a chip per race.

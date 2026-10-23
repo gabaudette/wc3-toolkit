@@ -39,6 +39,12 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
 - `data/api.json`: API declaration metadata, source hashes and the snapshot version label.
 - `data/examples.json`: authored JASS and Lua examples attached to selected API entries.
 - `scripts/jass-language.mjs`: project-authored JASS highlighting grammar.
+- `src/codeThemes.ts`: bundled snippet themes, shared by highlighting and the native pickers.
+  Snippet colors are independent of the site theme; “Follow site theme” selects GitHub Dark
+  or Light. The preference is restored before paint and synchronized across snippets/tabs.
+
+The content cache is keyed by the theme configuration and JASS grammar, so Markdown cannot
+retain stylesheet references from an older syntax-highlighting configuration.
 
 Generated pages in `src/content/docs/reference/{api,fields}/` are ignored. Every build
 regenerates them. Edit the source guide or snapshot, rather than generated Markdown.
