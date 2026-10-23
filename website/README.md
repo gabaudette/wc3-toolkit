@@ -86,7 +86,6 @@ No adapter, game files, runtime backend or deployment token in GitHub Actions is
 commit with `VERCEL_GIT_PREVIOUS_SHA` (the last successful deployment for that branch), so a
 multi-commit push cannot hide an earlier documentation edit. Only these inputs trigger a
 build:
-
 - `website/**`
 - `object-editor/crates/wc3-data/data/**` (the shared field guides)
 - `vercel.json` and `.vercelignore`
