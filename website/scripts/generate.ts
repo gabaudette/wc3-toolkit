@@ -1,6 +1,7 @@
 import { mkdir, readdir, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { API_CATEGORIES, categoryFor } from "./api-categories";
+import { guideKey, validateApiGuides } from "./api-guides";
 import type { Declaration } from "./jass";
 import { signatures } from "./jass";
 
@@ -107,6 +108,11 @@ for (const name of Object.keys(examples)) {
     throw new Error(`Example refers to an unknown API: ${name}`);
   }
 }
+const practical = validateApiGuides(
+  await Bun.file(new URL("data/api-guides.json", root)).json(),
+  api.declarations,
+  examples,
+);
 
 await mkdir(output, { recursive: true });
 for (const directory of ["api", "fields", "examples"]) {
@@ -180,6 +186,12 @@ for (const category of categories) {
     `**${category.members.length.toLocaleString("en")} declarations** · [All API topics](${link(from, "reference/api")}) · [Full alphabetical index](${link(from, "reference/api/alphabetical")})`,
     "Functions, types and constants are grouped below. Select a symbol for its declaration, parameter types and Lua call syntax.",
   ];
+  const explained = category.members.filter((entry) => practical.guides.has(guideKey(entry)));
+  if (explained.length) {
+    body.push(
+      `## Practical guides\n\n${explained.map((entry) => `- [${code(entry.name)}](${link(from, apiPath(entry))}) — ${markdown(practical.guides.get(guideKey(entry))?.summary ?? "")}`).join("\n")}`,
+    );
+  }
   for (const kind of ["native", "function", "type", "constant"] as const) {
     const members = category.members.filter((entry) => entry.kind === kind);
     if (!members.length) {
@@ -224,6 +236,7 @@ const topicCards = categories.map((category) => {
 const categorizedIndex = [
   "Find native functions, Blizzard helpers, handle types and constants by what you are working on. Each topic brings declarations from `common.j` and `blizzard.j` together.",
   `${api.declarations.length.toLocaleString("en")} declarations · ${categories.length} topics · [Full alphabetical index](./alphabetical/) · [Code examples](../examples/)`,
+  `[Start with ${practical.guides.size} practical API guides](./practical/) for parameter meanings, ownership, cleanup and common mistakes. These project-authored explanations supplement the extracted declarations.`,
   "## Browse by topic",
   `<ul class="api-topic-grid" role="list">\n${topicCards.join("\n")}\n</ul>`,
   "## Using the reference",
@@ -232,15 +245,45 @@ const categorizedIndex = [
   ...api.sources.map((source) => `- ${code(source.name)} · SHA-256: ${code(source.sha256)}`),
 ];
 
+const practicalIndex = [
+  `This initial set of **${practical.guides.size} practical guides** covers units, timers, groups, triggers and temporary locations. Each includes parameter meanings, return behavior, usage, ownership, common mistakes, related APIs and a paired JASS/Lua example.`,
+  practical.verification,
+  `**Source snapshot:** ${markdown(api.version)}. [All API topics](../) · [Full alphabetical index](../alphabetical/) · [Code examples](../../examples/)`,
+  "Choose Lua or JASS in the top bar to switch syntax and language-specific guidance. Shared parameter and cleanup notes apply to both languages.",
+];
+for (const category of categories) {
+  const members = category.members
+    .map((entry) => practical.guides.get(guideKey(entry)))
+    .filter((entry) => entry !== undefined);
+  if (members.length) {
+    practicalIndex.push(
+      `## ${category.title}\n\n${members.map((entry) => `- [${code(entry.declaration.name)}](${link("reference/api/practical", apiPath(entry.declaration))}) — ${markdown(entry.summary)}`).join("\n")}`,
+    );
+  }
+}
+await page(
+  "api/practical/index",
+  "Practical API guides",
+  `Practical explanations and JASS/Lua examples for ${practical.guides.size} common APIs.`,
+  practicalIndex.join("\n\n"),
+);
+
 for (const declaration of api.declarations) {
   const from = apiPath(declaration);
   const { jass, lua } = signatures(declaration);
   const category = categoryFor(declaration);
+  const guide = practical.guides.get(guideKey(declaration));
   const body = [
     `**${declaration.kind}** · ${code(declaration.source)} line ${declaration.line} · [Browse the API](${link(from, "reference/api")})`,
     `Topic: [${category.title}](${link(from, categoryPath(category.id))}).`,
-    languageSection("jass", `## JASS declaration\n\n\`\`\`jass\n${jass}\n\`\`\``),
   ];
+  if (guide) {
+    body.push(
+      guide.summary,
+      `**Review status:** ${practical.verification}\n\n**Source snapshot:** ${markdown(api.version)}. [Practical guide index](${link(from, "reference/api/practical")}).`,
+    );
+  }
+  body.push(languageSection("jass", `## JASS declaration\n\n\`\`\`jass\n${jass}\n\`\`\``));
   let luaHeading = "Lua call syntax";
   if (declaration.kind === "type" || declaration.kind === "constant") {
     luaHeading = "Lua representation";
@@ -259,9 +302,15 @@ for (const declaration of api.declarations) {
     );
     body.push("## Parameters");
     if (declaration.parameters.length) {
-      body.push(
-        `| Name | Engine type |\n| --- | --- |\n${declaration.parameters.map((parameter) => `| ${code(parameter.name)} | ${typeLink(from, parameter.type)} |`).join("\n")}`,
-      );
+      if (guide) {
+        body.push(
+          `| Name | Engine type | Meaning |\n| --- | --- | --- |\n${declaration.parameters.map((parameter) => `| ${code(parameter.name)} | ${typeLink(from, parameter.type)} | ${markdown(guide.parameters[parameter.name])} |`).join("\n")}`,
+        );
+      } else {
+        body.push(
+          `| Name | Engine type |\n| --- | --- |\n${declaration.parameters.map((parameter) => `| ${code(parameter.name)} | ${typeLink(from, parameter.type)} |`).join("\n")}`,
+        );
+      }
     } else {
       body.push("This function takes no arguments.");
     }
@@ -270,7 +319,40 @@ for (const declaration of api.declarations) {
       returns = "No return value.";
     }
     body.push(`## Returns\n\n${returns}`);
-    const example = examples[declaration.name];
+    if (guide) {
+      body.push(
+        guide.returns,
+        `## How to use it\n\n${guide.usage.map((note) => `- ${markdown(note)}`).join("\n")}`,
+        `## Ownership and cleanup\n\n${markdown(guide.ownership)}`,
+        `## Common mistakes\n\n${guide.pitfalls.map((note) => `- ${markdown(note)}`).join("\n")}`,
+      );
+      for (const [language, notes] of [
+        ["jass", guide.jassNotes],
+        ["lua", guide.luaNotes],
+      ] as const) {
+        if (notes.length) {
+          const noteHeadings = { jass: "JASS notes", lua: "Lua notes" };
+          body.push(
+            languageSection(
+              language,
+              `### ${noteHeadings[language]}\n\n${notes.map((note) => `- ${markdown(note)}`).join("\n")}`,
+            ),
+          );
+        }
+      }
+      if (guide.unverified.length) {
+        body.push(
+          `## Unverified behavior\n\n${guide.unverified.map((note) => `- ${markdown(note)}`).join("\n")}`,
+        );
+      }
+      body.push(
+        `## Related APIs\n\n${guide.related.map((entry) => `- [${code(entry.name)}](${link(from, apiPath(entry))})`).join("\n")}`,
+      );
+    }
+    let example = examples[declaration.name];
+    if (guide) {
+      example = examples[guide.example];
+    }
     if (example) {
       body.push(`## Example\n\n**${example.title}**\n\n${example.description}\n\n${example.usage}`);
       body.push(languageSection("jass", `### JASS\n\n\`\`\`jass\n${example.jass}\n\`\`\``));
@@ -281,7 +363,8 @@ for (const declaration of api.declarations) {
   await page(
     `api/${slug(declaration)}`,
     declaration.name,
-    `${declaration.kind} from ${declaration.source}: JASS declaration, Lua usage and parameter types.`,
+    guide?.summary ??
+      `${declaration.kind} from ${declaration.source}: JASS declaration, Lua usage and parameter types.`,
     body.join("\n\n"),
   );
 }

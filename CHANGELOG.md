@@ -8,6 +8,10 @@ under "What's new".
 
 ### Added
 
+- Practical explanations for 26 common APIs, with parameter and return notes, ownership and
+  cleanup guidance, common mistakes, related links and paired JASS/Lua examples. A new
+  practical guide index and topic links make the curated pages easier to find.
+
 - Troubleshooting hub for loading game data, editing and saving maps, missing previews and
   import problems, with checks by symptom and a bug-report template.
 - Tinkerbench copyright footer throughout the documentation, with contributor attribution

@@ -342,5 +342,45 @@
     "usage": "Call `ExampleFlushChildHashtable(data, whichUnit)` before removing the tracked unit. This clears entries; it does not destroy the hashtable.",
     "jass": "function ExampleFlushChildHashtable takes hashtable data, unit whichUnit returns nothing\n    call FlushChildHashtable(data, GetHandleId(whichUnit))\nendfunction",
     "lua": "function ExampleFlushChildHashtable(data, whichUnit)\n    FlushChildHashtable(data, GetHandleId(whichUnit))\nend"
+  },
+  "RemoveUnit": {
+    "title": "Release a temporary unit",
+    "category": "Units and abilities",
+    "description": "Remove a unit when the system that created it has finished using it.",
+    "usage": "Pass a valid temporary unit owned by your system. After this call, clear any stored references to that unit; do not pass an unrelated map unit.",
+    "jass": "function ExampleRemoveUnit takes unit ownedUnit returns nothing\n    if ownedUnit != null then\n        call RemoveUnit(ownedUnit)\n    endif\nendfunction",
+    "lua": "function ExampleRemoveUnit(ownedUnit)\n    if ownedUnit ~= nil then\n        RemoveUnit(ownedUnit)\n    end\nend"
+  },
+  "GroupClear": {
+    "title": "Reuse an empty group",
+    "category": "Groups and combat",
+    "description": "Clear membership, then reuse the same group before releasing it. Neither clearing nor destroying the group removes its units.",
+    "usage": "Pass a valid existing unit. The example owns its scratch group and releases it before returning.",
+    "jass": "function ExampleGroupClear takes unit whichUnit returns nothing\n    local group scratch = CreateGroup()\n    call GroupAddUnit(scratch, whichUnit)\n    call GroupClear(scratch)\n    call GroupAddUnit(scratch, whichUnit)\n    call DestroyGroup(scratch)\n    set scratch = null\nendfunction",
+    "lua": "function ExampleGroupClear(whichUnit)\n    local scratch = CreateGroup()\n    GroupAddUnit(scratch, whichUnit)\n    GroupClear(scratch)\n    GroupAddUnit(scratch, whichUnit)\n    DestroyGroup(scratch)\nend"
+  },
+  "GetTriggerUnit": {
+    "title": "Read the unit from a death event",
+    "category": "Timers and triggers",
+    "description": "Register a map-lifetime death listener and read its event unit in the action. The Blizzard helper registers the event across player slots.",
+    "usage": "Call ExampleGetTriggerUnit once during map initialization. Keep the trigger for the map lifetime; repeatedly registering it would duplicate messages.",
+    "jass": "function ExampleTriggerUnitDeathAction takes nothing returns nothing\n    local unit eventUnit = GetTriggerUnit()\n    call DisplayTextToPlayer(GetOwningPlayer(eventUnit), 0, 0, GetUnitName(eventUnit) + \" died.\")\n    set eventUnit = null\nendfunction\n\nfunction ExampleGetTriggerUnit takes nothing returns nothing\n    local trigger listener = CreateTrigger()\n    call TriggerRegisterAnyUnitEventBJ(listener, EVENT_PLAYER_UNIT_DEATH)\n    call TriggerAddAction(listener, function ExampleTriggerUnitDeathAction)\n    set listener = null\nendfunction",
+    "lua": "function ExampleGetTriggerUnit()\n    local listener = CreateTrigger()\n    TriggerRegisterAnyUnitEventBJ(listener, EVENT_PLAYER_UNIT_DEATH)\n    TriggerAddAction(listener, function()\n        local eventUnit = GetTriggerUnit()\n        DisplayTextToPlayer(GetOwningPlayer(eventUnit), 0, 0, GetUnitName(eventUnit) .. \" died.\")\n    end)\nend"
+  },
+  "DestroyTrigger": {
+    "title": "Release a temporary trigger",
+    "category": "Timers and triggers",
+    "description": "Destroy an owned listener once its events and actions are no longer needed.",
+    "usage": "Pass a trigger retained by your system. Release any separately owned timers, groups or locations as well, and clear the caller's stored trigger reference afterwards.",
+    "jass": "function ExampleDestroyTrigger takes trigger ownedTrigger returns nothing\n    if ownedTrigger != null then\n        call DestroyTrigger(ownedTrigger)\n    endif\nendfunction",
+    "lua": "function ExampleDestroyTrigger(ownedTrigger)\n    if ownedTrigger ~= nil then\n        DestroyTrigger(ownedTrigger)\n    end\nend"
+  },
+  "GetUnitLoc": {
+    "title": "Read and release a unit position",
+    "category": "Effects and geometry",
+    "description": "Read a snapshot of a unit's position through a temporary location and release that location after extracting its coordinates.",
+    "usage": "Pass a valid existing unit. If you need only coordinates in your own code, prefer GetUnitX and GetUnitY to avoid allocating a location.",
+    "jass": "function ExampleGetUnitLoc takes unit whichUnit returns nothing\n    local location point = GetUnitLoc(whichUnit)\n    local real x = GetLocationX(point)\n    local real y = GetLocationY(point)\n    call RemoveLocation(point)\n    set point = null\n    call DisplayTextToPlayer(Player(0), 0, 0, R2S(x) + \", \" + R2S(y))\nendfunction",
+    "lua": "function ExampleGetUnitLoc(whichUnit)\n    local point = GetUnitLoc(whichUnit)\n    local x = GetLocationX(point)\n    local y = GetLocationY(point)\n    RemoveLocation(point)\n    DisplayTextToPlayer(Player(0), 0, 0, tostring(x) .. \", \" .. tostring(y))\nend"
   }
 }

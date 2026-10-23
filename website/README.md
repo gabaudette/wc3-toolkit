@@ -56,10 +56,21 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   callable parameter/return-type fallbacks so, for example, saving a unit handle stays under
   storage. Tests cover cross-topic operations and new symbols. Update these rules when new
   API families need a more specific home than Runtime and general utilities.
+- `data/api-guides.json`: project-authored practical API explanations, separate from the
+  extracted snapshot and preserved by `refresh:api`. The practical index lists the initial
+  26 APIs. Match each symbol and source, document every parameter by its exact name, explain
+  returns and ownership, and include usage, mistakes, related APIs and a recipe key. Reuse
+  recipes where possible; the selected recipe must call the API in both languages. Optional
+  `jassNotes` and `luaNotes` switch with the language picker; `unverified` records specific
+  engine behavior that has not been exercised. Keep the source-review status honest: parsing
+  or syntax checking does not establish game behavior. To claim in-game verification, record
+  the exact game build, test setup and observed result before changing the status text.
+  Validation rejects unresolved or ambiguous symbols/links, stale parameter names, duplicate
+  guides, blank guidance and missing or unrelated examples before replacing generated pages.
 - `data/examples.json`: paired, complete JASS and Lua recipes with titles, categories and
   usage instructions. The API pages and generated examples cookbook use this same source.
   `examples.test.ts` checks Lua 5.3 syntax, named entry points, API references and duplicate
-  JASS function names. The 43 current JASS recipes were also checked with PJass against the
+  JASS function names. The 48 current JASS recipes were also checked with PJass against the
   local installation scripts. Game execution still needs a test map.
 - `scripts/jass-language.mjs`: project-authored JASS highlighting grammar.
 - `src/codeThemes.ts`: bundled snippet themes, shared by highlighting and the native pickers.

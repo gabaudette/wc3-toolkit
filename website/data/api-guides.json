@@ -1,0 +1,745 @@
+{
+  "verification": "Project-authored guidance reviewed against the recorded source snapshot. Examples are syntax-checked, not tested in-game; specific engine caveats are identified where relevant.",
+  "guides": [
+    {
+      "name": "CreateUnit",
+      "source": "common.j",
+      "summary": "Create a unit of a chosen type for a player at map coordinates.",
+      "parameters": {
+        "id": "The owning player handle, such as Player(0), rather than a numeric player slot.",
+        "unitid": "The integer raw code of a unit type available in the map.",
+        "x": "Horizontal map coordinate for placement.",
+        "y": "Vertical map coordinate for placement.",
+        "face": "Initial facing angle in degrees."
+      },
+      "returns": "The newly created unit handle. Retain it if your system will later issue orders, change fields or remove the unit.",
+      "usage": [
+        "Choose an existing unit type and owner, then create the unit from synchronized map code.",
+        "Keep permanent gameplay units for their intended lifetime. For temporary units, keep a reference so the creating system can remove them."
+      ],
+      "ownership": "This creates a unit. The system that creates a temporary unit should arrange RemoveUnit when finished. Clearing a variable does not remove the unit from the map.",
+      "pitfalls": [
+        "Do not pass a display name such as Footman as the unit type. Use its raw code.",
+        "Do not remove a permanent gameplay unit merely to tidy a local variable."
+      ],
+      "related": [
+        "RemoveUnit",
+        "Player",
+        "GetUnitX",
+        "SetUnitPosition"
+      ],
+      "example": "CreateUnit",
+      "jassNotes": [
+        "Write a four-character raw code as an integer literal, for example 'hfoo'. Clear local handle references when finished with them."
+      ],
+      "luaNotes": [
+        "Convert the raw code with FourCC(\"hfoo\"). An ordinary string is not the required integer unit type."
+      ],
+      "unverified": [
+        "Invalid type IDs and exact placement around blocked terrain have not been tested in-game for this snapshot."
+      ]
+    },
+    {
+      "name": "RemoveUnit",
+      "source": "common.j",
+      "summary": "Remove an existing unit when its owning system no longer needs it.",
+      "parameters": {
+        "whichUnit": "The unit to remove; ensure it belongs to the system performing cleanup."
+      },
+      "returns": "No value. The passed unit must no longer be used by your system.",
+      "usage": [
+        "Use this to retire temporary units or deliberately remove a map unit.",
+        "Clear stored references after removal so later callbacks do not try to use the old unit."
+      ],
+      "ownership": "Removes the unit itself. It does not release unrelated groups, locations or timers that your code created while working with that unit.",
+      "pitfalls": [
+        "GroupRemoveUnit removes group membership; it does not remove a unit from the map.",
+        "If the design requires a unit to die, consider KillUnit. Do not use removal as a substitute for a death workflow."
+      ],
+      "related": [
+        "CreateUnit",
+        "KillUnit",
+        "GroupRemoveUnit"
+      ],
+      "example": "RemoveUnit",
+      "jassNotes": [
+        "Set stored unit variables to null after removal when your system no longer needs them."
+      ],
+      "luaNotes": [
+        "Assign nil to stored references after removal. Destroying the engine unit does not automatically erase references from Lua tables."
+      ],
+      "unverified": [
+        "Death-event ordering and removal during other running callbacks are not established by this guide."
+      ]
+    },
+    {
+      "name": "GetUnitX",
+      "source": "common.j",
+      "summary": "Read a unit's current horizontal map coordinate without allocating a location.",
+      "parameters": {
+        "whichUnit": "The existing unit whose position you want to read."
+      },
+      "returns": "A real number: the unit's horizontal coordinate at the time of the call.",
+      "usage": [
+        "Read both coordinates when a calculation needs a position pair.",
+        "Read again when you need an updated position; stored numbers do not follow a moving unit."
+      ],
+      "ownership": "Returns a number and borrows the unit. There is no temporary location to remove and no unit ownership transfer.",
+      "pitfalls": [
+        "A coordinate is not a location handle. Do not pass it to RemoveLocation.",
+        "This coordinate does not include terrain height or flying height."
+      ],
+      "related": [
+        "GetUnitY",
+        "GetUnitLoc",
+        "SetUnitPosition"
+      ],
+      "example": "GetUnitX"
+    },
+    {
+      "name": "GetUnitY",
+      "source": "common.j",
+      "summary": "Read a unit's current vertical map coordinate without allocating a location.",
+      "parameters": {
+        "whichUnit": "The existing unit whose position you want to read."
+      },
+      "returns": "A real number: the unit's vertical coordinate at the time of the call.",
+      "usage": [
+        "Read both coordinates when a calculation needs a position pair.",
+        "Read again when you need an updated position; stored numbers do not follow a moving unit."
+      ],
+      "ownership": "Returns a number and borrows the unit. There is no temporary location to remove and no unit ownership transfer.",
+      "pitfalls": [
+        "A coordinate is not a location handle. Do not pass it to RemoveLocation.",
+        "This coordinate does not include terrain height or flying height."
+      ],
+      "related": [
+        "GetUnitX",
+        "GetUnitLoc",
+        "SetUnitPosition"
+      ],
+      "example": "GetUnitX"
+    },
+    {
+      "name": "SetUnitPosition",
+      "source": "common.j",
+      "summary": "Reposition an existing unit to a requested map location.",
+      "parameters": {
+        "whichUnit": "The existing unit to reposition.",
+        "newX": "Requested horizontal map coordinate.",
+        "newY": "Requested vertical map coordinate."
+      },
+      "returns": "No value. Read GetUnitX and GetUnitY afterwards if the resulting position matters.",
+      "usage": [
+        "Use this for deliberate repositioning. Use a movement order when the unit should walk to its destination.",
+        "Treat the requested coordinates as a placement request; terrain and placement constraints can affect the result."
+      ],
+      "ownership": "Modifies a borrowed unit. It creates no location or other temporary handle that needs cleanup.",
+      "pitfalls": [
+        "Do not expect a walking animation or a path to be followed as with a move order.",
+        "Do not assume the final coordinates exactly match the requested coordinates."
+      ],
+      "related": [
+        "GetUnitX",
+        "GetUnitY",
+        "IssuePointOrder",
+        "CreateUnit"
+      ],
+      "example": "SetUnitPosition",
+      "unverified": [
+        "Precise placement near obstacles, cliffs and map edges has not been tested in-game for this snapshot."
+      ]
+    },
+    {
+      "name": "CreateTimer",
+      "source": "common.j",
+      "summary": "Allocate a timer that can later run a callback after a delay.",
+      "parameters": {},
+      "returns": "A new timer handle. Creating it alone does not start a countdown.",
+      "usage": [
+        "Create a timer, then call TimerStart with a delay and callback.",
+        "Decide whether the timer belongs to a single operation or is a persistent timer shared by a system."
+      ],
+      "ownership": "The creating system owns the timer. DestroyTimer releases it when no longer needed, including after a one-shot countdown.",
+      "pitfalls": [
+        "An unstarted timer does not invoke any callback.",
+        "Repeatedly replacing a stored timer without destroying the old one leaves the earlier timers owned but unreachable."
+      ],
+      "related": [
+        "TimerStart",
+        "PauseTimer",
+        "DestroyTimer",
+        "GetExpiredTimer"
+      ],
+      "example": "CreateTimer"
+    },
+    {
+      "name": "TimerStart",
+      "source": "common.j",
+      "summary": "Start or restart a timer and choose the function to run when it expires.",
+      "parameters": {
+        "whichTimer": "An existing timer, usually allocated with CreateTimer.",
+        "timeout": "Delay in seconds; use a positive interval for ordinary countdowns.",
+        "periodic": "True to repeat the countdown; false to run it once.",
+        "handlerFunc": "Callback function value, passed without calling it."
+      },
+      "returns": "No value. The callback runs later when the timer expires.",
+      "usage": [
+        "Create the timer first and pass a no-argument callback. Starting the same timer again configures that timer rather than allocating another one.",
+        "For a one-shot operation, destroy the timer in its callback. For a periodic operation, define a stop and cleanup path.",
+        "Capture event data before leaving an event action; the later timer callback is a different context."
+      ],
+      "ownership": "Does not allocate a second timer. A one-shot timer still needs DestroyTimer after it finishes; periodic timers need an explicit owner that stops and destroys them.",
+      "pitfalls": [
+        "Calling the callback while supplying this argument executes it now instead of registering it.",
+        "Do not assume a paused timer and a newly restarted timer preserve the same countdown state."
+      ],
+      "related": [
+        "CreateTimer",
+        "GetExpiredTimer",
+        "PauseTimer",
+        "DestroyTimer"
+      ],
+      "example": "TimerStart",
+      "jassNotes": [
+        "Pass function CallbackName and declare the callback before the initializer that refers to it."
+      ],
+      "luaNotes": [
+        "Pass a function value or closure, for example function() ... end, rather than CallbackName()."
+      ],
+      "unverified": [
+        "Zero or negative delays, scheduling precision and reentrant restart behavior have not been tested here."
+      ]
+    },
+    {
+      "name": "PauseTimer",
+      "source": "common.j",
+      "summary": "Pause a timer without releasing its handle.",
+      "parameters": {
+        "whichTimer": "The existing timer whose countdown should be paused."
+      },
+      "returns": "No value. The timer remains allocated.",
+      "usage": [
+        "Pause a retained timer when its system needs to suspend it. ResumeTimer is the related operation for continuing it.",
+        "The cleanup example pauses the timer before destroying it; pausing alone is not cleanup."
+      ],
+      "ownership": "Borrows an existing timer. Its owner must still call DestroyTimer when the timer is no longer needed.",
+      "pitfalls": [
+        "Do not lose the timer reference after pausing it; it still occupies an engine handle.",
+        "Do not destroy a shared timer just because the current caller pauses it."
+      ],
+      "related": [
+        "ResumeTimer",
+        "TimerStart",
+        "DestroyTimer"
+      ],
+      "example": "DestroyTimer"
+    },
+    {
+      "name": "DestroyTimer",
+      "source": "common.j",
+      "summary": "Release a timer after its owning operation has finished.",
+      "parameters": {
+        "whichTimer": "The timer owned by the system performing cleanup."
+      },
+      "returns": "No value. Stop using the timer handle after this call.",
+      "usage": [
+        "Retain the handle until the operation completes, then pause and destroy it as shown in the example.",
+        "For a one-shot callback, GetExpiredTimer can identify the timer to release."
+      ],
+      "ownership": "Releases the engine timer. Clear stored references afterwards. Callback-created units, groups and other resources need their own cleanup.",
+      "pitfalls": [
+        "A one-shot timer does not release itself merely because its callback ran.",
+        "Do not destroy a timer borrowed from another system without agreeing on ownership."
+      ],
+      "related": [
+        "CreateTimer",
+        "PauseTimer",
+        "GetExpiredTimer"
+      ],
+      "example": "DestroyTimer",
+      "unverified": [
+        "This guide does not establish cancellation behavior for callback code that is already running."
+      ]
+    },
+    {
+      "name": "GetExpiredTimer",
+      "source": "common.j",
+      "summary": "Read the timer associated with the timer-expiration callback currently running.",
+      "parameters": {},
+      "returns": "The existing timer for the current expiration callback, rather than a newly allocated timer.",
+      "usage": [
+        "Call inside a TimerStart callback when you need to identify or destroy that callback's timer.",
+        "Keep application state separately when several timers share the same callback."
+      ],
+      "ownership": "Borrows the callback's timer. Destroy it only when this callback owns completion of that timer; periodic timers may need to keep running.",
+      "pitfalls": [
+        "This is not a way to find the most recently created timer.",
+        "Do not defer this getter to unrelated code and expect the original timer context to remain available."
+      ],
+      "related": [
+        "TimerStart",
+        "CreateTimer",
+        "DestroyTimer"
+      ],
+      "example": "GetExpiredTimer",
+      "unverified": [
+        "Values returned outside a matching expiration callback are not established here; do not rely on a null fallback."
+      ]
+    },
+    {
+      "name": "CreateGroup",
+      "source": "common.j",
+      "summary": "Allocate an empty collection of unit references.",
+      "parameters": {},
+      "returns": "A new empty group handle ready for adding or enumerating units.",
+      "usage": [
+        "Create a scratch group, populate it, process its members, then destroy it.",
+        "Retain and clear a group when a system deliberately reuses the collection."
+      ],
+      "ownership": "The creator owns the collection. DestroyGroup releases it; the units inside remain separate gameplay objects.",
+      "pitfalls": [
+        "A new group has no members until you add or enumerate them.",
+        "Dropping a variable does not release the engine group."
+      ],
+      "related": [
+        "GroupEnumUnitsInRange",
+        "ForGroup",
+        "GroupClear",
+        "DestroyGroup"
+      ],
+      "example": "ForGroup"
+    },
+    {
+      "name": "GroupEnumUnitsInRange",
+      "source": "common.j",
+      "summary": "Fill a supplied group with units found around a map coordinate.",
+      "parameters": {
+        "whichGroup": "An existing group that receives the enumeration results. Use a dedicated scratch group.",
+        "x": "Horizontal coordinate of the search center.",
+        "y": "Vertical coordinate of the search center.",
+        "radius": "Search radius in map units; supply a nonnegative distance.",
+        "filter": "Optional boolean-expression filter. With no filter, apply your own gameplay checks to the results."
+      },
+      "returns": "No value. Process the units through the supplied group.",
+      "usage": [
+        "Allocate a group before enumerating. Use GroupClear before reusing a collection whose previous contents are no longer needed.",
+        "Apply ownership, alive-state and unit-type checks required by your game rules. Do not assume a range search already enforces them.",
+        "Use GetFilterUnit in a filter callback, GetEnumUnit in ForGroup, or FirstOfGroup for a loop that removes processed members."
+      ],
+      "ownership": "Borrows the receiving group and its units. The caller still owns the group and any separately created filter expression. The example passes no filter and destroys its scratch group.",
+      "pitfalls": [
+        "Do not pass an uninitialized group as the output collection.",
+        "Do not assume repeated enumeration accumulates a union. If you need a union, build that membership explicitly."
+      ],
+      "related": [
+        "CreateGroup",
+        "GroupClear",
+        "FirstOfGroup",
+        "GetFilterUnit",
+        "DestroyGroup"
+      ],
+      "example": "GroupEnumUnitsInRange",
+      "jassNotes": [
+        "Pass null when no filter is needed. A code callback is not itself a boolexpr; use the appropriate expression constructor if filtering."
+      ],
+      "luaNotes": [
+        "Pass nil for no filter. A Lua function is not itself the boolexpr handle required by this parameter."
+      ],
+      "unverified": [
+        "Exact boundary inclusion, collision-size effects and special unit visibility cases have not been tested for this snapshot."
+      ]
+    },
+    {
+      "name": "ForGroup",
+      "source": "common.j",
+      "summary": "Run a callback for the units in a group.",
+      "parameters": {
+        "whichGroup": "An existing populated group to enumerate.",
+        "callback": "No-argument callback that reads its current member with GetEnumUnit."
+      },
+      "returns": "No value. Work is performed by the callback.",
+      "usage": [
+        "Populate the group first. Inside the callback, use GetEnumUnit to read the current unit.",
+        "Keep the callback immediate and avoid waits or mutation of the enumerated collection. Use a FirstOfGroup loop when membership must change as you process it."
+      ],
+      "ownership": "Borrows the group and its unit members. The caller retains responsibility for DestroyGroup; enumeration does not remove units from the map.",
+      "pitfalls": [
+        "Do not use GetTriggerUnit to identify a group member. It describes a different context.",
+        "Passing an empty group does not select units automatically."
+      ],
+      "related": [
+        "GetEnumUnit",
+        "FirstOfGroup",
+        "GroupRemoveUnit",
+        "DestroyGroup"
+      ],
+      "example": "ForGroup",
+      "jassNotes": [
+        "Pass function CallbackName, with its declaration before the caller."
+      ],
+      "luaNotes": [
+        "Pass a function value; invoke GetEnumUnit inside that function."
+      ]
+    },
+    {
+      "name": "GetEnumUnit",
+      "source": "common.j",
+      "summary": "Read the unit currently being processed by a ForGroup callback.",
+      "parameters": {},
+      "returns": "The existing unit for the active group-enumeration callback.",
+      "usage": [
+        "Call inside the callback passed to ForGroup.",
+        "Pass the returned unit explicitly to code that needs it after the callback; do not expect enumeration context to persist."
+      ],
+      "ownership": "Borrows a group member. Reading it allocates nothing and does not transfer ownership of the unit.",
+      "pitfalls": [
+        "Do not call RemoveUnit solely to clean up a borrowed enumeration result.",
+        "GetFilterUnit is for filtering and GetTriggerUnit is for unit events; neither replaces this getter in ForGroup."
+      ],
+      "related": [
+        "ForGroup",
+        "GetFilterUnit",
+        "GetTriggerUnit"
+      ],
+      "example": "ForGroup",
+      "unverified": [
+        "The return value outside an enumeration callback is not established here."
+      ]
+    },
+    {
+      "name": "FirstOfGroup",
+      "source": "common.j",
+      "summary": "Read one member of a group without removing it.",
+      "parameters": {
+        "whichGroup": "The existing group to inspect."
+      },
+      "returns": "A unit member, or no unit when the group is empty. Do not build logic around a particular member order.",
+      "usage": [
+        "For a draining loop, fetch one unit, exit if empty, remove that member, then process it.",
+        "The linked range-search example removes each fetched member before the next iteration."
+      ],
+      "ownership": "Borrows a unit reference. GroupRemoveUnit changes membership; DestroyGroup releases the collection. Neither operation removes the unit from the map.",
+      "pitfalls": [
+        "Calling FirstOfGroup repeatedly without removing or otherwise changing the member can create an endless loop.",
+        "Do not confuse removing a member with calling RemoveUnit."
+      ],
+      "related": [
+        "GroupRemoveUnit",
+        "GroupClear",
+        "DestroyGroup"
+      ],
+      "example": "GroupEnumUnitsInRange",
+      "jassNotes": [
+        "Check the returned unit against null to finish a draining loop."
+      ],
+      "luaNotes": [
+        "Check the returned unit against nil to finish a draining loop."
+      ],
+      "unverified": [
+        "Groups containing units already removed from the map need separate validation; stale-member behavior is not covered here."
+      ]
+    },
+    {
+      "name": "GroupClear",
+      "source": "common.j",
+      "summary": "Empty a group while keeping the collection available for reuse.",
+      "parameters": {
+        "whichGroup": "The group whose memberships should be discarded."
+      },
+      "returns": "No value. The group remains allocated and can receive units again.",
+      "usage": [
+        "Use when a retained scratch group should start with no previous members.",
+        "Destroy the group when your system no longer needs the collection itself."
+      ],
+      "ownership": "Clears references from the group without removing its units from the map. The group owner still owes DestroyGroup at the end of its lifetime.",
+      "pitfalls": [
+        "GroupClear does not free the group handle.",
+        "Clearing a group is not a way to delete all its units."
+      ],
+      "related": [
+        "CreateGroup",
+        "GroupAddUnit",
+        "DestroyGroup"
+      ],
+      "example": "GroupClear"
+    },
+    {
+      "name": "DestroyGroup",
+      "source": "common.j",
+      "summary": "Release a group collection after processing its unit references.",
+      "parameters": {
+        "whichGroup": "The group owned by the system performing cleanup."
+      },
+      "returns": "No value. The group handle must no longer be used.",
+      "usage": [
+        "Process the results, then release a temporary scratch group.",
+        "Use GroupClear instead when a retained group must be emptied and reused."
+      ],
+      "ownership": "Destroys the collection, not its units. Clear stored references to the destroyed group; do not destroy collections borrowed from another system.",
+      "pitfalls": [
+        "DestroyGroup does not remove or kill its members.",
+        "Do not call GroupClear or enumerate into a group after destroying it."
+      ],
+      "related": [
+        "CreateGroup",
+        "GroupClear",
+        "RemoveUnit"
+      ],
+      "example": "DestroyGroup"
+    },
+    {
+      "name": "CreateTrigger",
+      "source": "common.j",
+      "summary": "Allocate a trigger that can own event registrations and actions.",
+      "parameters": {},
+      "returns": "A new trigger handle. Add the events and actions needed for it to respond.",
+      "usage": [
+        "Create the trigger, register an event, then add its callback action during setup.",
+        "Register a persistent listener once during map initialization; retain temporary listeners when you will need to destroy them."
+      ],
+      "ownership": "The creating system owns the trigger. A deliberate map-lifetime listener stays alive; a temporary listener should be destroyed when finished.",
+      "pitfalls": [
+        "Creating a trigger alone does not register it for any event.",
+        "Running the initializer repeatedly creates additional listeners and duplicate responses."
+      ],
+      "related": [
+        "TriggerRegisterPlayerUnitEvent",
+        "TriggerRegisterAnyUnitEventBJ",
+        "TriggerAddAction",
+        "DestroyTrigger"
+      ],
+      "example": "TriggerRegisterPlayerUnitEvent"
+    },
+    {
+      "name": "TriggerRegisterPlayerUnitEvent",
+      "source": "common.j",
+      "summary": "Register a trigger for a unit event belonging to one player slot.",
+      "parameters": {
+        "whichTrigger": "An existing trigger that should receive the event.",
+        "whichPlayer": "The player handle whose units are being observed.",
+        "whichPlayerUnitEvent": "A player-unit event constant, such as EVENT_PLAYER_UNIT_DEATH.",
+        "filter": "Optional boolexpr limiting eligible units. The example uses no filter."
+      },
+      "returns": "An event handle representing the registration, rather than a unit or the trigger itself.",
+      "usage": [
+        "Register the event and attach an action. Read the unit in that action using the event getter appropriate to that event.",
+        "One call targets one player. The example loops across player slots; TriggerRegisterAnyUnitEventBJ is a helper for that setup."
+      ],
+      "ownership": "Attaches a registration to the supplied trigger. Manage the trigger lifetime with DestroyTrigger. Any separately created filter expression needs its own ownership plan; the example avoids one.",
+      "pitfalls": [
+        "A numeric player index is not a player handle; use Player(index).",
+        "Registering the same listener repeatedly can produce duplicate responses."
+      ],
+      "related": [
+        "CreateTrigger",
+        "TriggerAddAction",
+        "GetTriggerUnit",
+        "TriggerRegisterAnyUnitEventBJ",
+        "DestroyTrigger"
+      ],
+      "example": "TriggerRegisterPlayerUnitEvent",
+      "jassNotes": [
+        "Use null for an omitted filter."
+      ],
+      "luaNotes": [
+        "Use nil for an omitted filter."
+      ]
+    },
+    {
+      "name": "TriggerAddAction",
+      "source": "common.j",
+      "summary": "Attach a callback to an existing trigger.",
+      "parameters": {
+        "whichTrigger": "The trigger whose responses should include this action.",
+        "actionFunc": "Callback function value to run when the trigger executes its actions."
+      },
+      "returns": "A triggeraction handle identifying the attached action. Keep it if you need TriggerRemoveAction later.",
+      "usage": [
+        "Register an event and add an action during listener setup. Adding the action does not execute it immediately.",
+        "Read event responses while handling that event; pass captured values into deferred timer work."
+      ],
+      "ownership": "The action belongs to the trigger. Remove a specific action with TriggerRemoveAction when needed, or destroy a finished temporary trigger. Resources allocated by actions need separate cleanup.",
+      "pitfalls": [
+        "Passing the result of calling a function does not register that function as the action.",
+        "Do not attach another copy of an action every time the event occurs."
+      ],
+      "related": [
+        "CreateTrigger",
+        "TriggerRemoveAction",
+        "GetTriggerUnit",
+        "DestroyTrigger"
+      ],
+      "example": "TriggerRegisterPlayerUnitEvent",
+      "jassNotes": [
+        "Pass function ActionName and declare ActionName before the setup function."
+      ],
+      "luaNotes": [
+        "Pass ActionName or a closure, rather than ActionName()."
+      ]
+    },
+    {
+      "name": "GetTriggerUnit",
+      "source": "common.j",
+      "summary": "Read the unit associated with the unit event currently being handled.",
+      "parameters": {},
+      "returns": "The existing unit supplied by the current unit-event context. This is not a newly created unit.",
+      "usage": [
+        "Use in an action registered for a unit event. The example reads the dying unit from a player-unit death event.",
+        "Store the unit in a local and pass it explicitly to later work instead of calling this getter from an unrelated timer callback."
+      ],
+      "ownership": "Borrows the event unit. Do not remove it merely because the action is finished reading it.",
+      "pitfalls": [
+        "This is not the currently selected unit or the current group-enumeration member.",
+        "Do not assume every trigger event provides a unit response."
+      ],
+      "related": [
+        "TriggerRegisterPlayerUnitEvent",
+        "TriggerRegisterAnyUnitEventBJ",
+        "TriggerAddAction",
+        "GetEnumUnit"
+      ],
+      "example": "GetTriggerUnit",
+      "unverified": [
+        "No safe fallback value is promised outside a matching unit-event context. Use this getter only where the registered event supplies it."
+      ]
+    },
+    {
+      "name": "DestroyTrigger",
+      "source": "common.j",
+      "summary": "Release a trigger after its listener is no longer needed.",
+      "parameters": {
+        "whichTrigger": "The trigger owned by the system performing cleanup."
+      },
+      "returns": "No value. Stop using the trigger after destruction.",
+      "usage": [
+        "Keep a reference to a temporary listener until it can be retired.",
+        "Keep deliberately persistent listeners alive for the map lifetime instead of destroying them at the end of their initializer."
+      ],
+      "ownership": "Releases the trigger and its attached listener setup. Timers, groups, locations or units created separately by its actions remain the responsibility of their owning systems.",
+      "pitfalls": [
+        "Clearing a variable alone does not retire an active listener.",
+        "Do not destroy a shared trigger simply because one caller is finished with it."
+      ],
+      "related": [
+        "CreateTrigger",
+        "TriggerRemoveAction",
+        "DestroyTimer",
+        "DestroyGroup"
+      ],
+      "example": "DestroyTrigger",
+      "unverified": [
+        "Do not rely on this call to cancel action code that is already running; that behavior has not been tested here."
+      ]
+    },
+    {
+      "name": "TriggerRegisterAnyUnitEventBJ",
+      "source": "blizzard.j",
+      "summary": "Register one player-unit event across the player slots using a Blizzard helper.",
+      "parameters": {
+        "trig": "The existing trigger to register across player slots.",
+        "whichEvent": "A player-unit event constant, such as EVENT_PLAYER_UNIT_DEATH."
+      },
+      "returns": "No value. Unlike the single-player native, this helper does not return an event handle.",
+      "usage": [
+        "Use for a listener that needs the same unit event across players, then attach an action once.",
+        "The local helper uses bj_MAX_PLAYER_SLOTS to iterate the slots and delegates registration to TriggerRegisterPlayerUnitEvent without a filter. This is setup convenience, not a different kind of event."
+      ],
+      "ownership": "Adds registrations to the supplied trigger. It does not create a new trigger or unit; the caller still controls the trigger lifetime.",
+      "pitfalls": [
+        "Do not call this helper separately for each player; it already iterates the slots.",
+        "Do not add the same action once per slot when one trigger action is enough."
+      ],
+      "related": [
+        "TriggerRegisterPlayerUnitEvent",
+        "CreateTrigger",
+        "TriggerAddAction",
+        "GetTriggerUnit",
+        "DestroyTrigger"
+      ],
+      "example": "GetTriggerUnit"
+    },
+    {
+      "name": "Location",
+      "source": "common.j",
+      "summary": "Allocate a point handle from two map coordinates.",
+      "parameters": {
+        "x": "Horizontal map coordinate to store.",
+        "y": "Vertical map coordinate to store."
+      },
+      "returns": "A new location handle containing the position.",
+      "usage": [
+        "Use when an API specifically requires a location handle. If an API accepts numeric coordinates, pass the numbers directly.",
+        "Keep the point until its last use, then remove it."
+      ],
+      "ownership": "Allocates an owned location. Pair it with RemoveLocation; clearing a variable does not release the engine point.",
+      "pitfalls": [
+        "Repeatedly constructing points without removing them leaves allocated handles behind.",
+        "A location is not a unit and does not move a unit merely by being created."
+      ],
+      "related": [
+        "RemoveLocation",
+        "GetLocationX",
+        "GetLocationY",
+        "GetUnitLoc"
+      ],
+      "example": "RemoveLocation"
+    },
+    {
+      "name": "GetUnitLoc",
+      "source": "common.j",
+      "summary": "Allocate a location containing a snapshot of a unit's position.",
+      "parameters": {
+        "whichUnit": "The existing unit whose current position should be copied."
+      },
+      "returns": "A newly allocated location, separate from the unit. It does not automatically follow subsequent movement.",
+      "usage": [
+        "Use when another function needs a location handle for the unit's current position.",
+        "If you need only coordinates, use GetUnitX and GetUnitY to avoid allocating a point."
+      ],
+      "ownership": "The caller owns the returned location and must RemoveLocation after the last use. The source unit is borrowed and must not be removed as location cleanup.",
+      "pitfalls": [
+        "Each call creates a new location, even for the same unit. Reusing the variable does not release the old point.",
+        "Do not keep using a removed location."
+      ],
+      "related": [
+        "GetUnitX",
+        "GetUnitY",
+        "RemoveLocation",
+        "Location"
+      ],
+      "example": "GetUnitLoc"
+    },
+    {
+      "name": "RemoveLocation",
+      "source": "common.j",
+      "summary": "Release a temporary location after its last use.",
+      "parameters": {
+        "whichLocation": "The location owned by the system performing cleanup."
+      },
+      "returns": "No value. The point handle must no longer be used.",
+      "usage": [
+        "Read any needed coordinates before releasing the point.",
+        "Remove points created by Location or GetUnitLoc when no later operation needs them."
+      ],
+      "ownership": "Releases the point handle, not a unit or terrain feature at that coordinate. Shared points require an agreed owner; do not remove a borrowed point arbitrarily.",
+      "pitfalls": [
+        "Setting a variable to null or nil is not a substitute for RemoveLocation.",
+        "Do not call a location getter with the old handle after removing it."
+      ],
+      "related": [
+        "Location",
+        "GetUnitLoc",
+        "GetUnitX",
+        "GetUnitY"
+      ],
+      "example": "RemoveLocation",
+      "jassNotes": [
+        "After RemoveLocation, clear local or stored references with set point = null when finished."
+      ],
+      "luaNotes": [
+        "After RemoveLocation, clear retained references with point = nil. Lua garbage collection does not replace engine-handle cleanup."
+      ]
+    }
+  ]
+}
