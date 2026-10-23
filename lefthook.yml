@@ -1,0 +1,42 @@
+# Git hooks (lefthook). Formatting, linting, the builds and the tests run here,
+# before each commit; CI repeats only the builds and tests, on a clean machine
+# and on Windows. `bun install` in object-editor/app installs the hooks.
+# Fix what they report with `cargo fmt --all` and `bun run lint:fix`; read the
+# Clippy and test output for the rest.
+
+glob_matcher: doublestar
+
+# In order: the Rust app crate embeds the built frontend, so the frontend
+# builds before the Rust tests.
+pre-commit:
+  parallel: false
+  jobs:
+    - name: frontend lint
+      root: object-editor/app/
+      glob: &frontend
+        - "**/*.{ts,tsx,js,css,json,jsonc,html}"
+      run: bun run check
+
+    - name: frontend test and build
+      root: object-editor/app/
+      glob: *frontend
+      run: bun run test && bun run build
+
+    - name: rust format
+      root: object-editor/
+      glob: "**/*.rs"
+      run: cargo fmt-check
+
+    - name: rust lint
+      root: object-editor/
+      glob: &rust
+        - "**/*.rs"
+        - "**/Cargo.toml"
+        - "**/Cargo.lock"
+        - ".cargo/config.toml"
+      run: cargo lint
+
+    - name: rust test
+      root: object-editor/
+      glob: *rust
+      run: cargo test --workspace

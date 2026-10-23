@@ -1,16 +1,26 @@
+# Builds and tests. Formatting and linting run before each commit instead
+# (lefthook.yml), so CI does not repeat them.
 name: CI
 
+# Pull requests run once (as pull_request); push only runs for main.
 on:
   push:
+    branches: [main]
   pull_request:
+
+# A newer push to a pull request cancels its run still going; main keeps a
+# result for every merge.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 env:
   BUN_VERSION: 1.4.2
-  # Build-time libraries Tauri needs on Linux.
-  TAURI_LINUX_DEPS: libwebkit2gtk-4.1-dev libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+  # No incremental builds in CI: nothing reuses them, and they bloat the cache.
+  CARGO_INCREMENTAL: 0
 
 jobs:
   frontend:
@@ -32,52 +42,28 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Lint and type-check
-        run: bun run check
-
       - name: Test
         run: bun run test
 
       - name: Build
         run: bun run build
 
-  lint:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Install Tauri system libraries
-        run: sudo apt-get update && sudo apt-get install -y $TAURI_LINUX_DEPS
-
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Build the frontend (the app crate embeds it)
-        working-directory: object-editor/app
-        run: bun install --frozen-lockfile && bun run build
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-
-      - name: Format
-        working-directory: object-editor
-        run: cargo fmt-check
-
-      - name: Lint
-        working-directory: object-editor
-        run: cargo lint
-
+  # Linux tests every crate but the app: the app needs WebKit and other
+  # system libraries whose apt install alone took 12 to 17 minutes. Windows
+  # needs none and tests everything; the pre-commit Clippy builds the app on
+  # Linux.
   test:
+    name: test (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            app: false
+            crates: --workspace --exclude wc3-object-editor
+          - os: windows-latest
+            app: true
+            crates: --workspace
 
     runs-on: ${{ matrix.os }}
 
@@ -85,22 +71,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Install Tauri system libraries
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y $TAURI_LINUX_DEPS
-
       - name: Set up Bun
+        if: matrix.app
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
 
       - name: Build the frontend (the app crate embeds it)
+        if: matrix.app
         working-directory: object-editor/app
         run: bun install --frozen-lockfile && bun run build
 
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
 
+      # Caches the Cargo registry and target/ (dependencies and the bundled C
+      # libraries), keyed by OS, toolchain and Cargo.lock.
+      - name: Cache Rust builds
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: object-editor
+
       - name: Test
         working-directory: object-editor
-        run: cargo test --workspace
+        run: cargo test ${{ matrix.crates }}

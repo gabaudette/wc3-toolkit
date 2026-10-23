@@ -6,8 +6,19 @@ to this repository; the rule IDs refer to those documents.
 
 ## Validation
 
-Every change must pass these checks with zero errors and zero warnings. Run them from
-`object-editor/`:
+Every change must pass these checks with zero errors and zero warnings.
+
+Every check runs before each commit, through [lefthook](lefthook.yml): rustfmt, Clippy and
+`cargo test --workspace` when Rust files are staged; Biome, the TypeScript check, the frontend
+tests and the build when frontend files are. After a small change the whole hook takes a few
+seconds. `bun install` in `object-editor/app` sets it up. CI does not lint; it builds and runs
+the tests on a clean machine: on Windows, and on Linux for every crate but the app (which needs
+system libraries that take minutes to install there). Fix what the hook reports with
+`cargo fmt --all` and `bun run lint:fix`, and read the Clippy and test output for the rest.
+Skip the hook only for work in progress that you will fix before pushing
+(`git commit --no-verify`).
+
+Run the checks by hand from `object-editor/`:
 
 ```bash
 cargo fmt-check
@@ -16,8 +27,7 @@ cargo test --workspace
 ```
 
 `cargo lint` runs Clippy on all targets with warnings as errors (see `.cargo/config.toml`).
-Lint levels live in `object-editor/Cargo.toml` under `[workspace.lints]`. CI runs the same
-checks on every push and pull request.
+Lint levels live in `object-editor/Cargo.toml` under `[workspace.lints]`.
 
 Some tests read a real Warcraft III install and real maps. They are marked `#[ignore]` and
 run with:
