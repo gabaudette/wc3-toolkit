@@ -99,8 +99,9 @@ The version lives in one place: `version` in `object-editor/Cargo.toml` (the app
 installers and the version shown in the editor all read it). To release:
 
 1. Set the new version in `object-editor/Cargo.toml`, rename `## Unreleased` in
-   `CHANGELOG.md` to `## 0.2.0 - <date>` (start a new empty `## Unreleased` above it), and
-   commit both on `main`.
+   `CHANGELOG.md` to `## 0.2.0 - <date>`, add a devlog entry for the release, and commit them on
+   `main`. The next change starts a new `## Unreleased` section (an empty one would show in the
+   app).
 2. Tag that commit and push the tag: `git tag v0.2.0 && git push origin v0.2.0`.
 3. The Release workflow checks that the tag matches the version, builds the Windows
    installer (NSIS) and the Linux packages (`.deb`, AppImage), and attaches them to a

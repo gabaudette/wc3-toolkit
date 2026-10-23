@@ -4,6 +4,12 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Version 0.1.0
+
+- The first tagged version. `Unreleased` in the changelog became `0.1.0 - 2026-10-23`, and the
+  `v0.1.0` tag runs the release workflow for the first time: the Windows installer and the tag
+  workflow are tested here, on a draft release.
+
 ## 2026-10-23 · Fold the game's objects in the lists (AGE-21)
 
 - Each object list splits into the map's own objects (custom or changed: `group === "map"` for
