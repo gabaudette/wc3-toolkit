@@ -45,6 +45,7 @@ jobs:
       - run: bun run check
       - run: bun run build
       - run: bun run check:links
+      - run: bun run package:vercel
       - uses: actions/upload-artifact@v4
         with:
           name: documentation

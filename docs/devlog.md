@@ -19,6 +19,8 @@ single line. Every pull request adds an entry here and to the changelog.
   normalization. A small project-authored grammar highlights JASS. Pagefind indexes the
   static build; CI validates parsing, types, the site build and local links/assets. Vercel
   builds from the repository root so changes to the shared field guides rebuild the site.
+  A checked Build Output API package includes the static files and routing explicitly; the
+  generic project preset had reported success while producing an empty deployment.
 
 ## 2026-10-23 · TGA textures (AGE-18) and the model preview (AGE-17)
 
