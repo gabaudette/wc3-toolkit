@@ -123,7 +123,14 @@ fn model_bytes<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<
             return preview_copy(&data).map_err(|e| format!("{file}: {e}"));
         }
 
-        load_model(&session.files, path, session.mode).map_err(|e| e.to_string())
+        load_model(&session.files, path, session.mode).map_err(|e| {
+            // Some game objects name a model that was never shipped, such as placeholders.
+            if e.is_not_found() {
+                "it is not in the game files or the map.".to_owned()
+            } else {
+                e.to_string()
+            }
+        })
     })
 }
 

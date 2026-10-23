@@ -14,6 +14,7 @@ pub mod objects;
 pub mod profile;
 pub mod slk;
 pub mod strings;
+pub mod tga;
 pub mod units;
 pub mod upgrades;
 
@@ -41,6 +42,15 @@ impl Error {
         Self::InFile {
             file: file.into(),
             source: Box::new(self),
+        }
+    }
+
+    /// Whether the error is a file missing from the game's storage.
+    pub fn is_not_found(&self) -> bool {
+        match self {
+            Self::Casc(casc::Error::NotFound(_)) => true,
+            Self::InFile { source, .. } => source.is_not_found(),
+            _ => false,
         }
     }
 }

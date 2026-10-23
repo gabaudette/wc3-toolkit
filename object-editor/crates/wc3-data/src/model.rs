@@ -15,7 +15,6 @@ use crate::{Error, Result};
 
 const MAGIC: &[u8; 4] = b"MDLX";
 const MODEL_EXTENSION: &str = ".mdx";
-const TEXT_MODEL_EXTENSION: &str = ".mdl";
 const TAG_SIZE: usize = 4;
 const U32_SIZE: usize = 4;
 const CHUNK_HEADER: usize = TAG_SIZE + U32_SIZE;
@@ -53,18 +52,19 @@ const WIDE_SKIN_VALUE_SIZE: usize = 2;
 
 /// The model file for a model path as unit data stores it, e.g.
 /// `units\human\HeroPaladin\HeroPaladin` → `units\human\HeroPaladin\HeroPaladin.mdx`.
+/// Any other extension is replaced, as the game does: `.mdl`, and the `.ma` a few
+/// cinematic doodads name.
 pub fn model_file(path: &str) -> String {
-    let lower = path.to_ascii_lowercase();
-    if lower.ends_with(MODEL_EXTENSION) {
+    if path.to_ascii_lowercase().ends_with(MODEL_EXTENSION) {
         return path.to_owned();
     }
 
-    if lower.ends_with(TEXT_MODEL_EXTENSION) {
-        let stem = &path[..path.len() - TEXT_MODEL_EXTENSION.len()];
-        return format!("{stem}{MODEL_EXTENSION}");
-    }
-
-    format!("{path}{MODEL_EXTENSION}")
+    let name_start = path.rfind(['\\', '/']).map_or(0, |i| i + 1);
+    let stem = match path[name_start..].rfind('.') {
+        Some(dot) => &path[..name_start + dot],
+        None => path,
+    };
+    format!("{stem}{MODEL_EXTENSION}")
 }
 
 /// Reads a model for previewing, in the layout model readers understand.
@@ -418,5 +418,13 @@ mod tests {
         );
         assert_eq!(model_file("Abilities\\Spell.mdl"), "Abilities\\Spell.mdx");
         assert_eq!(model_file("a.MDX"), "a.MDX");
+        assert_eq!(
+            model_file("Doodads/Empty/Empty.ma"),
+            "Doodads/Empty/Empty.mdx"
+        );
+        assert_eq!(
+            model_file("Units\\Mr.Rivers\\Rivers"),
+            "Units\\Mr.Rivers\\Rivers.mdx"
+        );
     }
 }

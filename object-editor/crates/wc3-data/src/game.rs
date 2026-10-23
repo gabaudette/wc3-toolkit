@@ -4,8 +4,9 @@
 //! `war3.w3mod:` is the base, `_balance\<set>.w3mod:` overrides game data for a
 //! balance version, `_locales\<locale>.w3mod:` holds text and `_hd.w3mod:` holds
 //! HD art. A file in a more specific layer replaces the base file as a whole.
-//! (`_de.w3mod:` is another HD-resolution art layer whose purpose is not yet
-//! known; it is not used.)
+//! `_de.w3mod:` holds HD art that exists nowhere else, such as the models of
+//! newer campaign units (Roderick, the Scarlet Crusade, the Forsaken); art
+//! lookups use it last.
 
 use std::path::Path;
 
@@ -13,6 +14,7 @@ use crate::{Error, Result};
 
 const ROOT: &str = "war3.w3mod:";
 const HD_LAYER: &str = "_hd.w3mod:";
+const EXTRA_ART_LAYER: &str = "_de.w3mod:";
 const DEFAULT_LOCALE: &str = "enus";
 
 /// Which art the user works with. Reforged keeps separate values for some
@@ -102,13 +104,15 @@ impl GameFiles {
 
     /// Reads an art file (icon, texture, model) for the given art mode. When that
     /// mode has no version of the file, the other mode's version is used: some
-    /// art, such as several campaign icons, only exists in HD.
+    /// art, such as several campaign icons, only exists in HD. Art found in
+    /// neither comes from the `_de.w3mod:` layer.
     pub fn read_art(&self, path: &str, mode: ArtMode) -> Result<Vec<u8>> {
         let base = format!("{ROOT}{path}");
         let hd = format!("{ROOT}{HD_LAYER}{path}");
+        let extra = format!("{ROOT}{EXTRA_ART_LAYER}{path}");
         let order = match mode {
-            ArtMode::Sd => [&base, &hd],
-            ArtMode::Hd => [&hd, &base],
+            ArtMode::Sd => [&base, &hd, &extra],
+            ArtMode::Hd => [&hd, &base, &extra],
         };
 
         for name in order {

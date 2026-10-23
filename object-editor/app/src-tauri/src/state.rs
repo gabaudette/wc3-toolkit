@@ -185,4 +185,34 @@ mod tests {
         assert_eq!(found("units\\human\\Footman\\Footman"), None);
         Ok(())
     }
+
+    /// Maps can import TGA art: a field naming `x.blp` finds the map's
+    /// `x.tga`, and it decodes like the other formats.
+    #[test]
+    fn imported_tga_art_is_found_and_decoded() -> TestResult {
+        // A 1x1 top-down true-color TGA holding one red pixel (stored BGR).
+        let mut tga = vec![0u8; 18];
+        tga[2] = 2;
+        tga[12] = 1;
+        tga[14] = 1;
+        tga[16] = 24;
+        tga[17] = 0x20;
+        tga.extend_from_slice(&[0, 0, 255]);
+
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("map.w3x");
+        let mut archive = mpq::Archive::create(&path, MAX_FILES)?;
+        archive.write("war3mapImported\\BTNRed.tga", &tga)?;
+        archive.save()?;
+
+        let open = OpenMap::load(path)?;
+        let (file, bytes) = open
+            .art("war3mapImported\\BTNRed.blp")
+            .ok_or("the TGA was not found")?;
+        assert_eq!(file, "war3mapImported\\BTNRed.tga");
+        let image = wc3_data::icon::decode_texture(&bytes)?;
+        assert_eq!((image.width, image.height), (1, 1));
+        assert_eq!(image.rgba, [255, 0, 0, 255]);
+        Ok(())
+    }
 }
