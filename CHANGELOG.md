@@ -6,6 +6,12 @@ under "What's new".
 
 ## Unreleased
 
+### Added
+
+- Buffs tab: browse, search, edit and create custom buffs and effects, with a chip per race.
+- Destructables tab: trees, gates, crates and rocks, with a chip per category and their model
+  in the inspector.
+
 ### Changed
 
 - Names with Warcraft color codes show in color everywhere: lists, page titles, search,
@@ -14,6 +20,7 @@ under "What's new".
 
 ### Fixed
 
+- Long game texts, like tooltips, showed quote marks around their value when edited.
 - Internal improvements.
 
 ## 0.1.0 - 2026-10-23

@@ -28,12 +28,12 @@ use wc3_data::strings::{MapStrings, reference_id};
 
 use crate::abilities::MapAbilities;
 use crate::imports::{ImportedFile, files_used};
-use crate::items::MapItems;
+use crate::plain::PlainObjects;
 use crate::units::MapUnits;
 use crate::upgrades::MapUpgrades;
 use crate::{
     ABILITIES_FILE, ABILITY_SKINS_FILE, BUFF_SKINS_FILE, BUFFS_FILE, Error, ITEM_SKINS_FILE,
-    ITEMS_FILE, Map, Result, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, UPGRADE_SKINS_FILE,
+    ITEMS_FILE, Result, STRINGS_FILE, UNIT_SKINS_FILE, UNITS_FILE, UPGRADE_SKINS_FILE,
     UPGRADES_FILE,
 };
 
@@ -158,10 +158,6 @@ impl Tables {
             .any(|t| t.original.iter().any(|e| e.effective_id() == id))
     }
 
-    fn has(&self, id: FourCC) -> bool {
-        self.both().iter().any(|t| t.find(id).is_some())
-    }
-
     fn is_empty(&self) -> bool {
         self.both()
             .iter()
@@ -181,62 +177,14 @@ impl Tables {
     }
 }
 
-/// A map's buffs, kept as stored (the editor does not edit them yet).
-/// Abilities, items and upgrades are in [`MapAbilities`], [`MapItems`] and
-/// [`MapUpgrades`].
-pub struct MapExtras {
-    buffs: Tables,
-    /// Files the map had when loaded; others are only written once they hold something.
-    loaded: Vec<&'static str>,
-}
-
-impl MapExtras {
-    pub fn load(map: &Map) -> Result<Self> {
-        let mut loaded = Vec::new();
-        let mut tables = |ty: ObjectType| -> Result<Tables> {
-            let (data_file, skin_file) = ty.files();
-            let mut read = |file: &'static str| -> Result<ObjectData> {
-                match map.object_data(file)? {
-                    Some(data) => {
-                        loaded.push(file);
-                        Ok(data)
-                    }
-                    None => Ok(ObjectData::empty(ty.layout())),
-                }
-            };
-            Ok(Tables {
-                data: read(data_file)?,
-                skin: read(skin_file)?,
-            })
-        };
-
-        let buffs = tables(ObjectType::Buff)?;
-        Ok(Self { buffs, loaded })
-    }
-
-    /// The buff files to write: those the map had, and new ones that imports
-    /// put something into.
-    pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
-        let mut files = Vec::new();
-        let (data_file, skin_file) = ObjectType::Buff.files();
-        for (file, data) in [(data_file, &self.buffs.data), (skin_file, &self.buffs.skin)] {
-            let has_entries = !data.custom.is_empty() || !data.original.is_empty();
-            if has_entries || self.loaded.contains(&file) {
-                files.push((file, data.to_bytes()));
-            }
-        }
-        files
-    }
-}
-
 /// A map's movable objects, borrowed from where the editor keeps them.
 #[derive(Clone, Copy)]
 pub struct MapObjects<'a> {
     pub units: &'a MapUnits,
     pub abilities: &'a MapAbilities,
-    pub items: &'a MapItems,
+    pub items: &'a PlainObjects,
     pub upgrades: &'a MapUpgrades,
-    pub extras: &'a MapExtras,
+    pub buffs: &'a PlainObjects,
 }
 
 impl MapObjects<'_> {
@@ -247,7 +195,7 @@ impl MapObjects<'_> {
                 data.find(id).is_some() || skin.find(id).is_some()
             }
             ObjectType::Ability => self.abilities.has(id),
-            ObjectType::Buff => self.extras.buffs.has(id),
+            ObjectType::Buff => self.buffs.has(id),
             ObjectType::Item => self.items.has(id),
             ObjectType::Upgrade => self.upgrades.has(id),
         }
@@ -258,9 +206,9 @@ impl MapObjects<'_> {
 pub struct MapObjectsMut<'a> {
     pub units: &'a mut MapUnits,
     pub abilities: &'a mut MapAbilities,
-    pub items: &'a mut MapItems,
+    pub items: &'a mut PlainObjects,
     pub upgrades: &'a mut MapUpgrades,
-    pub extras: &'a mut MapExtras,
+    pub buffs: &'a mut PlainObjects,
 }
 
 /// The kinds of objects a field's value can name, from its metadata type.
@@ -647,7 +595,7 @@ pub fn export(
     let tables = |ty: ObjectType| match ty {
         ObjectType::Unit => &source_units,
         ObjectType::Ability => source.abilities.tables(),
-        ObjectType::Buff => &source.extras.buffs,
+        ObjectType::Buff => source.buffs.tables(),
         ObjectType::Item => source.items.tables(),
         ObjectType::Upgrade => source.upgrades.tables(),
     };
@@ -831,7 +779,7 @@ pub fn apply(
         abilities,
         items,
         upgrades,
-        extras,
+        buffs,
     } = target;
     let renamed: HashMap<(ObjectType, FourCC), FourCC> =
         plan.iter().map(|p| ((p.ty, p.id), p.new_id)).collect();
@@ -846,7 +794,10 @@ pub fn apply(
                 let tables = abilities.tables_mut();
                 (&mut tables.data, &mut tables.skin)
             }
-            ObjectType::Buff => (&mut extras.buffs.data, &mut extras.buffs.skin),
+            ObjectType::Buff => {
+                let tables = buffs.tables_mut();
+                (&mut tables.data, &mut tables.skin)
+            }
             ObjectType::Item => {
                 let tables = items.tables_mut();
                 (&mut tables.data, &mut tables.skin)
@@ -906,6 +857,7 @@ mod tests {
     use wc3_data::objects::{ModSet, Modification};
 
     use super::*;
+    use crate::plain;
 
     const NAME: &str = "unam";
     const ABILITIES: &str = "uabi";
@@ -975,9 +927,9 @@ mod tests {
     struct Objects {
         units: MapUnits,
         abilities: MapAbilities,
-        items: MapItems,
+        items: PlainObjects,
         upgrades: MapUpgrades,
-        extras: MapExtras,
+        buffs: PlainObjects,
     }
 
     impl Objects {
@@ -1005,21 +957,24 @@ mod tests {
                     data: table(Layout::Leveled, abilities),
                     skin: ObjectData::empty(Layout::Leveled),
                 }),
-                items: MapItems::from_tables(Tables {
-                    data: table(Layout::Plain, items),
-                    skin: ObjectData::empty(Layout::Plain),
-                }),
+                items: PlainObjects::from_tables(
+                    plain::ITEMS,
+                    Tables {
+                        data: table(Layout::Plain, items),
+                        skin: ObjectData::empty(Layout::Plain),
+                    },
+                ),
                 upgrades: MapUpgrades::from_tables(Tables {
                     data: table(Layout::Leveled, upgrades),
                     skin: ObjectData::empty(Layout::Leveled),
                 }),
-                extras: MapExtras {
-                    buffs: Tables {
+                buffs: PlainObjects::from_tables(
+                    plain::BUFFS,
+                    Tables {
                         data: table(Layout::Plain, buffs),
                         skin: ObjectData::empty(Layout::Plain),
                     },
-                    loaded: Vec::new(),
-                },
+                ),
             }
         }
 
@@ -1029,7 +984,7 @@ mod tests {
                 abilities: &self.abilities,
                 items: &self.items,
                 upgrades: &self.upgrades,
-                extras: &self.extras,
+                buffs: &self.buffs,
             }
         }
     }
@@ -1250,7 +1205,7 @@ mod tests {
                 abilities: &mut target.abilities,
                 items: &mut target.items,
                 upgrades: &mut target.upgrades,
-                extras: &mut target.extras,
+                buffs: &mut target.buffs,
             },
         );
 
@@ -1291,13 +1246,13 @@ mod tests {
             upgrade.mods().next().unwrap().value,
             Value::String("h002".into())
         );
-        assert!(target.extras.buffs.data.find(id("B000")).is_some());
+        assert!(target.buffs.tables().data.find(id("B000")).is_some());
     }
 
     #[test]
     fn writes_buff_files_only_when_needed() {
         let empty = Objects::new(no_units(), Vec::new(), Vec::new(), Vec::new(), Vec::new());
-        assert!(empty.extras.files().is_empty());
+        assert!(empty.buffs.files().is_empty());
 
         let with_buff = Objects::new(
             no_units(),
@@ -1306,7 +1261,7 @@ mod tests {
             Vec::new(),
             Vec::new(),
         );
-        let names: Vec<&str> = with_buff.extras.files().iter().map(|(n, _)| *n).collect();
+        let names: Vec<&str> = with_buff.buffs.files().iter().map(|(n, _)| *n).collect();
         assert_eq!(names, [BUFFS_FILE]);
     }
 }

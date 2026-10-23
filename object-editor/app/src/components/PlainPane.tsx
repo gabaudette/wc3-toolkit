@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../api";
-import type { Field, UnitDetail, UnitItem } from "../types";
+import type { Catalog, Field, UnitDetail, UnitItem } from "../types";
 import { replaceField } from "../ui";
-import { ITEM_LIST, UnitList } from "./UnitList";
+import { type ListConfig, UnitList } from "./UnitList";
 import { UnitPage } from "./UnitPage";
 
-type ItemsPaneProps = {
+type PlainPaneProps = {
+  /** Which objects: items, buffs or destructables. */
+  catalog: Catalog;
+  list: ListConfig;
   editable: boolean;
   selected: string | null;
   onSelect: (id: string) => void;
@@ -14,9 +17,17 @@ type ItemsPaneProps = {
   onError: (message: string | null) => void;
 };
 
-/** The Items tab: the unit list and page over the item data. */
-export function ItemsPane({ editable, selected, onSelect, onMapChanged, onError }: ItemsPaneProps) {
-  const [items, setItems] = useState<UnitItem[]>([]);
+/** A tab of objects without levels (items, buffs, destructables): the unit list and page over them. */
+export function PlainPane({
+  catalog,
+  list,
+  editable,
+  selected,
+  onSelect,
+  onMapChanged,
+  onError,
+}: PlainPaneProps) {
+  const [objects, setObjects] = useState<UnitItem[]>([]);
   const [detail, setDetail] = useState<UnitDetail | null>(null);
   /** Edits run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
@@ -25,8 +36,8 @@ export function ItemsPane({ editable, selected, onSelect, onMapChanged, onError 
   const listError = useCallback((message: string) => onError(message), [onError]);
 
   const refreshList = useCallback(() => {
-    api.listItems().then(setItems).catch(fail);
-  }, [fail]);
+    api.listPlain(catalog).then(setObjects).catch(fail);
+  }, [catalog, fail]);
 
   useEffect(() => {
     refreshList();
@@ -38,8 +49,8 @@ export function ItemsPane({ editable, selected, onSelect, onMapChanged, onError 
       return;
     }
 
-    api.itemDetail(selected).then(setDetail).catch(fail);
-  }, [selected, fail]);
+    api.plainDetail(catalog, selected).then(setDetail).catch(fail);
+  }, [catalog, selected, fail]);
 
   function run(id: string, edit: () => Promise<Field>) {
     queue.current = queue.current.then(async () => {
@@ -50,7 +61,7 @@ export function ItemsPane({ editable, selected, onSelect, onMapChanged, onError 
         onMapChanged();
         refreshList();
         // The summary and header can depend on the field, so fetch the page too.
-        setDetail(await api.itemDetail(id));
+        setDetail(await api.plainDetail(catalog, id));
       } catch (e) {
         fail(e);
       }
@@ -63,7 +74,7 @@ export function ItemsPane({ editable, selected, onSelect, onMapChanged, onError 
     }
 
     try {
-      const created = await api.createItem(detail.item.base);
+      const created = await api.createPlain(catalog, detail.item.base);
       onMapChanged();
       refreshList();
       onSelect(created.id);
@@ -75,8 +86,8 @@ export function ItemsPane({ editable, selected, onSelect, onMapChanged, onError 
   return (
     <div className="flex min-h-0 flex-1 gap-2.5">
       <UnitList
-        config={ITEM_LIST}
-        units={items}
+        config={list}
+        units={objects}
         selected={selected}
         onSelect={onSelect}
         onError={listError}
@@ -87,14 +98,18 @@ export function ItemsPane({ editable, selected, onSelect, onMapChanged, onError 
           detail={detail}
           editable={editable}
           onChange={(field, value) =>
-            run(detail.item.id, () => api.setItemField(detail.item.id, field, value))
+            run(detail.item.id, () => api.setPlainField(catalog, detail.item.id, field, value))
           }
-          onReset={(field) => run(detail.item.id, () => api.resetItemField(detail.item.id, field))}
+          onReset={(field) =>
+            run(detail.item.id, () => api.resetPlainField(catalog, detail.item.id, field))
+          }
           onCreateCopy={createCopy}
         />
       )}
       {!detail && (
-        <p className="m-auto text-muted">Pick an item on the left. {items.length} items loaded.</p>
+        <p className="m-auto text-muted">
+          Pick {list.article} {list.singular} on the left. {objects.length} {list.noun} loaded.
+        </p>
       )}
     </div>
   );

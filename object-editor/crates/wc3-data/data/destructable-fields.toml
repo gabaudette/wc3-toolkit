@@ -1,0 +1,250 @@
+# Field guide for the Destructables tab: what each field does, which fields come
+# first, and which are rarely needed. Written for this project (not taken from
+# the game). Mark anything not confirmed in game with `unverified = true`.
+#
+# Destructables are map objects that can be destroyed: trees, gates, crates,
+# rocks, bridges.
+#
+# [order]      per category, the fields shown first, in this order. Fields not
+#              listed follow in the game's metadata order.
+# [[field]]    ids sharing one description; `advanced = true` folds the fields
+#              into the "Advanced" group of their category.
+
+[order]
+stats = ["bhps", "bbut", "bret", "breg", "brel"]
+combat = ["barm", "btar"]
+text = ["bnam", "bsuf"]
+art = [
+  "bfil", "bvar", "btxf", "btxi", "bvcr", "bvcg", "bvcb", "bsel", "bgsc", "bgse", "bshd",
+  "bsmm", "bumm", "bmmr", "bmmg", "bmmb", "bgpm", "blit", "bflo", "boch", "bflh", "bfxr",
+  "bmap", "bmar", "brad", "bfra", "bfvi", "boct", "btco", "btcc", "bnrn",
+]
+path = ["bwal", "bptx", "bptd", "bclh"]
+editor = [
+  "bcat", "btil", "btsp", "bonc", "bonw", "bcpd", "bmis", "bmas", "bcpr", "buch", "busr",
+]
+sound = ["bdsn", "bsnd"]
+
+# --- Stats -------------------------------------------------------------------
+
+[[field]]
+ids = ["bhps"]
+description = "Hit points: how much damage it takes to destroy it."
+
+[[field]]
+ids = ["bbut"]
+description = "Seconds it takes to build, for destructables players can build (like a gate)."
+advanced = true
+
+[[field]]
+ids = ["bret"]
+description = "Seconds a worker takes to repair it from nearly destroyed."
+advanced = true
+
+[[field]]
+ids = ["breg", "brel"]
+description = "Gold and lumber a full repair costs."
+advanced = true
+
+# --- Combat ------------------------------------------------------------------
+
+[[field]]
+ids = ["barm"]
+description = "Sound it makes when hit (Wood, Stone, Metal, ...). It does not change damage taken."
+
+[[field]]
+ids = ["btar"]
+description = "What it counts as when attacks and spells look for targets (Tree, Debris, Wall, ...). Units only attack it, and workers only harvest it, if their targets allow that type."
+
+# --- Text --------------------------------------------------------------------
+
+[[field]]
+ids = ["bnam"]
+description = "The name, shown in the editor's palette and when the mouse is over it in game."
+
+[[field]]
+ids = ["bsuf"]
+description = "Text after the name in the editor only, to tell similar destructables apart. Players never see it."
+advanced = true
+
+# --- Art ---------------------------------------------------------------------
+
+[[field]]
+ids = ["bfil"]
+description = "Model of the destructable."
+
+[[field]]
+ids = ["bvar"]
+description = "How many model variations it has; placed copies pick one, so a row of trees does not look identical."
+
+[[field]]
+ids = ["btxf"]
+description = "Texture that replaces the model's replaceable texture (for example the tree texture of a tileset)."
+
+[[field]]
+ids = ["btxi"]
+description = "Which replaceable texture of the model the texture file replaces."
+advanced = true
+
+[[field]]
+ids = ["bvcr", "bvcg", "bvcb"]
+description = "Tint of the model, red, green and blue from 0 to 255; 255 everywhere keeps its colors."
+
+[[field]]
+ids = ["bsel"]
+description = "Size of the selection circle in the editor."
+advanced = true
+
+[[field]]
+ids = ["bgsc"]
+description = "Size of the selection circle in game."
+advanced = true
+
+[[field]]
+ids = ["bgse"]
+description = "Whether players can select it in game."
+
+[[field]]
+ids = ["bshd"]
+description = "Shadow drawn under it."
+advanced = true
+
+[[field]]
+ids = ["bsmm"]
+description = "Whether it shows on the minimap."
+
+[[field]]
+ids = ["bumm", "bmmr", "bmmg", "bmmb"]
+description = "Whether it uses its own minimap color, and that color (red, green, blue from 0 to 255)."
+advanced = true
+
+[[field]]
+ids = ["bgpm"]
+description = "Model shown in the portrait when it is selected."
+advanced = true
+
+[[field]]
+ids = ["blit"]
+description = "Whether the model is drawn with a cheaper method. Large numbers of trees use it."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["bflo"]
+description = "Whether it blocks sight with a larger area than its model, like a thick tree line."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["boch"]
+description = "Height up to which it hides units behind it from view."
+advanced = true
+
+[[field]]
+ids = ["bflh"]
+description = "Height flying units keep when passing over it."
+advanced = true
+
+[[field]]
+ids = ["bfxr"]
+description = "Facing it always has, in degrees; -1 lets each placed copy face its own way."
+advanced = true
+
+[[field]]
+ids = ["bmap", "bmar"]
+description = "How far it may tilt on slopes, forward and sideways, in degrees."
+advanced = true
+
+[[field]]
+ids = ["brad"]
+description = "Radius of the area around it that blocks placing buildings."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["bfra", "bfvi"]
+description = "Radius in which it stays visible through the fog of war, and whether it does."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["boct"]
+description = "Whether it fades out when units walk behind it."
+advanced = true
+
+[[field]]
+ids = ["btco", "btcc"]
+description = "Team color of team-colored parts of the model, and whether a custom team color may be used."
+advanced = true
+
+[[field]]
+ids = ["bnrn"]
+description = "Whether the model is not drawn at all (invisible blockers)."
+advanced = true
+
+# --- Pathing -----------------------------------------------------------------
+
+[[field]]
+ids = ["bwal"]
+description = "Whether units can walk on it, like a bridge."
+
+[[field]]
+ids = ["bptx"]
+description = "Pathing map: the ground it blocks while standing."
+
+[[field]]
+ids = ["bptd"]
+description = "Pathing map once it is destroyed; empty frees the ground."
+
+[[field]]
+ids = ["bclh"]
+description = "Cliff level a walkable destructable (like a bridge) puts units on."
+advanced = true
+
+# --- Editor ------------------------------------------------------------------
+
+[[field]]
+ids = ["bcat"]
+description = "Category it is listed under in the editor's palette (Trees, Bridges, Debris, ...)."
+
+[[field]]
+ids = ["btil", "btsp"]
+description = "Tilesets it is offered for in the palette, and whether it is offered only there."
+advanced = true
+
+[[field]]
+ids = ["bonc", "bonw"]
+description = "Whether it can be placed on cliffs, and on water."
+advanced = true
+
+[[field]]
+ids = ["bcpd"]
+description = "Whether it can be placed already destroyed, like a broken gate."
+advanced = true
+
+[[field]]
+ids = ["bmis", "bmas", "bcpr"]
+description = "Smallest and largest size for random sizes when placing, and whether random sizes are allowed."
+advanced = true
+
+[[field]]
+ids = ["buch"]
+description = "Whether the editor draws a helper to make it easier to click."
+advanced = true
+
+[[field]]
+ids = ["busr"]
+description = "Whether it shows in the editor's user list."
+unverified = true
+advanced = true
+
+# --- Sound -------------------------------------------------------------------
+
+[[field]]
+ids = ["bdsn"]
+description = "Sound played when it is destroyed."
+
+[[field]]
+ids = ["bsnd"]
+description = "Sound that loops near it, like a waterfall."
+advanced = true

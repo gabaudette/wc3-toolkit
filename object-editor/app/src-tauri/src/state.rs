@@ -12,8 +12,7 @@ use wc3_data::upgrades::UpgradeDatabase;
 use wc3_map::Map;
 use wc3_map::abilities::MapAbilities;
 use wc3_map::imports::{MapImports, candidates};
-use wc3_map::items::MapItems;
-use wc3_map::transfer::MapExtras;
+use wc3_map::plain::{BUFFS, DESTRUCTABLES, ITEMS, PlainObjects};
 use wc3_map::units::MapUnits;
 use wc3_map::upgrades::MapUpgrades;
 
@@ -26,6 +25,10 @@ pub struct Session {
     /// Items: the unit metadata's item fields over the item tables.
     pub items: UnitDatabase,
     pub item_guide: FieldGuide,
+    pub buffs: UnitDatabase,
+    pub buff_guide: FieldGuide,
+    pub destructables: UnitDatabase,
+    pub destructable_guide: FieldGuide,
     pub upgrades: UpgradeDatabase,
     pub upgrade_guide: FieldGuide,
     pub mode: ArtMode,
@@ -39,10 +42,10 @@ pub struct OpenMap {
     /// Units, and the map's string table.
     pub units: MapUnits,
     pub abilities: MapAbilities,
-    pub items: MapItems,
+    pub items: PlainObjects,
     pub upgrades: MapUpgrades,
-    /// Buffs: only imports change them.
-    pub extras: MapExtras,
+    pub buffs: PlainObjects,
+    pub destructables: PlainObjects,
     /// The import list, and files imports queued for the next save.
     pub imports: MapImports,
     /// The files as last loaded or saved, to tell whether anything changed.
@@ -53,28 +56,23 @@ pub struct OpenMap {
 }
 
 impl OpenMap {
-    pub fn new(
-        path: PathBuf,
-        units: MapUnits,
-        abilities: MapAbilities,
-        items: MapItems,
-        upgrades: MapUpgrades,
-        extras: MapExtras,
-        imports: MapImports,
-    ) -> Self {
+    /// Reads every object file, the string table and the import list.
+    pub fn load(path: PathBuf) -> wc3_map::Result<Self> {
+        let archive = Map::open(&path)?;
         let mut map = Self {
+            units: MapUnits::load(&archive)?,
+            abilities: MapAbilities::load(&archive)?,
+            items: PlainObjects::load(&archive, ITEMS)?,
+            upgrades: MapUpgrades::load(&archive)?,
+            buffs: PlainObjects::load(&archive, BUFFS)?,
+            destructables: PlainObjects::load(&archive, DESTRUCTABLES)?,
+            imports: MapImports::load(&archive)?,
             path,
-            units,
-            abilities,
-            items,
-            upgrades,
-            extras,
-            imports,
             saved_files: Vec::new(),
             icons: HashMap::new(),
         };
         map.saved_files = map.files();
-        map
+        Ok(map)
     }
 
     /// Every file the editor writes into the map.
@@ -83,7 +81,8 @@ impl OpenMap {
         files.extend(self.abilities.files());
         files.extend(self.items.files());
         files.extend(self.upgrades.files());
-        files.extend(self.extras.files());
+        files.extend(self.buffs.files());
+        files.extend(self.destructables.files());
         files
     }
 
@@ -161,21 +160,11 @@ mod tests {
         archive.write("Textures\\Skin.dds", b"texture")?;
         archive.save()?;
 
-        let map = Map::open(&path)?;
-        let mut imports = MapImports::load(&map)?;
-        imports.add(ImportedFile {
+        let mut open = OpenMap::load(path.clone())?;
+        open.imports.add(ImportedFile {
             path: "war3mapImported\\BTNHero.blp".to_owned(),
             bytes: b"icon".to_vec(),
         });
-        let open = OpenMap::new(
-            path.clone(),
-            MapUnits::load(&map)?,
-            MapAbilities::load(&map)?,
-            MapItems::load(&map)?,
-            MapUpgrades::load(&map)?,
-            MapExtras::load(&map)?,
-            imports,
-        );
 
         let found = |art: &str| open.art(art).map(|(file, bytes)| (file, bytes.len()));
         assert_eq!(found("Haramad.mdl"), Some(("Haramad.mdx".to_owned(), 5)));

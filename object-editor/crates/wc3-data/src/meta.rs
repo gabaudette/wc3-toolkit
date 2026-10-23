@@ -40,6 +40,8 @@ pub enum ObjectKind {
     Unit,
     Building,
     Item,
+    Buff,
+    Destructable,
 }
 
 #[derive(Debug, Clone)]
@@ -125,6 +127,8 @@ impl FieldMeta {
             ObjectKind::Unit => self.use_unit,
             ObjectKind::Building => self.use_building,
             ObjectKind::Item => self.use_item,
+            // Their own metadata files do not use the kind flags: every field applies.
+            ObjectKind::Buff | ObjectKind::Destructable => true,
         }
     }
 }

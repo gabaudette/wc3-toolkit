@@ -12,12 +12,8 @@ use wc3_data::meta::FieldMeta;
 use wc3_data::units::UnitDatabase;
 use wc3_data::upgrades::UpgradeDatabase;
 use wc3_map::abilities::MapAbilities;
-use wc3_map::imports::MapImports;
-use wc3_map::items::MapItems;
-use wc3_map::transfer::MapExtras;
 use wc3_map::units::MapUnits;
-use wc3_map::upgrades::MapUpgrades;
-use wc3_map::{FourCC, Map, MapStrings, save_files};
+use wc3_map::{FourCC, MapStrings, save_files};
 
 use crate::abilities::{AbilityCard, AbilityDetail, AbilitySummary, AbilityView};
 use crate::hotkeys::{self, Clash};
@@ -101,6 +97,10 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
     let ability_guide = FieldGuide::abilities().map_err(|e| e.to_string())?;
     let items = UnitDatabase::load_items(&files).map_err(|e| e.to_string())?;
     let item_guide = FieldGuide::items().map_err(|e| e.to_string())?;
+    let buffs = UnitDatabase::load_buffs(&files).map_err(|e| e.to_string())?;
+    let buff_guide = FieldGuide::buffs().map_err(|e| e.to_string())?;
+    let destructables = UnitDatabase::load_destructables(&files).map_err(|e| e.to_string())?;
+    let destructable_guide = FieldGuide::destructables().map_err(|e| e.to_string())?;
     let upgrades = UpgradeDatabase::load(&files).map_err(|e| e.to_string())?;
     let upgrade_guide = FieldGuide::upgrades().map_err(|e| e.to_string())?;
     let summary = GameSummary {
@@ -118,6 +118,10 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
         ability_guide,
         items,
         item_guide,
+        buffs,
+        buff_guide,
+        destructables,
+        destructable_guide,
         upgrades,
         upgrade_guide,
         mode,
@@ -129,26 +133,10 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
 
 #[tauri::command]
 pub fn open_map(state: State<'_, AppState>, path: String) -> Result<MapSummary, String> {
-    let path = PathBuf::from(path);
-    let map = Map::open(&path).map_err(|e| e.to_string())?;
-    let units = MapUnits::load(&map).map_err(|e| e.to_string())?;
-    let abilities = MapAbilities::load(&map).map_err(|e| e.to_string())?;
-    let items = MapItems::load(&map).map_err(|e| e.to_string())?;
-    let upgrades = MapUpgrades::load(&map).map_err(|e| e.to_string())?;
-    let extras = MapExtras::load(&map).map_err(|e| e.to_string())?;
-    let imports = MapImports::load(&map).map_err(|e| e.to_string())?;
-    drop(map);
-
+    // Read before taking the session lock, so a large map does not block it.
+    let open = OpenMap::load(PathBuf::from(path)).map_err(|e| e.to_string())?;
     state.with(|session| {
-        session.map = Some(OpenMap::new(
-            path.clone(),
-            units,
-            abilities,
-            items,
-            upgrades,
-            extras,
-            imports,
-        ));
+        session.map = Some(open);
         Ok(map_summary(session))
     })
 }

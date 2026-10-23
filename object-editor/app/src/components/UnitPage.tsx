@@ -18,12 +18,37 @@ type UnitPageProps = {
 };
 
 /** The field holding the model, by noun. */
-const MODEL_FIELD: Record<string, string> = { unit: "umdl", item: "ifil" };
+const MODEL_FIELD: Record<string, string> = { unit: "umdl", item: "ifil", destructable: "bfil" };
 
-/** "item" for items, "unit" for heroes, units and buildings. */
+const VARIATIONS_FIELD = "bvar";
+const MODEL_EXTENSION = /\.md[lx]$/i;
+
+/**
+ * The model the preview loads. Destructables name their model without the
+ * extension and number its variations (`AshenTree` → `AshenTree0.mdl`).
+ */
+function modelFile(noun: string, fields: Field[]): string | null {
+  const raw = fields.find((f) => f.id === MODEL_FIELD[noun])?.raw;
+  if (!raw || noun !== "destructable" || MODEL_EXTENSION.test(raw)) {
+    return raw || null;
+  }
+
+  const variations = Number(fields.find((f) => f.id === VARIATIONS_FIELD)?.raw ?? "1");
+  let file = raw;
+  if (variations > 1) {
+    file = `${file}0`;
+  }
+
+  return `${file}.mdl`;
+}
+
+/** Kinds that name themselves; heroes, units and buildings are all "unit". */
+const OWN_NOUNS = ["item", "buff", "destructable"];
+
+/** What the page calls the object: "unit", "item", "buff" or "destructable". */
 function nounOf(item: UnitDetail["item"]): string {
-  if (item.kind === "item") {
-    return "item";
+  if (OWN_NOUNS.includes(item.kind)) {
+    return item.kind;
   }
 
   return "unit";
@@ -70,7 +95,7 @@ export function UnitPage({
   const allFields = detail.sections.flatMap((s) => s.fields);
   const inspectedField = allFields.find((f) => f.id === inspected) ?? null;
   const changedCount = allFields.filter((f) => f.modified).length;
-  const modelPath = allFields.find((f) => f.id === MODEL_FIELD[noun])?.raw || null;
+  const modelPath = modelFile(noun, allFields);
   const searching = Boolean(filter) || changedOnly;
 
   const sections = useMemo(

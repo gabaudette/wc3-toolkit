@@ -9,7 +9,7 @@ mod abilities;
 mod commands;
 mod hotkeys;
 mod icons;
-mod items;
+mod plain;
 mod platform;
 mod state;
 mod transfer;
@@ -46,12 +46,12 @@ fn main() -> ExitCode {
             commands::reset_field,
             commands::create_unit,
             commands::save_map,
-            items::list_items,
-            items::item_detail,
-            items::search_items,
-            items::set_item_field,
-            items::reset_item_field,
-            items::create_item,
+            plain::list_plain,
+            plain::plain_detail,
+            plain::search_plain,
+            plain::set_plain_field,
+            plain::reset_plain_field,
+            plain::create_plain,
             upgrades::list_upgrades,
             upgrades::upgrade_detail,
             upgrades::search_upgrades,

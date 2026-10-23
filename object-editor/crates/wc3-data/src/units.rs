@@ -6,6 +6,7 @@
 
 use std::collections::HashMap;
 
+use crate::abilities::merge_optional;
 use crate::game::{ArtMode, GameFiles, decode_text};
 use crate::meta::{FieldMeta, ObjectKind, parse_metadata};
 use crate::profile::{Profile, split_list, unquote};
@@ -34,6 +35,41 @@ const ITEM_TABLE: &str = "units\\itemdata.slk";
 const ITEM_FUNC: &str = "units\\itemfunc.txt";
 const ITEM_SKIN: &str = "units\\itemskin.txt";
 const ITEM_STRINGS: &[&str] = &["units\\itemstrings.txt", "units\\itemskinstrings.txt"];
+/// Buffs: their own metadata and table; text and art live in the ability profiles.
+const BUFF_METADATA: &str = "units\\abilitybuffmetadata.slk";
+const BUFF_SOURCE: &str = "AbilityBuffData";
+const BUFF_TABLE: &str = "units\\abilitybuffdata.slk";
+const ABILITY_PROFILES: &[&str] = &[
+    "campaign", "common", "human", "item", "neutral", "nightelf", "orc", "undead",
+];
+const ABILITY_SKIN: &str = "units\\abilityskin.txt";
+const ABILITY_SKIN_STRINGS: &str = "units\\abilityskinstrings.txt";
+/// Buffs show their editor name, or else their tooltip title.
+const BUFF_NAME_KEYS: &[&str] = &["EditorName", "Bufftip"];
+const DESTRUCTABLE_METADATA: &str = "units\\destructablemetadata.slk";
+const DESTRUCTABLE_SOURCE: &str = "DestructableData";
+const DESTRUCTABLE_TABLE: &str = "units\\destructabledata.slk";
+const DESTRUCTABLE_SKIN: &str = "units\\destructableskin.txt";
+
+/// The editor's own lists, with the metadata types that use them. Tilesets are
+/// left out: their letters differ only by case (`e`, `E`), and choices match
+/// without case.
+const WORLD_EDIT_DATA: &str = "ui\\worldeditdata.txt";
+const CATEGORY_SECTIONS: &[(&str, &str)] = &[
+    ("DestructibleCategories", "destructableCategory"),
+    ("DoodadCategories", "doodadCategory"),
+];
+
+/// Where a catalog's data comes from.
+struct CatalogSpec {
+    catalog: Catalog,
+    metadata: &'static str,
+    /// Which of the metadata's fields the catalog shows.
+    keep: fn(&FieldMeta) -> bool,
+    /// The main table's metadata source name (`ItemData`), and its file.
+    source: &'static str,
+    table: &'static str,
+}
 const RACES: &[&str] = &["campaign", "human", "neutral", "nightelf", "orc", "undead"];
 
 /// Text files that only name other objects (abilities, items, upgrades), used
@@ -93,9 +129,18 @@ impl EnumValue {
     }
 }
 
+/// What a [`UnitDatabase`] holds. Units and items share the unit metadata;
+/// buffs and destructables have their own.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Catalog {
+    Units,
+    Items,
+    Buffs,
+    Destructables,
+}
+
 pub struct UnitDatabase {
-    /// Loaded with [`UnitDatabase::load_items`]: every object is an item.
-    items: bool,
+    catalog: Catalog,
     fields: Vec<FieldMeta>,
     tables: HashMap<String, Slk>,
     profile: Profile,
@@ -132,7 +177,7 @@ impl UnitDatabase {
         let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
 
         Ok(Self {
-            items: false,
+            catalog: Catalog::Units,
             fields,
             tables,
             profile: load_unit_profile(files)?,
@@ -150,7 +195,12 @@ impl UnitDatabase {
     }
 
     pub fn contains(&self, id: &str) -> bool {
-        let main = if self.items { "itemdata" } else { "unitdata" };
+        let main = match self.catalog {
+            Catalog::Units => "unitdata",
+            Catalog::Items => "itemdata",
+            Catalog::Buffs => "abilitybuffdata",
+            Catalog::Destructables => "destructabledata",
+        };
         self.tables.get(main).is_some_and(|t| t.has_row(id))
     }
 
@@ -176,31 +226,96 @@ impl UnitDatabase {
     /// from `ItemData` and the item profiles. Choices, editor strings and
     /// names are shared with units.
     pub fn load_items(files: &GameFiles) -> Result<Self> {
-        let metadata = load_slk(files.read_base(METADATA)?, METADATA)?;
-        let fields: Vec<FieldMeta> = parse_metadata(&metadata)
-            .map_err(|e| e.in_file(METADATA))?
-            .into_iter()
-            .filter(|f| f.use_item)
-            .collect();
-
-        let table = load_slk(files.read_balanced(ITEM_TABLE)?, ITEM_TABLE)?;
-        let ids = table.keys().map(str::to_owned).collect();
-        let mut tables = HashMap::new();
-        tables.insert(ITEM_SOURCE.to_ascii_lowercase(), table);
-
-        let editor_strings = load_profile(files, EDITOR_STRINGS, GameFiles::read_localized)?;
-        let editor_data = load_profile(files, &[EDITOR_DATA], GameFiles::read_base)?;
-        let enums = parse_enums(&editor_data, &editor_strings);
-        let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
-
         let mut profile = load_profile(files, &[ITEM_FUNC], GameFiles::read_balanced)?;
         profile.merge_text(&decode_text(files.read_base(ITEM_SKIN)?, ITEM_SKIN)?);
         for path in ITEM_STRINGS {
             profile.merge_text(&decode_text(files.read_localized(path)?, path)?);
         }
 
+        let spec = CatalogSpec {
+            catalog: Catalog::Items,
+            metadata: METADATA,
+            keep: |f| f.use_item,
+            source: ITEM_SOURCE,
+            table: ITEM_TABLE,
+        };
+        Self::load_catalog(files, &spec, profile)
+    }
+
+    /// Buffs and effects: their own metadata over `AbilityBuffData`, with text
+    /// and art from the ability profiles, where they sit next to abilities.
+    pub fn load_buffs(files: &GameFiles) -> Result<Self> {
+        let mut profile = Profile::new();
+        for source in ABILITY_PROFILES {
+            let path = format!("units\\{source}abilityfunc.txt");
+            merge_optional(&mut profile, files.read_balanced(&path), &path)?;
+        }
+
+        merge_optional(&mut profile, files.read_base(ABILITY_SKIN), ABILITY_SKIN)?;
+        for source in ABILITY_PROFILES {
+            let path = format!("units\\{source}abilitystrings.txt");
+            merge_optional(&mut profile, files.read_localized(&path), &path)?;
+        }
+
+        merge_optional(
+            &mut profile,
+            files.read_localized(ABILITY_SKIN_STRINGS),
+            ABILITY_SKIN_STRINGS,
+        )?;
+
+        let spec = CatalogSpec {
+            catalog: Catalog::Buffs,
+            metadata: BUFF_METADATA,
+            keep: |_| true,
+            source: BUFF_SOURCE,
+            table: BUFF_TABLE,
+        };
+        Self::load_catalog(files, &spec, profile)
+    }
+
+    /// Destructables (trees, gates, crates): their own metadata over
+    /// `DestructableData`, with art from the destructable skins.
+    pub fn load_destructables(files: &GameFiles) -> Result<Self> {
+        let profile = load_profile(files, &[DESTRUCTABLE_SKIN], GameFiles::read_base)?;
+        let spec = CatalogSpec {
+            catalog: Catalog::Destructables,
+            metadata: DESTRUCTABLE_METADATA,
+            keep: |_| true,
+            source: DESTRUCTABLE_SOURCE,
+            table: DESTRUCTABLE_TABLE,
+        };
+        Self::load_catalog(files, &spec, profile)
+    }
+
+    /// A catalog other than units: its metadata's kept fields over one table
+    /// whose rows are the objects, with the shared editor strings and choices.
+    fn load_catalog(files: &GameFiles, spec: &CatalogSpec, profile: Profile) -> Result<Self> {
+        let metadata = load_slk(files.read_base(spec.metadata)?, spec.metadata)?;
+        let fields: Vec<FieldMeta> = parse_metadata(&metadata)
+            .map_err(|e| e.in_file(spec.metadata))?
+            .into_iter()
+            .filter(spec.keep)
+            .collect();
+
+        let table = load_slk(files.read_balanced(spec.table)?, spec.table)?;
+        let ids = table.keys().map(str::to_owned).collect();
+        let mut tables = HashMap::new();
+        tables.insert(spec.source.to_ascii_lowercase(), table);
+
+        let editor_strings = load_profile(files, EDITOR_STRINGS, GameFiles::read_localized)?;
+        let editor_data = load_profile(files, &[EDITOR_DATA], GameFiles::read_base)?;
+        let mut enums = parse_enums(&editor_data, &editor_strings);
+        let world_edit = decode_text(files.read_base(WORLD_EDIT_DATA)?, WORLD_EDIT_DATA)?;
+        for (section, value_type) in CATEGORY_SECTIONS {
+            enums.insert(
+                (*value_type).to_owned(),
+                letter_choices(&world_edit, section, &editor_strings),
+            );
+        }
+        let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
+
         Ok(Self {
-            items: true,
+            catalog: spec.catalog,
             fields,
             tables,
             profile,
@@ -214,8 +329,11 @@ impl UnitDatabase {
 
     /// Buildings are flagged in `UnitBalance`; hero IDs start with an uppercase letter.
     pub fn kind(&self, id: &str) -> ObjectKind {
-        if self.items {
-            return ObjectKind::Item;
+        match self.catalog {
+            Catalog::Items => return ObjectKind::Item,
+            Catalog::Buffs => return ObjectKind::Buff,
+            Catalog::Destructables => return ObjectKind::Destructable,
+            Catalog::Units => {}
         }
 
         let is_building = self
@@ -237,9 +355,33 @@ impl UnitDatabase {
     /// Display name of a unit, or of any object a unit field refers to (ability,
     /// item, upgrade), with the editor suffix that tells campaign variants apart.
     pub fn name(&self, id: &str) -> String {
-        object_name(&self.profile, id)
+        let own = match self.catalog {
+            Catalog::Buffs => BUFF_NAME_KEYS
+                .iter()
+                .find_map(|key| self.profile.get(id, key))
+                .map(|name| unquote(name).to_owned()),
+            Catalog::Units | Catalog::Items | Catalog::Destructables => {
+                object_name(&self.profile, id)
+            }
+        };
+        own.map(|name| self.display_text(&name))
             .or_else(|| object_name(&self.names, id))
             .unwrap_or_else(|| id.to_owned())
+    }
+
+    /// Text as the editor shows it: destructables and doodads name themselves
+    /// with editor string keys (`WESTRING_DEST_...`), which resolve here.
+    pub fn display_text(&self, text: &str) -> String {
+        let (key, rest) = text.split_once(' ').unwrap_or((text, ""));
+        if !key.starts_with(STRING_KEY_PREFIX) {
+            return text.to_owned();
+        }
+
+        match self.editor_string(key) {
+            Some(resolved) if rest.is_empty() => resolved,
+            Some(resolved) => format!("{resolved} {rest}"),
+            None => text.to_owned(),
+        }
     }
 
     /// The editor's label for a field, e.g. `Art - Model File`.
@@ -281,7 +423,8 @@ impl UnitDatabase {
         }?;
 
         match field.index {
-            None => Some(whole),
+            // Long text is quoted in profiles (`Buffubertip="..."`); the value is what is inside.
+            None => Some(unquote(&whole).to_owned()),
             Some(i) => split_list(&whole)
                 .into_iter()
                 .nth(i)
@@ -311,7 +454,7 @@ impl UnitDatabase {
                 .parse::<f64>()
                 .map(|v| format!("{v:.REAL_DECIMALS$}"))
                 .unwrap_or(raw),
-            "string" | "char" => unquote(&raw).to_owned(),
+            "string" | "char" => self.display_text(unquote(&raw)),
             _ if field.is_bit_flags() => self.bit_flags(&field.value_type, &raw),
             "abilityList" | "heroAbilityList" | "abilitySkinList" | "unitList" | "itemList"
             | "upgradeList" | "techList" => self.list_names(&raw),
@@ -351,7 +494,12 @@ impl UnitDatabase {
 
     /// The unit's icon path as stored in the data, e.g. `ReplaceableTextures\...\BTNHeroPaladin.blp`.
     pub fn icon_path(&self, id: &str, mode: ArtMode) -> Option<String> {
-        self.profile_value(id, "Art", mode)
+        let key = match self.catalog {
+            Catalog::Units | Catalog::Items => "Art",
+            Catalog::Buffs => "Buffart",
+            Catalog::Destructables => return None,
+        };
+        self.profile_value(id, key, mode)
     }
 
     fn profile_value(&self, id: &str, key: &str, mode: ArtMode) -> Option<String> {
@@ -483,6 +631,29 @@ fn enum_labels(values: &[EnumValue], raw: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+/// Choices keyed by letter in `WorldEditData.txt` (`D=WESTRING_DTYPE_DESTRUCTABLE,<icon>`).
+/// Read from the text itself: profiles lowercase their keys, and these keep their case.
+fn letter_choices(text: &str, section: &str, editor_strings: &Profile) -> Vec<EnumValue> {
+    let header = format!("[{section}]");
+    text.lines()
+        .map(str::trim)
+        .skip_while(|line| *line != header)
+        .skip(1)
+        .take_while(|line| !line.starts_with('['))
+        .filter(|line| !line.starts_with("//"))
+        .filter_map(|line| {
+            let (value, rest) = line.split_once('=')?;
+            let key = split_list(rest).into_iter().next()?;
+            Some(EnumValue {
+                value: value.trim().to_owned(),
+                label: resolve_string(editor_strings, key.trim())
+                    .unwrap_or_else(|| value.trim().to_owned()),
+                aliases: Vec::new(),
+            })
+        })
+        .collect()
 }
 
 /// Reads `UnitEditorData.txt`: `[armorType]` sections with `00=Metal,WESTRING_...` entries.

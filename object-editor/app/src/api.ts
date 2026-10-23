@@ -5,6 +5,7 @@ import type {
   AbilityCard,
   AbilityDetail,
   AbilitySummary,
+  Catalog,
   Field,
   GameSummary,
   HotkeyClash,
@@ -61,13 +62,18 @@ export const api = {
     invoke<Field>("set_field", { id, field, value }),
   resetField: (id: string, field: string) => invoke<Field>("reset_field", { id, field }),
   createUnit: (base: string) => invoke<UnitItem>("create_unit", { base }),
-  listItems: () => invoke<UnitItem[]>("list_items"),
-  itemDetail: (id: string) => invoke<UnitDetail>("item_detail", { id }),
-  searchItems: (query: string) => invoke<SearchHit[]>("search_items", { query }),
-  setItemField: (id: string, field: string, value: string) =>
-    invoke<Field>("set_item_field", { id, field, value }),
-  resetItemField: (id: string, field: string) => invoke<Field>("reset_item_field", { id, field }),
-  createItem: (base: string) => invoke<UnitItem>("create_item", { base }),
+  /** Items, buffs and destructables: objects without levels, on the unit page. */
+  listPlain: (catalog: Catalog) => invoke<UnitItem[]>("list_plain", { catalog }),
+  plainDetail: (catalog: Catalog, id: string) =>
+    invoke<UnitDetail>("plain_detail", { catalog, id }),
+  searchPlain: (catalog: Catalog, query: string) =>
+    invoke<SearchHit[]>("search_plain", { catalog, query }),
+  setPlainField: (catalog: Catalog, id: string, field: string, value: string) =>
+    invoke<Field>("set_plain_field", { catalog, id, field, value }),
+  resetPlainField: (catalog: Catalog, id: string, field: string) =>
+    invoke<Field>("reset_plain_field", { catalog, id, field }),
+  createPlain: (catalog: Catalog, base: string) =>
+    invoke<UnitItem>("create_plain", { catalog, base }),
   listUpgrades: () => invoke<UnitItem[]>("list_upgrades"),
   upgradeDetail: (id: string) => invoke<AbilityDetail>("upgrade_detail", { id }),
   searchUpgrades: (query: string) => invoke<SearchHit[]>("search_upgrades", { query }),

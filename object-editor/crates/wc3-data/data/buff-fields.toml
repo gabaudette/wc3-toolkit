@@ -1,0 +1,128 @@
+# Field guide for the Buffs tab: what each buff and effect field does, which
+# fields come first, and which are rarely needed. Written for this project (not
+# taken from the game). Mark anything not confirmed in game with
+# `unverified = true`.
+#
+# A buff is the mark an ability leaves on a unit (its icon in the status bar and
+# the art on the unit); an effect is art an ability plays without a status icon.
+#
+# [order]      per category, the fields shown first, in this order. Fields not
+#              listed follow in the game's metadata order.
+# [[field]]    ids sharing one description; `advanced = true` folds the fields
+#              into the "Advanced" group of their category.
+
+[order]
+text = ["ftip", "fube", "fnam", "fnsf"]
+stats = ["feff", "frac"]
+art = [
+  "fart", "ftat", "fta0", "ftac", "fsat", "fspt", "feat", "feft", "fmat", "fmsp", "fmac",
+  "fmho", "flig", "fta1", "fta2", "fta3", "fta4", "fta5", "fspd",
+]
+sound = ["fefs", "fefl"]
+
+# --- Text --------------------------------------------------------------------
+
+[[field]]
+ids = ["ftip"]
+description = "The buff's title, shown when the mouse is over its icon in a unit's status bar."
+
+[[field]]
+ids = ["fube"]
+description = "The text under the title in the status bar tooltip: what the buff does to the unit. Color codes and |n line breaks work."
+
+[[field]]
+ids = ["fnam"]
+description = "The buff's name in the editor, where abilities pick their buffs. Players see the tooltip title instead."
+
+[[field]]
+ids = ["fnsf"]
+description = "Text after the name in the editor only, to tell similar buffs apart. Players never see it."
+advanced = true
+
+# --- Stats -------------------------------------------------------------------
+
+[[field]]
+ids = ["feff"]
+description = "Whether this is an effect (art an ability plays, with no icon in the status bar) rather than a buff."
+
+[[field]]
+ids = ["frac"]
+description = "The race the buff belongs to. The editor groups buffs by it; it does not change what the buff does."
+advanced = true
+
+# --- Art ---------------------------------------------------------------------
+
+[[field]]
+ids = ["fart"]
+description = "Icon shown in the status bar of a unit that has the buff."
+
+[[field]]
+ids = ["ftat"]
+description = "Models attached to the unit while it has the buff, such as frost on a slowed unit."
+
+[[field]]
+ids = ["fta0", "fta1", "fta2", "fta3", "fta4", "fta5"]
+description = "Where each target model attaches on the unit (origin, overhead, chest, weapon, ...), one entry per model in order."
+
+[[field]]
+ids = ["ftac"]
+description = "How many of the target models are used."
+advanced = true
+
+[[field]]
+ids = ["fsat"]
+description = "Model played once on the unit, for example when the buff is applied or the unit dies with it."
+
+[[field]]
+ids = ["fspt"]
+description = "Where the special model attaches on the unit."
+advanced = true
+
+[[field]]
+ids = ["feat"]
+description = "Model of an effect, played where the ability strikes (effects only)."
+
+[[field]]
+ids = ["feft"]
+description = "Where the effect model attaches."
+advanced = true
+
+[[field]]
+ids = ["fmat"]
+description = "Model of a missile the effect throws."
+advanced = true
+
+[[field]]
+ids = ["fmsp"]
+description = "Speed of the effect's missile."
+advanced = true
+
+[[field]]
+ids = ["fmac"]
+description = "How high the effect's missile arcs; 0 flies straight."
+advanced = true
+
+[[field]]
+ids = ["fmho"]
+description = "Whether the effect's missile follows its target when the target moves."
+advanced = true
+
+[[field]]
+ids = ["flig"]
+description = "Lightning drawn between units, for chain and drain effects."
+advanced = true
+
+[[field]]
+ids = ["fspd"]
+description = "The lowest graphics detail setting at which the art still shows."
+advanced = true
+
+# --- Sound -------------------------------------------------------------------
+
+[[field]]
+ids = ["fefs"]
+description = "Sound played once when the effect starts."
+
+[[field]]
+ids = ["fefl"]
+description = "Sound that loops while the effect lasts."

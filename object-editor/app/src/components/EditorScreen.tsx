@@ -4,6 +4,7 @@ import { SearchLg } from "@untitledui/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, errorMessage } from "../api";
 import type {
+  Catalog,
   Field,
   GameSummary,
   HotkeyClash,
@@ -18,21 +19,43 @@ import { AppVersion } from "./AppVersion";
 import { Button } from "./Button";
 import { CommandPalette, type PaletteCommand } from "./CommandPalette";
 import { ImportDialog } from "./ImportDialog";
-import { ItemsPane } from "./ItemsPane";
 import { OpenAbilityContext } from "./openAbility";
+import { PlainPane } from "./PlainPane";
 import { ShareDialog } from "./ShareDialog";
-import { UNIT_LIST, UnitList } from "./UnitList";
+import {
+  BUFF_LIST,
+  DESTRUCTABLE_LIST,
+  ITEM_LIST,
+  type ListConfig,
+  UNIT_LIST,
+  UnitList,
+} from "./UnitList";
 import { UnitPage } from "./UnitPage";
 import { UpgradesPane } from "./UpgradesPane";
 
-type Tab = "units" | "abilities" | "items" | "upgrades";
+type Tab = "units" | "abilities" | "upgrades" | Catalog;
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "units", label: "Units" },
   { id: "abilities", label: "Abilities" },
   { id: "items", label: "Items" },
   { id: "upgrades", label: "Upgrades" },
+  { id: "buffs", label: "Buffs" },
+  { id: "destructables", label: "Destructables" },
 ];
+
+/** The tabs of objects without levels, each on the unit list and page. */
+const PLAIN_TABS: { catalog: Catalog; list: ListConfig }[] = [
+  { catalog: "items", list: ITEM_LIST },
+  { catalog: "buffs", list: BUFF_LIST },
+  { catalog: "destructables", list: DESTRUCTABLE_LIST },
+];
+
+const NO_PLAIN_SELECTION: Record<Catalog, string | null> = {
+  items: null,
+  buffs: null,
+  destructables: null,
+};
 
 type EditorScreenProps = {
   game: GameSummary;
@@ -60,7 +83,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [dialog, setDialog] = useState<"share" | "import" | "search" | null>(null);
   const [tab, setTab] = useState<Tab>("units");
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [selectedPlain, setSelectedPlain] = useState(NO_PLAIN_SELECTION);
   const [selectedUpgrade, setSelectedUpgrade] = useState<string | null>(null);
   /** Bumped when the map is replaced or imported into, so the ability list reloads. */
   const [revision, setRevision] = useState(0);
@@ -89,9 +112,9 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     setTab("abilities");
   }, []);
 
-  const openItem = useCallback((id: string) => {
-    setSelectedItem(id);
-    setTab("items");
+  const openPlain = useCallback((catalog: Catalog, id: string) => {
+    setSelectedPlain((current) => ({ ...current, [catalog]: id }));
+    setTab(catalog);
   }, []);
 
   const openUpgrade = useCallback((id: string) => {
@@ -198,7 +221,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       setSelected(null);
       setDetail(null);
       setSelectedAbility(null);
-      setSelectedItem(null);
+      setSelectedPlain(NO_PLAIN_SELECTION);
       setSelectedUpgrade(null);
       setRevision((r) => r + 1);
       refreshList();
@@ -358,7 +381,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         units={units}
         onOpenUnit={openUnit}
         onOpenAbility={openAbility}
-        onOpenItem={openItem}
+        onOpenPlain={openPlain}
         onOpenUpgrade={openUpgrade}
         onClose={() => setDialog(null)}
       />
@@ -386,16 +409,18 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
           />
         )}
 
-        {tab === "items" && (
-          <ItemsPane
-            key={revision}
+        {PLAIN_TABS.filter(({ catalog }) => tab === catalog).map(({ catalog, list }) => (
+          <PlainPane
+            key={`${catalog}-${revision}`}
+            catalog={catalog}
+            list={list}
             editable={editable}
-            selected={selectedItem}
-            onSelect={setSelectedItem}
+            selected={selectedPlain[catalog]}
+            onSelect={(id) => openPlain(catalog, id)}
             onMapChanged={refreshMap}
             onError={setError}
           />
-        )}
+        ))}
 
         <div className={classes("flex min-h-0 flex-1 gap-2.5", tab !== "units" && "hidden")}>
           <UnitList
