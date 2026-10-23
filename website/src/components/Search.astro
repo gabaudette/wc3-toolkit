@@ -1,0 +1,10 @@
+---
+// biome-ignore lint/correctness/noUnusedImports: Used in the Astro template.
+import DefaultSearch from "@astrojs/starlight/components/Search.astro";
+---
+
+<DefaultSearch {...Astro.props} />
+
+<script>
+  import "../searchFilters";
+</script>

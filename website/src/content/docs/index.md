@@ -57,7 +57,9 @@ language-specific explanations. Browse the [code examples cookbook](./reference/
 Use **Code theme** above any snippet to choose its colors. The choice applies to all snippets
 and is remembered across pages. **Follow site theme** matches the site’s dark or light mode.
 
-Press **Ctrl K** (or **⌘ K**) to search. The published site searches guides, API symbols and raw field codes together.
+Press **Ctrl K** (or **⌘ K**) to search. The published site searches guides, API symbols and raw field codes together. Use **Search in** to
+choose **All content**, **Guides**, **API** or **Object fields**. Practical API explanations
+appear in both Guides and API.
 
 ## About this guide
 
