@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-23 · Linked map-making glossary (AGE-33)
+## 2026-10-23 · Linked map-making glossary (PR #37, AGE-33)
 
 - Added 33 alphabetically grouped definitions spanning object editing, sharing, scripting
   and map-file terminology. Entries distinguish object types from placed instances, raw
