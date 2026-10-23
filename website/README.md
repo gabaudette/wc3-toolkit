@@ -73,7 +73,8 @@ confirmed. It is not advertised as the latest patch.
 ## Hosting
 
 The repository root's `vercel.json` installs and builds this directory and serves
-`website/dist`. The Vercel project `wc3-toolkit-docs` connects to this repository: main pushes
+`website/dist`. Install and build commands explicitly select Bun 1.4.2 because older build
+images cannot read Bun 1.4 lockfiles. The Vercel project `wc3-toolkit-docs` connects to this repository: main pushes
 produce production deployments and pull requests produce previews. Field guides remain
 outside the website directory, so use the repository root as the Vercel project root.
 No adapter, game files, runtime backend or deployment token in GitHub Actions is needed.
