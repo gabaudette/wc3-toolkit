@@ -79,6 +79,7 @@ export default defineConfig({
             { slug: "scripting/languages" },
             { slug: "reference/examples" },
             { slug: "reference/api" },
+            { slug: "reference/api/practical" },
           ],
         },
         { label: "Object data", items: [{ slug: "reference/fields" }] },

@@ -4,6 +4,24 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Practical API explanations (AGE-26)
+
+- Added a separate authored API guide catalog for 26 unit, timer, group, trigger and location
+  functions. Generation keeps existing symbol URLs and adds parameter meanings, return notes,
+  usage, ownership, common mistakes and related links. The practical index, sidebar and topic
+  pages expose the initial set. Language-specific prose follows the existing Lua/JASS toggle.
+- Reused existing recipes and added five paired lifecycle/event-context examples, bringing
+  the cookbook to 48 recipes. The guides distinguish source review and syntax validation
+  from game execution, with specific unverified behavior called out where relevant.
+- Added pre-generation validation for symbol/source resolution, exact parameter coverage,
+  related targets and recipe consistency. Authored guidance survives API snapshot refreshes.
+- Validation: 101 tests pass; Biome and Astro report no diagnostics; all 48 recipes pass
+  Lua syntax checks and PJass against local installation scripts. The production build and
+  local link/asset checks pass across 6,606 pages. A separate audit checks all 5,131 existing
+  symbol URLs, all 26 guide sections and 1,023 internal fragment links. Browser checks cover
+  desktop/mobile layouts, language-specific notes, examples and table-of-contents items,
+  persisted language choice and guide-to-topic navigation. Game behavior was not exercised.
+
 ## 2026-10-23 · Troubleshooting hub (PR #33, AGE-24)
 
 - Added a symptom index and recovery steps for game detection/loading, read-only browsing,
