@@ -1,4 +1,4 @@
-# wc3-toolkit
+# Tinkerbench
 
 Open-source tools for Warcraft III: Reforged map creation.
 
