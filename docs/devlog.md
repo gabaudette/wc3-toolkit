@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-23 · Categorized API reference
+## 2026-10-23 · Categorized API reference (PR #30)
 
 - Replaced the 5,131-declaration API landing list with 22 topic cards linking to generated
   topic pages. Each page groups native functions, Blizzard helpers, handle types and constants;
