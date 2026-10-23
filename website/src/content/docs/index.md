@@ -17,7 +17,7 @@ the workbench.
   <a href="./screenshots/unit-editor.png">
     <img src="./screenshots/unit-editor.png" alt="Tinkerbench with the Paladin selected: searchable objects on the left, grouped fields in the center, and a 3D model and field explanation on the right." width="1440" height="900" fetchpriority="high" />
   </a>
-  <figcaption>The unit editor, running with a real Warcraft III installation. Select the screenshot to see it at full size.</figcaption>
+  <figcaption>The unit editor, running with a real Warcraft III installation. Select the screenshot to see it at full size.<br />Image subject to change.</figcaption>
 </figure>
 
 - **Find an object quickly.** Search by name or raw code, or use **Ctrl K** across object types.

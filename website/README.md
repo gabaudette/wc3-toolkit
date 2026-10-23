@@ -41,6 +41,7 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   finish loading, and move the pointer away from the content before capturing. Keep filenames
   stable when refreshing the UI. Screenshots show game art in context; do not export or add
   standalone game assets. The guide’s captions and alt text should match each refreshed image.
+  Include “Image subject to change.” below every screenshot, including reused images.
 - `../object-editor/crates/wc3-data/data/*-fields.toml`: project-authored field explanations,
   shared with the editor. Every guide ID gets a page, including IDs absent from the snapshot.
 - `data/fields.toml`: display names, types, limits, choices and applicability extracted from

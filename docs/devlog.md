@@ -22,7 +22,8 @@ single line. Every pull request adds an entry here and to the changelog.
   sharing. Installation and first-map guides reuse the two startup captures and explicitly
   explain the Load game data action before choosing a map. Linked full-size
   screenshots have descriptive alt text, fixed dimensions and lazy loading below the first
-  image. Relative asset links work with the site’s optional base path.
+  image. Every screenshot in the site and README includes “Image subject to change.” beneath
+  it. Relative asset links work with the site’s optional base path.
 - Reused the unit-editor capture in a homepage showcase and the root README. Images live
   under `website/public/screenshots/` so both entry points use the same source, with capture
   and refresh notes in the website README.
