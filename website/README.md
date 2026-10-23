@@ -39,6 +39,11 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   the generated reference subdirectories. Recheck linked field labels, object types and
   companion settings against `data/fields.toml` and the shared TOML explanations when
   metadata changes. Its task combinations are source-reviewed, not in-game verification.
+- `src/content/docs/reference/glossary.md`: authored, alphabetically grouped definitions with
+  links from introductory guides. Keep term heading anchors stable; incoming term links and
+  production search can point directly to them. Language-specific notes use the same paired
+  sections as other guides. Recheck definitions against the linked guides and supported
+  formats when app or reference terminology changes. This page is not generated.
 - `public/screenshots/`: real desktop captures shared by the visual tour, startup guides,
   homepage and root README. Editor views are 1440 × 900; startup captures focus on their
   panels (600 × 420 and 600 × 600) to keep the controls readable. Sharing and import dialogs

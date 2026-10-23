@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- A linked map-making glossary with 33 definitions, examples and reference links, including
+  raw codes, custom objects, dependencies, handles, natives and Blizzard helpers.
 - Website search filters for guides, APIs and object fields, with result-type labels and
   improved discovery of practical guides alongside exact symbol and raw-code lookups.
 

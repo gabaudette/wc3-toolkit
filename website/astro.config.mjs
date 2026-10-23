@@ -68,6 +68,7 @@ export default defineConfig({
             { slug: "editor/install" },
             { slug: "editor/visual-tour" },
             { slug: "editor/first-map" },
+            { slug: "reference/glossary" },
             { slug: "editor/troubleshooting" },
           ],
         },

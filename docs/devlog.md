@@ -4,6 +4,26 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Linked map-making glossary (PR #37, AGE-33)
+
+- Added 33 alphabetically grouped definitions spanning object editing, sharing, scripting
+  and map-file terminology. Entries distinguish object types from placed instances, raw
+  codes from field IDs and text tokens, code ownership from player ownership, and natives
+  from Blizzard helpers. Examples and paired JASS/Lua notes reuse established guidance.
+- Linked term anchors from the editing, scripting, sharing and object-format introductions,
+  and exposed the glossary in Start here, the homepage and generated API overview. It is
+  authored outside generated subdirectories and uses the existing Guides search category.
+- Kept format limits and API ownership/context caveats in their linked references. Added
+  maintenance notes for term anchors and source definitions; no app behavior changed.
+- Validation: all 122 existing tests pass; Biome and Astro report no diagnostics. Build
+  and local link/asset checks pass across 6,608 pages. A separate audit verifies 33 distinct
+  term anchors and 205 internal fragments across seven glossary/entry pages. Production
+  search finds the glossary for all 33 terms in Guides, with direct definition links.
+  Browser checks cover desktop/mobile layouts in both themes, alphabetical jumps, incoming
+  term links, homepage navigation, and paired Lua/JASS notes without hiding term headings.
+  No browser runtime errors were reported. Definitions were source-reviewed; no game
+  behavior was exercised.
+
 ## 2026-10-23 · Search by content type (PR #36, AGE-32)
 
 - Added Pagefind Content filters and result-type metadata through the MarkdownContent
