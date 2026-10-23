@@ -5,7 +5,7 @@ The gnome header logo and favicon are the app's existing icons. Fonts are bundle
 
 ## Run and validate
 
-From this directory:
+Use Node.js 24 and Bun 1.4.2. From this directory:
 
 ```sh
 bun install --frozen-lockfile
