@@ -19,13 +19,21 @@ Parameters keep the names and order from the source. Names such as `whichUnit` a
 
 Inside a trigger action or other initialized map code:
 
+<section data-example-language="jass">
+
 ```jass
 local unit footman = CreateUnit(Player(0), 'hfoo', 0.0, 0.0, 270.0)
 ```
 
+</section>
+
+<section data-example-language="lua">
+
 ```lua
 local footman = CreateUnit(Player(0), FourCC("hfoo"), 0.0, 0.0, 270.0)
 ```
+
+</section>
 
 Player indices start at zero. The four-character raw code becomes an integer: JASS uses `'hfoo'`, Lua uses `FourCC("hfoo")`. Names shown to players are not object IDs.
 
@@ -33,12 +41,16 @@ Player indices start at zero. The four-character raw code becomes an integer: JA
 
 JASS passes a named callback with `function CallbackName`. Declare that callback before the code that uses it. Lua can pass a function value or an inline closure.
 
+<section data-example-language="lua">
+
 ```lua
 local t = CreateTimer()
 TimerStart(t, 1.0, false, function()
     DestroyTimer(t)
 end)
 ```
+
+</section>
 
 `nothing` means no arguments or no return value in a JASS declaration. It is not an argument to pass in Lua. Lua booleans use `true` and `false`; strings use ordinary quotes.
 

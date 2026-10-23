@@ -18,3 +18,4 @@ CLAUDE.local.md
 .vercel/**
 website/src/content/docs/reference/api/**
 website/src/content/docs/reference/fields/**
+website/src/content/docs/reference/examples/**

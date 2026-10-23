@@ -22,7 +22,14 @@ type Field = {
 };
 type GuideEntry = { ids: string[]; description: string; advanced?: boolean; unverified?: boolean };
 type Guide = { field: GuideEntry[] };
-type Example = { description: string; jass: string; lua: string };
+type Example = {
+  title: string;
+  category: string;
+  description: string;
+  usage: string;
+  jass: string;
+  lua: string;
+};
 
 const root = new URL("../", import.meta.url);
 const output = new URL("src/content/docs/reference/", root);
@@ -52,6 +59,10 @@ async function page(path: string, title: string, description: string, body: stri
   );
 }
 
+function languageSection(language: "jass" | "lua", body: string) {
+  return `<section data-example-language="${language}">\n\n${body}\n\n</section>`;
+}
+
 // All generated links are relative, so previews, custom domains and Pages subpaths agree.
 function link(from: string, to: string) {
   const fromParts = from.split("/");
@@ -60,7 +71,14 @@ function link(from: string, to: string) {
     fromParts.shift();
     toParts.shift();
   }
-  return `${"../".repeat(fromParts.length)}${toParts.join("/")}/`;
+  const relative = `${"../".repeat(fromParts.length)}${toParts.join("/")}`;
+  if (!relative) {
+    return "./";
+  }
+  if (relative.endsWith("/")) {
+    return relative;
+  }
+  return `${relative}/`;
 }
 
 const types = new Map(
@@ -90,8 +108,8 @@ for (const name of Object.keys(examples)) {
 }
 
 await mkdir(output, { recursive: true });
-for (const directory of ["api", "fields"]) {
-  // These two ignored directories are owned entirely by this generator.
+for (const directory of ["api", "fields", "examples"]) {
+  // These ignored directories are owned entirely by this generator.
   await rm(new URL(`${directory}/`, output), { force: true, recursive: true });
 }
 
@@ -125,8 +143,13 @@ for (const declaration of api.declarations) {
   const { jass, lua } = signatures(declaration);
   const body = [
     `**${declaration.kind}** · ${code(declaration.source)} line ${declaration.line} · [Browse the API](${link(from, "reference/api")})`,
-    `## JASS declaration\n\n\`\`\`jass\n${jass}\n\`\`\``,
+    languageSection("jass", `## JASS declaration\n\n\`\`\`jass\n${jass}\n\`\`\``),
   ];
+  let luaHeading = "Lua call syntax";
+  if (declaration.kind === "type" || declaration.kind === "constant") {
+    luaHeading = "Lua representation";
+  }
+  body.push(languageSection("lua", `## ${luaHeading}\n\n\`\`\`lua\n${lua}\n\`\`\``));
   if (declaration.kind === "type") {
     body.push(
       `Parent type: ${typeLink(from, declaration.returns)}. In Lua this is an engine handle, not a table you create yourself.`,
@@ -137,7 +160,7 @@ for (const declaration of api.declarations) {
     );
   } else {
     body.push(
-      `## Lua call syntax\n\n\`\`\`lua\n${lua}\n\`\`\`\n\nParameter names above are placeholders. Supply values of the types below.`,
+      "Parameter names in the call syntax are placeholders. Supply values of the types below.",
     );
     body.push("## Parameters");
     if (declaration.parameters.length) {
@@ -154,9 +177,10 @@ for (const declaration of api.declarations) {
     body.push(`## Returns\n\n${returns}`);
     const example = examples[declaration.name];
     if (example) {
-      body.push(
-        `## Example\n\n${example.description}\n\n### JASS\n\n\`\`\`jass\n${example.jass}\n\`\`\`\n\n### Lua\n\n\`\`\`lua\n${example.lua}\n\`\`\``,
-      );
+      body.push(`## Example\n\n**${example.title}**\n\n${example.description}\n\n${example.usage}`);
+      body.push(languageSection("jass", `### JASS\n\n\`\`\`jass\n${example.jass}\n\`\`\``));
+      body.push(languageSection("lua", `### Lua\n\n\`\`\`lua\n${example.lua}\n\`\`\``));
+      body.push(`[Browse all code examples](${link(from, "reference/examples")})`);
     }
   }
   await page(
@@ -171,6 +195,33 @@ await page(
   "JASS & Lua API",
   "Search native functions, Blizzard helpers, handle types and constants.",
   apiIndex.join("\n\n"),
+);
+
+const exampleIndex = [
+  "Choose **Lua** or **JASS** in the top bar (in the menu on mobile). Your choice applies to guides and API examples and is remembered across pages.",
+  "Each linked recipe includes both languages, its setup requirements, and cleanup where it owns temporary handles. Call the named entry point after map initialization. In the Lua harness, register a no-argument entry point with `Dev.OnStart(ExampleName)`; pass arguments inside a callback when needed.",
+  "Run gameplay changes from synchronized map code. Event-response functions need the event shown in their example. Replace custom raw codes such as `A000` with your map's actual codes. A sample trigger described as map-lifetime should be registered once.",
+];
+for (const category of new Set(Object.values(examples).map((example) => example.category))) {
+  exampleIndex.push(`## ${category}`);
+  for (const [name, example] of Object.entries(examples)) {
+    if (example.category !== category) {
+      continue;
+    }
+    const declaration = api.declarations.find((entry) => entry.name === name);
+    if (!declaration) {
+      throw new Error(`Missing API declaration for example ${name}`);
+    }
+    exampleIndex.push(
+      `- [${example.title}](${link("reference/examples", apiPath(declaration))}#example) — ${code(name)}`,
+    );
+  }
+}
+await page(
+  "examples/index",
+  "Code examples",
+  "Practical JASS and Lua recipes for units, spells, timers, groups, effects and game systems.",
+  exampleIndex.join("\n\n"),
 );
 
 let fieldCount = 0;

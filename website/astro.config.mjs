@@ -47,6 +47,7 @@ export default defineConfig({
       components: {
         ThemeProvider: "./src/components/ThemeProvider.astro",
         MarkdownContent: "./src/components/MarkdownContent.astro",
+        ThemeSelect: "./src/components/ThemeSelect.astro",
       },
       social: [
         { icon: "github", label: "GitHub", href: "https://github.com/gabaudette/wc3-toolkit" },
@@ -67,7 +68,11 @@ export default defineConfig({
         { label: "Make something", items: [{ autogenerate: { directory: "guides" } }] },
         {
           label: "JASS & Lua",
-          items: [{ slug: "scripting/languages" }, { slug: "reference/api" }],
+          items: [
+            { slug: "scripting/languages" },
+            { slug: "reference/examples" },
+            { slug: "reference/api" },
+          ],
         },
         { label: "Object data", items: [{ slug: "reference/fields" }] },
         { label: "Map formats", items: [{ autogenerate: { directory: "formats" } }] },

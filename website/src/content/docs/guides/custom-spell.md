@@ -29,16 +29,24 @@ Create a custom Paladin in **Units**, then add your ability to its hero ability 
 
 For a spell-effect trigger action, filter on your ability’s raw code:
 
+<section data-example-language="jass">
+
 ```jass
 if GetSpellAbilityId() == 'A000' then
     // Add behavior here.
 endif
 ```
 
+</section>
+
+<section data-example-language="lua">
+
 ```lua
 if GetSpellAbilityId() == FourCC("A000") then
     -- Add behavior here.
 end
 ```
+
+</section>
 
 Replace `A000` with your actual code. These fragments belong inside a registered spell-effect action; [the trigger guide](../triggers/) shows the whole registration. A trigger adds behavior to the base spell, so account for effects it already applies.

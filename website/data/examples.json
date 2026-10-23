@@ -1,42 +1,346 @@
 {
   "CreateUnit": {
-    "description": "Create one Footman for Player 1 at the map origin. These snippets run inside an initialized map, such as a trigger action.",
-    "jass": "local unit footman = CreateUnit(Player(0), 'hfoo', 0.0, 0.0, 270.0)",
-    "lua": "local footman = CreateUnit(Player(0), FourCC(\"hfoo\"), 0.0, 0.0, 270.0)"
+    "title": "Spawn a Footman",
+    "category": "Units and abilities",
+    "description": "Create a Footman for Player 1 at the map origin and return the unit. The unit stays in the map until your gameplay removes it.",
+    "usage": "Call `ExampleCreateUnit()` after map initialization. Keep the returned unit if another system needs it.",
+    "jass": "function ExampleCreateUnit takes nothing returns unit\n    return CreateUnit(Player(0), 'hfoo', 0.0, 0.0, 270.0)\nendfunction",
+    "lua": "function ExampleCreateUnit()\n    return CreateUnit(Player(0), FourCC(\"hfoo\"), 0.0, 0.0, 270.0)\nend"
   },
-  "TimerStart": {
-    "description": "Run a one-shot callback after one second and destroy the timer when it fires. The JASS callback must be declared before the code that starts the timer.",
-    "jass": "function ExampleTimerElapsed takes nothing returns nothing\n    call DestroyTimer(GetExpiredTimer())\nendfunction\n\nfunction ExampleStartTimer takes nothing returns nothing\n    local timer t = CreateTimer()\n    call TimerStart(t, 1.0, false, function ExampleTimerElapsed)\n    set t = null\nendfunction",
-    "lua": "local t = CreateTimer()\nTimerStart(t, 1.0, false, function()\n    DestroyTimer(t)\nend)"
+  "GetUnitX": {
+    "title": "Read a unit’s coordinates",
+    "category": "Units and abilities",
+    "description": "Read the current X and Y coordinates and show them to the unit’s owner.",
+    "usage": "Call `ExampleGetUnitX(whichUnit)` with an existing unit after the loading screen.",
+    "jass": "function ExampleGetUnitX takes unit whichUnit returns nothing\n    local real x = GetUnitX(whichUnit)\n    local real y = GetUnitY(whichUnit)\n    call DisplayTimedTextToPlayer(GetOwningPlayer(whichUnit), 0.0, 0.0, 5.0, \"X=\" + R2S(x) + \", Y=\" + R2S(y))\nendfunction",
+    "lua": "function ExampleGetUnitX(whichUnit)\n    local x = GetUnitX(whichUnit)\n    local y = GetUnitY(whichUnit)\n    DisplayTimedTextToPlayer(GetOwningPlayer(whichUnit), 0, 0, 5,\n        \"X=\" .. R2S(x) .. \", Y=\" .. R2S(y))\nend"
   },
-  "GetSpellAbilityId": {
-    "description": "Inside a spell-effect trigger action, filter for a custom ability. Replace A000 with your map’s ability raw code.",
-    "jass": "if GetSpellAbilityId() == 'A000' then\n    // Add behavior for this spell here.\nendif",
-    "lua": "if GetSpellAbilityId() == FourCC(\"A000\") then\n    -- Add behavior for this spell here.\nend"
+  "SetUnitPosition": {
+    "title": "Move a unit to a point",
+    "category": "Units and abilities",
+    "description": "Reposition an existing unit to coordinates (256, 256). The engine applies its normal placement and pathing behavior.",
+    "usage": "Call `ExampleSetUnitPosition(whichUnit)` in a flat test area. Use an order instead when the unit should walk there.",
+    "jass": "function ExampleSetUnitPosition takes unit whichUnit returns nothing\n    call SetUnitPosition(whichUnit, 256.0, 256.0)\nendfunction",
+    "lua": "function ExampleSetUnitPosition(whichUnit)\n    SetUnitPosition(whichUnit, 256.0, 256.0)\nend"
   },
-  "DisplayTimedTextToPlayer": {
-    "description": "Show a message to Player 1 for ten seconds. Call after the loading screen; see the Lua harness guide for a delayed start example.",
-    "jass": "call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 10.0, \"Hello, map maker!\")",
-    "lua": "DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 10.0, \"Hello, map maker!\")"
+  "SetUnitState": {
+    "title": "Heal a living unit",
+    "category": "Units and abilities",
+    "description": "Add 50 life to a living unit, capped at its current maximum life.",
+    "usage": "Call `ExampleSetUnitState(whichUnit)` with a living unit. This is healing, not a resurrection routine.",
+    "jass": "function ExampleSetUnitState takes unit whichUnit returns nothing\n    local real maximum = GetUnitState(whichUnit, UNIT_STATE_MAX_LIFE)\n    local real healed = GetUnitState(whichUnit, UNIT_STATE_LIFE) + 50.0\n    if healed > maximum then\n        set healed = maximum\n    endif\n    call SetUnitState(whichUnit, UNIT_STATE_LIFE, healed)\nendfunction",
+    "lua": "function ExampleSetUnitState(whichUnit)\n    local maximum = GetUnitState(whichUnit, UNIT_STATE_MAX_LIFE)\n    local healed = GetUnitState(whichUnit, UNIT_STATE_LIFE) + 50.0\n    if healed > maximum then\n        healed = maximum\n    end\n    SetUnitState(whichUnit, UNIT_STATE_LIFE, healed)\nend"
+  },
+  "SetUnitOwner": {
+    "title": "Transfer a unit to Player 2",
+    "category": "Units and abilities",
+    "description": "Change an existing unit’s owner to Player 2 and update its team color. Player indices start at zero.",
+    "usage": "Call `ExampleSetUnitOwner(whichUnit)` from synchronized gameplay code.",
+    "jass": "function ExampleSetUnitOwner takes unit whichUnit returns nothing\n    call SetUnitOwner(whichUnit, Player(1), true)\nendfunction",
+    "lua": "function ExampleSetUnitOwner(whichUnit)\n    SetUnitOwner(whichUnit, Player(1), true)\nend"
   },
   "UnitAddAbility": {
-    "description": "Give a unit an existing custom ability. Replace A000 with the ability raw code; caster must be a unit already in your map.",
-    "jass": "call UnitAddAbility(caster, 'A000')",
-    "lua": "UnitAddAbility(caster, FourCC(\"A000\"))"
+    "title": "Give a unit a custom ability",
+    "category": "Units and abilities",
+    "description": "Add an existing custom ability and return whether adding it succeeded.",
+    "usage": "Replace `A000` with your map’s ability code, then call `ExampleUnitAddAbility(whichUnit)`. The object must already exist in the map.",
+    "jass": "function ExampleUnitAddAbility takes unit whichUnit returns boolean\n    return UnitAddAbility(whichUnit, 'A000')\nendfunction",
+    "lua": "function ExampleUnitAddAbility(whichUnit)\n    return UnitAddAbility(whichUnit, FourCC(\"A000\"))\nend"
   },
-  "RemoveLocation": {
-    "description": "Remove a temporary location once you have used it. The coordinates remain ordinary numbers.",
-    "jass": "local location point = Location(128.0, 256.0)\nlocal real x = GetLocationX(point)\ncall RemoveLocation(point)\nset point = null",
-    "lua": "local point = Location(128.0, 256.0)\nlocal x = GetLocationX(point)\nRemoveLocation(point)"
+  "SetUnitAbilityLevel": {
+    "title": "Set an ability to level 2",
+    "category": "Units and abilities",
+    "description": "Set a unit’s custom ability to level 2 and return the level reported by the engine.",
+    "usage": "Replace `A000`; give the unit that ability first and configure it with at least two levels. Call `ExampleSetUnitAbilityLevel(whichUnit)`.",
+    "jass": "function ExampleSetUnitAbilityLevel takes unit whichUnit returns integer\n    return SetUnitAbilityLevel(whichUnit, 'A000', 2)\nendfunction",
+    "lua": "function ExampleSetUnitAbilityLevel(whichUnit)\n    return SetUnitAbilityLevel(whichUnit, FourCC(\"A000\"), 2)\nend"
   },
-  "Player": {
-    "description": "Player indices are zero-based: Player(0) is Player 1. Do not use this as a promise about which slots are occupied.",
-    "jass": "local player firstPlayer = Player(0)",
-    "lua": "local firstPlayer = Player(0)"
+  "IssuePointOrder": {
+    "title": "Order a unit to walk",
+    "category": "Units and abilities",
+    "description": "Issue a move order toward coordinates (512, 256) and return whether the engine accepted the order.",
+    "usage": "Call `ExampleIssuePointOrder(whichUnit)` with a controllable unit in a passable test area.",
+    "jass": "function ExampleIssuePointOrder takes unit whichUnit returns boolean\n    return IssuePointOrder(whichUnit, \"move\", 512.0, 256.0)\nendfunction",
+    "lua": "function ExampleIssuePointOrder(whichUnit)\n    return IssuePointOrder(whichUnit, \"move\", 512.0, 256.0)\nend"
+  },
+  "IssueTargetOrder": {
+    "title": "Order an attack on a target",
+    "category": "Units and abilities",
+    "description": "Issue an attack order against another unit. The attacker must be able to attack that target.",
+    "usage": "Call `ExampleIssueTargetOrder(attacker, target)` with two existing units. An accepted order does not guarantee the target is reachable.",
+    "jass": "function ExampleIssueTargetOrder takes unit attacker, unit target returns boolean\n    return IssueTargetOrder(attacker, \"attack\", target)\nendfunction",
+    "lua": "function ExampleIssueTargetOrder(attacker, target)\n    return IssueTargetOrder(attacker, \"attack\", target)\nend"
+  },
+  "IssueImmediateOrder": {
+    "title": "Stop a unit",
+    "category": "Units and abilities",
+    "description": "Issue the immediate stop order, which does not take a target or coordinates.",
+    "usage": "Call `ExampleIssueImmediateOrder(whichUnit)` to interrupt the unit’s current order.",
+    "jass": "function ExampleIssueImmediateOrder takes unit whichUnit returns boolean\n    return IssueImmediateOrder(whichUnit, \"stop\")\nendfunction",
+    "lua": "function ExampleIssueImmediateOrder(whichUnit)\n    return IssueImmediateOrder(whichUnit, \"stop\")\nend"
+  },
+  "CreateItem": {
+    "title": "Place a healing potion",
+    "category": "Items",
+    "description": "Create a healing potion on the ground at coordinates (128, 128).",
+    "usage": "Call `ExampleCreateItem()` after initialization. The returned item stays in the map; remove it later if your system owns its lifetime.",
+    "jass": "function ExampleCreateItem takes nothing returns item\n    return CreateItem('phea', 128.0, 128.0)\nendfunction",
+    "lua": "function ExampleCreateItem()\n    return CreateItem(FourCC(\"phea\"), 128.0, 128.0)\nend"
+  },
+  "UnitAddItemById": {
+    "title": "Give a unit a charged potion",
+    "category": "Items",
+    "description": "Create a healing potion for a unit with inventory and set its charges to three. Check that an item was returned before editing it.",
+    "usage": "Call `ExampleUnitAddItemById(whichUnit)` with a hero or another unit that has inventory. Test full-inventory behavior in your map.",
+    "jass": "function ExampleUnitAddItemById takes unit whichUnit returns nothing\n    local item potion = UnitAddItemById(whichUnit, 'phea')\n    if potion != null then\n        call SetItemCharges(potion, 3)\n    endif\n    set potion = null\nendfunction",
+    "lua": "function ExampleUnitAddItemById(whichUnit)\n    local potion = UnitAddItemById(whichUnit, FourCC(\"phea\"))\n    if potion ~= nil then\n        SetItemCharges(potion, 3)\n    end\nend"
+  },
+  "SetItemCharges": {
+    "title": "Change an item’s charges",
+    "category": "Items",
+    "description": "Set an existing item’s charge count to five. Its object data determines how charges are consumed.",
+    "usage": "Call `ExampleSetItemCharges(whichItem)` with an item configured to use charges.",
+    "jass": "function ExampleSetItemCharges takes item whichItem returns nothing\n    call SetItemCharges(whichItem, 5)\nendfunction",
+    "lua": "function ExampleSetItemCharges(whichItem)\n    SetItemCharges(whichItem, 5)\nend"
+  },
+  "RemoveItem": {
+    "title": "Remove an item you own",
+    "category": "Items",
+    "description": "Remove an item from the game. The helper accepts a missing item without doing anything.",
+    "usage": "Call `ExampleRemoveItem(whichItem)`, then clear any stored reference your system keeps to that item.",
+    "jass": "function ExampleRemoveItem takes item whichItem returns nothing\n    if whichItem != null then\n        call RemoveItem(whichItem)\n    endif\nendfunction",
+    "lua": "function ExampleRemoveItem(whichItem)\n    if whichItem ~= nil then\n        RemoveItem(whichItem)\n    end\nend"
+  },
+  "TimerStart": {
+    "title": "Run code once after a delay",
+    "category": "Timers and triggers",
+    "description": "Start a one-shot timer that shows a message after two seconds. Destroy the expired timer inside its callback.",
+    "usage": "Call `ExampleTimerStart()` once after map initialization. The JASS callback appears before the function that registers it.",
+    "jass": "function ExampleTimerStartElapsed takes nothing returns nothing\n    local timer expired = GetExpiredTimer()\n    call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 5.0, \"Two seconds elapsed.\")\n    call DestroyTimer(expired)\n    set expired = null\nendfunction\n\nfunction ExampleTimerStart takes nothing returns nothing\n    local timer delayed = CreateTimer()\n    call TimerStart(delayed, 2.0, false, function ExampleTimerStartElapsed)\n    set delayed = null\nendfunction",
+    "lua": "function ExampleTimerStart()\n    local delayed = CreateTimer()\n    TimerStart(delayed, 2.0, false, function()\n        DisplayTimedTextToPlayer(Player(0), 0, 0, 5, \"Two seconds elapsed.\")\n        DestroyTimer(delayed)\n    end)\nend"
+  },
+  "CreateTimer": {
+    "title": "Start and stop a periodic timer",
+    "category": "Timers and triggers",
+    "description": "Keep one timer for a repeating heartbeat. The start function is idempotent; the stop function pauses, destroys and clears the owned timer.",
+    "usage": "Call `ExampleCreateTimer()` to start and `ExampleStopHeartbeat()` when the system ends. This recipe owns one shared heartbeat timer.",
+    "jass": "globals\n    timer ExampleHeartbeatTimer = null\nendglobals\n\nfunction ExampleHeartbeatTick takes nothing returns nothing\n    call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 2.0, \"Heartbeat\")\nendfunction\n\nfunction ExampleCreateTimer takes nothing returns nothing\n    if ExampleHeartbeatTimer == null then\n        set ExampleHeartbeatTimer = CreateTimer()\n        call TimerStart(ExampleHeartbeatTimer, 2.0, true, function ExampleHeartbeatTick)\n    endif\nendfunction\n\nfunction ExampleStopHeartbeat takes nothing returns nothing\n    if ExampleHeartbeatTimer != null then\n        call PauseTimer(ExampleHeartbeatTimer)\n        call DestroyTimer(ExampleHeartbeatTimer)\n        set ExampleHeartbeatTimer = null\n    endif\nendfunction",
+    "lua": "local heartbeatTimer = nil\n\nfunction ExampleCreateTimer()\n    if heartbeatTimer ~= nil then\n        return\n    end\n    heartbeatTimer = CreateTimer()\n    TimerStart(heartbeatTimer, 2.0, true, function()\n        DisplayTimedTextToPlayer(Player(0), 0, 0, 2, \"Heartbeat\")\n    end)\nend\n\nfunction ExampleStopHeartbeat()\n    if heartbeatTimer ~= nil then\n        PauseTimer(heartbeatTimer)\n        DestroyTimer(heartbeatTimer)\n        heartbeatTimer = nil\n    end\nend"
+  },
+  "GetExpiredTimer": {
+    "title": "Find the timer in its callback",
+    "category": "Timers and triggers",
+    "description": "Get the timer responsible for the current timer callback and release it. Event-response values belong to their event context.",
+    "usage": "Call `ExampleGetExpiredTimer()` after initialization. Use `GetExpiredTimer()` inside the registered callback, not arbitrary map code.",
+    "jass": "function ExampleExpiredTimerAction takes nothing returns nothing\n    local timer expired = GetExpiredTimer()\n    call DestroyTimer(expired)\n    set expired = null\nendfunction\n\nfunction ExampleGetExpiredTimer takes nothing returns nothing\n    local timer delayed = CreateTimer()\n    call TimerStart(delayed, 1.0, false, function ExampleExpiredTimerAction)\n    set delayed = null\nendfunction",
+    "lua": "function ExampleGetExpiredTimer()\n    local delayed = CreateTimer()\n    TimerStart(delayed, 1.0, false, function()\n        local expired = GetExpiredTimer()\n        DestroyTimer(expired)\n    end)\nend"
+  },
+  "DestroyTimer": {
+    "title": "Release a timer owned by your system",
+    "category": "Timers and triggers",
+    "description": "Pause and destroy an owned timer. Destroying it prevents further periodic callbacks.",
+    "usage": "Call `ExampleDestroyTimer(ownedTimer)` only for a timer your system owns, then set your stored reference to `null` in JASS or `nil` in Lua.",
+    "jass": "function ExampleDestroyTimer takes timer ownedTimer returns nothing\n    if ownedTimer != null then\n        call PauseTimer(ownedTimer)\n        call DestroyTimer(ownedTimer)\n    endif\nendfunction",
+    "lua": "function ExampleDestroyTimer(ownedTimer)\n    if ownedTimer ~= nil then\n        PauseTimer(ownedTimer)\n        DestroyTimer(ownedTimer)\n    end\nend"
+  },
+  "TriggerRegisterTimerEvent": {
+    "title": "Run a one-shot timed trigger",
+    "category": "Timers and triggers",
+    "description": "Register a trigger for a single five-second timer event. The action destroys its trigger after showing a message.",
+    "usage": "Call `ExampleTriggerRegisterTimerEvent()` once after initialization. Unlike the periodic heartbeat recipe, this trigger cleans itself up.",
+    "jass": "function ExampleTimedTriggerAction takes nothing returns nothing\n    local trigger fired = GetTriggeringTrigger()\n    call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 5.0, \"Timed trigger fired.\")\n    call DestroyTrigger(fired)\n    set fired = null\nendfunction\n\nfunction ExampleTriggerRegisterTimerEvent takes nothing returns nothing\n    local trigger timed = CreateTrigger()\n    call TriggerRegisterTimerEvent(timed, 5.0, false)\n    call TriggerAddAction(timed, function ExampleTimedTriggerAction)\n    set timed = null\nendfunction",
+    "lua": "function ExampleTriggerRegisterTimerEvent()\n    local timed = CreateTrigger()\n    TriggerRegisterTimerEvent(timed, 5.0, false)\n    TriggerAddAction(timed, function()\n        DisplayTimedTextToPlayer(Player(0), 0, 0, 5, \"Timed trigger fired.\")\n        DestroyTrigger(timed)\n    end)\nend"
+  },
+  "GetSpellAbilityId": {
+    "title": "React to a specific spell",
+    "category": "Timers and triggers",
+    "description": "Register spell-effect events and filter the action by ability raw code. Casting other abilities does not run the custom behavior.",
+    "usage": "Replace `A000` with your custom ability’s raw code, then call `ExampleGetSpellAbilityId()` once after initialization. This registers a map-lifetime trigger.",
+    "jass": "function ExampleGetSpellAbilityIdAction takes nothing returns nothing\n    if GetSpellAbilityId() == 'A000' then\n        call DisplayTimedTextToPlayer(GetOwningPlayer(GetTriggerUnit()), 0.0, 0.0, 5.0, \"Custom spell cast!\")\n    endif\nendfunction\n\nfunction ExampleGetSpellAbilityId takes nothing returns nothing\n    local trigger spell = CreateTrigger()\n    local integer index = 0\n    loop\n        exitwhen index >= bj_MAX_PLAYER_SLOTS\n        call TriggerRegisterPlayerUnitEvent(spell, Player(index), EVENT_PLAYER_UNIT_SPELL_EFFECT, null)\n        set index = index + 1\n    endloop\n    call TriggerAddAction(spell, function ExampleGetSpellAbilityIdAction)\n    set spell = null\nendfunction",
+    "lua": "function ExampleGetSpellAbilityId()\n    local spell = CreateTrigger()\n    for index = 0, bj_MAX_PLAYER_SLOTS - 1 do\n        TriggerRegisterPlayerUnitEvent(spell, Player(index),\n            EVENT_PLAYER_UNIT_SPELL_EFFECT, nil)\n    end\n    TriggerAddAction(spell, function()\n        if GetSpellAbilityId() ~= FourCC(\"A000\") then\n            return\n        end\n        DisplayTimedTextToPlayer(GetOwningPlayer(GetTriggerUnit()), 0, 0, 5,\n            \"Custom spell cast!\")\n    end)\nend"
+  },
+  "GetSpellTargetUnit": {
+    "title": "Damage a spell’s unit target",
+    "category": "Timers and triggers",
+    "description": "Inside the spell-effect action, capture the caster and unit target before applying 50 magic damage. A point-target spell may have no unit target. This adds damage on top of any effect the base spell already applies.",
+    "usage": "Replace `A000` with your custom ability’s raw code, then call `ExampleGetSpellTargetUnit()` once after initialization. This registers a map-lifetime trigger.",
+    "jass": "function ExampleGetSpellTargetUnitAction takes nothing returns nothing\n    local unit caster = GetTriggerUnit()\n    local unit target = GetSpellTargetUnit()\n    if GetSpellAbilityId() == 'A000' and target != null then\n        call UnitDamageTarget(caster, target, 50.0, false, false, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_MAGIC, WEAPON_TYPE_WHOKNOWS)\n    endif\n    set caster = null\n    set target = null\nendfunction\n\nfunction ExampleGetSpellTargetUnit takes nothing returns nothing\n    local trigger spell = CreateTrigger()\n    local integer index = 0\n    loop\n        exitwhen index >= bj_MAX_PLAYER_SLOTS\n        call TriggerRegisterPlayerUnitEvent(spell, Player(index), EVENT_PLAYER_UNIT_SPELL_EFFECT, null)\n        set index = index + 1\n    endloop\n    call TriggerAddAction(spell, function ExampleGetSpellTargetUnitAction)\n    set spell = null\nendfunction",
+    "lua": "function ExampleGetSpellTargetUnit()\n    local spell = CreateTrigger()\n    for index = 0, bj_MAX_PLAYER_SLOTS - 1 do\n        TriggerRegisterPlayerUnitEvent(spell, Player(index),\n            EVENT_PLAYER_UNIT_SPELL_EFFECT, nil)\n    end\n    TriggerAddAction(spell, function()\n        if GetSpellAbilityId() ~= FourCC(\"A000\") then\n            return\n        end\n        local caster = GetTriggerUnit()\n        local target = GetSpellTargetUnit()\n        if target ~= nil then\n            UnitDamageTarget(caster, target, 50.0, false, false,\n                ATTACK_TYPE_NORMAL, DAMAGE_TYPE_MAGIC, WEAPON_TYPE_WHOKNOWS)\n        end\n    end)\nend"
+  },
+  "GetSpellTargetX": {
+    "title": "Read a spell’s target point",
+    "category": "Timers and triggers",
+    "description": "Read the point targeted by a point-target custom spell. The effect handle is destroyed immediately; the chosen one-shot model supplies the visual.",
+    "usage": "Replace `A000` with your custom ability’s raw code, then call `ExampleGetSpellTargetX()` once after initialization. This registers a map-lifetime trigger.",
+    "jass": "function ExampleGetSpellTargetXAction takes nothing returns nothing\n    local effect visual = null\n    if GetSpellAbilityId() == 'A000' then\n        set visual = AddSpecialEffect(\"Abilities\\\\Spells\\\\Human\\\\HolyBolt\\\\HolyBoltSpecialArt.mdl\", GetSpellTargetX(), GetSpellTargetY())\n        call DestroyEffect(visual)\n        set visual = null\n    endif\nendfunction\n\nfunction ExampleGetSpellTargetX takes nothing returns nothing\n    local trigger spell = CreateTrigger()\n    local integer index = 0\n    loop\n        exitwhen index >= bj_MAX_PLAYER_SLOTS\n        call TriggerRegisterPlayerUnitEvent(spell, Player(index), EVENT_PLAYER_UNIT_SPELL_EFFECT, null)\n        set index = index + 1\n    endloop\n    call TriggerAddAction(spell, function ExampleGetSpellTargetXAction)\n    set spell = null\nendfunction",
+    "lua": "function ExampleGetSpellTargetX()\n    local spell = CreateTrigger()\n    for index = 0, bj_MAX_PLAYER_SLOTS - 1 do\n        TriggerRegisterPlayerUnitEvent(spell, Player(index),\n            EVENT_PLAYER_UNIT_SPELL_EFFECT, nil)\n    end\n    TriggerAddAction(spell, function()\n        if GetSpellAbilityId() ~= FourCC(\"A000\") then\n            return\n        end\n        local visual = AddSpecialEffect(\n            \"Abilities\\\\Spells\\\\Human\\\\HolyBolt\\\\HolyBoltSpecialArt.mdl\",\n            GetSpellTargetX(), GetSpellTargetY())\n        DestroyEffect(visual)\n    end)\nend"
+  },
+  "TriggerRegisterPlayerUnitEvent": {
+    "title": "React when a unit dies",
+    "category": "Timers and triggers",
+    "description": "Register a death event for every player slot and report the dying unit’s name to its owner. Read the event response inside the action.",
+    "usage": "Call `ExampleTriggerRegisterPlayerUnitEvent()` once after initialization. The trigger stays active for the map’s lifetime.",
+    "jass": "function ExampleUnitDeathAction takes nothing returns nothing\n    local unit dying = GetDyingUnit()\n    call DisplayTimedTextToPlayer(GetOwningPlayer(dying), 0.0, 0.0, 5.0, GetUnitName(dying) + \" died.\")\n    set dying = null\nendfunction\n\nfunction ExampleTriggerRegisterPlayerUnitEvent takes nothing returns nothing\n    local trigger deaths = CreateTrigger()\n    local integer index = 0\n    loop\n        exitwhen index >= bj_MAX_PLAYER_SLOTS\n        call TriggerRegisterPlayerUnitEvent(deaths, Player(index), EVENT_PLAYER_UNIT_DEATH, null)\n        set index = index + 1\n    endloop\n    call TriggerAddAction(deaths, function ExampleUnitDeathAction)\n    set deaths = null\nendfunction",
+    "lua": "function ExampleTriggerRegisterPlayerUnitEvent()\n    local deaths = CreateTrigger()\n    for index = 0, bj_MAX_PLAYER_SLOTS - 1 do\n        TriggerRegisterPlayerUnitEvent(deaths, Player(index),\n            EVENT_PLAYER_UNIT_DEATH, nil)\n    end\n    TriggerAddAction(deaths, function()\n        local dying = GetDyingUnit()\n        DisplayTimedTextToPlayer(GetOwningPlayer(dying), 0, 0, 5,\n            GetUnitName(dying) .. \" died.\")\n    end)\nend"
+  },
+  "TriggerRegisterPlayerChatEvent": {
+    "title": "Register an exact chat command",
+    "category": "Timers and triggers",
+    "description": "Listen for Player 1 typing exactly -help and show a short command hint to that player.",
+    "usage": "Call `ExampleTriggerRegisterPlayerChatEvent()` once. The trigger remains for the map’s lifetime; do not register it repeatedly.",
+    "jass": "function ExampleChatAction takes nothing returns nothing\n    call DisplayTimedTextToPlayer(GetTriggerPlayer(), 0.0, 0.0, 10.0, \"Cast your custom spell to test its trigger.\")\nendfunction\n\nfunction ExampleTriggerRegisterPlayerChatEvent takes nothing returns nothing\n    local trigger chat = CreateTrigger()\n    call TriggerRegisterPlayerChatEvent(chat, Player(0), \"-help\", true)\n    call TriggerAddAction(chat, function ExampleChatAction)\n    set chat = null\nendfunction",
+    "lua": "function ExampleTriggerRegisterPlayerChatEvent()\n    local chat = CreateTrigger()\n    TriggerRegisterPlayerChatEvent(chat, Player(0), \"-help\", true)\n    TriggerAddAction(chat, function()\n        DisplayTimedTextToPlayer(GetTriggerPlayer(), 0, 0, 10,\n            \"Cast your custom spell to test its trigger.\")\n    end)\nend"
+  },
+  "GroupEnumUnitsInRange": {
+    "title": "Order nearby friendly units",
+    "category": "Groups and combat",
+    "description": "Enumerate units within 400 of the origin, issue a move order to Player 1’s units, and destroy the temporary group. Remove each unit before the next iteration.",
+    "usage": "Call `ExampleGroupEnumUnitsInRange()` in a flat test map with Player 1 units near the origin.",
+    "jass": "function ExampleGroupEnumUnitsInRange takes nothing returns nothing\n    local group nearby = CreateGroup()\n    local unit current = null\n    call GroupEnumUnitsInRange(nearby, 0.0, 0.0, 400.0, null)\n    loop\n        set current = FirstOfGroup(nearby)\n        exitwhen current == null\n        call GroupRemoveUnit(nearby, current)\n        if GetOwningPlayer(current) == Player(0) then\n            call IssuePointOrder(current, \"move\", 512.0, 0.0)\n        endif\n    endloop\n    call DestroyGroup(nearby)\n    set nearby = null\n    set current = null\nendfunction",
+    "lua": "function ExampleGroupEnumUnitsInRange()\n    local nearby = CreateGroup()\n    GroupEnumUnitsInRange(nearby, 0.0, 0.0, 400.0, nil)\n    while true do\n        local current = FirstOfGroup(nearby)\n        if current == nil then\n            break\n        end\n        GroupRemoveUnit(nearby, current)\n        if GetOwningPlayer(current) == Player(0) then\n            IssuePointOrder(current, \"move\", 512.0, 0.0)\n        end\n    end\n    DestroyGroup(nearby)\nend"
+  },
+  "ForGroup": {
+    "title": "Stop all of Player 1’s units",
+    "category": "Groups and combat",
+    "description": "Use a group callback and GetEnumUnit to issue an order to every enumerated unit, then release the group.",
+    "usage": "Call `ExampleForGroup()` after initialization. `GetEnumUnit()` is used only inside the callback.",
+    "jass": "function ExampleStopEnumUnit takes nothing returns nothing\n    call IssueImmediateOrder(GetEnumUnit(), \"stop\")\nendfunction\n\nfunction ExampleForGroup takes nothing returns nothing\n    local group owned = CreateGroup()\n    call GroupEnumUnitsOfPlayer(owned, Player(0), null)\n    call ForGroup(owned, function ExampleStopEnumUnit)\n    call DestroyGroup(owned)\n    set owned = null\nendfunction",
+    "lua": "function ExampleForGroup()\n    local owned = CreateGroup()\n    GroupEnumUnitsOfPlayer(owned, Player(0), nil)\n    ForGroup(owned, function()\n        IssueImmediateOrder(GetEnumUnit(), \"stop\")\n    end)\n    DestroyGroup(owned)\nend"
   },
   "DestroyGroup": {
-    "description": "Destroy a temporary unit group after use. Destroying the group does not remove its units.",
-    "jass": "local group temporary = CreateGroup()\ncall DestroyGroup(temporary)\nset temporary = null",
-    "lua": "local temporary = CreateGroup()\nDestroyGroup(temporary)"
+    "title": "Count a group and release it",
+    "category": "Groups and combat",
+    "description": "Create a temporary group, count the units near the origin, and destroy the group. Destroying the group does not remove its units.",
+    "usage": "Call `ExampleDestroyGroup()` after the loading screen to see the count.",
+    "jass": "function ExampleDestroyGroup takes nothing returns nothing\n    local group nearby = CreateGroup()\n    local integer count = 0\n    call GroupEnumUnitsInRange(nearby, 0.0, 0.0, 400.0, null)\n    set count = BlzGroupGetSize(nearby)\n    call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 5.0, \"Nearby units: \" + I2S(count))\n    call DestroyGroup(nearby)\n    set nearby = null\nendfunction",
+    "lua": "function ExampleDestroyGroup()\n    local nearby = CreateGroup()\n    GroupEnumUnitsInRange(nearby, 0.0, 0.0, 400.0, nil)\n    local count = BlzGroupGetSize(nearby)\n    DisplayTimedTextToPlayer(Player(0), 0, 0, 5, \"Nearby units: \" .. I2S(count))\n    DestroyGroup(nearby)\nend"
+  },
+  "UnitDamageTarget": {
+    "title": "Apply spell damage to a unit",
+    "category": "Groups and combat",
+    "description": "Apply 75 magic damage from a source unit to a target. This call can fire damage events in other systems.",
+    "usage": "Call `ExampleUnitDamageTarget(source, target)` with two existing units. Avoid calling it unconditionally inside a damage event, which can recurse.",
+    "jass": "function ExampleUnitDamageTarget takes unit source, unit target returns boolean\n    return UnitDamageTarget(source, target, 75.0, false, false, ATTACK_TYPE_NORMAL, DAMAGE_TYPE_MAGIC, WEAPON_TYPE_WHOKNOWS)\nendfunction",
+    "lua": "function ExampleUnitDamageTarget(source, target)\n    return UnitDamageTarget(source, target, 75.0, false, false,\n        ATTACK_TYPE_NORMAL, DAMAGE_TYPE_MAGIC, WEAPON_TYPE_WHOKNOWS)\nend"
+  },
+  "AddSpecialEffect": {
+    "title": "Play a one-shot effect at a point",
+    "category": "Effects and geometry",
+    "description": "Create a Holy Bolt visual at a point and destroy its handle. Whether a model continues visibly after destruction depends on its animations; this recipe uses a one-shot model.",
+    "usage": "Call `ExampleAddSpecialEffect(x, y)` with map coordinates.",
+    "jass": "function ExampleAddSpecialEffect takes real x, real y returns nothing\n    local effect visual = AddSpecialEffect(\"Abilities\\\\Spells\\\\Human\\\\HolyBolt\\\\HolyBoltSpecialArt.mdl\", x, y)\n    call DestroyEffect(visual)\n    set visual = null\nendfunction",
+    "lua": "function ExampleAddSpecialEffect(x, y)\n    local visual = AddSpecialEffect(\"Abilities\\\\Spells\\\\Human\\\\HolyBolt\\\\HolyBoltSpecialArt.mdl\", x, y)\n    DestroyEffect(visual)\nend"
+  },
+  "AddSpecialEffectTarget": {
+    "title": "Attach an effect to a unit",
+    "category": "Effects and geometry",
+    "description": "Attach a Bloodlust visual to an existing unit and return the effect handle. Attachment names depend on the model.",
+    "usage": "Store the result of `ExampleAddSpecialEffectTarget(whichUnit)` and call `DestroyEffect` when your visual ends. This helper intentionally leaves that effect alive.",
+    "jass": "function ExampleAddSpecialEffectTarget takes unit whichUnit returns effect\n    return AddSpecialEffectTarget(\"Abilities\\\\Spells\\\\Orc\\\\Bloodlust\\\\BloodlustTarget.mdl\", whichUnit, \"overhead\")\nendfunction",
+    "lua": "function ExampleAddSpecialEffectTarget(whichUnit)\n    return AddSpecialEffectTarget(\"Abilities\\\\Spells\\\\Orc\\\\Bloodlust\\\\BloodlustTarget.mdl\", whichUnit, \"overhead\")\nend"
+  },
+  "DestroyEffect": {
+    "title": "Remove an owned effect",
+    "category": "Effects and geometry",
+    "description": "Destroy an effect when your system no longer needs it. Do not destroy another system’s effect.",
+    "usage": "Pass the handle returned by your effect-creation call to `ExampleDestroyEffect(visual)`, then clear your stored reference.",
+    "jass": "function ExampleDestroyEffect takes effect visual returns nothing\n    if visual != null then\n        call DestroyEffect(visual)\n    endif\nendfunction",
+    "lua": "function ExampleDestroyEffect(visual)\n    if visual ~= nil then\n        DestroyEffect(visual)\n    end\nend"
+  },
+  "Rect": {
+    "title": "Find the center of a temporary area",
+    "category": "Effects and geometry",
+    "description": "Create a rectangle, read its center coordinates, and remove it after use. The rectangle is a geometry handle; it is not a region event by itself.",
+    "usage": "Call `ExampleRect()` after the loading screen to display the center.",
+    "jass": "function ExampleRect takes nothing returns nothing\n    local rect area = Rect(-128.0, -256.0, 128.0, 256.0)\n    local real x = GetRectCenterX(area)\n    local real y = GetRectCenterY(area)\n    call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 5.0, \"Center: \" + R2S(x) + \", \" + R2S(y))\n    call RemoveRect(area)\n    set area = null\nendfunction",
+    "lua": "function ExampleRect()\n    local area = Rect(-128.0, -256.0, 128.0, 256.0)\n    local x = GetRectCenterX(area)\n    local y = GetRectCenterY(area)\n    DisplayTimedTextToPlayer(Player(0), 0, 0, 5,\n        \"Center: \" .. R2S(x) .. \", \" .. R2S(y))\n    RemoveRect(area)\nend"
+  },
+  "RemoveLocation": {
+    "title": "Use and remove a location",
+    "category": "Effects and geometry",
+    "description": "Read a point’s coordinates and remove the temporary location. Keep plain X/Y numbers when you do not need a location handle.",
+    "usage": "Call `ExampleRemoveLocation()` after the loading screen to display the coordinates.",
+    "jass": "function ExampleRemoveLocation takes nothing returns nothing\n    local location point = Location(128.0, 256.0)\n    local real x = GetLocationX(point)\n    local real y = GetLocationY(point)\n    call RemoveLocation(point)\n    set point = null\n    call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 5.0, \"Point: \" + R2S(x) + \", \" + R2S(y))\nendfunction",
+    "lua": "function ExampleRemoveLocation()\n    local point = Location(128.0, 256.0)\n    local x = GetLocationX(point)\n    local y = GetLocationY(point)\n    RemoveLocation(point)\n    DisplayTimedTextToPlayer(Player(0), 0, 0, 5,\n        \"Point: \" .. R2S(x) .. \", \" .. R2S(y))\nend"
+  },
+  "TriggerRegisterEnterRegion": {
+    "title": "Watch units entering an area",
+    "category": "Effects and geometry",
+    "description": "Create an entry region and report units that enter it. The setup owns its region and trigger; the stop function destroys the trigger before removing the region.",
+    "usage": "Call `ExampleTriggerRegisterEnterRegion()` once, then move a unit into the area from outside. Call `ExampleStopEntryRegion()` to stop watching.",
+    "jass": "globals\n    region ExampleEntryRegion = null\n    trigger ExampleEntryTrigger = null\nendglobals\n\nfunction ExampleEntryAction takes nothing returns nothing\n    local unit entering = GetEnteringUnit()\n    call DisplayTimedTextToPlayer(GetOwningPlayer(entering), 0.0, 0.0, 5.0, \"Entered the area.\")\n    set entering = null\nendfunction\n\nfunction ExampleTriggerRegisterEnterRegion takes nothing returns nothing\n    local rect area = null\n    if ExampleEntryTrigger != null then\n        return\n    endif\n    set area = Rect(0.0, 0.0, 512.0, 512.0)\n    set ExampleEntryRegion = CreateRegion()\n    call RegionAddRect(ExampleEntryRegion, area)\n    call RemoveRect(area)\n    set area = null\n    set ExampleEntryTrigger = CreateTrigger()\n    call TriggerRegisterEnterRegion(ExampleEntryTrigger, ExampleEntryRegion, null)\n    call TriggerAddAction(ExampleEntryTrigger, function ExampleEntryAction)\nendfunction\n\nfunction ExampleStopEntryRegion takes nothing returns nothing\n    if ExampleEntryTrigger != null then\n        call DestroyTrigger(ExampleEntryTrigger)\n        set ExampleEntryTrigger = null\n        call RemoveRegion(ExampleEntryRegion)\n        set ExampleEntryRegion = null\n    endif\nendfunction",
+    "lua": "local entryRegion = nil\nlocal entryTrigger = nil\n\nfunction ExampleTriggerRegisterEnterRegion()\n    if entryTrigger ~= nil then\n        return\n    end\n    local area = Rect(0.0, 0.0, 512.0, 512.0)\n    entryRegion = CreateRegion()\n    RegionAddRect(entryRegion, area)\n    RemoveRect(area)\n    entryTrigger = CreateTrigger()\n    TriggerRegisterEnterRegion(entryTrigger, entryRegion, nil)\n    TriggerAddAction(entryTrigger, function()\n        local entering = GetEnteringUnit()\n        DisplayTimedTextToPlayer(GetOwningPlayer(entering), 0, 0, 5,\n            \"Entered the area.\")\n    end)\nend\n\nfunction ExampleStopEntryRegion()\n    if entryTrigger ~= nil then\n        DestroyTrigger(entryTrigger)\n        entryTrigger = nil\n        RemoveRegion(entryRegion)\n        entryRegion = nil\n    end\nend"
+  },
+  "Player": {
+    "title": "Use zero-based player indices",
+    "category": "Players and game systems",
+    "description": "Return Player 1’s player handle. The zero-based index identifies a slot; it does not tell you whether a human is playing there.",
+    "usage": "Use `ExamplePlayer()` wherever you need the Player 1 handle.",
+    "jass": "function ExamplePlayer takes nothing returns player\n    return Player(0)\nendfunction",
+    "lua": "function ExamplePlayer()\n    return Player(0)\nend"
+  },
+  "DisplayTimedTextToPlayer": {
+    "title": "Show a welcome message after loading",
+    "category": "Players and game systems",
+    "description": "Delay a message by one second so it can appear after the loading screen, then release the one-shot timer.",
+    "usage": "Call `ExampleDisplayTimedTextToPlayer()` once after initialization. The message is sent to Player 1.",
+    "jass": "function ExampleWelcomeMessage takes nothing returns nothing\n    call DisplayTimedTextToPlayer(Player(0), 0.0, 0.0, 10.0, \"Hello, map maker!\")\n    call DestroyTimer(GetExpiredTimer())\nendfunction\n\nfunction ExampleDisplayTimedTextToPlayer takes nothing returns nothing\n    local timer delayed = CreateTimer()\n    call TimerStart(delayed, 1.0, false, function ExampleWelcomeMessage)\n    set delayed = null\nendfunction",
+    "lua": "function ExampleDisplayTimedTextToPlayer()\n    local delayed = CreateTimer()\n    TimerStart(delayed, 1.0, false, function()\n        DisplayTimedTextToPlayer(Player(0), 0, 0, 10, \"Hello, map maker!\")\n        DestroyTimer(delayed)\n    end)\nend"
+  },
+  "SetPlayerState": {
+    "title": "Give Player 1 bonus gold",
+    "category": "Players and game systems",
+    "description": "Add 100 gold to Player 1’s current gold instead of replacing the balance with 100.",
+    "usage": "Call `ExampleSetPlayerState()` from synchronized gameplay code. Do not run this gameplay change only for a local client.",
+    "jass": "function ExampleSetPlayerState takes nothing returns nothing\n    local player recipient = Player(0)\n    local integer currentGold = GetPlayerState(recipient, PLAYER_STATE_RESOURCE_GOLD)\n    call SetPlayerState(recipient, PLAYER_STATE_RESOURCE_GOLD, currentGold + 100)\n    set recipient = null\nendfunction",
+    "lua": "function ExampleSetPlayerState()\n    local recipient = Player(0)\n    local currentGold = GetPlayerState(recipient, PLAYER_STATE_RESOURCE_GOLD)\n    SetPlayerState(recipient, PLAYER_STATE_RESOURCE_GOLD, currentGold + 100)\nend"
+  },
+  "SetPlayerAlliance": {
+    "title": "Make a mutual passive alliance",
+    "category": "Players and game systems",
+    "description": "Set passive alliance in both directions between Player 1 and Player 2. Shared vision and shared control use separate alliance flags.",
+    "usage": "Call `ExampleSetPlayerAlliance()` from synchronized gameplay code when the alliance should change.",
+    "jass": "function ExampleSetPlayerAlliance takes nothing returns nothing\n    call SetPlayerAlliance(Player(0), Player(1), ALLIANCE_PASSIVE, true)\n    call SetPlayerAlliance(Player(1), Player(0), ALLIANCE_PASSIVE, true)\nendfunction",
+    "lua": "function ExampleSetPlayerAlliance()\n    SetPlayerAlliance(Player(0), Player(1), ALLIANCE_PASSIVE, true)\n    SetPlayerAlliance(Player(1), Player(0), ALLIANCE_PASSIVE, true)\nend"
+  },
+  "CreateQuest": {
+    "title": "Create and complete a quest",
+    "category": "Players and game systems",
+    "description": "Own a single quest, mark it completed when its objective finishes, and optionally remove it from the quest log.",
+    "usage": "Call `ExampleCreateQuest()` once, `ExampleCompleteQuest()` when the objective is met, and `ExampleRemoveQuest()` if the quest should be removed.",
+    "jass": "globals\n    quest ExampleQuest = null\nendglobals\n\nfunction ExampleCreateQuest takes nothing returns nothing\n    if ExampleQuest == null then\n        set ExampleQuest = CreateQuest()\n        call QuestSetTitle(ExampleQuest, \"Defend the village\")\n        call QuestSetDescription(ExampleQuest, \"Defeat the attacking wave.\")\n        call QuestSetRequired(ExampleQuest, true)\n    endif\nendfunction\n\nfunction ExampleCompleteQuest takes nothing returns nothing\n    if ExampleQuest != null then\n        call QuestSetCompleted(ExampleQuest, true)\n    endif\nendfunction\n\nfunction ExampleRemoveQuest takes nothing returns nothing\n    if ExampleQuest != null then\n        call DestroyQuest(ExampleQuest)\n        set ExampleQuest = null\n    endif\nendfunction",
+    "lua": "local villageQuest = nil\n\nfunction ExampleCreateQuest()\n    if villageQuest == nil then\n        villageQuest = CreateQuest()\n        QuestSetTitle(villageQuest, \"Defend the village\")\n        QuestSetDescription(villageQuest, \"Defeat the attacking wave.\")\n        QuestSetRequired(villageQuest, true)\n    end\nend\n\nfunction ExampleCompleteQuest()\n    if villageQuest ~= nil then\n        QuestSetCompleted(villageQuest, true)\n    end\nend\n\nfunction ExampleRemoveQuest()\n    if villageQuest ~= nil then\n        DestroyQuest(villageQuest)\n        villageQuest = nil\n    end\nend"
+  },
+  "InitHashtable": {
+    "title": "Initialize shared per-unit storage",
+    "category": "Players and game systems",
+    "description": "Create one map-lifetime hashtable and store an integer under a unit’s handle ID. Clear that unit’s entries when your system stops tracking it.",
+    "usage": "Call `ExampleInitHashtable(whichUnit)` with an existing unit. Call `ExampleForgetStoredUnit(whichUnit)` before removing that tracked unit.",
+    "jass": "globals\n    hashtable ExampleUnitData = null\nendglobals\n\nfunction ExampleInitHashtable takes unit whichUnit returns nothing\n    if ExampleUnitData == null then\n        set ExampleUnitData = InitHashtable()\n    endif\n    call SaveInteger(ExampleUnitData, GetHandleId(whichUnit), 0, 3)\nendfunction\n\nfunction ExampleForgetStoredUnit takes unit whichUnit returns nothing\n    if ExampleUnitData != null then\n        call FlushChildHashtable(ExampleUnitData, GetHandleId(whichUnit))\n    endif\nendfunction",
+    "lua": "local unitData = nil\n\nfunction ExampleInitHashtable(whichUnit)\n    if unitData == nil then\n        unitData = InitHashtable()\n    end\n    SaveInteger(unitData, GetHandleId(whichUnit), 0, 3)\nend\n\nfunction ExampleForgetStoredUnit(whichUnit)\n    if unitData ~= nil then\n        FlushChildHashtable(unitData, GetHandleId(whichUnit))\n    end\nend"
+  },
+  "SaveInteger": {
+    "title": "Store an integer for a unit",
+    "category": "Players and game systems",
+    "description": "Store the value 5 under a unit’s handle ID and child key 0 in a hashtable supplied by your system.",
+    "usage": "Call `ExampleSaveInteger(data, whichUnit)` with an initialized hashtable and an existing unit. Clear the entries before the tracked unit is removed.",
+    "jass": "function ExampleSaveInteger takes hashtable data, unit whichUnit returns nothing\n    call SaveInteger(data, GetHandleId(whichUnit), 0, 5)\nendfunction",
+    "lua": "function ExampleSaveInteger(data, whichUnit)\n    SaveInteger(data, GetHandleId(whichUnit), 0, 5)\nend"
+  },
+  "LoadInteger": {
+    "title": "Read a unit’s stored integer",
+    "category": "Players and game systems",
+    "description": "Read the same parent and child keys used by the SaveInteger recipe.",
+    "usage": "Call `ExampleLoadInteger(data, whichUnit)` with the same table and unit you saved. Use the returned integer in your system.",
+    "jass": "function ExampleLoadInteger takes hashtable data, unit whichUnit returns integer\n    return LoadInteger(data, GetHandleId(whichUnit), 0)\nendfunction",
+    "lua": "function ExampleLoadInteger(data, whichUnit)\n    return LoadInteger(data, GetHandleId(whichUnit), 0)\nend"
+  },
+  "FlushChildHashtable": {
+    "title": "Forget one unit’s stored data",
+    "category": "Players and game systems",
+    "description": "Clear all child entries under one unit’s handle ID while leaving other units’ entries in the table.",
+    "usage": "Call `ExampleFlushChildHashtable(data, whichUnit)` before removing the tracked unit. This clears entries; it does not destroy the hashtable.",
+    "jass": "function ExampleFlushChildHashtable takes hashtable data, unit whichUnit returns nothing\n    call FlushChildHashtable(data, GetHandleId(whichUnit))\nendfunction",
+    "lua": "function ExampleFlushChildHashtable(data, whichUnit)\n    FlushChildHashtable(data, GetHandleId(whichUnit))\nend"
   }
 }

@@ -1,12 +1,14 @@
 ---
 // biome-ignore lint/correctness/noUnusedImports: Used in the Astro template, which Biome does not analyze.
 import DefaultThemeProvider from "@astrojs/starlight/components/ThemeProvider.astro";
+import { CODE_LANGUAGE_STORAGE_KEY } from "../codeLanguage";
 import { CODE_THEME_STORAGE_KEY, CODE_THEMES } from "../codeThemes";
 
 // biome-ignore lint/correctness/noUnusedVariables: Passed into the inline Astro script below.
 const codeThemeConfig = {
   ids: CODE_THEMES.map((theme) => theme.id),
   storageKey: CODE_THEME_STORAGE_KEY,
+  languageKey: CODE_LANGUAGE_STORAGE_KEY,
 };
 ---
 
@@ -28,6 +30,15 @@ const codeThemeConfig = {
     document.documentElement.dataset.codeTheme = codeTheme;
   } catch {
     document.documentElement.dataset.codeTheme = "auto";
+  }
+  try {
+    let language = "lua";
+    if (localStorage.getItem(codeThemeConfig.languageKey) === "jass") {
+      language = "jass";
+    }
+    document.documentElement.dataset.codeLanguage = language;
+  } catch {
+    document.documentElement.dataset.codeLanguage = "lua";
   }
 </script>
 <DefaultThemeProvider />

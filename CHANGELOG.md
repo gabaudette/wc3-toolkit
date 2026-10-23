@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Documentation cookbook with 43 JASS/Lua code recipes, and a global language toggle that
+  remembers your choice across guides and API examples.
 - Code snippet theme picker in the documentation, with six color themes and a remembered
   choice across pages.
 - [Documentation website](https://tinkerbench-docs.vercel.app): editor guides, JASS and Lua API declarations, and a searchable

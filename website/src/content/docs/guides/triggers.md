@@ -6,6 +6,8 @@ description: "Register a spell-effect event and filter a custom ability in JASS 
 
 This example registers the spell-effect event for every player slot and reacts only to a chosen ability. Replace `A000` with your custom ability’s raw code.
 
+<section data-example-language="lua">
+
 ## Lua
 
 For the [Lua harness](../../editor/lua-harness/), put this in a module:
@@ -29,7 +31,9 @@ Dev.OnStart(function()
 end)
 ```
 
-Keep the trigger for the map’s lifetime. If you build a temporary system, keep its handle somewhere you can destroy it when that system ends.
+</section>
+
+<section data-example-language="jass">
 
 ## JASS
 
@@ -55,7 +59,11 @@ function InitCustomSpell takes nothing returns nothing
 endfunction
 ```
 
+</section>
+
 ## Verify the event
+
+Keep the trigger for the map’s lifetime. If you build a temporary system, keep its handle somewhere you can destroy it when that system ends.
 
 Give your custom ability to a test unit, launch the correct map and cast it. The owner should see the message when the spell effect happens. Cast a different ability too: it should not show the message.
 

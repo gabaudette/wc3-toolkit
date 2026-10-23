@@ -36,6 +36,15 @@ single line. Every pull request adds an entry here and to the changelog.
 - The content cache is keyed by themes, selectors and the JASS grammar: cached Markdown
   otherwise kept references to the previous highlighting stylesheet after a palette change.
 
+- Expanded the authored example catalog from 8 to 43 complete paired recipes and generated
+  a categorized cookbook from the same source. Each recipe documents setup, an entry point
+  and owned-handle cleanup. All JASS recipes pass PJass with the installed common.j and
+  blizzard.j; all Lua versions pass Lua 5.3 syntax checks. CI validates the catalog and Lua
+  syntax with luaparse, and checks that JASS entry points are distinct and present.
+- A remembered global Lua/JASS toggle in the header/mobile menu hides the other language’s
+  sections, including setup prose and table-of-contents items. Both variants remain in static
+  output for search and no-JavaScript reading. Language choice and code palette are separate.
+
 ## 2026-10-23 · Category icons, and the real uRoughness fix (AGE-17)
 
 - Destructables and doodads have no icon field. `WorldEditData.txt` gives each category an icon

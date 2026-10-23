@@ -37,16 +37,24 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
 - `data/fields.toml`: display names, types, limits, choices and applicability extracted from
   the local installation. Includes spell-specific fields beyond the authored guides.
 - `data/api.json`: API declaration metadata, source hashes and the snapshot version label.
-- `data/examples.json`: authored JASS and Lua examples attached to selected API entries.
+- `data/examples.json`: paired, complete JASS and Lua recipes with titles, categories and
+  usage instructions. The API pages and generated examples cookbook use this same source.
+  `examples.test.ts` checks Lua 5.3 syntax, named entry points, API references and duplicate
+  JASS function names. The 43 current JASS recipes were also checked with PJass against the
+  local installation scripts. Game execution still needs a test map.
 - `scripts/jass-language.mjs`: project-authored JASS highlighting grammar.
 - `src/codeThemes.ts`: bundled snippet themes, shared by highlighting and the native pickers.
   Snippet colors are independent of the site theme; “Follow site theme” selects GitHub Dark
   or Light. The preference is restored before paint and synchronized across snippets/tabs.
 
+A global Lua/JASS toggle in `ThemeSelect.astro` stores its choice before paint. Paired
+sections use `data-example-language`; their headings and table-of-contents items switch
+together. Single-language instructions such as the Lua harness stay readable.
+
 The content cache is keyed by the theme configuration and JASS grammar, so Markdown cannot
 retain stylesheet references from an older syntax-highlighting configuration.
 
-Generated pages in `src/content/docs/reference/{api,fields}/` are ignored. Every build
+Generated pages in `src/content/docs/reference/{api,fields,examples}/` are ignored. Every build
 regenerates them. Edit the source guide or snapshot, rather than generated Markdown.
 URLs include the script filename and declaration kind so `rect` (type) and `Rect` (native)
 remain distinct on case-insensitive hosts. Generation rejects duplicate URL paths and guide IDs.
