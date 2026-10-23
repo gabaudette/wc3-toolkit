@@ -13,7 +13,13 @@ The documentation source and local build instructions are in [website/](website/
 ### Tinkerbench, the Object Editor (`object-editor/`, in progress)
 
 An external replacement for the World Editor's Object Editor, built with Rust and Tauri. It
-reads and writes the same object data as the World Editor, with a better interface:
+reads and writes the same object data as the World Editor.
+
+[![Tinkerbench showing the Paladin, searchable objects, grouped fields, a 3D model and field explanations.](website/public/screenshots/unit-editor.png)](https://tinkerbench-docs.vercel.app/editor/visual-tour/)
+
+*Image subject to change.*
+
+Find an object, understand a field, and see the result in one workbench:
 
 - one search box for names, raw codes and field values;
 - fields grouped by topic with full names and a description of what each one does;
@@ -23,7 +29,11 @@ reads and writes the same object data as the World Editor, with a better interfa
 - a 3D model viewer;
 - share codes and bundle files to copy objects between maps, with what they depend on.
 
-It covers units (with heroes and buildings), abilities, items and upgrades. See
+[Take the visual tour](https://tinkerbench-docs.vercel.app/editor/visual-tour/) for a screenshot
+walkthrough, from object search to editing ability levels.
+
+It covers units (with heroes and buildings), abilities, items, upgrades, buffs, destructables
+and doodads. See
 [docs/pet-peeves.md](docs/pet-peeves.md) for the full list of goals.
 
 #### Install

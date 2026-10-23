@@ -55,7 +55,12 @@ export default defineConfig({
       sidebar: [
         {
           label: "Start here",
-          items: [{ slug: "index" }, { slug: "editor/install" }, { slug: "editor/first-map" }],
+          items: [
+            { slug: "index" },
+            { slug: "editor/install" },
+            { slug: "editor/visual-tour" },
+            { slug: "editor/first-map" },
+          ],
         },
         {
           label: "Tinkerbench",

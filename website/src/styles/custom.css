@@ -65,6 +65,30 @@ h3,
   font-size: 0.875rem;
 }
 
+.app-screenshot {
+  margin-block: 1.5rem;
+}
+
+.app-screenshot a {
+  display: block;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.app-screenshot img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.app-screenshot figcaption {
+  margin-top: 0.65rem;
+  color: var(--sl-color-gray-2);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
 .code-theme-toolbar {
   display: flex;
   justify-content: flex-end;

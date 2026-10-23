@@ -10,7 +10,17 @@ For this first pass, change an existing unit’s maximum life. Tinkerbench edits
 
 1. In the World Editor, create a map and place a Footman for a player you can control.
 2. Save it as a separate test map. Close the map in the World Editor before saving changes from Tinkerbench.
-3. Open Tinkerbench and choose **Open map…**, then select that map.
+3. Start Tinkerbench, choose your Warcraft III folder and select **Load game data**. See
+   [connect the game](../install/#connect-the-game) if this is your first start.
+4. Under **2. Map**, choose **Open a map…**, then select your test map. If you are already in
+   the workbench, use **Open map…** in its top bar instead.
+
+<figure class="app-screenshot">
+  <a href="../../screenshots/open-map.png">
+    <img src="../../screenshots/open-map.png" alt="The startup Map section after game data loads, with buttons to reopen the last map, open a map or browse game data only." width="600" height="600" loading="lazy" />
+  </a>
+  <figcaption>Choose Open a map… to select your test map. Reopen appears when a previous map is remembered.<br />Image subject to change.</figcaption>
+</figure>
 
 ## Change one field
 
