@@ -4,17 +4,6 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-23 · Documentation code themes (PR #27)
-
-- Expressive Code emits GitHub Dark/Light, Dracula, One Dark Pro, Nord and Catppuccin Mocha
-  variants, selected with a separate `data-code-theme` attribute. “Follow site theme” maps
-  to the GitHub variant matching Starlight's dark/light choice.
-- A native, labeled picker above each snippet synchronizes the whole page. Local storage
-  restores the choice before paint and across pages; blocked storage still allows changing
-  the current page. Copy buttons and code content are preserved.
-- The content cache is keyed by themes, selectors and the JASS grammar: cached Markdown
-  otherwise kept references to the previous highlighting stylesheet after a palette change.
-
 ## 2026-10-23 · Documentation website (PR #27, AGE-20)
 
 - Astro Starlight site in `website/`, with the Workshop direction selected from four design
@@ -38,6 +27,14 @@ single line. Every pull request adds an entry here and to the changelog.
   edits, preserves multi-commit changes, and builds if history is unavailable. Integration
   tests exercise real Git commits. A project-level guard also skips branches without docs,
   preventing unrelated main pushes from replacing the live site before this PR merges.
+- Expressive Code emits GitHub Dark/Light, Dracula, One Dark Pro, Nord and Catppuccin Mocha
+  variants, selected with a separate `data-code-theme` attribute. “Follow site theme” maps
+  to the GitHub variant matching Starlight's dark/light choice.
+- A native, labeled picker above each snippet synchronizes the whole page. Local storage
+  restores the choice before paint and across pages; blocked storage still allows changing
+  the current page. Copy buttons and code content are preserved.
+- The content cache is keyed by themes, selectors and the JASS grammar: cached Markdown
+  otherwise kept references to the previous highlighting stylesheet after a palette change.
 
 ## 2026-10-23 · Category icons, and the real uRoughness fix (AGE-17)
 
