@@ -1,0 +1,6 @@
+# One Rust version for everyone: the pre-commit Clippy, CI and release builds.
+# rustup installs it on the first cargo command in this folder.
+[toolchain]
+channel = "1.99.1"
+components = ["clippy", "rustfmt"]
+profile = "minimal"

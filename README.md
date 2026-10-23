@@ -6,7 +6,7 @@ Open-source tools for Warcraft III: Reforged map creation.
 
 ## Tools
 
-### Object Editor (`object-editor/`, in progress)
+### Tinkerbench, the Object Editor (`object-editor/`, in progress)
 
 An external replacement for the World Editor's Object Editor, built with Rust and Tauri. It
 reads and writes the same object data as the World Editor, with a better interface:
@@ -17,13 +17,30 @@ reads and writes the same object data as the World Editor, with a better interfa
 - ability cards showing icon, tooltip and per-level values wherever an ability is referenced;
 - live tooltip preview with color codes;
 - a 3D model viewer;
-- share codes to copy objects between maps.
+- share codes and bundle files to copy objects between maps, with what they depend on.
 
-The first version covers the Units tab (units, heroes, buildings). See
+It covers units (with heroes and buildings), abilities, items and upgrades. See
 [docs/pet-peeves.md](docs/pet-peeves.md) for the full list of goals.
 
-To run it you also need [Bun](https://bun.sh) and, on Linux, the WebKitGTK libraries Tauri
-uses ([Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)):
+#### Install
+
+Download the latest version from the
+[Releases page](https://github.com/gabaudette/wc3-toolkit/releases):
+
+- **Windows:** the `-setup.exe` file. It installs for your user only. The installer is not
+  signed yet, so Windows may show "Windows protected your PC": click **More info**, then
+  **Run anyway**.
+- **Linux (Debian, Ubuntu, Mint):** the `.deb` file, installed with
+  `sudo apt install ./<file>.deb`.
+- **Linux (other):** the `.AppImage` file: make it executable (`chmod +x <file>.AppImage`)
+  and run it.
+
+On first start, point the editor at your Warcraft III folder.
+
+#### Run from source
+
+You need [Bun](https://bun.sh) and, on Linux, the WebKitGTK libraries Tauri uses
+([Tauri prerequisites](https://v2.tauri.app/start/prerequisites/)):
 
 ```bash
 cd object-editor/app
@@ -49,7 +66,8 @@ Modules register code to run at game start with `Dev.OnStart(function() ... end)
 
 - A legal copy of Warcraft III: Reforged. The tools read game data from your installation;
   this repository contains no Blizzard files.
-- Rust (stable), a C/C++ compiler and CMake (for the bundled CascLib and StormLib).
+- Rust (rustup installs the version pinned in `object-editor/rust-toolchain.toml`), a C/C++
+  compiler and CMake (for the bundled CascLib and StormLib).
 
 ## Building
 

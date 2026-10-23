@@ -82,8 +82,10 @@ jobs:
         working-directory: object-editor/app
         run: bun install --frozen-lockfile && bun run build
 
+      # The version pinned in object-editor/rust-toolchain.toml.
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+        working-directory: object-editor
+        run: rustup toolchain install
 
       # Caches the Cargo registry and target/ (dependencies and the bundled C
       # libraries), keyed by OS, toolchain and Cargo.lock.

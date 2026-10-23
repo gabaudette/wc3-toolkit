@@ -31,7 +31,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `ws2_32` and `CASCLIB_NO_AUTO_LINK_LIBRARY` (its header otherwise auto-links a prebuilt
   `CascLibRAD.lib`); MSVC rejects `strncpy` and similar CRT functions as deprecated, and the
   shim builds with warnings as errors.
-- `object-editor/app/` — the Tauri 2 editor: React 19 + TypeScript + Vite + Tailwind 4 +
+- `object-editor/app/` — the Tauri 2 editor, named **Tinkerbench** (gnome icon in
+  `src-tauri/icons/app-icon.png`; `bun run tauri icon` makes the other sizes): React 19 + TypeScript + Vite + Tailwind 4 +
   react-aria-components, Bun, Biome with the AGE baseline plus the React domain. Rust side in
   `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI
   (`abilities.rs` the same for abilities: list, cards, pages with per-level cells),
@@ -45,6 +46,10 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `crates/wc3-map/src/lua.rs`): appends the modules plus a `Dev.OnStart` loader and a `main()`
   hook to the editor's `war3map.lua` in a `<map>_dev.w3m` copy named `[DEV] ...`, after
   checking every file as Lua 5.3 with `full_moon`.
+
+Every pull request adds an entry to `CHANGELOG.md` (user-facing, shown in the app under
+"What's new"; performance-only or technical-only work is just "Performance improvements." or
+"Internal improvements.") and to `docs/devlog.md` (technical details); see `CONTRIBUTING.md`.
 
 Coding standards: `docs/standards/` (AGE Studio engineering standards) and their application
 to this repo plus validation commands in `CONTRIBUTING.md`; follow them for every change. Machine-specific notes (game paths, test maps) are in `CLAUDE.local.md` when present.
