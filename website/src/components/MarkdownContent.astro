@@ -1,9 +1,19 @@
 ---
 // biome-ignore lint/correctness/noUnusedImports: Used in the Astro template, which Biome does not analyze.
 import DefaultMarkdownContent from "@astrojs/starlight/components/MarkdownContent.astro";
+import { searchMetadata } from "../searchMetadata";
+
+// biome-ignore lint/correctness/noUnusedVariables: Used in the Astro template.
+const search = searchMetadata(
+  Astro.locals.starlightRoute.id,
+  Astro.locals.starlightRoute.entry.data.practicalGuide,
+);
 ---
 
-<DefaultMarkdownContent><slot /></DefaultMarkdownContent>
+<div data-pagefind-meta={`type:${search.label}`} data-pagefind-weight={search.weight}>
+  {search.filters.map((kind) => <span hidden data-pagefind-filter={`Content:${kind}`} />)}
+  <DefaultMarkdownContent><slot /></DefaultMarkdownContent>
+</div>
 
 <script>
   import "../codeThemePicker";

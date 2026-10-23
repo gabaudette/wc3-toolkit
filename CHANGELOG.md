@@ -8,6 +8,9 @@ under "What's new".
 
 ### Added
 
+- Website search filters for guides, APIs and object fields, with result-type labels and
+  improved discovery of practical guides alongside exact symbol and raw-code lookups.
+
 - A “Which field do I change?” guide mapping 19 common goals to object tabs, field labels,
   raw codes and companion settings, linked from the homepage, field reference and editing guide.
 - Practical explanations for 26 common APIs, with parameter and return notes, ownership and

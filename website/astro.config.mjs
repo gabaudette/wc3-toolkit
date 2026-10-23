@@ -36,6 +36,12 @@ export default defineConfig({
       logo: { src: "./src/assets/tinkerbench.png", alt: "Tinkerbench gnome" },
       favicon: "/icon-128.png",
       disable404Route: true,
+      pagefind: {
+        ranking: {
+          // Keep normal heading weights without an extra multiplier for short titles.
+          metaWeights: { title: 1 },
+        },
+      },
       expressiveCode: {
         shiki: { langs: [jass] },
         themes: CODE_THEMES.map((theme) => theme.id),
@@ -46,6 +52,7 @@ export default defineConfig({
       customCss: ["./src/styles/custom.css"],
       components: {
         Footer: "./src/components/Footer.astro",
+        Search: "./src/components/Search.astro",
         ThemeProvider: "./src/components/ThemeProvider.astro",
         MarkdownContent: "./src/components/MarkdownContent.astro",
         ThemeSelect: "./src/components/ThemeSelect.astro",

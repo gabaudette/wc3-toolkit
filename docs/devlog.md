@@ -4,6 +4,28 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Search by content type (PR #36, AGE-32)
+
+- Added Pagefind Content filters and result-type metadata through the MarkdownContent
+  override. Classification follows collection IDs; curated API pages and their practical
+  index are marked by the generator and belong to both Guides and API. No separate search
+  catalog is needed.
+- Weighted guide body content and reduced Pagefind’s extra title-metadata multiplier
+  while retaining normal heading weights for exact symbols and raw codes. Wrapped the
+  existing search modal with an explicit
+  All content/Guides/API/Object fields chooser. It updates Pagefind’s native checkbox
+  bindings one kind at a time, avoiding its default AND semantics across disjoint kinds.
+  The existing modal retains filter state while closed and preserves its keyboard and
+  language-preference behavior.
+- Added route/classification tests and documented filter semantics and authoring inputs.
+- Validation: 122 tests pass; Biome and Astro report no diagnostics. Root and `/docs-check`
+  production builds pass, with local link/asset checks across 6,607 pages. An audit confirms
+  all 6,606 indexed pages have content/type metadata and all 26 curated APIs plus their
+  index belong to both Guides and API. Browser checks cover conceptual and exact queries,
+  every chooser option, recovery through All content, empty results, keyboard selection,
+  retained filter state, desktop/mobile layouts in both themes, subpath result URLs and
+  preserved JASS preference after navigation. No browser runtime errors were reported.
+
 ## 2026-10-23 · Find object fields by goal (PR #35, AGE-31)
 
 - Added an authored “Which field do I change?” guide with 19 tasks across movement, life,

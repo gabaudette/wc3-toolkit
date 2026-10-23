@@ -76,6 +76,20 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   `examples.test.ts` checks Lua 5.3 syntax, named entry points, API references and duplicate
   JASS function names. The 48 current JASS recipes were also checked with PJass against the
   local installation scripts. Game execution still needs a test map.
+- `src/searchMetadata.ts`: derives Pagefind Content filters and result type labels from
+  collection IDs, independent of the deployment base path. Authored pages are Guides; the
+  generated API and field trees are API and Object fields. The generator marks its curated
+  API explanations and practical index with `practicalGuide: true`, making them discoverable
+  in both Guides and API. `MarkdownContent.astro` emits filter/metadata attributes and gives
+  guide body text a ranking boost. `astro.config.mjs` reduces Pagefind’s extra title-metadata
+  multiplier while retaining normal heading weights, balancing long guides against short
+  reference pages. The Search override wraps the existing modal. `searchFilters.ts` adds
+  an explicit
+  All content/Guides/API/Object fields chooser and synchronizes Pagefind’s underlying
+  checkboxes via change events. One choice avoids its default AND semantics for multiple
+  values. Recheck this bridge when upgrading Pagefind. Search tests cover
+  route boundaries, curated flags and classification; verify actual ranking and UI against
+  the production build for a guide query, `CreateUnit`, `uarm` and a no-match query.
 - `scripts/jass-language.mjs`: project-authored JASS highlighting grammar.
 - `src/codeThemes.ts`: bundled snippet themes, shared by highlighting and the native pickers.
   Snippet colors are independent of the site theme; “Follow site theme” selects GitHub Dark

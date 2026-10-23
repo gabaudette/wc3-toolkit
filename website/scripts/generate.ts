@@ -52,12 +52,22 @@ const slug = (declaration: Declaration) =>
   `${declaration.source.replace(".j", "")}/${declaration.kind}/${declaration.name.toLowerCase()}`;
 const apiPath = (declaration: Declaration) => `reference/api/${slug(declaration)}`;
 
-async function page(path: string, title: string, description: string, body: string) {
+async function page(
+  path: string,
+  title: string,
+  description: string,
+  body: string,
+  practicalGuide = false,
+) {
   const url = new URL(`${path}.md`, output);
   await mkdir(new URL(".", url), { recursive: true });
+  let practicalMetadata = "";
+  if (practicalGuide) {
+    practicalMetadata = "practicalGuide: true\n";
+  }
   await Bun.write(
     url,
-    `---\ntitle: ${JSON.stringify(title)}\ndescription: ${JSON.stringify(description)}\neditUrl: false\n---\n\n${body}\n`,
+    `---\ntitle: ${JSON.stringify(title)}\ndescription: ${JSON.stringify(description)}\neditUrl: false\n${practicalMetadata}---\n\n${body}\n`,
   );
 }
 
@@ -266,6 +276,7 @@ await page(
   "Practical API guides",
   `Practical explanations and JASS/Lua examples for ${practical.guides.size} common APIs.`,
   practicalIndex.join("\n\n"),
+  true,
 );
 
 for (const declaration of api.declarations) {
@@ -366,6 +377,7 @@ for (const declaration of api.declarations) {
     guide?.summary ??
       `${declaration.kind} from ${declaration.source}: JASS declaration, Lua usage and parameter types.`,
     body.join("\n\n"),
+    Boolean(guide),
   );
 }
 await page(
