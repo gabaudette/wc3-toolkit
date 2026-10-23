@@ -23,6 +23,26 @@ export function levelCount(levels: number): string {
 export const FIELD_ROW_GRID =
   "grid grid-cols-[minmax(12rem,1fr)_minmax(9rem,16rem)_minmax(3.5rem,7rem)_1.75rem] items-start gap-x-3";
 
+const MODEL_EXTENSION = /\.md[lx]$/i;
+
+/**
+ * The model file a preview loads for a destructable or doodad: they name their
+ * model without the extension and number its variations (`AshenTree` →
+ * `AshenTree0.mdl` when there are several).
+ */
+export function variationModel(raw: string, variations: number): string {
+  if (MODEL_EXTENSION.test(raw)) {
+    return raw;
+  }
+
+  let file = raw;
+  if (variations > 1) {
+    file = `${file}0`;
+  }
+
+  return `${file}.mdl`;
+}
+
 /** "1 object", "3 objects". */
 export function objectCount(count: number): string {
   if (count === 1) {

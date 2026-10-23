@@ -8,9 +8,11 @@
 
 use std::path::PathBuf;
 
+use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::guide::FieldGuide;
 use wc3_data::icon::load_texture;
+use wc3_data::leveled::LeveledData;
 use wc3_data::meta::ObjectKind;
 use wc3_data::units::UnitDatabase;
 use wc3_data::upgrades::UpgradeDatabase;
@@ -329,6 +331,41 @@ fn the_upgrade_guide_covers_every_upgrade_field() -> TestResult {
     Ok(())
 }
 
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn the_doodad_guide_covers_every_doodad_field() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let db = DoodadDatabase::load(&files)?;
+    let guide = FieldGuide::doodads()?;
+
+    let missing: Vec<&str> = db
+        .fields()
+        .iter()
+        .map(|f| f.id.as_str())
+        .filter(|id| guide.entry(id).is_none())
+        .collect();
+    let unknown: Vec<&str> = guide
+        .field_ids()
+        .filter(|id| db.field(id).is_none())
+        .collect();
+    let misplaced: Vec<String> = guide
+        .ordered()
+        .filter_map(|(id, category)| {
+            let field = db.field(id)?;
+            (field.category != category)
+                .then(|| format!("{id} is {} not {category}", field.category))
+        })
+        .collect();
+
+    assert!(missing.is_empty(), "no description: {missing:?}");
+    assert!(unknown.is_empty(), "not item fields: {unknown:?}");
+    assert!(misplaced.is_empty(), "{misplaced:?}");
+    Ok(())
+}
+
 /// Items load with their names, values and icons.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
@@ -388,12 +425,53 @@ fn buffs_and_destructables_load_with_names_and_values() -> TestResult {
         destructables.display_value("LTlt", category, ArtMode::Sd),
         "Trees/Destructibles"
     );
+    let tilesets = destructables.field("btil").ok_or("no btil")?;
+    assert!(
+        destructables.ids().iter().any(|id| destructables
+            .raw_value(id, tilesets, ArtMode::Sd)
+            .is_some_and(|t| t.contains(','))),
+        "a list field keeps every entry"
+    );
     let hit_points = destructables.field("bhps").ok_or("no bhps")?;
     assert!(
         destructables
             .raw_value("LTlt", hit_points, ArtMode::Sd)
             .is_some()
     );
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn doodads_load_with_values_per_variation() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let db = DoodadDatabase::load(&files)?;
+    let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
+
+    assert!(db.ids().len() > 500, "only {} doodads", db.ids().len());
+    assert!(db.contains("APms"));
+    let name = db.name("APms");
+    assert!(!name.is_empty() && !name.starts_with("WESTRING"), "{name}");
+    assert_eq!(db.variations("APms"), 4);
+    assert_eq!(
+        db.raw_value("APms", field("dvr1")?, 1, ArtMode::Sd)
+            .as_deref(),
+        Some("255")
+    );
+    assert_eq!(
+        db.raw_value("APms", field("dcat")?, 0, ArtMode::Sd)
+            .as_deref(),
+        Some("E")
+    );
+    assert!(
+        db.raw_value("APms", field("dtil")?, 0, ArtMode::Sd)
+            .is_some_and(|t| t.contains(',')),
+        "tilesets keep the whole list"
+    );
+    assert_eq!(db.field_name(field("dvr1")?), "Tinting Color 1 (Red)");
     Ok(())
 }
 

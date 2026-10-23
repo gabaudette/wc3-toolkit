@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 
 use wc3_data::abilities::AbilityDatabase;
+use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{ArtMode, GameFiles};
 use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
@@ -12,9 +13,9 @@ use wc3_data::upgrades::UpgradeDatabase;
 use wc3_map::Map;
 use wc3_map::abilities::MapAbilities;
 use wc3_map::imports::{MapImports, candidates};
+use wc3_map::leveled::{DOODADS, LeveledObjects, UPGRADES};
 use wc3_map::plain::{BUFFS, DESTRUCTABLES, ITEMS, PlainObjects};
 use wc3_map::units::MapUnits;
-use wc3_map::upgrades::MapUpgrades;
 
 pub struct Session {
     pub files: GameFiles,
@@ -29,6 +30,8 @@ pub struct Session {
     pub buff_guide: FieldGuide,
     pub destructables: UnitDatabase,
     pub destructable_guide: FieldGuide,
+    pub doodads: DoodadDatabase,
+    pub doodad_guide: FieldGuide,
     pub upgrades: UpgradeDatabase,
     pub upgrade_guide: FieldGuide,
     pub mode: ArtMode,
@@ -43,9 +46,10 @@ pub struct OpenMap {
     pub units: MapUnits,
     pub abilities: MapAbilities,
     pub items: PlainObjects,
-    pub upgrades: MapUpgrades,
+    pub upgrades: LeveledObjects,
     pub buffs: PlainObjects,
     pub destructables: PlainObjects,
+    pub doodads: LeveledObjects,
     /// The import list, and files imports queued for the next save.
     pub imports: MapImports,
     /// The files as last loaded or saved, to tell whether anything changed.
@@ -63,9 +67,10 @@ impl OpenMap {
             units: MapUnits::load(&archive)?,
             abilities: MapAbilities::load(&archive)?,
             items: PlainObjects::load(&archive, ITEMS)?,
-            upgrades: MapUpgrades::load(&archive)?,
+            upgrades: LeveledObjects::load(&archive, UPGRADES)?,
             buffs: PlainObjects::load(&archive, BUFFS)?,
             destructables: PlainObjects::load(&archive, DESTRUCTABLES)?,
+            doodads: LeveledObjects::load(&archive, DOODADS)?,
             imports: MapImports::load(&archive)?,
             path,
             saved_files: Vec::new(),
@@ -83,6 +88,7 @@ impl OpenMap {
         files.extend(self.upgrades.files());
         files.extend(self.buffs.files());
         files.extend(self.destructables.files());
+        files.extend(self.doodads.files());
         files
     }
 

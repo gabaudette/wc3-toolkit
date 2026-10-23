@@ -4,6 +4,26 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Doodads (AGE-15, part 2)
+
+- Doodads are leveled by model variation: the tint (`dvr1`, `dvg1`, `dvb1`) is per variation,
+  the other 40 fields are plain. `DoodadDatabase` reads `DoodadMetaData.slk` over
+  `Doodads.slk`, with art from `DoodadSkins.txt`, where per-variation values are lists with
+  one entry per variation (`vertR=255,255,...`, always 10 entries; Mushrooms have 4 variations).
+- Upgrades and doodads now share one map type: `MapUpgrades` became `LeveledObjects`,
+  configured by a `LeveledKind` (files, ID letter, label, and the fields holding the name,
+  icon, list filter and level count), over a `LeveledData` trait that `UpgradeDatabase` and
+  `DoodadDatabase` implement. The app's upgrade commands became catalog-aware
+  (`list_leveled`, ...), and `UpgradesPane` became `LeveledPane`. Level tables call their
+  columns "Variation" for doodads.
+- Variations are stored as levels 1..N, data column 0. That is an assumption: none of the 135
+  maps nor Legion TD changes a variation, so it still needs checking against a map saved by
+  the World Editor.
+- Found on the way: destructable metadata gives list types (tilesets, targets) index 0, which
+  the unit database read as "the first entry". It now means the whole list for list types, so
+  a destructable offered in two tilesets shows both.
+- The units database also loads the editor's categories, since it formats values for every tab.
+
 ## 2026-10-23 · Buffs and destructables (AGE-15, part 1)
 
 - Both have the shape items have: plain fields over one table plus profiles. Rather than copy

@@ -106,6 +106,9 @@ const NONE_KEY: &str = "WESTRING_NONE";
 /// (keys are stored lowercase).
 const ALIAS_SUFFIX: &str = "_alt";
 
+/// Value types holding a list (`tilesetList`, `targetList`, `abilityList`).
+const LIST_SUFFIX: &str = "List";
+
 /// Values the game uses for "no value" in tables.
 const EMPTY_MARKERS: &[&str] = &["", "-", "_"];
 const REAL_DECIMALS: usize = 3;
@@ -173,7 +176,7 @@ impl UnitDatabase {
 
         let editor_strings = load_profile(files, EDITOR_STRINGS, GameFiles::read_localized)?;
         let editor_data = load_profile(files, &[EDITOR_DATA], GameFiles::read_base)?;
-        let enums = parse_enums(&editor_data, &editor_strings);
+        let enums = editor_enums(files, &editor_data, &editor_strings)?;
         let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
 
         Ok(Self {
@@ -304,14 +307,7 @@ impl UnitDatabase {
 
         let editor_strings = load_profile(files, EDITOR_STRINGS, GameFiles::read_localized)?;
         let editor_data = load_profile(files, &[EDITOR_DATA], GameFiles::read_base)?;
-        let mut enums = parse_enums(&editor_data, &editor_strings);
-        let world_edit = decode_text(files.read_base(WORLD_EDIT_DATA)?, WORLD_EDIT_DATA)?;
-        for (section, value_type) in CATEGORY_SECTIONS {
-            enums.insert(
-                (*value_type).to_owned(),
-                letter_choices(&world_edit, section, &editor_strings),
-            );
-        }
+        let enums = editor_enums(files, &editor_data, &editor_strings)?;
         let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
 
         Ok(Self {
@@ -422,7 +418,12 @@ impl UnitDatabase {
                 .or_else(|| self.profile_value(id, &field.field, mode))
         }?;
 
-        match field.index {
+        // Destructable metadata gives list types (tilesets, targets) index 0
+        // too; for them it means the whole list, not its first entry.
+        let index = field
+            .index
+            .filter(|i| *i > 0 || !field.value_type.ends_with(LIST_SUFFIX));
+        match index {
             // Long text is quoted in profiles (`Buffubertip="..."`); the value is what is inside.
             None => Some(unquote(&whole).to_owned()),
             Some(i) => split_list(&whole)
@@ -631,6 +632,24 @@ fn enum_labels(values: &[EnumValue], raw: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join(", ")
+}
+
+/// Every choice list: `UnitEditorData.txt` and the categories in `WorldEditData.txt`.
+/// The units database formats values for the leveled tabs too (doodad categories).
+fn editor_enums(
+    files: &GameFiles,
+    editor_data: &Profile,
+    editor_strings: &Profile,
+) -> Result<HashMap<String, Vec<EnumValue>>> {
+    let mut enums = parse_enums(editor_data, editor_strings);
+    let world_edit = decode_text(files.read_base(WORLD_EDIT_DATA)?, WORLD_EDIT_DATA)?;
+    for (section, value_type) in CATEGORY_SECTIONS {
+        enums.insert(
+            (*value_type).to_owned(),
+            letter_choices(&world_edit, section, editor_strings),
+        );
+    }
+    Ok(enums)
 }
 
 /// Choices keyed by letter in `WorldEditData.txt` (`D=WESTRING_DTYPE_DESTRUCTABLE,<icon>`).

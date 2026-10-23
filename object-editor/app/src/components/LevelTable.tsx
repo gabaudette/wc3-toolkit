@@ -23,6 +23,8 @@ type LevelTableProps = {
   /** Sets `level` and every later level to `value`. */
   onFill: (field: string, level: number, value: string) => void;
   onReset: (field: string, level: number) => void;
+  /** What a column is called: "Level", or "Variation" for doodads. */
+  levelName?: string;
   /** Shows a row's field in the page's inspector, when the page has one. */
   onInspect?: (field: Field) => void;
 };
@@ -159,6 +161,7 @@ function FlagsPopover({ anchor, label, onKey, onCommit, children }: FlagsPopover
 }
 
 type CellEditorProps = {
+  levelName: string;
   anchor: HTMLElement | undefined;
   field: LevelField;
   editing: Editing;
@@ -176,9 +179,10 @@ function CellEditor({
   onKey,
   onCommit,
   onChoice,
+  levelName,
 }: CellEditorProps) {
   const meta = field.field;
-  const label = `${meta.name}, level ${editing.column + 1}`;
+  const label = `${meta.name}, ${levelName.toLowerCase()} ${editing.column + 1}`;
 
   if (meta.control === "select") {
     return (
@@ -244,6 +248,7 @@ export function LevelTable({
   onChange,
   onFill,
   onReset,
+  levelName = "Level",
   onInspect,
 }: LevelTableProps) {
   const [active, setActive] = useState<Cell>({ row: 0, column: 0 });
@@ -420,11 +425,11 @@ export function LevelTable({
         <thead>
           <tr className="text-xs text-faint">
             <th className="sticky left-0 z-10 w-72 min-w-72 bg-surface-0 px-3 py-1 text-left font-normal">
-              Per level
+              Per {levelName.toLowerCase()}
             </th>
             {levelNumbers.map((level) => (
               <th key={level} className="min-w-20 px-2 py-1 text-right font-normal">
-                Level {level}
+                {levelName} {level}
               </th>
             ))}
             <th className="w-8">
@@ -479,6 +484,7 @@ export function LevelTable({
                       <td key={levelNumbers[column]} className="relative px-1 py-0.5 text-right">
                         {isEditing && meta.control !== "flags" && meta.control !== "flagList" && (
                           <CellEditor
+                            levelName={levelName}
                             anchor={cells.current.get(cellKey(position))}
                             field={field}
                             editing={editing}
@@ -526,6 +532,7 @@ export function LevelTable({
                         )}
                         {isEditing && (meta.control === "flags" || meta.control === "flagList") && (
                           <CellEditor
+                            levelName={levelName}
                             anchor={cells.current.get(cellKey(position))}
                             field={field}
                             editing={editing}

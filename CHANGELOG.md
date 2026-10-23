@@ -11,6 +11,9 @@ under "What's new".
 - Buffs tab: browse, search, edit and create custom buffs and effects, with a chip per race.
 - Destructables tab: trees, gates, crates and rocks, with a chip per category and their model
   in the inspector.
+- Doodads tab: props, plants, rocks and lights, with a chip per category, their model in the
+  inspector, and the tint of every model variation side by side. Every object type of the
+  World Editor's Object Editor can now be edited.
 
 ### Changed
 
@@ -21,6 +24,7 @@ under "What's new".
 ### Fixed
 
 - Long game texts, like tooltips, showed quote marks around their value when edited.
+- Destructables available in several tilesets only showed the first one.
 - Internal improvements.
 
 ## 0.1.0 - 2026-10-23

@@ -8,6 +8,7 @@ import type {
   Field,
   GameSummary,
   HotkeyClash,
+  LeveledCatalog,
   MapSummary,
   TransferObject,
   UnitDetail,
@@ -19,21 +20,23 @@ import { AppVersion } from "./AppVersion";
 import { Button } from "./Button";
 import { CommandPalette, type PaletteCommand } from "./CommandPalette";
 import { ImportDialog } from "./ImportDialog";
+import { LeveledPane } from "./LeveledPane";
 import { OpenAbilityContext } from "./openAbility";
 import { PlainPane } from "./PlainPane";
 import { ShareDialog } from "./ShareDialog";
 import {
   BUFF_LIST,
   DESTRUCTABLE_LIST,
+  DOODAD_LIST,
   ITEM_LIST,
   type ListConfig,
   UNIT_LIST,
   UnitList,
+  UPGRADE_LIST,
 } from "./UnitList";
 import { UnitPage } from "./UnitPage";
-import { UpgradesPane } from "./UpgradesPane";
 
-type Tab = "units" | "abilities" | "upgrades" | Catalog;
+type Tab = "units" | "abilities" | LeveledCatalog | Catalog;
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "units", label: "Units" },
@@ -42,7 +45,19 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "upgrades", label: "Upgrades" },
   { id: "buffs", label: "Buffs" },
   { id: "destructables", label: "Destructables" },
+  { id: "doodads", label: "Doodads" },
 ];
+
+/** The tabs of objects with levels or variations, each on the ability page. */
+const LEVELED_TABS: { catalog: LeveledCatalog; list: ListConfig }[] = [
+  { catalog: "upgrades", list: UPGRADE_LIST },
+  { catalog: "doodads", list: DOODAD_LIST },
+];
+
+const NO_LEVELED_SELECTION: Record<LeveledCatalog, string | null> = {
+  upgrades: null,
+  doodads: null,
+};
 
 /** The tabs of objects without levels, each on the unit list and page. */
 const PLAIN_TABS: { catalog: Catalog; list: ListConfig }[] = [
@@ -84,7 +99,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [tab, setTab] = useState<Tab>("units");
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
   const [selectedPlain, setSelectedPlain] = useState(NO_PLAIN_SELECTION);
-  const [selectedUpgrade, setSelectedUpgrade] = useState<string | null>(null);
+  const [selectedLeveled, setSelectedLeveled] = useState(NO_LEVELED_SELECTION);
   /** Bumped when the map is replaced or imported into, so the ability list reloads. */
   const [revision, setRevision] = useState(0);
   const editable = map !== null;
@@ -117,9 +132,9 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     setTab(catalog);
   }, []);
 
-  const openUpgrade = useCallback((id: string) => {
-    setSelectedUpgrade(id);
-    setTab("upgrades");
+  const openLeveled = useCallback((catalog: LeveledCatalog, id: string) => {
+    setSelectedLeveled((current) => ({ ...current, [catalog]: id }));
+    setTab(catalog);
   }, []);
 
   const refreshList = useCallback(() => {
@@ -222,7 +237,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       setDetail(null);
       setSelectedAbility(null);
       setSelectedPlain(NO_PLAIN_SELECTION);
-      setSelectedUpgrade(null);
+      setSelectedLeveled(NO_LEVELED_SELECTION);
       setRevision((r) => r + 1);
       refreshList();
     } catch (e) {
@@ -382,7 +397,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         onOpenUnit={openUnit}
         onOpenAbility={openAbility}
         onOpenPlain={openPlain}
-        onOpenUpgrade={openUpgrade}
+        onOpenLeveled={openLeveled}
         onClose={() => setDialog(null)}
       />
 
@@ -398,16 +413,18 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
           />
         )}
 
-        {tab === "upgrades" && (
-          <UpgradesPane
-            key={revision}
+        {LEVELED_TABS.filter(({ catalog }) => tab === catalog).map(({ catalog, list }) => (
+          <LeveledPane
+            key={`${catalog}-${revision}`}
+            catalog={catalog}
+            list={list}
             editable={editable}
-            selected={selectedUpgrade}
-            onSelect={setSelectedUpgrade}
+            selected={selectedLeveled[catalog]}
+            onSelect={(id) => openLeveled(catalog, id)}
             onMapChanged={refreshMap}
             onError={setError}
           />
-        )}
+        ))}
 
         {PLAIN_TABS.filter(({ catalog }) => tab === catalog).map(({ catalog, list }) => (
           <PlainPane

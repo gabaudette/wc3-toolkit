@@ -1,7 +1,7 @@
 import { Copy01 } from "@untitledui/icons";
 import { useMemo, useState } from "react";
 import type { AbilityDetail, AbilitySection, Field, LevelField } from "../types";
-import { capitalized, levelCount } from "../ui";
+import { capitalized, levelCount, variationModel } from "../ui";
 import { Button } from "./Button";
 import { GameText } from "./GameText";
 import { Inspector } from "./Inspector";
@@ -10,13 +10,25 @@ import { LevelText } from "./LevelText";
 import { AdvancedGroup, FieldHeader, FieldRows, matches, SectionToggle, toggled } from "./Sections";
 import { UnitIcon } from "./UnitIcon";
 
-/** The object types this page shows: abilities, and upgrades shaped like them. */
-type Noun = "ability" | "upgrade";
+/** The object types this page shows: abilities, and upgrades and doodads shaped like them. */
+type Noun = "ability" | "upgrade" | "doodad";
 
-const PLURALS: Record<Noun, string> = { ability: "abilities", upgrade: "upgrades" };
+const PLURALS: Record<Noun, string> = {
+  ability: "abilities",
+  upgrade: "upgrades",
+  doodad: "doodads",
+};
+/** What a column of the level tables is called. */
+const LEVEL_NAMES: Record<Noun, string> = {
+  ability: "Level",
+  upgrade: "Level",
+  doodad: "Variation",
+};
+const DOODAD_MODEL = "dfil";
 const FILTER_EXAMPLES: Record<Noun, string> = {
   ability: "Filter fields: cooldown, damage, icon…",
   upgrade: "Filter fields: gold, effect, icon…",
+  doodad: "Filter fields: model, tint, size…",
 };
 
 type AbilityPageProps = {
@@ -33,16 +45,20 @@ type AbilityPageProps = {
 
 /** Sections open by default; the rest start folded to keep the page short. */
 const OPEN_BY_DEFAULT = ["stats", "data", "text"];
+/** Doodads have no stats or data: their art is what people change. */
+const DOODAD_OPEN_BY_DEFAULT = ["text", "art"];
 const NO_LEVEL = 0;
-/** Keys of the level tables, shown under the page header. */
-const LEVEL_KEYS: [string, string][] = [
-  ["Arrows", "move"],
-  ["Enter", "edits"],
-  ["Enter or Tab", "saves and moves to the next level"],
-  ["Ctrl+Enter", "fills the later levels too"],
-  ["Delete", "resets"],
-  ["Esc", "cancels"],
-];
+/** Keys of the level tables, shown under the page header ("level" or "variation"). */
+function levelKeys(level: string): [string, string][] {
+  return [
+    ["Arrows", "move"],
+    ["Enter", "edits"],
+    ["Enter or Tab", `saves and moves to the next ${level}`],
+    ["Ctrl+Enter", `fills the later ${level}s too`],
+    ["Delete", "resets"],
+    ["Esc", "cancels"],
+  ];
+}
 
 type Shown = {
   section: AbilitySection;
@@ -84,9 +100,23 @@ function baseLabel(detail: AbilityDetail): string {
   return "Game value";
 }
 
+/** "s" for counts other than 1. */
+function plural(count: number): string {
+  if (count === 1) {
+    return "";
+  }
+
+  return "s";
+}
+
 function facts(detail: AbilityDetail, noun: Noun): string {
   const { summary, hotkey, requiredLevel } = detail.card;
   let kind = "Unit ability";
+  if (noun === "doodad") {
+    const variations = `${detail.levels} variation${plural(detail.levels)}`;
+    return ["Doodad", summary.race, variations].filter(Boolean).join(" · ");
+  }
+
   if (noun === "upgrade") {
     kind = "Upgrade";
   } else if (summary.hero) {
@@ -117,7 +147,13 @@ export function AbilityPage({
 }: AbilityPageProps) {
   const [filter, setFilter] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
-  const [open, setOpen] = useState<string[]>(OPEN_BY_DEFAULT);
+  const [open, setOpen] = useState<string[]>(() => {
+    if (noun === "doodad") {
+      return DOODAD_OPEN_BY_DEFAULT;
+    }
+
+    return OPEN_BY_DEFAULT;
+  });
   const [openAdvanced, setOpenAdvanced] = useState<string[]>([]);
   const [inspected, setInspected] = useState<string | null>(null);
   const { summary, description } = detail.card;
@@ -127,6 +163,12 @@ export function AbilityPage({
     single.find((f) => f.id === inspected) ?? perLevel.find((f) => f.id === inspected) ?? null;
   const inspect = (field: Field) => setInspected(field.id);
   const searching = Boolean(filter) || changedOnly;
+  // Doodads show their model; abilities and upgrades have none to show.
+  const doodadModel = single.find((f) => f.id === DOODAD_MODEL)?.raw;
+  let modelPath: string | null = null;
+  if (noun === "doodad" && doodadModel) {
+    modelPath = variationModel(doodadModel, detail.levels);
+  }
   const changedCount = detail.sections.reduce(
     (sum, s) => sum + changedIn(s.fields, s.levelFields),
     0,
@@ -154,6 +196,7 @@ export function AbilityPage({
         />
         <LevelTable
           fields={levelFields.filter((f) => !isText(f))}
+          levelName={LEVEL_NAMES[noun]}
           editable={editable}
           onChange={onChange}
           onFill={onFill}
@@ -164,6 +207,7 @@ export function AbilityPage({
           <LevelText
             key={field.field.id}
             field={field}
+            levelName={LEVEL_NAMES[noun]}
             editable={editable}
             onChange={(level, value) => onChange(field.field.id, level, value)}
             onReset={(level) => onReset(field.field.id, level)}
@@ -240,7 +284,7 @@ export function AbilityPage({
               aria-label="Level table keys"
               className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-faint"
             >
-              {LEVEL_KEYS.map(([key, action]) => (
+              {levelKeys(LEVEL_NAMES[noun].toLowerCase()).map(([key, action]) => (
                 <li key={key}>
                   <kbd className="rounded-[3px] border border-line px-1 font-sans text-muted">
                     {key}
@@ -290,6 +334,7 @@ export function AbilityPage({
         </div>
       </section>
       <Inspector
+        {...(noun === "doodad" && { modelPath })}
         field={inspectedField}
         perLevel={inspectedField !== null && perLevel.includes(inspectedField)}
         editable={editable}

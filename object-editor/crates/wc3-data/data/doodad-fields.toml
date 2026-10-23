@@ -1,0 +1,170 @@
+# Field guide for the Doodads tab: what each doodad field does, which fields come
+# first, and which are rarely needed. Written for this project (not taken from
+# the game). Mark anything not confirmed in game with `unverified = true`.
+#
+# Doodads are decoration without gameplay: props, plants, rocks, lights,
+# cinematic pieces. The tint fields have one value per model variation.
+#
+# [order]      per category, the fields shown first, in this order. Fields not
+#              listed follow in the game's metadata order.
+# [[field]]    ids sharing one description; `advanced = true` folds the fields
+#              into the "Advanced" group of their category.
+
+[order]
+text = ["dnam"]
+art = [
+  "dfil", "dvar", "ddes", "dvr1", "dvg1", "dvb1", "dsel", "dshd", "dsh2", "dsmm", "dumc",
+  "dmmr", "dmmg", "dmmb", "dvis", "dfxr", "dmap", "dmar", "dflt", "dshf", "danf", "doct",
+  "ddec", "decs", "dtco", "dtcc", "dwat", "dcuw",
+]
+path = ["dwlk", "dptx"]
+editor = [
+  "dcat", "dtil", "dtsp", "dmis", "dmas", "dcpr", "donc", "donw", "duch", "dimc", "dusr",
+]
+sound = ["dsnd"]
+
+# --- Text --------------------------------------------------------------------
+
+[[field]]
+ids = ["dnam"]
+description = "The name shown in the editor's doodad palette. Players never see doodad names."
+
+# --- Art ---------------------------------------------------------------------
+
+[[field]]
+ids = ["dfil"]
+description = "Model of the doodad. With several variations, each placed copy uses one of the numbered models."
+
+[[field]]
+ids = ["dvar"]
+description = "How many model variations it has; placed copies pick one, so a field of mushrooms does not look identical."
+
+[[field]]
+ids = ["ddes"]
+description = "Size a placed copy starts with; 1 is the model's normal size."
+
+[[field]]
+ids = ["dvr1", "dvg1", "dvb1"]
+description = "Tint of each model variation, red, green and blue from 0 to 255; 255 everywhere keeps its colors."
+
+[[field]]
+ids = ["dsel"]
+description = "Size of the selection circle in the editor."
+advanced = true
+
+[[field]]
+ids = ["dshd", "dsh2"]
+description = "Whether it casts a shadow, in classic and in Reforged graphics."
+advanced = true
+
+[[field]]
+ids = ["dsmm"]
+description = "Whether it shows on the minimap."
+advanced = true
+
+[[field]]
+ids = ["dumc", "dmmr", "dmmg", "dmmb"]
+description = "Whether it uses its own minimap color, and that color (red, green, blue from 0 to 255)."
+advanced = true
+
+[[field]]
+ids = ["dvis"]
+description = "Distance from the camera within which it is drawn; bigger shows it from farther away."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["dfxr"]
+description = "Facing it always has, in degrees; -1 lets each placed copy face its own way."
+advanced = true
+
+[[field]]
+ids = ["dmap", "dmar"]
+description = "How far it may tilt on slopes, forward and sideways, in degrees."
+advanced = true
+
+[[field]]
+ids = ["dflt"]
+description = "Whether it floats on water instead of sitting on the ground below it."
+advanced = true
+
+[[field]]
+ids = ["dshf", "danf"]
+description = "Whether it stays visible under the fog of war, and whether it keeps animating there."
+advanced = true
+
+[[field]]
+ids = ["doct"]
+description = "Whether it fades out when units walk behind it."
+advanced = true
+
+[[field]]
+ids = ["ddec", "decs"]
+description = "Whether it is drawn flat on the ground like a decal, and its order among decals."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["dtco", "dtcc"]
+description = "Team color of team-colored parts of the model, and whether a custom team color may be used."
+advanced = true
+
+[[field]]
+ids = ["dwat"]
+description = "Whether it is water, drawn with the water shader."
+unverified = true
+advanced = true
+
+[[field]]
+ids = ["dcuw"]
+description = "Whether it is hidden when under water."
+unverified = true
+advanced = true
+
+# --- Pathing -----------------------------------------------------------------
+
+[[field]]
+ids = ["dwlk"]
+description = "Whether units can walk on it, like a ramp or a platform."
+
+[[field]]
+ids = ["dptx"]
+description = "Pathing map: the ground it blocks. Empty lets units walk through it."
+
+# --- Editor ------------------------------------------------------------------
+
+[[field]]
+ids = ["dcat"]
+description = "Category it is listed under in the editor's palette (Props, Structures, Environment, ...)."
+
+[[field]]
+ids = ["dtil", "dtsp"]
+description = "Tilesets it is offered for in the palette, and whether it is offered only there."
+advanced = true
+
+[[field]]
+ids = ["dmis", "dmas", "dcpr"]
+description = "Smallest and largest size for random sizes when placing, and whether random sizes are allowed."
+advanced = true
+
+[[field]]
+ids = ["donc", "donw"]
+description = "Whether it can be placed on cliffs, and on water."
+advanced = true
+
+[[field]]
+ids = ["duch", "dimc"]
+description = "Whether the editor draws a helper to make it easier to click, and whether clicks on the model itself are ignored."
+advanced = true
+
+[[field]]
+ids = ["dusr"]
+description = "Whether it shows in the editor's user list."
+unverified = true
+advanced = true
+
+# --- Sound -------------------------------------------------------------------
+
+[[field]]
+ids = ["dsnd"]
+description = "Sound that loops near it, like a torch or a fountain."
