@@ -45,6 +45,7 @@ pre-commit:
 # (technical details) compared with main.
 pre-push:
   jobs:
+    # No `root`: lefthook would then skip the check on pushes that change
+    # nothing under that folder, like Rust-only branches or a release commit.
     - name: changelog and devlog
-      root: object-editor/app/
-      run: bun scripts/check-logs.ts
+      run: bun object-editor/app/scripts/check-logs.ts

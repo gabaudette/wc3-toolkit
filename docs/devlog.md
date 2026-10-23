@@ -4,6 +4,14 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · The pre-push check ran only for app changes
+
+- The changelog and devlog check had `root: object-editor/app/` in `lefthook.yml`. Lefthook
+  then runs a job only when a pushed file is under that root, so the check skipped every push
+  that changed nothing in the app: Rust-only branches, docs, and the 0.1.0 release commit,
+  where lefthook printed "no matching push files". It now runs from the repository root on
+  every push.
+
 ## 2026-10-23 · Version 0.1.0
 
 - The first tagged version. `Unreleased` in the changelog became `0.1.0 - 2026-10-23`, and the
