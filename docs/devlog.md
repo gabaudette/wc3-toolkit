@@ -4,6 +4,26 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Find object fields by goal (PR #35, AGE-31)
+
+- Added an authored “Which field do I change?” guide with 19 tasks across movement, life,
+  mana, vision, combat, costs, shops and appearance. Tasks name the correct object tab and
+  link exact snapshot field labels and raw codes, with companion settings and distinctions.
+- Covered Attack 1/2, acquisition versus attack range, cooldown versus animation timing,
+  defense category versus hit-sound material, item versus unit fields and model scale versus
+  selection/collision settings. Doodad tint guidance links the existing variation limitation.
+- Linked the guide from the homepage, Object data sidebar, editing guide and generated field
+  overview. The authored page remains outside the directories owned by the generator.
+- Reviewed mappings against checked-in metadata and shared field explanations. The page
+  explicitly distinguishes that review from in-game testing; no app behavior changed.
+- Validation: all 101 existing tests pass; Biome and Astro report no diagnostics. The
+  production build and link/asset checks pass across 6,607 pages. An audit checks all 19
+  task anchors, 92 field links covering 88 distinct fields against snapshot labels/shared
+  guides, and 148 internal fragments across the guide and its entry pages. Browser checks
+  cover desktop/mobile layouts, light/dark themes, homepage-to-task-to-field navigation,
+  production search, and keyboard activation. Wrapped index links use block click targets
+  so taps between lines still activate the link. No game behavior was exercised.
+
 ## 2026-10-23 · Practical API explanations (PR #34, AGE-26)
 
 - Added a separate authored API guide catalog for 26 unit, timer, group, trigger and location

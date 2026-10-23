@@ -82,7 +82,10 @@ export default defineConfig({
             { slug: "reference/api/practical" },
           ],
         },
-        { label: "Object data", items: [{ slug: "reference/fields" }] },
+        {
+          label: "Object data",
+          items: [{ slug: "reference/field-tasks" }, { slug: "reference/fields" }],
+        },
         { label: "Map formats", items: [{ autogenerate: { directory: "formats" } }] },
         {
           label: "Contributing",

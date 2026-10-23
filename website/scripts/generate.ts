@@ -419,6 +419,7 @@ await page(
 let fieldCount = 0;
 const fieldIndex = [
   "Every field in the seven project-authored field guides gets its own searchable page. Metadata adds names, types, ranges and choices from the local installation snapshot. Spell-specific ability data fields are also listed, with a clear note where no authored explanation exists.",
+  "Know the goal but not the field? [Which field do I change?](../field-tasks/) maps common tasks to exact field labels and raw codes, including companion settings to check.",
   `**Metadata snapshot:** ${markdown(api.version)}. Guide descriptions are read directly from the editor's TOML files on every build.`,
   "Search by raw code (for example `uarm`) or display name. Start with [Armor Type](./unit/uarm/) versus [Defense Type](./unit/udty/): one changes the hit sound, the other changes combat damage.",
 ];

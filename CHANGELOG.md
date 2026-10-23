@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- A “Which field do I change?” guide mapping 19 common goals to object tabs, field labels,
+  raw codes and companion settings, linked from the homepage, field reference and editing guide.
 - Practical explanations for 26 common APIs, with parameter and return notes, ownership and
   cleanup guidance, common mistakes, related links and paired JASS/Lua examples. A new
   practical guide index and topic links make the curated pages easier to find.
