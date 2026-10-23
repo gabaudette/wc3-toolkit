@@ -25,7 +25,7 @@ examples. Browse the [code examples cookbook](./reference/examples/) for practic
 
 ## Look it up
 
-- **[JASS & Lua API](./reference/api/)** — generated declarations, parameter types, call syntax and selected examples in both languages. Search an exact name like `CreateUnit`.
+- **[API reference](./reference/api/)** — generated declarations, parameter types, call syntax and selected examples in your chosen language. Search an exact name like `CreateUnit`.
 - **[Object field reference](./reference/fields/)** — raw codes, meanings, values and gotchas from the same field guides as the editor.
 - **[Map formats](./formats/object-data/)** — object files, strings, imports and protected maps, based on the toolkit’s readers and writers.
 

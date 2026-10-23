@@ -1,6 +1,6 @@
 ---
 
-title: "JASS and Lua in Warcraft III"
+title: "Scripting basics"
 description: "Read the same game API in two languages and understand raw codes, callbacks and handles."
 ---
 

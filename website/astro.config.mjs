@@ -67,7 +67,7 @@ export default defineConfig({
         },
         { label: "Make something", items: [{ autogenerate: { directory: "guides" } }] },
         {
-          label: "JASS & Lua",
+          label: "Scripting",
           items: [
             { slug: "scripting/languages" },
             { slug: "reference/examples" },

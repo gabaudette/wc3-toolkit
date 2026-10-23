@@ -44,6 +44,8 @@ single line. Every pull request adds an entry here and to the changelog.
 - A remembered global Lua/JASS toggle in the header/mobile menu hides the other language’s
   sections, including setup prose and table-of-contents items. Both variants remain in static
   output for search and no-JavaScript reading. Language choice and code palette are separate.
+  The sidebar uses “Scripting”, “Scripting basics” and “API reference” so navigation applies
+  to either selected language.
 
 ## 2026-10-23 · Category icons, and the real uRoughness fix (AGE-17)
 

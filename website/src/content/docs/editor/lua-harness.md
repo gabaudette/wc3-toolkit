@@ -49,4 +49,4 @@ cargo run --release -p wc3-map --bin wc3map -- path/to/test.w3m lua ../map/src -
 
 Edit the original map in the World Editor and modules in your text editor. Save, rebuild the development copy, then launch that copy in Warcraft III. Do not save changes to the generated development copy and expect them to become part of the original.
 
-Syntax checking catches parsing errors, not missing game APIs, invalid raw codes or runtime mistakes. Test those in game. The [JASS & Lua API](../../reference/api/) helps check parameter order and types.
+Syntax checking catches parsing errors, not missing game APIs, invalid raw codes or runtime mistakes. Test those in game. The [API reference](../../reference/api/) helps check parameter order and types.

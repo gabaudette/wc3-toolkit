@@ -192,7 +192,7 @@ for (const declaration of api.declarations) {
 }
 await page(
   "api/index",
-  "JASS & Lua API",
+  "API reference",
   "Search native functions, Blizzard helpers, handle types and constants.",
   apiIndex.join("\n\n"),
 );
