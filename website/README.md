@@ -80,6 +80,24 @@ produce production deployments and pull requests produce previews. Field guides 
 outside the website directory, so use the repository root as the Vercel project root.
 No adapter, game files, runtime backend or deployment token in GitHub Actions is needed.
 
+### Build only when documentation inputs change
+
+`vercel.json` runs `scripts/ignore-build.mjs` before installation. It compares the current
+commit with `VERCEL_GIT_PREVIOUS_SHA` (the last successful deployment for that branch), so a
+multi-commit push cannot hide an earlier documentation edit. Only these inputs trigger a
+build:
+
+- `website/**`
+- `object-editor/crates/wc3-data/data/**` (the shared field guides)
+- `vercel.json` and `.vercelignore`
+
+Other editor, map, changelog and root README changes skip the build. Vercel can still show a
+skipped deployment/check; it does not install dependencies, build or replace the live site.
+An initial deployment, unavailable Git history or `DOCS_FORCE_BUILD=1` builds conservatively.
+
+The project-level Ignored Build Step also skips branches where the docs script is absent.
+This protects the live site while the documentation PR has not yet been merged into main.
+
 Default canonical URL: `https://tinkerbench-docs.vercel.app`. Set `DOCS_SITE` to change it.
 `DOCS_BASE` supports a subpath such as `/wc3-toolkit` for a static host like GitHub Pages;
 set it consistently for the build and `check:links`. The default is `/`.

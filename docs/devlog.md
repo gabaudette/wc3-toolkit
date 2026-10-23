@@ -22,6 +22,11 @@ single line. Every pull request adds an entry here and to the changelog.
   builds from the repository root so changes to the shared field guides rebuild the site.
   A checked Build Output API package includes the static files and routing explicitly; the
   generic project preset had reported success while producing an empty deployment.
+- Vercel's ignored-build script compares against the last successful branch deployment and
+  watches the website, shared field guides and hosting configuration. It skips unrelated
+  edits, preserves multi-commit changes, and builds if history is unavailable. Integration
+  tests exercise real Git commits. A project-level guard also skips branches without docs,
+  preventing unrelated main pushes from replacing the live site before this PR merges.
 
 ## 2026-10-23 · TGA textures (AGE-18) and the model preview (AGE-17)
 
