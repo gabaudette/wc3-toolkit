@@ -17,7 +17,7 @@ reads and writes the same object data as the World Editor.
 
 [![Tinkerbench showing the Paladin, searchable objects, grouped fields, a 3D model and field explanations.](website/public/screenshots/unit-editor.png)](https://tinkerbench-docs.vercel.app/editor/visual-tour/)
 
-*Image subject to change.*
+<p align="center"><sub><em>Image subject to change.</em></sub></p>
 
 Find an object, understand a field, and see the result in one workbench:
 

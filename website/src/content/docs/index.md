@@ -6,7 +6,9 @@ description: "Tinkerbench, JASS and Lua, and Warcraft III object data in one pla
 
 Make a unit, change a spell, understand a field. This is the working handbook for **Tinkerbench** and Warcraft III map making.
 
+:::caution[Early development]
 Tinkerbench is in early development. Use a copy of your map while trying the editor.
+:::
 
 ## Meet Tinkerbench
 
@@ -17,7 +19,7 @@ the workbench.
   <a href="./screenshots/unit-editor.png">
     <img src="./screenshots/unit-editor.png" alt="Tinkerbench with the Paladin selected: searchable objects on the left, grouped fields in the center, and a 3D model and field explanation on the right." width="1440" height="900" fetchpriority="high" />
   </a>
-  <figcaption>The unit editor, running with a real Warcraft III installation. Select the screenshot to see it at full size.<br />Image subject to change.</figcaption>
+  <figcaption>The unit editor, running with a real Warcraft III installation. Select the screenshot to see it at full size.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 - **Find an object quickly.** Search by name or raw code, or use **Ctrl K** across object types.

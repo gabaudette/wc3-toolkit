@@ -19,7 +19,7 @@ For this first pass, change an existing unit’s maximum life. Tinkerbench edits
   <a href="../../screenshots/open-map.png">
     <img src="../../screenshots/open-map.png" alt="The startup Map section after game data loads, with buttons to reopen the last map, open a map or browse game data only." width="600" height="600" loading="lazy" />
   </a>
-  <figcaption>Choose Open a map… to select your test map. Reopen appears when a previous map is remembered.<br />Image subject to change.</figcaption>
+  <figcaption>Choose Open a map… to select your test map. Reopen appears when a previous map is remembered.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 ## Change one field

@@ -21,7 +21,7 @@ previous session.
   <a href="../../screenshots/load-game.png">
     <img src="../../screenshots/load-game.png" alt="Tinkerbench’s first startup screen with a Warcraft III folder path, Browse button, HD art checkbox and Load game data button." width="600" height="420" />
   </a>
-  <figcaption>Choose your game installation, select the art mode, then load its object data.<br />Image subject to change.</figcaption>
+  <figcaption>Choose your game installation, select the art mode, then load its object data.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 Enable **Use HD (Reforged) art values and icons** if you want HD art, then select
@@ -38,7 +38,7 @@ map. If you previously opened a map, **Reopen** offers that file directly.
   <a href="../../screenshots/open-map.png">
     <img src="../../screenshots/open-map.png" alt="Tinkerbench’s startup screen after loading 928 units, with a Map section offering Reopen test.w3m, Open a map and Browse game data only." width="600" height="600" loading="lazy" />
   </a>
-  <figcaption>Once the game is loaded, open a map to edit it or browse the game data read-only.<br />Image subject to change.</figcaption>
+  <figcaption>Once the game is loaded, open a map to edit it or browse the game data read-only.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 **Browse game data only** opens the workbench without a map. You can inspect objects, fields
@@ -54,7 +54,7 @@ map to follow along with, see [your first map](../first-map/).
   <a href="../../screenshots/unit-editor.png">
     <img src="../../screenshots/unit-editor.png" alt="Paladin selected in the Units tab, with object search on the left, stats and grouped fields in the center, and its model and hit point explanation in the inspector." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The Paladin’s page brings its identity, values, model and field help into one view.<br />Image subject to change.</figcaption>
+  <figcaption>The Paladin’s page brings its identity, values, model and field help into one view.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 | Area            | What you can do                                                                                           |
@@ -79,7 +79,7 @@ object types, so you can find an ability while browsing units.
   <a href="../../screenshots/object-search.png">
     <img src="../../screenshots/object-search.png" alt="The Ctrl K search overlay showing Holy Light ability results, their icons and raw codes above the unit editor." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Use the raw code on the right to distinguish objects with the same name.<br />Image subject to change.</figcaption>
+  <figcaption>Use the raw code on the right to distinguish objects with the same name.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 The left column’s search stays within the current tab. It also matches field values, which
@@ -95,7 +95,7 @@ beside **Hit Points Maximum (Base)** (`uhpm`) to read its explanation in the ins
   <a href="../../screenshots/field-inspector.png">
     <img src="../../screenshots/field-inspector.png" alt="The Paladin’s fields filtered to hit points, showing a base maximum of 100, regeneration fields, and an inspector explaining that heroes gain additional life from Strength." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The inspector explains why a hero’s base hit points are only part of its in-game life.<br />Image subject to change.</figcaption>
+  <figcaption>The inspector explains why a hero’s base hit points are only part of its in-game life.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 Change a value in the center column. The editor highlights overrides and keeps the inherited
@@ -116,7 +116,7 @@ resolved tooltip and puts per-level numbers in a table. Select the information b
   <a href="../../screenshots/ability-levels.png">
     <img src="../../screenshots/ability-levels.png" alt="Holy Light’s ability editor showing its colored tooltip, three level columns for mana cost, cooldown and cast range, and mana cost help in the inspector." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Holy Light has three levels. Its tooltip preview and level table are visible together.<br />Image subject to change.</figcaption>
+  <figcaption>Holy Light has three levels. Its tooltip preview and level table are visible together.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 Use the table’s keyboard controls:

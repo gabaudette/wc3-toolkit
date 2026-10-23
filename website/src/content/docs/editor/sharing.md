@@ -20,7 +20,7 @@ Select either screenshot to open it at full size.
   <a href="../../screenshots/share-code.png">
     <img src="../../screenshots/share-code.png" alt="Share units dialog with test_hero selected, its generated W3OBJ1 code and object preview, plus Save bundle file and Copy code buttons." width="680" height="540" />
   </a>
-  <figcaption>The generated code and included objects appear together. Copy the code, or use Save bundle file… to include imported assets.<br />Image subject to change.</figcaption>
+  <figcaption>The generated code and included objects appear together. Copy the code, or use Save bundle file… to include imported assets.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 A share code carries object definitions. It does not carry imported models, textures or icons.
@@ -37,7 +37,7 @@ A share code carries object definitions. It does not carry imported models, text
   <a href="../../screenshots/import-preview.png">
     <img src="../../screenshots/import-preview.png" alt="Import objects preview on the Share code tab, showing test_hero with raw code H000 reassigned to H001, and Cancel and Import 1 object buttons." width="680" height="420" loading="lazy" />
   </a>
-  <figcaption>The preview proposes H000 → H001 because H000 already exists in this map. Review the new code before choosing Import 1 object.<br />Image subject to change.</figcaption>
+  <figcaption>The preview proposes H000 → H001 because H000 already exists in this map. Review the new code before choosing Import 1 object.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 **Preview** lets you review the import before applying it. **Cancel** closes the dialog.

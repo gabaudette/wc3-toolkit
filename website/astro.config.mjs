@@ -32,7 +32,7 @@ export default defineConfig({
   base: process.env.DOCS_BASE || "/",
   integrations: [
     starlight({
-      title: "Tinkerbench · Field guide",
+      title: "Tinkerbench",
       logo: { src: "./src/assets/tinkerbench.png", alt: "Tinkerbench gnome" },
       favicon: "/icon-128.png",
       disable404Route: true,
