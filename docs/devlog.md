@@ -4,6 +4,30 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Contextual documentation reports (AGE-35)
+
+- Added a shared footer link that opens a GitHub issue draft with page title, canonical URL,
+  and prompts for the problem, expected result and relevant details. Static links work
+  without JavaScript; GitHub owns sign-in and submission. The site sends no report itself.
+- Generated API and field frontmatter preserves exact symbol/source/kind and case-sensitive
+  field code/object type. A client helper includes the selected language on paired-example
+  pages and refreshes links when that preference changes, including across tabs. Canonical
+  context uses the configured site and deployment base, excluding browser query strings.
+- Excluded the controls from search and added documentation reporting guidance plus source
+  maintenance notes. Added URL tests for encoding, prompts, language and reference context.
+- Validation: all 127 tests pass; Biome and Astro report no diagnostics. Production build
+  and local link/asset checks pass across 6,610 pages. A rendered-site audit checks one
+  encoded report link on all 6,609 documentation pages and verifies 5,131 API plus 1,421
+  case-sensitive field references against their sources. Static links retain context
+  without inventing a selected language; the 404 page omits the report control.
+  Browser checks cover authored/API/field pages, language changes and storage events,
+  desktop/320px layouts in both themes, keyboard activation and guidance navigation.
+  The signed-out GitHub flow preserves the draft title/body in its sign-in return URL.
+  A temporary subpath preview verifies the alternate canonical domain and guidance anchor;
+  normalized the base-path slash after that check caught a malformed guidance link.
+  Report controls stay out of Pagefind content; no documentation browser errors occurred.
+  No GitHub report was submitted, and no game execution was needed.
+
 ## 2026-10-23 · Visual scripting lifecycles (PR #39, AGE-36)
 
 - Added six responsive HTML/CSS flow diagrams covering one-shot/periodic timers,

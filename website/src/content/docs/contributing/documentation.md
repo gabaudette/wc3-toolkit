@@ -7,6 +7,26 @@ description: "Preview the website, edit authored guides and shared field explana
 You can improve the guides and website without installing Warcraft III. The build uses
 checked-in declaration and field metadata, alongside the project’s own explanations.
 
+## Report a documentation problem
+
+Use **Report a documentation problem** at the bottom of the affected page. It opens a
+GitHub issue draft with the page title and canonical URL. API and field pages also include
+their identifier; pages with paired examples include your selected Lua/JASS language when
+JavaScript is available. You do not need to sign in on this website. GitHub may ask you to
+sign in before you can submit the report.
+
+[Search existing issues](https://github.com/gabaudette/wc3-toolkit/issues) first, then review
+the prefilled context and describe:
+1. What is incorrect or unclear. Quote the affected text or identify the broken link or
+   example. Include the steps and exact error text when something fails.
+2. What you expected the explanation or example to say or do.
+3. Relevant details, such as Tinkerbench/Warcraft III versions, an object or field ID, or a
+   minimal example. A screenshot can help explain a layout problem.
+
+For a general documentation suggestion, [open a new issue](https://github.com/gabaudette/wc3-toolkit/issues/new)
+and include the affected page links yourself. For editor problems, follow the
+[bug-report guidance](../#report-a-useful-bug).
+
 ## Run the website locally
 
 Use Node.js 24 and Bun 1.4.2. After cloning the

@@ -1,12 +1,15 @@
 ---
 // biome-ignore lint/correctness/noUnusedImports: Used in the Astro template, which Biome does not analyze.
 import DefaultFooter from "@astrojs/starlight/components/Footer.astro";
+// biome-ignore lint/correctness/noUnusedImports: Used in the Astro template.
+import DocumentationReport from "./DocumentationReport.astro";
 
 // biome-ignore lint/correctness/noUnusedVariables: Used in the Astro template, which Biome does not analyze.
 const year = new Date().getUTCFullYear();
 ---
 
 <div role="contentinfo" aria-label="Site footer">
+  {Astro.locals.starlightRoute.entry.id !== "404" && <DocumentationReport />}
   <DefaultFooter />
   <p class="copyright">
     © {year} Tinkerbench. Gabriel Audette and wc3-toolkit contributors.{" "}
