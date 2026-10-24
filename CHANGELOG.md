@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Visual scripting lifecycles for timers, groups and locations, with six responsive diagrams,
+  accessible text explanations and five expandable examples that follow the Lua/JASS toggle.
 - Comparisons for Armor Type versus Defense Type, removing versus killing units, and
   coordinates versus location handles, with decision tables, cleanup notes and linked examples.
 - A linked map-making glossary with 33 definitions, examples and reference links, including

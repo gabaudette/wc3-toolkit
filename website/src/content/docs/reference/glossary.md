@@ -228,6 +228,9 @@ a variable does not destroy the engine timer. A borrowed event or enumeration re
 not automatically become yours to destroy. See [handles and cleanup](../../scripting/languages/#handles-and-cleanup)
 and the [practical API guides](../api/practical/).
 
+The [visual scripting lifecycles](../lifecycles/) trace those responsibilities for timers,
+groups and locations, including the difference between retaining and releasing a handle.
+
 ### Per-level field
 
 A field with a separate value for each ability or upgrade level, rather than one shared

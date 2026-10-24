@@ -173,3 +173,5 @@ use valid references and follow the linked API caveats.
 
 Continue with [handles and cleanup](../../scripting/languages/#handles-and-cleanup) or
 [ownership in the glossary](../glossary/#ownership-and-cleanup).
+
+For the allocation-to-cleanup flow, see the [location lifecycle diagrams](../lifecycles/#locations).

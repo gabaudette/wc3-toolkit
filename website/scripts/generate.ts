@@ -4,6 +4,7 @@ import { API_CATEGORIES, categoryFor } from "./api-categories";
 import { guideKey, validateApiGuides } from "./api-guides";
 import type { Declaration } from "./jass";
 import { signatures } from "./jass";
+import { expandLifecycleExamples } from "./lifecycle-examples";
 
 type ApiSnapshot = {
   version: string;
@@ -58,6 +59,42 @@ const conceptComparisons: ConceptComparison[] = [
     anchor: "coordinates-versus-location-handles",
     apis: ["GetUnitX", "GetUnitY", "GetUnitLoc", "Location", "RemoveLocation"],
     unitFields: [],
+  },
+];
+const lifecycleGuides = [
+  {
+    title: "Timer lifecycles",
+    anchor: "timers",
+    apis: ["CreateTimer", "TimerStart", "PauseTimer", "DestroyTimer", "GetExpiredTimer"],
+  },
+  {
+    title: "Group lifecycles",
+    anchor: "groups",
+    apis: [
+      "CreateGroup",
+      "GroupEnumUnitsOfPlayer",
+      "GroupEnumUnitsInRange",
+      "ForGroup",
+      "GetEnumUnit",
+      "FirstOfGroup",
+      "GroupAddUnit",
+      "GroupRemoveUnit",
+      "GroupClear",
+      "DestroyGroup",
+    ],
+  },
+  {
+    title: "Location lifecycles",
+    anchor: "locations",
+    apis: [
+      "Location",
+      "GetUnitLoc",
+      "GetLocationX",
+      "GetLocationY",
+      "GetUnitX",
+      "GetUnitY",
+      "RemoveLocation",
+    ],
   },
 ];
 
@@ -151,9 +188,13 @@ const practical = validateApiGuides(
   api.declarations,
   examples,
 );
+const lifecycleBody = expandLifecycleExamples(
+  await Bun.file(new URL("data/lifecycles.md", root)).text(),
+  examples,
+);
 
 await mkdir(output, { recursive: true });
-for (const directory of ["api", "fields", "examples"]) {
+for (const directory of ["api", "fields", "examples", "lifecycles"]) {
   // These ignored directories are owned entirely by this generator.
   await rm(new URL(`${directory}/`, output), { force: true, recursive: true });
 }
@@ -172,6 +213,7 @@ const apiIndex = [
   "Blizzard helpers can have their own behavior and overhead; inspect your local script when implementation details matter.",
   "[Read scripting basics](../../scripting/languages/). Generated call syntax uses parameter names as placeholders; it is not a runnable example by itself. Authored examples are labeled separately.",
   "Need a definition? The [map-making glossary](../glossary/) explains raw codes, natives, Blizzard helpers and handle ownership.",
+  "[Follow visual scripting lifecycles](../lifecycles/) for timer, group and location ownership diagrams with paired code examples.",
 ];
 
 const alphabeticalIndex: string[] = [
@@ -289,6 +331,7 @@ const practicalIndex = [
   practical.verification,
   `**Source snapshot:** ${markdown(api.version)}. [All API topics](../) · [Full alphabetical index](../alphabetical/) · [Code examples](../../examples/)`,
   "Choose Lua or JASS in the top bar to switch syntax and language-specific guidance. Shared parameter and cleanup notes apply to both languages.",
+  "[Visual scripting lifecycles](../../lifecycles/) connect timer, group and location API calls with ownership diagrams and code examples.",
 ];
 for (const category of categories) {
   const members = category.members
@@ -321,6 +364,12 @@ for (const declaration of api.declarations) {
   if (comparison) {
     body.push(
       `Compare: [${comparison.title}](${link(from, "reference/common-confusions")}#${comparison.anchor}).`,
+    );
+  }
+  const lifecycle = lifecycleGuides.find((entry) => entry.apis.includes(declaration.name));
+  if (lifecycle) {
+    body.push(
+      `Lifecycle diagrams: [${lifecycle.title}](${link(from, "reference/lifecycles")}#${lifecycle.anchor}).`,
     );
   }
   if (guide) {
@@ -431,6 +480,7 @@ await page(
 const exampleIndex = [
   "Choose **Lua** or **JASS** in the top bar (in the menu on mobile). Your choice applies to guides and API examples and is remembered across pages.",
   "Each linked recipe includes setup requirements and cleanup where it owns temporary handles. Call the named entry point after map initialization.",
+  "[Visual scripting lifecycles](../lifecycles/) pair selected recipes with timer, group and location ownership diagrams.",
   languageSection(
     "lua",
     "In the Lua harness, register a no-argument entry point with `Dev.OnStart(ExampleName)`; pass arguments inside a callback when needed.",
@@ -461,6 +511,12 @@ await page(
   "Code examples",
   "Practical JASS and Lua recipes for units, spells, timers, groups, effects and game systems.",
   exampleIndex.join("\n\n"),
+);
+await page(
+  "lifecycles/index",
+  "Visual scripting lifecycles",
+  "Visual guides and paired JASS/Lua recipes for timer, group and location ownership, reuse and cleanup.",
+  lifecycleBody,
 );
 
 let fieldCount = 0;

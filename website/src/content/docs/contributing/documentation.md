@@ -31,12 +31,14 @@ the reference pages.
 | Object-field explanations shared with the editor   | `object-editor/crates/wc3-data/data/*-fields.toml` |
 | API declaration metadata                           | `website/data/api.json`                            |
 | Field display names, types, ranges and choices     | `website/data/fields.toml`                         |
+| Lifecycle diagrams and guide template              | `website/data/lifecycles.md`                       |
 | Paired JASS/Lua recipes                            | `website/data/examples.json`                       |
 | Application screenshots                            | `website/public/screenshots/`                      |
 
-Pages under `website/src/content/docs/reference/{api,fields,examples}/` are generated and
+Pages under `website/src/content/docs/reference/{api,fields,examples,lifecycles}/` are generated and
 ignored by Git. Edit their source guides, snapshots or generator instead of changing those
-Markdown files directly.
+Markdown files directly. The lifecycle template embeds existing paired recipes through
+`<!-- lifecycle-example: Name -->` markers; edit the shared recipe source to change its code.
 
 Refreshing API and field snapshots requires a local game installation. Follow
 [the extraction and refresh instructions](https://github.com/gabaudette/wc3-toolkit/blob/main/website/README.md#refresh-local-api-and-metadata)

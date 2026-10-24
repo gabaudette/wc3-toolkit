@@ -85,6 +85,7 @@ export default defineConfig({
           label: "Scripting",
           items: [
             { slug: "scripting/languages" },
+            { slug: "reference/lifecycles", label: "Resource lifecycles" },
             { slug: "reference/examples" },
             { slug: "reference/api" },
             { slug: "reference/api/practical" },
