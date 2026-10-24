@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-23 · Visual scripting lifecycles (AGE-36)
+## 2026-10-23 · Visual scripting lifecycles (PR #39, AGE-36)
 
 - Added six responsive HTML/CSS flow diagrams covering one-shot/periodic timers,
   scratch/reusable groups, temporary locations and the numeric-coordinate alternative.
