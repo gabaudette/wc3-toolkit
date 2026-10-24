@@ -123,6 +123,7 @@ async function page(
   description: string,
   body: string,
   practicalGuide = false,
+  reportReference?: string,
 ) {
   const url = new URL(`${path}.md`, output);
   await mkdir(new URL(".", url), { recursive: true });
@@ -130,9 +131,13 @@ async function page(
   if (practicalGuide) {
     practicalMetadata = "practicalGuide: true\n";
   }
+  let reportMetadata = "";
+  if (reportReference) {
+    reportMetadata = `reportReference: ${JSON.stringify(reportReference)}\n`;
+  }
   await Bun.write(
     url,
-    `---\ntitle: ${JSON.stringify(title)}\ndescription: ${JSON.stringify(description)}\neditUrl: false\n${practicalMetadata}---\n\n${body}\n`,
+    `---\ntitle: ${JSON.stringify(title)}\ndescription: ${JSON.stringify(description)}\neditUrl: false\n${practicalMetadata}${reportMetadata}---\n\n${body}\n`,
   );
 }
 
@@ -462,6 +467,7 @@ for (const declaration of api.declarations) {
       `${declaration.kind} from ${declaration.source}: JASS declaration, Lua usage and parameter types.`,
     body.join("\n\n"),
     Boolean(guide),
+    `API: ${declaration.name} (${declaration.source}, ${declaration.kind})`,
   );
 }
 await page(
@@ -621,6 +627,8 @@ for (const kind of catalogs) {
       `${name} · ${id}`,
       `${kind} field ${id}: ${entry?.description ?? name}`,
       body.join("\n\n"),
+      false,
+      `Field: ${id} (${kind})`,
     );
     index.push(`| [${markdown(name)}](./${id.toLowerCase()}/) | ${code(id)} |`);
   }

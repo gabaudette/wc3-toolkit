@@ -1,0 +1,51 @@
+---
+import { documentationReportUrl } from "../documentationReport";
+
+const { title, reportReference } = Astro.locals.starlightRoute.entry.data;
+const canonicalUrl = new URL(Astro.url.pathname, Astro.site).href;
+// biome-ignore lint/correctness/noUnusedVariables: Used in the Astro template.
+const reportUrl = documentationReportUrl({ title, canonicalUrl, reference: reportReference });
+// biome-ignore lint/correctness/noUnusedVariables: Used in the Astro template.
+const guidanceUrl = `${import.meta.env.BASE_URL.replace(/\/$/, "")}/contributing/documentation/#report-a-documentation-problem`;
+---
+
+<div class="documentation-report" data-pagefind-ignore>
+  <a
+    href={reportUrl}
+    data-documentation-report
+    data-report-title={title}
+    data-report-url={canonicalUrl}
+    data-report-reference={reportReference}
+    target="_blank"
+    rel="noopener noreferrer"
+  >Report a documentation problem</a>
+  <p>Opens a GitHub issue draft. <a href={guidanceUrl}>What to include</a>.</p>
+</div>
+
+<script>
+  import "../documentationReportLinks";
+</script>
+
+<style>
+  .documentation-report {
+    margin-top: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--sl-color-gray-5);
+    font-size: var(--sl-text-sm);
+    line-height: 1.7;
+  }
+
+  .documentation-report > a {
+    color: var(--sl-color-accent-high);
+  }
+
+  .documentation-report p {
+    margin-top: 0.25rem;
+    color: var(--sl-color-gray-3);
+    font-size: var(--sl-text-xs);
+  }
+
+  .documentation-report p a {
+    color: inherit;
+  }
+</style>

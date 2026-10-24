@@ -6,7 +6,12 @@ import { z } from "astro/zod";
 export const collections = {
   docs: defineCollection({
     loader: docsLoader(),
-    schema: docsSchema({ extend: z.object({ practicalGuide: z.boolean().default(false) }) }),
+    schema: docsSchema({
+      extend: z.object({
+        practicalGuide: z.boolean().default(false),
+        reportReference: z.string().optional(),
+      }),
+    }),
   }),
   i18n: defineCollection({ loader: i18nLoader(), schema: i18nSchema() }),
 };

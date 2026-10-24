@@ -18,6 +18,8 @@ not require a Warcraft III installation.
   and its checks.
 - **Want to improve this site?** Follow [documentation contributions](./documentation/) to
   preview guides, field explanations and examples.
+- **Found a documentation problem?** Use the report link at the bottom of the affected page
+  to include its context, then follow [what to include](./documentation/#report-a-documentation-problem).
 
 Small corrections to labels, explanations and examples are useful contributions too. The
 [project goals](https://github.com/gabaudette/wc3-toolkit/blob/main/docs/pet-peeves.md) describe

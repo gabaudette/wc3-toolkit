@@ -111,6 +111,18 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   route boundaries, curated flags and classification; verify actual ranking and UI against
   the production build for a guide query, `CreateUnit`, `uarm` and a no-match query.
 - `scripts/jass-language.mjs`: project-authored JASS highlighting grammar.
+- `src/components/DocumentationReport.astro`: shared footer report link, including authored
+  and generated pages. `src/documentationReport.ts` constructs a draft using GitHub's
+  [title/body query parameters](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/creating-an-issue#creating-an-issue-from-a-url-query).
+  The server supplies the title and canonical URL from the configured site and page path,
+  so preview hosts and browser query strings are not report context. The generator writes
+  optional `reportReference` frontmatter from exact API symbols/source/kind or field raw
+  codes/object types; do not infer case-sensitive raw codes from lowercase route slugs.
+  `src/documentationReportLinks.ts` adds the current language only on pages with paired
+  sections and refreshes the normal anchor when the global selection changes. Without
+  JavaScript, the server-rendered link still opens a draft with page/reference context.
+  Report controls are excluded from Pagefind; reporting guidance is authored in the
+  documentation contribution guide. GitHub handles sign-in and reader submission.
 - `src/codeThemes.ts`: bundled snippet themes, shared by highlighting and the native pickers.
   Snippet colors are independent of the site theme; “Follow site theme” selects GitHub Dark
   or Light. The preference is restored before paint and synchronized across snippets/tabs.

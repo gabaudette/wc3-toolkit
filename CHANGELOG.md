@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Contextual documentation problem links that open a GitHub draft with the page, API or
+  field identifier and selected example language.
 - Visual scripting lifecycles for timers, groups and locations, with six responsive diagrams,
   accessible text explanations and five expandable examples that follow the Lua/JASS toggle.
 - Comparisons for Armor Type versus Defense Type, removing versus killing units, and
