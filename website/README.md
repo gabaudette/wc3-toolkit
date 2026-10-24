@@ -82,6 +82,15 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   the exact game build, test setup and observed result before changing the status text.
   Validation rejects unresolved or ambiguous symbols/links, stale parameter names, duplicate
   guides, blank guidance and missing or unrelated examples before replacing generated pages.
+- `data/lifecycles.md`: authored lifecycle-guide template. Diagrams use semantic HTML and
+  the theme-aware flow styles in `src/styles/custom.css`; each has a visible text-equivalent
+  caption, while decorative diagram nodes are hidden from assistive technology. The
+  `<!-- lifecycle-example: Name -->` markers expand recipes from `data/examples.json` into
+  native, keyboard-accessible Code disclosures. Both languages remain in the generated
+  page and follow the existing toggle. Duplicate folded code is excluded from Pagefind;
+  the canonical API recipes remain searchable. The generator rejects missing, incomplete
+  or malformed recipe markers before replacing generated pages. Its `lifecycleGuides`
+  mapping adds API backlinks; keep resource anchors aligned with the template headings.
 - `data/examples.json`: paired, complete JASS and Lua recipes with titles, categories and
   usage instructions. The API pages and generated examples cookbook use this same source.
   `examples.test.ts` checks Lua 5.3 syntax, named entry points, API references and duplicate
@@ -114,7 +123,7 @@ such as the Lua harness stay readable.
 The content cache is keyed by the theme configuration and JASS grammar, so Markdown cannot
 retain stylesheet references from an older syntax-highlighting configuration.
 
-Generated pages in `src/content/docs/reference/{api,fields,examples}/` are ignored. Every build
+Generated pages in `src/content/docs/reference/{api,fields,examples,lifecycles}/` are ignored. Every build
 regenerates them. Edit the source guide or snapshot, rather than generated Markdown.
 URLs include the script filename and declaration kind so `rect` (type) and `Rect` (native)
 remain distinct on case-insensitive hosts. Generation rejects duplicate URL paths and guide IDs.

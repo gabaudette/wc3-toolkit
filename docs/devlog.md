@@ -4,6 +4,30 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-23 · Visual scripting lifecycles (AGE-36)
+
+- Added six responsive HTML/CSS flow diagrams covering one-shot/periodic timers,
+  scratch/reusable groups, temporary locations and the numeric-coordinate alternative.
+  Owned handles, borrowed references, repeat paths and final release have explicit labels.
+  Visible text-equivalent captions provide the same flows without decorative diagram nodes.
+- Added a lifecycle template and recipe expansion helper. Five native Code disclosures
+  reuse both languages verbatim from the existing recipe catalog; the global toggle and
+  snippet themes apply. Folded duplicate code is excluded from search. Template validation
+  runs before generation removes existing output, with tests for source reuse and errors.
+- Linked the guide from navigation, the homepage, scripting/ownership/comparison guides,
+  API and example indexes, plus 22 targeted API backlinks. Documented generated-directory
+  ownership, recipe markers, diagram styling and anchor maintenance.
+- Validation: all 124 tests pass, including paired-source reuse and invalid marker cases;
+  Biome and Astro report no diagnostics. Build and local link/asset checks pass across
+  6,610 pages. A separate audit verifies six figures/text equivalents, five disclosures,
+  22 API backlinks and 1,090 internal fragments across 30 pages. PJass accepts each of the
+  five JASS recipes against the local scripts; the existing tests parse paired Lua syntax.
+  Browser checks cover both themes at desktop and 320px, arrow direction, unclipped cards,
+  keyboard disclosure activation, language switching and recipe/backlink navigation.
+  Three lifecycle searches find the guide in the first five Guides results; exact API/field
+  lookups retain their reference first and folded duplicate code stays out of the index.
+  No browser errors were reported. Game behavior was not exercised; caveats remain explicit.
+
 ## 2026-10-23 · Commonly confused concepts (PR #38, AGE-34)
 
 - Added three authored comparisons: armor material versus defense category/base armor,

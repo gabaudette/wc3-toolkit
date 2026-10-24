@@ -94,6 +94,9 @@ Units, timers, groups, locations and triggers are engine handles. Clearing a var
 For concrete decisions, compare [removing versus killing a unit](../../reference/common-confusions/#removing-versus-killing-a-unit)
 and [coordinates versus location handles](../../reference/common-confusions/#coordinates-versus-location-handles).
 
+The [visual scripting lifecycles](../../reference/lifecycles/) show allocation, use, reuse and
+cleanup for timers, groups and locations, with expandable examples in your selected language.
+
 <section data-example-language="jass">
 
 Clear local handle references with `null` when appropriate after releasing the owned resource. In the timer example, clearing the local reference does not stop the timer; the expiry callback destroys it.
