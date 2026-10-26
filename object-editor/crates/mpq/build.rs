@@ -1,7 +1,13 @@
 use std::path::PathBuf;
 
 fn main() {
-    let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    // Read when the script runs, not when it compiles (`env!`): Cargo reuses a
+    // compiled build script for another checkout of the same crate that shares
+    // the target folder (a worktree), and a baked-in path points at the old one.
+    // Cargo runs build scripts from the crate folder, so the fallback is "here".
+    let manifest = std::env::var_os("CARGO_MANIFEST_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_default();
     let source = manifest.join("../../vendor/StormLib");
 
     // StormLib's own CMake build lists its 240+ sources, including bundled zlib,

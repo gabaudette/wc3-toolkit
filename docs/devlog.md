@@ -4,6 +4,16 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-26 · Build scripts find their sources wherever they run
+
+- The `casc` and `mpq` build scripts located the vendored CascLib and StormLib with
+  `env!("CARGO_MANIFEST_DIR")`, which fixes the path when the script is compiled. Cargo reuses a
+  compiled build script for another checkout of the same crate that shares the target folder
+  (a git worktree with `CARGO_TARGET_DIR` pointing at the main one), so after the worktree
+  was removed, the main checkout's build looked for `shim.cpp` and StormLib in the deleted
+  folder and failed. Both now read `CARGO_MANIFEST_DIR` when they run, as Cargo sets it for
+  every build script run; the compiled scripts no longer contain any checkout path.
+
 ## 2026-10-26 · Documentation deploys from GitHub Actions
 
 - Every pull request got a Vercel build, comment and check, even editor-only ones. The
