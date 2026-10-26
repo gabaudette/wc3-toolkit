@@ -223,3 +223,37 @@ pub fn create_plain(
             .ok_or(format!("Created {id} but cannot show it."))
     })
 }
+
+/// Removes a custom object, such as a buff the spell wizard created when the
+/// wizard is cancelled. Game objects are never removed.
+#[tauri::command]
+pub fn discard_plain(
+    state: State<'_, AppState>,
+    catalog: Catalog,
+    id: String,
+) -> Result<(), String> {
+    let id = fourcc(&id)?;
+    state.with(|session| {
+        let map = session.map.as_mut().ok_or(NO_MAP)?;
+        let OpenMap {
+            items,
+            buffs,
+            destructables,
+            units,
+            ..
+        } = map;
+        let objects = match catalog {
+            Catalog::Items => items,
+            Catalog::Buffs => buffs,
+            Catalog::Destructables => destructables,
+        };
+        if objects.remove(units.strings_mut(), id) {
+            Ok(())
+        } else {
+            Err(format!(
+                "{id} is not a custom {} of this map.",
+                catalog.singular()
+            ))
+        }
+    })
+}

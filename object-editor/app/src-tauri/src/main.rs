@@ -56,6 +56,7 @@ fn main() -> ExitCode {
             plain::set_plain_field,
             plain::reset_plain_field,
             plain::create_plain,
+            plain::discard_plain,
             leveled::list_leveled,
             leveled::leveled_detail,
             leveled::search_leveled,

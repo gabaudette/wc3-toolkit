@@ -79,6 +79,8 @@ export const api = {
     invoke<Field>("reset_plain_field", { catalog, id, field }),
   createPlain: (catalog: Catalog, base: string) =>
     invoke<UnitItem>("create_plain", { catalog, base }),
+  /** Removes a custom object, such as a buff the spell wizard created when it is cancelled. */
+  discardPlain: (catalog: Catalog, id: string) => invoke<void>("discard_plain", { catalog, id }),
   listLeveled: (catalog: LeveledCatalog) => invoke<UnitItem[]>("list_leveled", { catalog }),
   leveledDetail: (catalog: LeveledCatalog, id: string) =>
     invoke<AbilityDetail>("leveled_detail", { catalog, id }),

@@ -12,6 +12,9 @@ under "What's new".
   stun, summon, aura and 9 more), suggests game abilities to start from and why, then sets its
   name, levels, targets, range, cooldown, mana, its own values and tooltips in one table, with
   the tooltip previewed live. Cancelling leaves the map as it was.
+- Spell wizard buff step: give the spell its own buff (a copy of the original's, named after
+  your spell, with its own tooltip), keep the original's, or pick any other. The spell's buff is
+  set at every level, and cancelling removes the new buff too.
 - Contextual documentation problem links that open a GitHub draft with the page, API or
   field identifier and selected example language.
 - Visual scripting lifecycles for timers, groups and locations, with six responsive diagrams,

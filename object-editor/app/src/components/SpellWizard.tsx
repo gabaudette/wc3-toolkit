@@ -1,14 +1,24 @@
 import { ArrowLeft } from "@untitledui/icons";
 import { useEffect, useRef, useState } from "react";
 import { api, errorMessage } from "../api";
-import type { AbilityDetail, Field, LevelField, SpellBase, SpellKind } from "../types";
+import type {
+  AbilityDetail,
+  Field,
+  LevelField,
+  SpellBase,
+  SpellKind,
+  UnitDetail,
+  UnitItem,
+} from "../types";
 import { levelCount } from "../ui";
 import { AbilityPicker } from "./AbilityPicker";
 import { Button } from "./Button";
+import { CommitInput } from "./CommitInput";
 import { DialogShell } from "./DialogShell";
 import { GameText } from "./GameText";
 import { LevelTable } from "./LevelTable";
 import { LevelText } from "./LevelText";
+import { type BuffChoice, SpellBuffStep } from "./SpellBuffStep";
 import { PlaceholderValues } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
@@ -21,7 +31,7 @@ type SpellWizardProps = {
   onMapChanged: () => void;
 };
 
-type Step = "kind" | "base" | "values";
+type Step = "kind" | "base" | "values" | "buff";
 
 const NAME = "anam";
 const LEVELS = "alev";
@@ -36,11 +46,17 @@ const PLACEHOLDER_TEXTS = ["aub1", "auu1", "arut"];
 /** Texts that usually repeat the spell's name: tooltip titles and the learn title. */
 const NAMED_TEXTS = ["atp1", "aret"];
 const NO_LEVEL = 0;
+/** The buffs a spell leaves on its target, per level, as a comma list of IDs. */
+const BUFFS = "abuf";
+/** Fields of a spell's own buff named after it: the editor's name and the tooltip title. */
+const BUFF_NAMES = ["fnam", "ftip"];
+const BASE_BUFF: BuffChoice = { kind: "base" };
 
 const STEP_TITLES: Record<Step, string> = {
   kind: "New spell: what does it do?",
   base: "New spell: start from",
   values: "New spell: values",
+  buff: "New spell: buff",
 };
 
 /** The fields the values step edits: the common ones first, then the base ability's own. */
@@ -98,6 +114,40 @@ function namedTexts(detail: AbilityDetail, id: string): { raw: string; level: nu
   return [];
 }
 
+/** The IDs in a comma list such as `BPSE,BHbd`. */
+function idList(text: string): string[] {
+  return text
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+}
+
+/**
+ * The spell's buff field for a choice, or `null` to keep the base ability's.
+ * Its own buff replaces the base's first and keeps any others (a few spells
+ * leave two); another buff replaces them all.
+ */
+function chosenBuffs(choice: BuffChoice, baseBuffs: string[]): string | null {
+  if (choice.kind === "own") {
+    return [choice.id, ...baseBuffs.slice(1)].join(",");
+  }
+
+  if (choice.kind === "other") {
+    return choice.id;
+  }
+
+  return null;
+}
+
+/** The buff the step shows: the spell's own, the one picked, or the base's first. */
+function buffShown(choice: BuffChoice, baseBuffs: string[]): string | null {
+  if (choice.kind !== "base") {
+    return choice.id;
+  }
+
+  return baseBuffs[0] ?? null;
+}
+
 function plainField(detail: AbilityDetail, id: string): Field | undefined {
   return detail.sections.flatMap((s) => s.fields).find((f) => f.id === id);
 }
@@ -118,6 +168,12 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
   const [kind, setKind] = useState<SpellKind | null>(null);
   const [detail, setDetail] = useState<AbilityDetail | null>(null);
   const [picking, setPicking] = useState(false);
+  const [buffChoice, setBuffChoice] = useState<BuffChoice>(BASE_BUFF);
+  const [baseBuffs, setBaseBuffs] = useState<string[]>([]);
+  /** The base ability's name: the spell's own name may have changed by now. */
+  const [baseName, setBaseName] = useState("");
+  const [shownBuff, setShownBuff] = useState<UnitDetail | null>(null);
+  const [allBuffs, setAllBuffs] = useState<UnitItem[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** Edits run one after another, so a slow answer never overwrites a newer one. */
@@ -131,6 +187,7 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
     setStep("kind");
     setKind(null);
     setDetail(null);
+    setBuffChoice(BASE_BUFF);
     setError(null);
     api
       .spellKinds()
@@ -139,15 +196,34 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
   }, [open]);
 
   const draft = detail?.card.summary.id ?? null;
+  const shownBuffId = buffShown(buffChoice, baseBuffs);
 
+  useEffect(() => {
+    if (!shownBuffId) {
+      setShownBuff(null);
+      return;
+    }
+
+    api
+      .plainDetail("buffs", shownBuffId)
+      .then(setShownBuff)
+      .catch((e: unknown) => setError(errorMessage(e)));
+  }, [shownBuffId]);
+
+  /** Removes the spell and its own buff, as if the wizard had never run. */
   async function discard() {
     if (!draft) {
       return;
     }
 
     await queue.current;
+    if (buffChoice.kind === "own") {
+      await api.discardPlain("buffs", buffChoice.id);
+    }
+
     await api.discardSpell(draft);
     setDetail(null);
+    setBuffChoice(BASE_BUFF);
     onMapChanged();
   }
 
@@ -164,6 +240,11 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
   async function back() {
     setError(null);
     try {
+      if (step === "buff") {
+        setStep("values");
+        return;
+      }
+
       if (step === "values") {
         await discard();
         setStep("base");
@@ -181,6 +262,8 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
     setError(null);
     try {
       const created = await api.createAbility(base);
+      // A new copy still has the base ability's name.
+      setBaseName(created.name);
       onMapChanged();
       setDetail(await ownValues(created.id, base, await api.abilityDetail(created.id)));
       setStep("values");
@@ -249,12 +332,106 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
       return updated;
     });
 
+  /** Shows the buff step, with the base ability's buffs and every buff to pick from. */
+  async function toBuff() {
+    if (!detail) {
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      await queue.current;
+      const base = await api.abilityDetail(detail.card.summary.base);
+      const first = levelField(base, BUFFS)?.cells[0]?.raw ?? "";
+      setBaseBuffs(idList(first));
+      setAllBuffs(await api.listPlain("buffs"));
+      setStep("buff");
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** The spell's buffs at every level, or the base ability's again for `null`. */
+  async function setBuffs(id: string, buffs: string | null): Promise<AbilityDetail | null> {
+    let updated: AbilityDetail | null = null;
+    for (let level = 1; level <= (detail?.levels ?? 1); level++) {
+      if (buffs === null) {
+        updated = await api.resetAbilityField(id, BUFFS, level);
+      } else {
+        updated = await api.setAbilityField(id, BUFFS, level, buffs);
+      }
+    }
+
+    return updated;
+  }
+
+  /** Drops the spell's own buff when another choice replaces it. */
+  async function dropOwnBuff() {
+    if (buffChoice.kind === "own") {
+      await api.discardPlain("buffs", buffChoice.id);
+    }
+  }
+
+  const pickBaseBuff = () =>
+    edit(async (id) => {
+      await dropOwnBuff();
+      setBuffChoice(BASE_BUFF);
+      return setBuffs(id, null);
+    });
+
+  const pickOtherBuff = (buff: string) =>
+    edit(async (id) => {
+      await dropOwnBuff();
+      const other: BuffChoice = { kind: "other", id: buff };
+      setBuffChoice(other);
+      return setBuffs(id, chosenBuffs(other, baseBuffs));
+    });
+
+  /** Copies the base ability's buff, names it after the spell, and puts it first. */
+  const pickOwnBuff = () =>
+    edit(async (id) => {
+      const [first] = baseBuffs;
+      if (buffChoice.kind === "own" || !first || !detail) {
+        return null;
+      }
+
+      const created = await api.createPlain("buffs", first);
+      const name = plainField(detail, NAME)?.raw ?? created.name;
+      for (const field of BUFF_NAMES) {
+        await api.setPlainField("buffs", created.id, field, name);
+      }
+
+      const own: BuffChoice = { kind: "own", id: created.id };
+      setBuffChoice(own);
+      return setBuffs(id, chosenBuffs(own, baseBuffs));
+    });
+
+  const editOwnBuff = (field: string, value: string) =>
+    edit(async () => {
+      if (buffChoice.kind !== "own") {
+        return null;
+      }
+
+      await api.setPlainField("buffs", buffChoice.id, field, value);
+      setShownBuff(await api.plainDetail("buffs", buffChoice.id));
+      return null;
+    });
+
   async function finish() {
     if (!draft) {
       return;
     }
 
     await queue.current;
+    // Levels may have been added after the buff was picked; they get it too.
+    const buffs = chosenBuffs(buffChoice, baseBuffs);
+    if (buffs !== null) {
+      await setBuffs(draft, buffs);
+    }
+
     const created = draft;
     setDetail(null);
     onCreated(created);
@@ -272,7 +449,12 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
       )}
       <Button onPress={close}>Cancel</Button>
       {step === "values" && (
-        <Button primary onPress={finish}>
+        <Button primary onPress={toBuff} disabled={busy}>
+          Next: buff
+        </Button>
+      )}
+      {step === "buff" && (
+        <Button primary onPress={finish} disabled={busy}>
           Create spell
         </Button>
       )}
@@ -308,10 +490,25 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
         {step === "values" && detail && (
           <ValuesStep
             detail={detail}
+            baseName={baseName}
             onRename={rename}
             onChange={set}
             onFill={fill}
             onReset={reset}
+          />
+        )}
+        {step === "buff" && detail && (
+          <SpellBuffStep
+            baseName={baseName}
+            baseBuffs={baseBuffs}
+            choice={buffChoice}
+            shown={shownBuff}
+            allBuffs={allBuffs}
+            busy={busy}
+            onOwn={pickOwnBuff}
+            onBase={pickBaseBuff}
+            onOther={pickOtherBuff}
+            onEditOwn={editOwnBuff}
           />
         )}
       </DialogShell>
@@ -417,6 +614,8 @@ function BaseChoice({
 
 type ValuesStepProps = {
   detail: AbilityDetail;
+  /** The base ability's name: the spell's own name may have changed. */
+  baseName: string;
   /** Renames the spell, and the tooltip titles that repeat its name. */
   onRename: (name: string) => void;
   onChange: (field: string, level: number, value: string) => void;
@@ -424,7 +623,7 @@ type ValuesStepProps = {
   onReset: (field: string, level: number) => void;
 };
 
-function ValuesStep({ detail, onRename, onChange, onFill, onReset }: ValuesStepProps) {
+function ValuesStep({ detail, baseName, onRename, onChange, onFill, onReset }: ValuesStepProps) {
   const name = plainField(detail, NAME);
   const levels = plainField(detail, LEVELS);
   const tooltips = TOOLTIPS.map((id) => levelField(detail, id)).filter(
@@ -435,8 +634,8 @@ function ValuesStep({ detail, onRename, onChange, onFill, onReset }: ValuesStepP
   return (
     <PlaceholderValues.Provider value={detail}>
       <p className="text-sm text-muted">
-        Based on <GameText text={summary.name} singleLine /> ({summary.base}). Everything else, such
-        as its buff, icon and hotkey, can be changed on its page afterwards.
+        Based on <GameText text={baseName} singleLine /> ({summary.base}). Its icon, hotkey and
+        everything else can be changed on its page afterwards.
       </p>
       <div className="flex flex-wrap gap-4">
         {name && <CommitInput label="Name" field={name} onCommit={onRename} />}
@@ -466,42 +665,5 @@ function ValuesStep({ detail, onRename, onChange, onFill, onReset }: ValuesStepP
         />
       ))}
     </PlaceholderValues.Provider>
-  );
-}
-
-type CommitInputProps = {
-  label: string;
-  field: Field;
-  numeric?: boolean;
-  onCommit: (value: string) => void;
-};
-
-/** A text box that saves when it loses focus or on Enter. */
-function CommitInput({ label, field, numeric, onCommit }: CommitInputProps) {
-  const [value, setValue] = useState(field.raw);
-  useEffect(() => setValue(field.raw), [field.raw]);
-
-  function commit() {
-    if (value !== field.raw) {
-      onCommit(value);
-    }
-  }
-
-  return (
-    <label className="flex flex-col gap-1 text-sm text-muted">
-      {label}
-      <input
-        value={value}
-        {...(numeric && { type: "number", min: field.min ?? 1, max: field.max ?? undefined })}
-        onChange={(e) => setValue(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            commit();
-          }
-        }}
-        className="rounded-[3px] border border-field bg-well px-3 py-1.5 text-ink outline-none focus:border-glow"
-      />
-    </label>
   );
 }
