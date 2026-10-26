@@ -77,6 +77,8 @@ under "What's new".
   preview. It no longer does.
 - When the graphics driver resets the model preview, it now says so and comes back on its own,
   instead of staying blank.
+- Building from source no longer fails after the project folder moves, or when several copies
+  of the project share one build folder.
 - Performance improvements.
 - Internal improvements.
 
