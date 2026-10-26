@@ -37,7 +37,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI
   (`abilities.rs` the same for abilities: list, cards, pages with per-level cells),
   `commands.rs` (Tauri commands), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
-  the open map's imported file first, then the game's),
+  the open map's imported file first, then the game's; they read game files outside the
+  session lock, since `casc::Storage` is `Sync`, and textures decode at most 512 px),
   `platform.rs` (install/maps folder detection, the only platform-specific module).
   `api.ts`/`types.ts` mirror the Rust types. Run with `bun run tauri dev` from `app/`.
   The look ("Arcane": tokens, type, components, accessibility and copy rules) is in

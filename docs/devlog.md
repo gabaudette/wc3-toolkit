@@ -4,6 +4,38 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-26 · Faster object selection (AGE-40)
+
+Measured first, with a temporary timing log (release Rust, HD art, game data and Legion TD).
+The page itself was never the problem: `unit_detail` holds the session lock for about 1 ms,
+and the page paints 15 to 25 ms after the click. The 3D preview was.
+
+- **Textures queued behind one lock.** An HD model names about 20 textures; each request read
+  its file from CASC while holding the session lock, so they ran one after another and the
+  last waited 60 to 220 ms. CascLib supports reads from several threads (it locks its data
+  archives and file streams, and its own test extracts with worker threads), so `Storage` is
+  now `Sync`, the session holds the game files in an `Arc`, and icon, texture and model
+  requests take the lock only to look up the map's file or the cache, then read and decode
+  without it. A new real-install test reads 400 files on 8 threads and compares the bytes.
+  Page commands, which Tauri runs on the window's main thread, had also waited up to 23 ms
+  behind a model read; they now never wait.
+- **Full-size textures for a small preview.** HD textures are 2048 px; the preview is about
+  300 px wide. `decode_texture_fitting` decodes the largest DDS mip level that fits in 512 px,
+  a sixteenth of the pixels to decode, send to the window and upload.
+- **Models loaded twice in development.** React's StrictMode mounts the viewer twice in a
+  development build; the first load ran to the end before being thrown away. Loads now stop at
+  their next step once cancelled and abort their requests. The same applies when selecting
+  another object while a model loads.
+- Results, model ready after selection (fetch, parse, GL setup and textures): Archmage
+  372-538 ms → 146-204 ms, Paladin 245-356 → 107-129 ms, Footman 205-330 → 128-161 ms. With
+  Legion TD open, the map's own art adds about 50 µs of lock time per request.
+- Left as is: the model response takes about 60 ms to reach the window even when the backend
+  serves it in under 1 ms; the time goes to the window, not the backend. Not needed: Rayon.
+  Requests already run on their own threads, so removing the lock gave the parallelism.
+- Found on the way: the window's web process sometimes crashes inside the NVIDIA driver
+  (`libnvidia-eglcore`) while models load, closing the app. It happened 16 times since
+  2026-10-21, before this change, and is tracked separately.
+
 ## 2026-10-23 · Contextual documentation reports (PR #40, AGE-35)
 
 - Added a shared footer link that opens a GitHub issue draft with page title, canonical URL,

@@ -73,6 +73,7 @@ under "What's new".
   so instead of showing a file error.
 - The model preview no longer fails with "Missing shader uniform location: uRoughness" on
   some graphics drivers.
+- Performance improvements.
 - Internal improvements.
 
 ## 0.1.0 - 2026-10-23

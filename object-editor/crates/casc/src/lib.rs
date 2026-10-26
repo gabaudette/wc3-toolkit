@@ -74,14 +74,20 @@ pub struct Entry {
     pub size: u64,
 }
 
-/// An open CASC storage. Not thread-safe; wrap it in a `Mutex` to share it.
+/// An open CASC storage. Several threads can read files from it at once.
 pub struct Storage {
     handle: Handle,
 }
 
 // SAFETY: a CascLib storage handle is not tied to the thread that opened it.
-// `Storage` is not `Sync`, so only one thread can use it at a time.
 unsafe impl Send for Storage {}
+// SAFETY: CascLib guards the state reads share: opening data archives takes the
+// storage lock (`CascReadFile.cpp`) and every file stream has its own lock
+// (`FileStream.cpp`). Each read opens and closes its own file handle, each
+// search (`list`) its own find handle, and the last error is thread-local. CascLib's own test extracts files from one
+// storage on several worker threads (`RunExtractWorkers` in `CascTest.cpp`).
+// Closing the storage needs `&mut self` (`Drop`), so it never races a read.
+unsafe impl Sync for Storage {}
 
 fn last_error() -> u32 {
     // SAFETY: reads CascLib's thread-local last error; no arguments, no preconditions.
