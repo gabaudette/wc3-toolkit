@@ -46,8 +46,45 @@ jobs:
       - run: bun run build
       - run: bun run check:links
       - run: bun run package:vercel
+      # The Build Output API package (`website/dist` under `static/`), deployed as is below.
       - uses: actions/upload-artifact@v4
         with:
           name: documentation
-          path: website/dist
+          path: .vercel/output
+          include-hidden-files: true
           retention-days: 7
+
+  # Vercel's own Git deployments are off (`vercel.json`), so pull requests that do not touch
+  # the documentation get no Vercel build or check: this workflow only runs for the paths
+  # above. Pull requests get a preview, main the production site.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    # Pull requests from forks get no secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # Not secret: they name the team and project the token deploys to.
+      VERCEL_ORG_ID: team_A65hhzneOi1amVoZ0WJY5gjN
+      VERCEL_PROJECT_ID: prj_2yBQu8goeSinVFCzCsPhMYAa0wg0
+      PRODUCTION: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Check for the Vercel token
+        if: env.VERCEL_TOKEN == ''
+        run: echo "::warning::VERCEL_TOKEN is not set; the documentation was built but not deployed."
+      - uses: actions/download-artifact@v4
+        if: env.VERCEL_TOKEN != ''
+        with:
+          name: documentation
+          path: .vercel/output
+      - uses: actions/setup-node@v5
+        if: env.VERCEL_TOKEN != ''
+        with:
+          node-version: '24'
+      - name: Deploy
+        if: env.VERCEL_TOKEN != ''
+        run: |
+          target=preview
+          if [ "$PRODUCTION" = "true" ]; then target=production; fi
+          url=$(npx --yes vercel@63.1.2 deploy --prebuilt --archive=tgz --target="$target" --token="$VERCEL_TOKEN")
+          echo "Documentation $target: $url" >> "$GITHUB_STEP_SUMMARY"

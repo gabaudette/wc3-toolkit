@@ -167,30 +167,28 @@ confirmed. It is not advertised as the latest patch.
 
 ## Hosting
 
-The repository root's `vercel.json` installs and builds this directory and packages
-`website/dist` into `.vercel/output/static`, with explicit static routing. The Build Output
-API manifest prevents a successful build from deploying an empty output. Install and build commands explicitly select Bun 1.4.2 because older build
-images cannot read Bun 1.4 lockfiles. The Vercel project `wc3-toolkit-docs` connects to this repository: main pushes
-produce production deployments and pull requests produce previews. Field guides remain
-outside the website directory, so use the repository root as the Vercel project root.
-No adapter, game files, runtime backend or deployment token in GitHub Actions is needed.
+The site is static. `bun run package:vercel` packages `website/dist` into
+`.vercel/output/static` with explicit static routing (Vercel's Build Output API); the manifest
+prevents a successful build from deploying an empty output. Field guides stay outside the
+website directory, so the Vercel project's root is the repository root.
 
-### Build only when documentation inputs change
+### Deployed from GitHub Actions, only when the documentation changes
 
-`vercel.json` runs `scripts/ignore-build.mjs` before installation. It compares the current
-commit with `VERCEL_GIT_PREVIOUS_SHA` (the last successful deployment for that branch), so a
-multi-commit push cannot hide an earlier documentation edit. Only these inputs trigger a
-build:
+Vercel's own Git deployments are off (`"git": { "deploymentEnabled": false }` in the root
+`vercel.json`), so pull requests about the editor get no Vercel build, comment or check.
+`.github/workflows/docs.yml` runs only when one of these changes:
 - `website/**`
 - `object-editor/crates/wc3-data/data/**` (the shared field guides)
-- `vercel.json` and `.vercelignore`
+- `object-editor/crates/wc3-data/examples/docs_sources.rs`
+- `.github/workflows/docs.yml` and `vercel.json`
 
-Other editor, map, changelog and root README changes skip the build. Vercel can still show a
-skipped deployment/check; it does not install dependencies, build or replace the live site.
-An initial deployment, unavailable Git history or `DOCS_FORCE_BUILD=1` builds conservatively.
-
-The project-level Ignored Build Step also skips branches where the docs script is absent.
-This protects the live site while the documentation PR has not yet been merged into main.
+It tests, checks and builds the site, then its `deploy` job uploads the package with
+`vercel deploy --prebuilt`: a preview for a pull request, production for `main`. The URL is in
+the job summary. The job needs a `VERCEL_TOKEN` repository secret (a Vercel token for the
+team that owns `wc3-toolkit-docs`); without it the site is built but not deployed, with a
+warning. Pull requests from forks are built but not deployed, since they get no secrets. The
+team and project IDs are in the workflow. To redeploy by hand, run the workflow from the
+Actions tab (`workflow_dispatch`).
 
 Default canonical URL: `https://tinkerbench-docs.vercel.app`. Set `DOCS_SITE` to change it.
 `DOCS_BASE` supports a subpath such as `/wc3-toolkit` for a static host like GitHub Pages;
