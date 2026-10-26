@@ -19,6 +19,7 @@ mod view;
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
+    platform::keep_threads_at_normal_priority();
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(state::AppState::default())
