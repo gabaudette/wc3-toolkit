@@ -2,6 +2,7 @@
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use serde::Serialize;
 use tauri::State;
@@ -114,7 +115,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
 
     let mode = if hd { ArtMode::Hd } else { ArtMode::Sd };
     state.replace(Session {
-        files,
+        files: Arc::new(files),
         db,
         guide,
         abilities,

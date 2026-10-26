@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use wc3_data::abilities::AbilityDatabase;
 use wc3_data::doodads::DoodadDatabase;
@@ -18,7 +18,9 @@ use wc3_map::plain::{BUFFS, DESTRUCTABLES, ITEMS, PlainObjects};
 use wc3_map::units::MapUnits;
 
 pub struct Session {
-    pub files: GameFiles,
+    /// Shared with art requests, which read game files without holding the
+    /// session lock (CASC storage reads can run on several threads at once).
+    pub files: Arc<GameFiles>,
     pub db: UnitDatabase,
     pub guide: FieldGuide,
     pub abilities: AbilityDatabase,

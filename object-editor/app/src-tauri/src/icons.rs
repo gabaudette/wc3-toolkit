@@ -7,12 +7,15 @@
 //! - `wc3tex:` textures as raw RGBA with a size header (large, for the 3D view)
 //! - `wc3model:` models as MDX bytes, without the chunks previews do not use
 
+use std::sync::Arc;
 use tauri::http::{Request, Response, StatusCode, header};
 use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
-use wc3_data::icon::{dds_file, decode_texture, load_texture};
+
+use wc3_data::game::{ArtMode, GameFiles};
+use wc3_data::icon::{dds_file, decode_texture, decode_texture_fitting, load_texture};
 use wc3_data::model::{load_model, preview_copy};
 
-use crate::state::AppState;
+use crate::state::{AppState, Session};
 
 pub const ICON_SCHEME: &str = "wc3icon";
 pub const TEXTURE_SCHEME: &str = "wc3tex";
@@ -67,71 +70,92 @@ pub fn handle_model<R: Runtime>(
     serve(&ctx, &request, responder, BINARY, model_bytes);
 }
 
-fn icon_png<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>, String> {
-    let state = app.state::<AppState>();
-    state.with(|session| {
-        if let Some(map) = &mut session.map {
-            if let Some(png) = map.icons.get(path) {
-                return Ok(png.clone());
-            }
-
-            if let Some((file, data)) = map.art(path) {
-                let image = decode_texture(&data).map_err(|e| format!("{file}: {e}"))?;
-                let png = image.to_png().map_err(|e| e.to_string())?;
-                map.icons.insert(path.to_owned(), png.clone());
-                return Ok(png);
-            }
-        }
-
-        let key = (session.mode, path.to_owned());
-        if let Some(png) = session.icons.get(&key) {
-            return Ok(png.clone());
-        }
-
-        let image = load_texture(&session.files, path, session.mode).map_err(|e| e.to_string())?;
-        let png = image.to_png().map_err(|e| e.to_string())?;
-        session.icons.insert(key, png.clone());
-        Ok(png)
-    })
+/// Where an art request's bytes come from, decided while holding the session
+/// lock; the reading and decoding happen after it is released.
+enum Art {
+    /// The open map's file, and the path it was found at.
+    Map(String, Vec<u8>),
+    /// The game's files, read without the session lock.
+    Game(Arc<GameFiles>, ArtMode),
 }
 
-/// Reads the file while holding the session lock, then decodes after
-/// releasing it, so a large texture never stalls other commands.
-fn texture_raw<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>, String> {
-    let state = app.state::<AppState>();
-    let (file, data) = state.with(|session| {
-        if let Some(found) = session.map.as_ref().and_then(|map| map.art(path)) {
-            return Ok(found);
-        }
+/// The open map's file for `path`, or else the game's files to read it from.
+fn art_source(session: &Session, path: &str) -> Art {
+    match session.map.as_ref().and_then(|map| map.art(path)) {
+        Some((file, data)) => Art::Map(file, data),
+        None => Art::Game(Arc::clone(&session.files), session.mode),
+    }
+}
 
-        let file = dds_file(path);
-        let data = session
-            .files
-            .read_art(&file, session.mode)
-            .map_err(|e| e.to_string())?;
-        Ok((file, data))
+fn icon_png<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>, String> {
+    let state = app.state::<AppState>();
+    let source = state.with(|session| {
+        let cached = match &session.map {
+            Some(map) => map.icons.get(path),
+            None => None,
+        }
+        .or_else(|| session.icons.get(&(session.mode, path.to_owned())));
+        Ok(cached.cloned().ok_or_else(|| art_source(session, path)))
     })?;
 
-    let image = decode_texture(&data).map_err(|e| format!("{file}: {e}"))?;
+    match source {
+        Ok(png) => Ok(png),
+        Err(Art::Map(file, data)) => {
+            let image = decode_texture(&data).map_err(|e| format!("{file}: {e}"))?;
+            let png = image.to_png().map_err(|e| e.to_string())?;
+            state.with(|session| {
+                if let Some(map) = &mut session.map {
+                    map.icons.insert(path.to_owned(), png.clone());
+                }
+                Ok(())
+            })?;
+            Ok(png)
+        }
+        Err(Art::Game(files, mode)) => {
+            let image = load_texture(&files, path, mode).map_err(|e| e.to_string())?;
+            let png = image.to_png().map_err(|e| e.to_string())?;
+            state.with(|session| {
+                session.icons.insert((mode, path.to_owned()), png.clone());
+                Ok(())
+            })?;
+            Ok(png)
+        }
+    }
+}
+
+/// Textures for the 3D preview, at most this many pixels on a side: the
+/// preview is a few hundred pixels wide, and HD textures are 2048.
+const PREVIEW_TEXTURE_SIZE: u32 = 512;
+
+fn texture_raw<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>, String> {
+    let state = app.state::<AppState>();
+    let (file, data) = match state.with(|session| Ok(art_source(session, path)))? {
+        Art::Map(file, data) => (file, data),
+        Art::Game(files, mode) => {
+            let file = dds_file(path);
+            let data = files.read_art(&file, mode).map_err(|e| e.to_string())?;
+            (file, data)
+        }
+    };
+
+    let image =
+        decode_texture_fitting(&data, PREVIEW_TEXTURE_SIZE).map_err(|e| format!("{file}: {e}"))?;
     Ok(image.to_raw())
 }
 
 fn model_bytes<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>, String> {
     let state = app.state::<AppState>();
-    state.with(|session| {
-        if let Some((file, data)) = session.map.as_ref().and_then(|map| map.art(path)) {
-            return preview_copy(&data).map_err(|e| format!("{file}: {e}"));
-        }
-
-        load_model(&session.files, path, session.mode).map_err(|e| {
+    match state.with(|session| Ok(art_source(session, path)))? {
+        Art::Map(file, data) => preview_copy(&data).map_err(|e| format!("{file}: {e}")),
+        Art::Game(files, mode) => load_model(&files, path, mode).map_err(|e| {
             // Some game objects name a model that was never shipped, such as placeholders.
             if e.is_not_found() {
                 "it is not in the game files or the map.".to_owned()
             } else {
                 e.to_string()
             }
-        })
-    })
+        }),
+    }
 }
 
 fn response(status: StatusCode, content_type: &str, body: Vec<u8>) -> Response<Vec<u8>> {

@@ -79,7 +79,11 @@ function resetStatus(path: string | null): Status {
 const ENVIRONMENT_MAP = /environmentmap/i;
 
 /** Uploads every texture the model names; a missing one only leaves that part untextured. */
-async function loadTextures(renderer: ModelRenderer, model: Model): Promise<number> {
+async function loadTextures(
+  renderer: ModelRenderer,
+  model: Model,
+  signal: AbortSignal,
+): Promise<number> {
   let missing = 0;
   const images = model.Textures.map((t) => t.Image).filter(
     (image) => image && !ENVIRONMENT_MAP.test(image),
@@ -88,7 +92,7 @@ async function loadTextures(renderer: ModelRenderer, model: Model): Promise<numb
   await Promise.all(
     images.map(async (image) => {
       try {
-        const response = await fetch(convertFileSrc(image, TEXTURE_SCHEME));
+        const response = await fetch(convertFileSrc(image, TEXTURE_SCHEME), { signal });
         if (!response.ok) {
           missing += 1;
           return;
@@ -260,6 +264,9 @@ export function ModelViewer({ path }: ModelViewerProps) {
     }
 
     forceFullPrecision(gl);
+    // Selecting another object (or React's development double mount) stops a
+    // load at its next step and drops the requests still in flight.
+    const abort = new AbortController();
     let cancelled = false;
     let frame = 0;
 
@@ -267,12 +274,19 @@ export function ModelViewer({ path }: ModelViewerProps) {
       context: WebGL2RenderingContext | WebGLRenderingContext,
       modelPath: string,
     ) {
-      const response = await fetch(convertFileSrc(modelPath, MODEL_SCHEME));
+      const response = await fetch(convertFileSrc(modelPath, MODEL_SCHEME), {
+        signal: abort.signal,
+      });
       if (!response.ok) {
         throw new Error(await response.text());
       }
 
-      const model = parseMDX(await response.arrayBuffer());
+      const bytes = await response.arrayBuffer();
+      if (cancelled) {
+        return;
+      }
+
+      const model = parseMDX(bytes);
       const renderer = new ModelRenderer(model);
       allowMissingUniforms(renderer, context);
       renderer.initGL(context);
@@ -290,7 +304,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
         renderer.setSequence(first);
       }
 
-      const missing = await loadTextures(renderer, model);
+      const missing = await loadTextures(renderer, model, abort.signal);
       if (cancelled) {
         destroyRenderer(renderer);
         return;
@@ -362,6 +376,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
 
     return () => {
       cancelled = true;
+      abort.abort();
       window.cancelAnimationFrame(frame);
       if (rendererRef.current) {
         destroyRenderer(rendererRef.current);

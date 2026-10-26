@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::guide::FieldGuide;
-use wc3_data::icon::load_texture;
+use wc3_data::icon::{dds_file, load_texture};
 use wc3_data::leveled::LeveledData;
 use wc3_data::meta::ObjectKind;
 use wc3_data::model::{load_model, texture_paths};
@@ -200,6 +200,45 @@ fn every_unit_model_loads_for_the_preview() -> TestResult {
     );
     assert!(loaded > db.ids().len(), "only {loaded} models loaded");
 
+    Ok(())
+}
+
+/// The app reads art for several requests at once from one storage; every
+/// thread must get the same bytes as reading the files one by one.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn game_files_read_the_same_from_several_threads() -> TestResult {
+    const THREADS: usize = 8;
+    const FILES: usize = 400;
+
+    let (files, db) = open(GameOptions::default())?;
+    let paths: Vec<String> = db
+        .ids()
+        .iter()
+        .filter_map(|id| db.icon_path(id, ArtMode::Hd))
+        .map(|path| dds_file(&path))
+        .take(FILES)
+        .collect();
+    let read = |path: &String| files.read_art(path, ArtMode::Hd).ok();
+    let expected: Vec<Option<Vec<u8>>> = paths.iter().map(read).collect();
+
+    let results: Vec<Vec<Option<Vec<u8>>>> = std::thread::scope(|scope| {
+        let workers: Vec<_> = (0..THREADS)
+            .map(|_| scope.spawn(|| paths.iter().map(read).collect()))
+            .collect();
+        workers
+            .into_iter()
+            .map(|worker| worker.join().unwrap_or_default())
+            .collect()
+    });
+
+    assert!(
+        expected.iter().flatten().count() > FILES / 2,
+        "too few files read"
+    );
+    for result in results {
+        assert!(result == expected, "a thread read different bytes");
+    }
     Ok(())
 }
 

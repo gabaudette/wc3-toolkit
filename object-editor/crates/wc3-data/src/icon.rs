@@ -13,6 +13,7 @@ const DDS_MAGIC: &[u8; 4] = b"DDS ";
 const DDS_HEADER_SIZE: usize = 128;
 const HEIGHT_OFFSET: usize = 12;
 const WIDTH_OFFSET: usize = 16;
+const MIP_COUNT_OFFSET: usize = 28;
 const FOURCC_OFFSET: usize = 84;
 const RGBA_CHANNELS: usize = 4;
 
@@ -93,6 +94,24 @@ pub fn decode_texture(data: &[u8]) -> Result<Image> {
 
 /// Decodes the top mip level of a DXT1, DXT3, DXT5, ATI1 or ATI2 DDS file.
 pub fn decode_dds(data: &[u8]) -> Result<Image> {
+    decode_dds_fitting(data, u32::MAX)
+}
+
+/// Like [`decode_texture`], but a DDS file decodes at its largest mip level
+/// that fits in `max_side` pixels, so a small preview skips detail it cannot
+/// show (an HD texture's 512 px level is a sixteenth of its 2048 px one).
+pub fn decode_texture_fitting(data: &[u8], max_side: u32) -> Result<Image> {
+    if data.starts_with(DDS_MAGIC) {
+        decode_dds_fitting(data, max_side)
+    } else {
+        decode_texture(data)
+    }
+}
+
+/// Decodes the largest mip level of a DDS file no wider or taller than
+/// `max_side`, or its smallest level when none fits. A file without mip
+/// levels decodes at full size.
+pub fn decode_dds_fitting(data: &[u8], max_side: u32) -> Result<Image> {
     if data.len() < DDS_HEADER_SIZE || &data[..DDS_MAGIC.len()] != DDS_MAGIC {
         return Err(Error::Image("not a DDS file".to_owned()));
     }
@@ -114,8 +133,21 @@ pub fn decode_dds(data: &[u8]) -> Result<Image> {
         }
     };
 
+    let levels = read_u32(data, MIP_COUNT_OFFSET).max(1);
+    let (mut width, mut height) = (width, height);
+    let mut start = DDS_HEADER_SIZE;
+    for _ in 1..levels {
+        if width <= max_side && height <= max_side {
+            break;
+        }
+
+        start += format.compressed_size(width as usize, height as usize);
+        width = (width / 2).max(1);
+        height = (height / 2).max(1);
+    }
+
     let (w, h) = (width as usize, height as usize);
-    let compressed = &data[DDS_HEADER_SIZE..];
+    let compressed = data.get(start..).unwrap_or_default();
     let needed = format.compressed_size(w, h);
     if compressed.len() < needed {
         return Err(Error::Image(format!(
@@ -163,6 +195,39 @@ mod tests {
         assert_eq!((image.width, image.height), (4, 4));
         assert_eq!(&image.rgba[..4], &[255, 0, 0, 255]);
         assert!(image.to_png().unwrap().starts_with(b"\x89PNG"));
+    }
+
+    #[test]
+    fn decodes_the_largest_mip_level_that_fits() {
+        // 8x8 red (four blocks), then a 4x4 green level, then the 2x2 and 1x1 levels.
+        let red = [0x00, 0xF8, 0x00, 0xF8, 0, 0, 0, 0];
+        let green = [0xE0, 0x07, 0xE0, 0x07, 0, 0, 0, 0];
+        let blue = [0x1F, 0x00, 0x1F, 0x00, 0, 0, 0, 0];
+        let mut data = dds_header(8, 8, b"DXT1");
+        data[MIP_COUNT_OFFSET..MIP_COUNT_OFFSET + 4].copy_from_slice(&4u32.to_le_bytes());
+        for _ in 0..4 {
+            data.extend_from_slice(&red);
+        }
+        data.extend_from_slice(&green);
+        data.extend_from_slice(&blue);
+        data.extend_from_slice(&blue);
+
+        let full = decode_dds(&data).unwrap();
+        assert_eq!(
+            (full.width, full.rgba[..4].to_vec()),
+            (8, vec![255, 0, 0, 255])
+        );
+        let half = decode_dds_fitting(&data, 4).unwrap();
+        assert_eq!(
+            (half.width, half.rgba[..4].to_vec()),
+            (4, vec![0, 255, 0, 255])
+        );
+        let smallest = decode_dds_fitting(&data, 0).unwrap();
+        assert_eq!((smallest.width, smallest.height), (1, 1));
+
+        // Without mip levels the full image is all there is.
+        data[MIP_COUNT_OFFSET..MIP_COUNT_OFFSET + 4].copy_from_slice(&0u32.to_le_bytes());
+        assert_eq!(decode_dds_fitting(&data, 4).unwrap().width, 8);
     }
 
     #[test]
