@@ -12,10 +12,9 @@ type ModelViewerProps = {
 };
 
 type Animation = {
+  /** Position in the model's sequences: unique even when names repeat. */
   index: number;
   name: string;
-  /** Start frame: unique even when names repeat. */
-  start: number;
 };
 
 type Status =
@@ -132,6 +131,37 @@ function forceFullPrecision(gl: WebGL2RenderingContext) {
     shaderSource(shader, source.replace(MEDIUM_PRECISION, HIGH_PRECISION));
 }
 
+/** Drawing size of the preview canvas: twice its 288 px box, for sharp edges. */
+const CANVAS_SIZE = 576;
+
+type Preview = { canvas: HTMLCanvasElement; gl: WebGL2RenderingContext | null };
+let shared: Preview | null = null;
+
+/**
+ * The one canvas, and so the one WebGL context, every preview draws on. Each
+ * page used to bring its own canvas, so browsing created and dropped a WebGL
+ * context per object, and releasing them crashed the window's web process
+ * inside the NVIDIA driver after about a hundred quick selections (AGE-46).
+ * The canvas moves into whichever preview is showing.
+ */
+function previewCanvas(): Preview {
+  if (!shared) {
+    const canvas = document.createElement("canvas");
+    canvas.width = CANVAS_SIZE;
+    canvas.height = CANVAS_SIZE;
+    canvas.setAttribute("aria-label", "3D model preview. Drag to rotate, scroll to zoom.");
+    canvas.className = "size-full cursor-grab touch-none active:cursor-grabbing";
+    // WebGL2 for the newer HD shader.
+    const gl = canvas.getContext("webgl2");
+    if (gl) {
+      forceFullPrecision(gl);
+    }
+    shared = { canvas, gl };
+  }
+
+  return shared;
+}
+
 type ShaderProgram = {
   program: WebGLProgram;
   uniforms: Record<string, WebGLUniformLocation | null>;
@@ -225,7 +255,7 @@ function bounds(model: Model): Bounds {
  * rotate, scroll to zoom, pick an animation below.
  */
 export function ModelViewer({ path }: ModelViewerProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const holderRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<ModelRenderer | null>(null);
   const view = useRef({
     yaw: 0,
@@ -243,27 +273,51 @@ export function ModelViewer({ path }: ModelViewerProps) {
     () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const [missingTextures, setMissingTextures] = useState(0);
+  /** Bumped when the GL context comes back after being lost, to load the model again. */
+  const [restored, setRestored] = useState(0);
   const turningRef = useRef(turning);
   turningRef.current = turning;
 
   useEffect(() => {
-    setStatus(resetStatus(path));
-    setSequences([]);
-    setMissingTextures(0);
-    const canvas = canvasRef.current;
-    if (!path || !canvas) {
+    const holder = holderRef.current;
+    const { canvas } = previewCanvas();
+    if (!holder) {
       return;
     }
 
-    // WebGL2 for the newer HD shader. Reflection maps are never loaded (see
-    // `ENVIRONMENT_MAP`), so the renderer's reflection pre-processing never runs.
-    const gl = canvas.getContext("webgl2");
-    if (!gl) {
+    holder.prepend(canvas);
+    const lost = (e: Event) => {
+      // Ask for the context back; the model loads again once it is restored.
+      e.preventDefault();
+      setStatus({ kind: "error", message: "The 3D preview stopped. It restarts on its own." });
+    };
+    const back = () => setRestored((n) => n + 1);
+    canvas.addEventListener("webglcontextlost", lost);
+    canvas.addEventListener("webglcontextrestored", back);
+    return () => {
+      canvas.removeEventListener("webglcontextlost", lost);
+      canvas.removeEventListener("webglcontextrestored", back);
+      canvas.remove();
+    };
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `restored` reloads the model after a lost context.
+  useEffect(() => {
+    setStatus(resetStatus(path));
+    setSequences([]);
+    setMissingTextures(0);
+    if (!path) {
+      return;
+    }
+
+    // Reflection maps are never loaded (see `ENVIRONMENT_MAP`), so the
+    // renderer's reflection pre-processing never runs.
+    const { gl } = previewCanvas();
+    if (!gl || gl.isContextLost()) {
       setStatus({ kind: "error", message: "WebGL is not available in this window." });
       return;
     }
 
-    forceFullPrecision(gl);
     // Selecting another object (or React's development double mount) stops a
     // load at its next step and drops the requests still in flight.
     const abort = new AbortController();
@@ -293,11 +347,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
       renderer.setTeamColor(PLAYER_RED);
       renderer.setLightColor(LIGHT_COLOR);
 
-      const animations = model.Sequences.map((s, index) => ({
-        index,
-        name: s.Name,
-        start: s.Interval[0] ?? index,
-      }));
+      const animations = model.Sequences.map((s, index) => ({ index, name: s.Name }));
       const stand = animations.findIndex((a) => a.name.toLowerCase().startsWith(STAND_PREFIX));
       const first = Math.max(stand, 0);
       if (animations.length > 0) {
@@ -383,21 +433,21 @@ export function ModelViewer({ path }: ModelViewerProps) {
       }
       rendererRef.current = null;
     };
-  }, [path]);
+  }, [path, restored]);
 
   function pickSequence(index: number) {
     setSequence(index);
     rendererRef.current?.setSequence(index);
   }
 
-  function pointerDown(e: PointerEvent<HTMLCanvasElement>) {
+  function pointerDown(e: PointerEvent<HTMLDivElement>) {
     e.currentTarget.setPointerCapture(e.pointerId);
     view.current.dragging = true;
     view.current.lastX = e.clientX;
     view.current.lastY = e.clientY;
   }
 
-  function pointerMove(e: PointerEvent<HTMLCanvasElement>) {
+  function pointerMove(e: PointerEvent<HTMLDivElement>) {
     const v = view.current;
     if (!v.dragging) {
       return;
@@ -412,7 +462,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
     v.lastY = e.clientY;
   }
 
-  function wheel(e: WheelEvent<HTMLCanvasElement>) {
+  function wheel(e: WheelEvent<HTMLDivElement>) {
     const v = view.current;
     v.distance = Math.min(
       MAX_DISTANCE,
@@ -422,20 +472,17 @@ export function ModelViewer({ path }: ModelViewerProps) {
 
   return (
     <div className="flex w-72 shrink-0 flex-col gap-1.5">
-      <div className="relative aspect-square overflow-hidden rounded-[3px] border border-line bg-surface-0">
-        <canvas
-          ref={canvasRef}
-          width={576}
-          height={576}
-          onPointerDown={pointerDown}
-          onPointerMove={pointerMove}
-          onPointerUp={() => {
-            view.current.dragging = false;
-          }}
-          onWheel={wheel}
-          aria-label="3D model preview. Drag to rotate, scroll to zoom."
-          className="size-full cursor-grab touch-none active:cursor-grabbing"
-        />
+      {/* The shared preview canvas is placed first in this box (see `previewCanvas`). */}
+      <div
+        ref={holderRef}
+        onPointerDown={pointerDown}
+        onPointerMove={pointerMove}
+        onPointerUp={() => {
+          view.current.dragging = false;
+        }}
+        onWheel={wheel}
+        className="relative aspect-square overflow-hidden rounded-[3px] border border-line bg-surface-0"
+      >
         {status.kind === "loading" && (
           <p className="absolute inset-0 flex items-center justify-center text-sm text-muted">
             Loading model…
@@ -461,7 +508,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
             className="min-w-0 flex-1 rounded border border-field bg-well px-1.5 py-1 outline-none focus:border-glow"
           >
             {sequences.map((animation) => (
-              <option key={`${animation.start}-${animation.name}`} value={animation.index}>
+              <option key={animation.index} value={animation.index}>
                 {animation.name}
               </option>
             ))}

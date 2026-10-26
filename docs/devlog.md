@@ -4,6 +4,43 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-26 · The app closing on its own on Linux (AGE-46)
+
+- **Cause: real-time threads over their CPU limit.** WebKitGTK asks RealtimeKit (system D-Bus)
+  to run a few IPC threads with `SCHED_RR`: two `ReceiveQueue` threads in the app process,
+  `EventDispatcher` in the web process, `Storage` in the network process. RealtimeKit grants
+  that only with `RLIMIT_RTTIME` set (here 160 ms soft, 200 ms hard): a real-time thread that
+  runs that long without sleeping gets the process killed with SIGKILL by the kernel. Browsing
+  models pushes texture after texture through the IPC threads, and a burst sometimes lasted
+  long enough. Hence the silent exits (exit status 137, no panic, no Tauri exit event, no
+  out-of-memory kill), and why they never happened under strace or gdb, whose stops reset the
+  count. AeroFTP and Signal Desktop hit the same thing on WebKitGTK 2.52.6.
+- **Fix:** `platform::keep_threads_at_normal_priority` points `DBUS_SYSTEM_BUS_ADDRESS` at a
+  socket that cannot exist, first thing in `main`; WebKit's processes inherit it, the
+  RealtimeKit request fails, and every thread stays `SCHED_OTHER`. Nothing else in the app uses
+  the system bus (file dialogs and accessibility use the session bus; the open-map dialog was
+  checked). Lowering the soft limit, as AeroFTP did, does not help here: it is already below the
+  hard limit, and after the first SIGXCPU the kernel raises it by a second, so later bursts go
+  straight to SIGKILL. A Flatpak or Snap build would ask through the portal instead and would
+  need another way.
+- **Measured** with a script clicking through the unit list every 0.1 to 0.15 s: before, the
+  app was killed after 100 to 950 selections (6 of 7 runs); after, 0 real-time threads and no
+  exit in 2700 selections.
+- **The crash dumps were a separate, harmless thing.** `coredumpctl` had 19 `WebKitWebProcess`
+  segfaults in `libnvidia-eglcore` (driver 595.99.02). Symbolized with Ubuntu's debuginfod,
+  the stack is `dispatchDidCloseAndInvalidate` → `WebProcess::stopRunLoop` →
+  `PlatformDisplay::clearGLContexts` → `GLContext::~GLContext` → the driver: the web process
+  crashes while freeing GL contexts after the app is gone, on every close (even Alt+F4), with
+  or without `WEBKIT_DISABLE_DMABUF_RENDERER` or `WEBKIT_DISABLE_COMPOSITING_MODE`. Users
+  see nothing; it is a WebKitGTK/NVIDIA bug.
+- **One WebGL context for the whole session.** Pages are keyed by object, so every selection
+  mounted a new `ModelViewer` with a new canvas and WebGL context and dropped the last one.
+  The preview now draws on one canvas created once (`previewCanvas`), moved into whichever
+  preview shows; pointer and wheel handlers sit on its box. On `webglcontextlost` the preview
+  asks for the context back and says so; on `webglcontextrestored` it loads the model again.
+- Fixed on the way: animation picker keys were `start frame + name`, which repeats (two
+  "Stand 2" at frame 0); they are the sequence index now.
+
 ## 2026-10-26 · Faster object selection (AGE-40)
 
 Measured first, with a temporary timing log (release Rust, HD art, game data and Legion TD).

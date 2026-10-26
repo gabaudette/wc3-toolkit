@@ -73,6 +73,10 @@ under "What's new".
   so instead of showing a file error.
 - The model preview no longer fails with "Missing shader uniform location: uRoughness" on
   some graphics drivers.
+- On Linux, Tinkerbench could close without a word while browsing objects with the 3D
+  preview. It no longer does.
+- When the graphics driver resets the model preview, it now says so and comes back on its own,
+  instead of staying blank.
 - Performance improvements.
 - Internal improvements.
 
