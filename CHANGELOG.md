@@ -15,6 +15,11 @@ under "What's new".
 - Spell wizard buff step: give the spell its own buff (a copy of the original's, named after
   your spell, with its own tooltip), keep the original's, or pick any other. The spell's buff is
   set at every level, and cancelling removes the new buff too.
+- Spell wizard button step: pick the spell's icon from the game's and the map's icons (with
+  search), its hotkey and where its button sits on the command card, and for hero spells on
+  the learn menu too. Warns when the button would hide Move, Stop, Hold Position, Attack,
+  Patrol or Learn, or share their hotkey. Changing the hotkey updates the highlighted key in
+  older tooltips.
 - Contextual documentation problem links that open a GitHub draft with the page, API or
   field identifier and selected example language.
 - Visual scripting lifecycles for timers, groups and locations, with six responsive diagrams,
@@ -58,6 +63,8 @@ under "What's new".
 
 ### Changed
 
+- Dialogs open near the top of the window and stay there while their content grows or
+  shrinks, so buttons no longer move under the pointer.
 - Documentation navbar title is now “Tinkerbench”. Theme, code-theme and search controls use
   a subtle focus underline instead of a blue outer outline. The homepage’s early-development
   notice appears in an inline warning callout.

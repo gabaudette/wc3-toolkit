@@ -168,6 +168,16 @@ export type AbilitySection = {
   levelFields: LevelField[];
 };
 
+/** An icon the spell wizard offers for a spell's button. */
+export type IconChoice = {
+  /** As data files name it, e.g. `ReplaceableTextures\\CommandButtons\\BTNStormBolt.blp`. */
+  path: string;
+  /** Its file name without folders or extension, for searching. */
+  name: string;
+  /** Imported into the open map rather than from the game. */
+  fromMap: boolean;
+};
+
 /** A base ability the spell wizard suggests for a kind of spell. */
 export type SpellBase = {
   card: AbilityCard;

@@ -24,7 +24,9 @@ export function DialogShell({ open, title, onClose, children, footer, wide }: Di
         }
       }}
       isDismissable
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+      // Anchored near the top, so the title and buttons stay put while the
+      // content below changes height (a search narrowing a list, a new step).
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 pt-[8vh]"
     >
       <Modal
         className={classes(
