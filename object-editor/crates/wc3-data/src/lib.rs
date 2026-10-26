@@ -13,6 +13,7 @@ pub mod model;
 pub mod objects;
 pub mod profile;
 pub mod slk;
+pub mod spells;
 pub mod strings;
 pub mod tga;
 pub mod units;

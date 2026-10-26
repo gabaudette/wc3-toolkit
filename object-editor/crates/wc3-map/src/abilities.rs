@@ -412,6 +412,21 @@ impl MapAbilities {
         Ok(id)
     }
 
+    /// Removes a custom ability and the strings this editor added for it, as
+    /// if it had never been created. Returns `false` for game abilities (their
+    /// changes are reset field by field) and unknown IDs.
+    pub fn remove(&mut self, strings: &mut MapStrings, id: FourCC) -> bool {
+        let mut removed = false;
+        for data in [&mut self.tables.data, &mut self.tables.skin] {
+            let before = data.custom.len();
+            data.custom.retain(|e| e.id != id);
+            removed |= data.custom.len() != before;
+        }
+
+        self.drop_unused_strings(strings);
+        removed
+    }
+
     /// Updates the string a text field already refers to, or adds a new one
     /// with a comment like the World Editor's: `Abilities: A000 (name), Name (Name)`.
     fn store_string(
@@ -696,6 +711,37 @@ mod tests {
         }
 
         MapAbilities::from_tables(tables)
+    }
+
+    #[test]
+    fn removing_a_custom_ability_drops_it_and_its_new_strings() {
+        let mut map = abilities(
+            vec![entry("AHhb", "A000", vec![change("Hhb1", 1)])],
+            vec![entry("AHhb", "A000", Vec::new())],
+        );
+        let mut strings = MapStrings::default();
+        let kept = strings.add("Kept", None);
+        let added = strings.add("Fire Bolt", None);
+        let added_id = reference_id(&added).unwrap_or_default();
+        map.added_strings.push(added_id);
+        map.tables.skin.custom[0].sets[0].mods.push(Modification {
+            field: id("anam"),
+            level: Some(0),
+            column: Some(0),
+            value: Value::String(added),
+            end: FourCC::ZERO,
+        });
+
+        assert!(
+            !map.remove(&mut strings, id("AHds")),
+            "game abilities are not removed"
+        );
+        assert!(map.remove(&mut strings, id("A000")));
+        assert!(!map.has(id("A000")));
+        assert!(map.abilities().is_empty());
+        assert_eq!(strings.get(added_id), None, "its new string is gone");
+        let kept_id = reference_id(&kept).unwrap_or_default();
+        assert_eq!(strings.get(kept_id), Some("Kept"), "other strings stay");
     }
 
     #[test]

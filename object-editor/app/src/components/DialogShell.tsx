@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Dialog, Heading, Modal, ModalOverlay } from "react-aria-components";
+import { classes } from "../ui";
 
 type DialogShellProps = {
   open: boolean;
@@ -8,10 +9,12 @@ type DialogShellProps = {
   children: ReactNode;
   /** Buttons along the bottom edge. */
   footer: ReactNode;
+  /** Room for tables, like the spell wizard's values. */
+  wide?: boolean;
 };
 
 /** A centered dialog with a title, scrolling content and a footer. */
-export function DialogShell({ open, title, onClose, children, footer }: DialogShellProps) {
+export function DialogShell({ open, title, onClose, children, footer, wide }: DialogShellProps) {
   return (
     <ModalOverlay
       isOpen={open}
@@ -23,7 +26,13 @@ export function DialogShell({ open, title, onClose, children, footer }: DialogSh
       isDismissable
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
     >
-      <Modal className="frame flex max-h-[85vh] w-[40rem] max-w-[calc(100vw-2rem)] flex-col bg-surface-1 shadow-2xl">
+      <Modal
+        className={classes(
+          "frame flex max-h-[85vh] max-w-[calc(100vw-2rem)] flex-col bg-surface-1 shadow-2xl",
+          wide && "w-[64rem]",
+          !wide && "w-[40rem]",
+        )}
+      >
         <Dialog className="flex min-h-0 flex-1 flex-col outline-none">
           <Heading
             slot="title"

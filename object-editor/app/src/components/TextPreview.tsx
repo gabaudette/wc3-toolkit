@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../api";
 import { GameText } from "./GameText";
 
@@ -7,12 +7,21 @@ const FILL_DELAY_MS = 150;
 const PLACEHOLDER_START = "<";
 
 /**
+ * Changes whenever the values placeholders can show change, such as the page's
+ * object after an edit, so previews fill their placeholders again: a tooltip's
+ * `<A000,DataA1>` must follow the damage typed a moment ago.
+ */
+export const PlaceholderValues = createContext<unknown>(null);
+
+/**
  * Shows text the way the game draws it: colors, line breaks and filled-in
  * `<ID,Column>` placeholders. Updates as the user types.
  */
 export function TextPreview({ text }: { text: string }) {
   const [filled, setFilled] = useState(text);
+  const values = useContext(PlaceholderValues);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: `values` changing fills the placeholders again.
   useEffect(() => {
     setFilled(text);
     if (!text.includes(PLACEHOLDER_START)) {
@@ -28,7 +37,7 @@ export function TextPreview({ text }: { text: string }) {
         });
     }, FILL_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [text]);
+  }, [text, values]);
 
   if (!text.trim()) {
     return null;

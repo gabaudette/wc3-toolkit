@@ -3,6 +3,7 @@ import { api, errorMessage } from "../api";
 import type { AbilityDetail, AbilitySummary } from "../types";
 import { AbilityList } from "./AbilityList";
 import { AbilityPage } from "./AbilityPage";
+import { SpellWizard } from "./SpellWizard";
 
 type AbilitiesPaneProps = {
   editable: boolean;
@@ -22,6 +23,7 @@ export function AbilitiesPane({
 }: AbilitiesPaneProps) {
   const [abilities, setAbilities] = useState<AbilitySummary[]>([]);
   const [detail, setDetail] = useState<AbilityDetail | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
   /** Edits run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
 
@@ -104,7 +106,20 @@ export function AbilitiesPane({
         selected={selected}
         onSelect={onSelect}
         onError={listError}
+        {...(editable && { onNewSpell: () => setWizardOpen(true) })}
       />
+      {wizardOpen && (
+        <SpellWizard
+          open={wizardOpen}
+          onClose={() => setWizardOpen(false)}
+          onCreated={(id) => {
+            setWizardOpen(false);
+            refreshList();
+            onSelect(id);
+          }}
+          onMapChanged={onMapChanged}
+        />
+      )}
       {detail && (
         <AbilityPage
           key={detail.card.summary.id}

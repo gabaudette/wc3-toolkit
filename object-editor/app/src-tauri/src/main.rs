@@ -12,6 +12,7 @@ mod icons;
 mod leveled;
 mod plain;
 mod platform;
+mod spells;
 mod state;
 mod transfer;
 mod view;
@@ -47,6 +48,8 @@ fn main() -> ExitCode {
             commands::reset_field,
             commands::create_unit,
             commands::save_map,
+            spells::spell_kinds,
+            spells::discard_spell,
             plain::list_plain,
             plain::plain_detail,
             plain::search_plain,

@@ -8,6 +8,7 @@ import { Inspector } from "./Inspector";
 import { LevelTable } from "./LevelTable";
 import { LevelText } from "./LevelText";
 import { AdvancedGroup, FieldHeader, FieldRows, matches, SectionToggle, toggled } from "./Sections";
+import { PlaceholderValues } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
 /** The object types this page shows: abilities, and upgrades and doodads shaped like them. */
@@ -219,127 +220,129 @@ export function AbilityPage({
   }
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 gap-2.5">
-      <section className="frame flex min-h-0 min-w-0 flex-1 flex-col bg-surface-1">
-        <header className="flex flex-col gap-4 border-b border-line p-5">
-          <div className="flex items-center gap-4">
-            <UnitIcon path={summary.icon} size="large" />
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate font-display text-3xl font-bold text-gold-bright">
-                <GameText text={summary.name} singleLine />
-                {summary.suffix && (
-                  <span className="ml-2 text-base font-normal text-faint">
-                    <GameText text={summary.suffix} singleLine />
-                  </span>
-                )}
-              </h2>
-              <p className="font-mono text-xs text-faint">
-                {summary.id}
-                {summary.custom && ` · based on ${summary.base}`}
-              </p>
-              <p className="text-sm text-muted">{facts(detail, noun)}</p>
-            </div>
-            {editable && (
-              <Button onPress={onCreateCopy}>
-                <span className="flex items-center gap-1.5">
-                  <Copy01 className="size-4" aria-hidden="true" />
-                  New {noun} based on this
-                </span>
-              </Button>
-            )}
-          </div>
-
-          {description && (
-            <div className="max-h-32 overflow-y-auto rounded-[3px] border border-line bg-well px-3 py-2 text-sm leading-relaxed">
-              <GameText text={description} />
-            </div>
-          )}
-
-          <div className="flex items-center gap-3">
-            <input
-              type="search"
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              placeholder={FILTER_EXAMPLES[noun]}
-              aria-label="Filter fields"
-              className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
-            />
-            <label className="flex items-center gap-2 text-muted">
-              <input
-                type="checkbox"
-                checked={changedOnly}
-                onChange={(e) => setChangedOnly(e.target.checked)}
-              />
-              Changed only ({changedCount})
-            </label>
-          </div>
-
-          {!editable && (
-            <p className="text-sm text-faint">
-              Browsing game data. Open a map to edit {PLURALS[noun]}.
-            </p>
-          )}
-          {editable && (
-            <ul
-              aria-label="Level table keys"
-              className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-faint"
-            >
-              {levelKeys(LEVEL_NAMES[noun].toLowerCase()).map(([key, action]) => (
-                <li key={key}>
-                  <kbd className="rounded-[3px] border border-line px-1 font-sans text-muted">
-                    {key}
-                  </kbd>{" "}
-                  {action}
-                </li>
-              ))}
-            </ul>
-          )}
-        </header>
-
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <FieldHeader base={baseLabel(detail)} />
-          {sections.length === 0 && <p className="p-5 text-muted">No fields match.</p>}
-          {sections.map(({ section, fields, levelFields }) => {
-            const expanded = searching || open.includes(section.category);
-            const advancedFields = fields.filter((f) => f.advanced);
-            const advancedLevels = levelFields.filter((f) => f.field.advanced);
-
-            return (
-              <div key={section.category}>
-                <SectionToggle
-                  label={section.label}
-                  count={fields.length + levelFields.length}
-                  changed={changedIn(fields, levelFields)}
-                  expanded={expanded}
-                  onToggle={() => setOpen(toggled(open, section.category))}
-                />
-                {expanded &&
-                  body(
-                    fields.filter((f) => !f.advanced),
-                    levelFields.filter((f) => !f.field.advanced),
+    <PlaceholderValues.Provider value={detail}>
+      <div className="flex min-h-0 min-w-0 flex-1 gap-2.5">
+        <section className="frame flex min-h-0 min-w-0 flex-1 flex-col bg-surface-1">
+          <header className="flex flex-col gap-4 border-b border-line p-5">
+            <div className="flex items-center gap-4">
+              <UnitIcon path={summary.icon} size="large" />
+              <div className="min-w-0 flex-1">
+                <h2 className="truncate font-display text-3xl font-bold text-gold-bright">
+                  <GameText text={summary.name} singleLine />
+                  {summary.suffix && (
+                    <span className="ml-2 text-base font-normal text-faint">
+                      <GameText text={summary.suffix} singleLine />
+                    </span>
                   )}
-                {expanded && (
-                  <AdvancedGroup
-                    count={advancedFields.length + advancedLevels.length}
-                    changed={changedIn(advancedFields, advancedLevels)}
-                    open={searching || openAdvanced.includes(section.category)}
-                    onToggle={() => setOpenAdvanced(toggled(openAdvanced, section.category))}
-                  >
-                    {body(advancedFields, advancedLevels)}
-                  </AdvancedGroup>
-                )}
+                </h2>
+                <p className="font-mono text-xs text-faint">
+                  {summary.id}
+                  {summary.custom && ` · based on ${summary.base}`}
+                </p>
+                <p className="text-sm text-muted">{facts(detail, noun)}</p>
               </div>
-            );
-          })}
-        </div>
-      </section>
-      <Inspector
-        {...(noun === "doodad" && { modelPath })}
-        field={inspectedField}
-        perLevel={inspectedField !== null && perLevel.includes(inspectedField)}
-        editable={editable}
-        onReset={(field) => onReset(field, NO_LEVEL)}
-      />
-    </div>
+              {editable && (
+                <Button onPress={onCreateCopy}>
+                  <span className="flex items-center gap-1.5">
+                    <Copy01 className="size-4" aria-hidden="true" />
+                    New {noun} based on this
+                  </span>
+                </Button>
+              )}
+            </div>
+
+            {description && (
+              <div className="max-h-32 overflow-y-auto rounded-[3px] border border-line bg-well px-3 py-2 text-sm leading-relaxed">
+                <GameText text={description} />
+              </div>
+            )}
+
+            <div className="flex items-center gap-3">
+              <input
+                type="search"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+                placeholder={FILTER_EXAMPLES[noun]}
+                aria-label="Filter fields"
+                className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
+              />
+              <label className="flex items-center gap-2 text-muted">
+                <input
+                  type="checkbox"
+                  checked={changedOnly}
+                  onChange={(e) => setChangedOnly(e.target.checked)}
+                />
+                Changed only ({changedCount})
+              </label>
+            </div>
+
+            {!editable && (
+              <p className="text-sm text-faint">
+                Browsing game data. Open a map to edit {PLURALS[noun]}.
+              </p>
+            )}
+            {editable && (
+              <ul
+                aria-label="Level table keys"
+                className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-faint"
+              >
+                {levelKeys(LEVEL_NAMES[noun].toLowerCase()).map(([key, action]) => (
+                  <li key={key}>
+                    <kbd className="rounded-[3px] border border-line px-1 font-sans text-muted">
+                      {key}
+                    </kbd>{" "}
+                    {action}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </header>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <FieldHeader base={baseLabel(detail)} />
+            {sections.length === 0 && <p className="p-5 text-muted">No fields match.</p>}
+            {sections.map(({ section, fields, levelFields }) => {
+              const expanded = searching || open.includes(section.category);
+              const advancedFields = fields.filter((f) => f.advanced);
+              const advancedLevels = levelFields.filter((f) => f.field.advanced);
+
+              return (
+                <div key={section.category}>
+                  <SectionToggle
+                    label={section.label}
+                    count={fields.length + levelFields.length}
+                    changed={changedIn(fields, levelFields)}
+                    expanded={expanded}
+                    onToggle={() => setOpen(toggled(open, section.category))}
+                  />
+                  {expanded &&
+                    body(
+                      fields.filter((f) => !f.advanced),
+                      levelFields.filter((f) => !f.field.advanced),
+                    )}
+                  {expanded && (
+                    <AdvancedGroup
+                      count={advancedFields.length + advancedLevels.length}
+                      changed={changedIn(advancedFields, advancedLevels)}
+                      open={searching || openAdvanced.includes(section.category)}
+                      onToggle={() => setOpenAdvanced(toggled(openAdvanced, section.category))}
+                    >
+                      {body(advancedFields, advancedLevels)}
+                    </AdvancedGroup>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+        <Inspector
+          {...(noun === "doodad" && { modelPath })}
+          field={inspectedField}
+          perLevel={inspectedField !== null && perLevel.includes(inspectedField)}
+          editable={editable}
+          onReset={(field) => onReset(field, NO_LEVEL)}
+        />
+      </div>
+    </PlaceholderValues.Provider>
   );
 }
