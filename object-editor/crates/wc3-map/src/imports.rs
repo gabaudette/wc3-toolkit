@@ -21,6 +21,11 @@ const IMPORT_LIST_VERSION: u32 = 1;
 /// classic format, plus the 0x10 bit every Reforged entry carries).
 /// Unverified in the World Editor.
 const FULL_PATH_FLAG: u8 = 0x10 | 13;
+/// Low bits of an entry's flag saying its path is under `war3mapImported\`
+/// (classic 5 and 8; Reforged adds `0x10`, as in 24).
+const IMPORTED_DIR_FLAGS: &[u8] = &[5, 8];
+const FLAG_KIND_MASK: u8 = 0x0F;
+const IMPORTED_DIR: &str = "war3mapImported\\";
 const PATH_SEPARATOR: char = '\\';
 const MODEL_EXTENSIONS: &[&str] = &["mdx", "mdl"];
 const MODEL_EXTENSION: &str = "mdx";
@@ -141,6 +146,28 @@ impl MapImports {
             .iter()
             .find(|f| same_path(&f.path, path))
             .map(|f| f.bytes.as_slice())
+    }
+
+    /// Every file the map imports, by its path in the archive: the import
+    /// list's entries and the files queued for the next save. Protected maps
+    /// often have no list, so their imports are not known.
+    pub fn paths(&self) -> Vec<String> {
+        let listed = self.list.iter().flat_map(|list| {
+            list.entries.iter().map(|(flag, path)| {
+                if IMPORTED_DIR_FLAGS.contains(&(flag & FLAG_KIND_MASK)) {
+                    format!("{IMPORTED_DIR}{path}")
+                } else {
+                    path.clone()
+                }
+            })
+        });
+        let mut paths: Vec<String> = Vec::new();
+        for path in listed.chain(self.pending.iter().map(|f| f.path.clone())) {
+            if !paths.iter().any(|p| same_path(p, &path)) {
+                paths.push(path);
+            }
+        }
+        paths
     }
 
     pub fn has_pending(&self) -> bool {
@@ -362,6 +389,37 @@ mod tests {
                 "ReplaceableTextures\\CommandButtonsDisabled\\DISBTNHero.blp",
                 "Textures\\HeroSkin.blp",
                 "war3mapImported\\BTNHero.blp",
+            ]
+        );
+    }
+
+    #[test]
+    fn import_paths_include_the_imported_folder_and_queued_files() {
+        let mut list = ImportList::new();
+        list.entries.push((24, "KoboldDigger.mdx".to_owned()));
+        list.entries.push((5, "BTNOld.blp".to_owned()));
+        list.entries
+            .push((FULL_PATH_FLAG, "Textures\\Skin.dds".to_owned()));
+        let mut imports = MapImports {
+            list: Some(list),
+            pending: Vec::new(),
+        };
+        imports.add(ImportedFile {
+            path: "war3mapImported\\BTNNew.blp".into(),
+            bytes: vec![1],
+        });
+        imports.add(ImportedFile {
+            path: "textures\\skin.DDS".into(),
+            bytes: vec![2],
+        });
+
+        assert_eq!(
+            imports.paths(),
+            [
+                "war3mapImported\\KoboldDigger.mdx",
+                "war3mapImported\\BTNOld.blp",
+                "Textures\\Skin.dds",
+                "war3mapImported\\BTNNew.blp",
             ]
         );
     }

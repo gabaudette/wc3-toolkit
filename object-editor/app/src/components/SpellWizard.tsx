@@ -4,6 +4,7 @@ import { api, errorMessage } from "../api";
 import type {
   AbilityDetail,
   Field,
+  IconChoice,
   LevelField,
   SpellBase,
   SpellKind,
@@ -19,6 +20,7 @@ import { GameText } from "./GameText";
 import { LevelTable } from "./LevelTable";
 import { LevelText } from "./LevelText";
 import { type BuffChoice, SpellBuffStep } from "./SpellBuffStep";
+import { SpellButtonStep } from "./SpellButtonStep";
 import { PlaceholderValues } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
@@ -31,7 +33,7 @@ type SpellWizardProps = {
   onMapChanged: () => void;
 };
 
-type Step = "kind" | "base" | "values" | "buff";
+type Step = "kind" | "base" | "values" | "buff" | "button";
 
 const NAME = "anam";
 const LEVELS = "alev";
@@ -51,12 +53,21 @@ const BUFFS = "abuf";
 /** Fields of a spell's own buff named after it: the editor's name and the tooltip title. */
 const BUFF_NAMES = ["fnam", "ftip"];
 const BASE_BUFF: BuffChoice = { kind: "base" };
+const ICON = "aart";
+/** A hero spell's icon in its learn menu; it follows the button's icon. */
+const LEARN_ICON = "arar";
+/** Texts that may show the hotkey highlighted, as older tooltips do: `(|cffffcc00T|r)`. */
+const HOTKEY_TEXTS = ["atp1", "aret", "aut1"];
+const HOTKEY = "ahky";
+/** A hero spell's hotkey in its learn menu; it follows the cast hotkey when they matched. */
+const LEARN_HOTKEY = "arhk";
 
 const STEP_TITLES: Record<Step, string> = {
   kind: "New spell: what does it do?",
   base: "New spell: start from",
   values: "New spell: values",
   buff: "New spell: buff",
+  button: "New spell: button",
 };
 
 /** The fields the values step edits: the common ones first, then the base ability's own. */
@@ -174,6 +185,7 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
   const [baseName, setBaseName] = useState("");
   const [shownBuff, setShownBuff] = useState<UnitDetail | null>(null);
   const [allBuffs, setAllBuffs] = useState<UnitItem[]>([]);
+  const [icons, setIcons] = useState<IconChoice[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** Edits run one after another, so a slow answer never overwrites a newer one. */
@@ -240,6 +252,11 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
   async function back() {
     setError(null);
     try {
+      if (step === "button") {
+        setStep("buff");
+        return;
+      }
+
       if (step === "buff") {
         setStep("values");
         return;
@@ -420,6 +437,67 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
       return null;
     });
 
+  /** Shows the button step, with every icon to pick from. */
+  async function toButton() {
+    setBusy(true);
+    setError(null);
+    try {
+      await queue.current;
+      if (icons.length === 0) {
+        setIcons(await api.spellIcons());
+      }
+
+      setStep("button");
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Sets the button's icon, and a hero spell's learn icon with it. */
+  const setIcon = (path: string) =>
+    edit(async (id) => {
+      let updated = await api.setAbilityField(id, ICON, NO_LEVEL, path);
+      if (detail?.card.summary.hero) {
+        updated = await api.setAbilityField(id, LEARN_ICON, NO_LEVEL, path);
+      }
+
+      return updated;
+    });
+
+  /**
+   * Sets a hotkey, and moves its highlight in tooltips that show it, as older
+   * tooltips do (`Storm Bolt (|cffffcc00T|r)`); Reforged's leave it out. A
+   * hero spell's learn hotkey follows the cast hotkey when they were the same.
+   */
+  const setHotkey = (field: string, key: string) =>
+    edit(async (id) => {
+      const before = detail;
+      let updated = await api.setAbilityField(id, field, NO_LEVEL, key);
+      const old = before && plainField(before, field)?.raw;
+      if (!before || !old || old === key) {
+        return updated;
+      }
+
+      const learn = plainField(before, LEARN_HOTKEY)?.raw;
+      if (field === HOTKEY && before.card.summary.hero && learn === old) {
+        updated = await api.setAbilityField(id, LEARN_HOTKEY, NO_LEVEL, key);
+      }
+
+      const highlight = `(|cffffcc00${old}|r)`;
+      for (const fieldId of HOTKEY_TEXTS) {
+        for (const { raw, level } of namedTexts(before, fieldId)) {
+          if (raw.includes(highlight)) {
+            const moved = raw.replaceAll(highlight, `(|cffffcc00${key}|r)`);
+            updated = await api.setAbilityField(id, fieldId, level, moved);
+          }
+        }
+      }
+
+      return updated;
+    });
+
   async function finish() {
     if (!draft) {
       return;
@@ -454,6 +532,11 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
         </Button>
       )}
       {step === "buff" && (
+        <Button primary onPress={toButton} disabled={busy}>
+          Next: button
+        </Button>
+      )}
+      {step === "button" && (
         <Button primary onPress={finish} disabled={busy}>
           Create spell
         </Button>
@@ -509,6 +592,15 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
             onBase={pickBaseBuff}
             onOther={pickOtherBuff}
             onEditOwn={editOwnBuff}
+          />
+        )}
+        {step === "button" && detail && (
+          <SpellButtonStep
+            detail={detail}
+            icons={icons}
+            onSet={(field, value) => set(field, NO_LEVEL, value)}
+            onIcon={setIcon}
+            onHotkey={setHotkey}
           />
         )}
       </DialogShell>

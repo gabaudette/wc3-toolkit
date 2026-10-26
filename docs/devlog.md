@@ -4,6 +4,31 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-26 · Spell wizard, part 3: icon, hotkey and button (AGE-49)
+
+- A button step after the buff: icon picker, hotkey and a 4×3 command card for `abpx`/`abpy`;
+  heroes get a second card for the learn menu (`arpx`/`arpy`, `arhk`). Picking an icon sets
+  `aart`, and `arar` too for heroes.
+- Icons come from the `spell_icons` command: the map's imported images first
+  (`ImportList::paths`, new, with a test: listed entries with `war3mapImported\` added when
+  the flag's low bits are 5 or 8, plus files queued for import), then every icon the game's
+  abilities, units, items and buffs name, deduplicated and sorted by name. Some of those names
+  point at files that don't exist; `UnitIcon` gained `onMissing` and the picker drops icons
+  whose image fails to load.
+- Warnings cover the commands every unit has (Move, Stop, Hold Position, Attack, Patrol, plus
+  Learn for heroes, Cancel on the learn menu): covering their spot or sharing their hotkey.
+  Clashes with the unit's other abilities wait for AGE-50, when the spell is given to units.
+- Changing the hotkey replaces the old key's highlight (`(|cffffcc00T|r)`) in `atp1`, `aret`
+  and `aut1` at every level; Reforged tooltips mostly have none. For heroes the learn hotkey
+  follows the cast hotkey while the two were the same.
+- `DialogShell` now anchors dialogs near the top (`items-start`, `pt-[8vh]`) instead of
+  centering them: the wizard's steps differ in height, and a centered dialog moved its footer
+  buttons on every step and on every search keystroke.
+- Checked in the app on a copy of the test map: Fire Bolt with the fire icon, hotkey F and its
+  button at column 2, row 3; warnings for Patrol's spot and hotkey M; a Chain Lightning draft
+  whose learn hotkey followed the cast hotkey to G, then cancelled. The saved map's 5 object
+  and string files round-trip identically.
+
 ## 2026-10-26 · Spell wizard, part 2: the buff (AGE-48)
 
 - A buff step after the values: keep the base ability's buff, give the spell its own, or use

@@ -50,6 +50,7 @@ fn main() -> ExitCode {
             commands::save_map,
             spells::spell_kinds,
             spells::discard_spell,
+            spells::spell_icons,
             plain::list_plain,
             plain::plain_detail,
             plain::search_plain,

@@ -9,6 +9,7 @@ import type {
   Field,
   GameSummary,
   HotkeyClash,
+  IconChoice,
   ImportPreview,
   ImportSource,
   LeveledCatalog,
@@ -59,6 +60,8 @@ export const api = {
     invoke<AbilityDetail>("reset_ability_field", { id, field, level }),
   createAbility: (base: string) => invoke<AbilitySummary>("create_ability", { base }),
   spellKinds: () => invoke<SpellKind[]>("spell_kinds"),
+  /** Icons for a spell's button: the map's imported images first, then the game's. */
+  spellIcons: () => invoke<IconChoice[]>("spell_icons"),
   /** Removes a custom ability the spell wizard created, when it is cancelled. */
   discardSpell: (id: string) => invoke<void>("discard_spell", { id }),
   fillPlaceholders: (text: string) => invoke<string>("fill_placeholders", { text }),
