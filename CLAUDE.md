@@ -8,7 +8,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   storage via the vendored CascLib; `crates/wc3-data` loads game data: `game` (layered file
   access), `units` (every unit with all Object Editor fields and editor-style display values;
   `UnitDatabase::load_items` is the same over the item tables), `upgrades`,
-  `icon` (DDS → RGBA/PNG), `blp` (BLP1, JPEG or paletted, as maps import), plus the
+  `icon` (DDS → RGBA/PNG), `blp` (BLP1, JPEG or paletted, as maps import), `spells` (the spell
+  wizard's kinds and suggested bases, from `data/spell-recipes.toml`), plus the
   SLK/profile/metadata parsers. `wc3data` is a CLI inspector
   (`cargo run --release -p wc3-data --bin wc3data -- unit Hpal`). It also has the map formats:
   `objects` (all Object Editor files, v1–v3, byte-exact round trip) and `strings` (`war3map.wts`).

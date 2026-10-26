@@ -631,6 +631,26 @@ fn upgrades_load_with_values_per_level() -> TestResult {
     Ok(())
 }
 
+/// The spell wizard's suggested bases are real game abilities.
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn every_suggested_spell_base_exists() -> TestResult {
+    let dir = std::env::var_os(GAME_DIR_VAR)
+        .map(PathBuf::from)
+        .ok_or("set WC3_GAME_DIR")?;
+    let files = GameFiles::open(&dir, GameOptions::default())?;
+    let abilities = wc3_data::abilities::AbilityDatabase::load(&files)?;
+
+    let missing: Vec<String> = wc3_data::spells::spell_kinds()?
+        .iter()
+        .flat_map(|kind| kind.bases.iter().map(move |base| (kind, base)))
+        .filter(|(_, base)| abilities.info(&base.code).is_none())
+        .map(|(kind, base)| format!("{}: {}", kind.id, base.code))
+        .collect();
+    assert!(missing.is_empty(), "not game abilities: {missing:?}");
+    Ok(())
+}
+
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn holy_light_card_data() -> TestResult {

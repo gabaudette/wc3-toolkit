@@ -4,6 +4,33 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-26 · Spell wizard, part 1 (AGE-47)
+
+- First part of the spell creation tool (AGE-19): the wizard, spell kinds, base ability and
+  values. Buffs (AGE-48), button and hotkeys (AGE-49), giving the spell to units (AGE-50) and
+  triggered spells (AGE-51) come next.
+- `data/spell-recipes.toml` (read by `wc3-data::spells`) lists 14 kinds of spell, each with
+  suggested base abilities, best first, and a sentence on what each brings. A real-install
+  test checks that every suggestion is a game ability.
+- The spell is an ordinary custom ability created when the base is picked, so the values step
+  edits the real ability with the existing level table and tooltip preview (placeholders
+  filled from its own values). Cancelling, or going back to pick another base, removes it:
+  `MapAbilities::remove` drops a custom ability and the strings the editor added for it
+  (`discard_spell` command). The values step shows the common values (targets, range,
+  cooldown, mana, area, durations), then every per-level value in the base's spell-data
+  category, then the tooltip title and text; the rest stays on the ability page.
+- Copied tooltips name the base in their placeholders (`<AHtb,DataA1>`), so a copy shows the
+  original's numbers, in the editor and in game. On creation the wizard points `aub1`, `auu1`
+  and `arut` at the new ID, and renaming the spell also renames it in the tooltip titles
+  (`atp1`, `aret`).
+- `TextPreview` only re-filled placeholders when its text changed, so a tooltip kept showing
+  an old damage after the damage was edited. A `PlaceholderValues` context, set to the page's
+  object by the unit and ability pages and the wizard, makes previews fill again after edits.
+- Found while testing: every ability, upgrade and doodad page re-rendered forever. The level
+  table clamped its active cell with `min(active, rows - 1)`, then fixed a -1 to 0 and set a
+  new object; with no rows (the text section, whose per-level fields are all texts) that never
+  settled. `grid::inside` clamps before comparing, with tests. It was on main too.
+
 ## 2026-10-26 · Build scripts find their sources wherever they run
 
 - The `casc` and `mpq` build scripts located the vendored CascLib and StormLib with

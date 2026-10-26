@@ -1,7 +1,9 @@
+import { Stars02 } from "@untitledui/icons";
 import { useEffect, useMemo, useState } from "react";
 import { api, errorMessage } from "../api";
 import type { AbilitySummary, SearchHit } from "../types";
 import { classes } from "../ui";
+import { Button } from "./Button";
 import { Chip, toggle } from "./Chip";
 import { GameText } from "./GameText";
 import { ListFold, useFolded } from "./ListFold";
@@ -12,6 +14,8 @@ type AbilityListProps = {
   selected: string | null;
   onSelect: (id: string) => void;
   onError: (message: string) => void;
+  /** Opens the spell wizard; absent while browsing game data only. */
+  onNewSpell?: () => void;
 };
 
 type Kind = "hero" | "unit" | "item";
@@ -50,7 +54,13 @@ function originOf(ability: AbilitySummary): Origin {
   return "game";
 }
 
-export function AbilityList({ abilities, selected, onSelect, onError }: AbilityListProps) {
+export function AbilityList({
+  abilities,
+  selected,
+  onSelect,
+  onError,
+  onNewSpell,
+}: AbilityListProps) {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[] | null>(null);
   const [kinds, setKinds] = useState<Kind[]>(["hero", "unit", "item"]);
@@ -146,6 +156,14 @@ export function AbilityList({ abilities, selected, onSelect, onError }: AbilityL
       className="panel flex min-h-0 w-72 shrink-0 flex-col rounded-[3px] bg-surface-1"
     >
       <div className="flex flex-col gap-2 border-b border-line p-3">
+        {onNewSpell && (
+          <Button primary onPress={onNewSpell}>
+            <span className="flex items-center justify-center gap-1.5">
+              <Stars02 className="size-4" aria-hidden="true" />
+              New spell
+            </span>
+          </Button>
+        )}
         <input
           type="search"
           value={query}

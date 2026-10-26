@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { type Cell, moved, typesCharacter } from "../grid";
+import { type Cell, inside, moved, typesCharacter } from "../grid";
 import type { Field, LevelCell, LevelField } from "../types";
 import { classes } from "../ui";
 import { Description } from "./FieldRow";
@@ -264,11 +264,12 @@ export function LevelTable({
   const levels = Math.max(0, ...fields.map((f) => f.cells.length));
   const levelNumbers = Array.from({ length: levels }, (_, i) => i + 1);
 
+  // Keeps the active cell inside the table, also when it has no rows (an
+  // ability's text section), which used to re-render forever.
   useEffect(() => {
-    const row = Math.min(active.row, fields.length - 1);
-    const column = Math.min(active.column, levels - 1);
-    if (row !== active.row || column !== active.column) {
-      setActive({ row: Math.max(0, row), column: Math.max(0, column) });
+    const kept = inside(active, fields.length, levels);
+    if (kept) {
+      setActive(kept);
     }
   }, [active, fields.length, levels]);
 

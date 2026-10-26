@@ -1,0 +1,507 @@
+import { ArrowLeft } from "@untitledui/icons";
+import { useEffect, useRef, useState } from "react";
+import { api, errorMessage } from "../api";
+import type { AbilityDetail, Field, LevelField, SpellBase, SpellKind } from "../types";
+import { levelCount } from "../ui";
+import { AbilityPicker } from "./AbilityPicker";
+import { Button } from "./Button";
+import { DialogShell } from "./DialogShell";
+import { GameText } from "./GameText";
+import { LevelTable } from "./LevelTable";
+import { LevelText } from "./LevelText";
+import { PlaceholderValues } from "./TextPreview";
+import { UnitIcon } from "./UnitIcon";
+
+type SpellWizardProps = {
+  open: boolean;
+  onClose: () => void;
+  /** The spell was created; its page opens. */
+  onCreated: (id: string) => void;
+  /** Called after every change, so the window can show the map as unsaved. */
+  onMapChanged: () => void;
+};
+
+type Step = "kind" | "base" | "values";
+
+const NAME = "anam";
+const LEVELS = "alev";
+/** Values every spell has, in the order the values step shows them. */
+const COMMON_VALUES = ["atar", "aran", "acdn", "amcs", "aare", "adur", "ahdu"];
+/** The category holding a base ability's own values (damage, stun time, ...). */
+const SPELL_DATA = "data";
+/** The tooltip title and text, per level. */
+const TOOLTIPS = ["atp1", "aub1"];
+/** Tooltip texts that show values: normal, turned off, and the hero's learn text. */
+const PLACEHOLDER_TEXTS = ["aub1", "auu1", "arut"];
+/** Texts that usually repeat the spell's name: tooltip titles and the learn title. */
+const NAMED_TEXTS = ["atp1", "aret"];
+const NO_LEVEL = 0;
+
+const STEP_TITLES: Record<Step, string> = {
+  kind: "New spell: what does it do?",
+  base: "New spell: start from",
+  values: "New spell: values",
+};
+
+/** The fields the values step edits: the common ones first, then the base ability's own. */
+function valueFields(detail: AbilityDetail): LevelField[] {
+  const all = detail.sections.flatMap((s) =>
+    s.levelFields.map((f) => ({ f, category: s.category })),
+  );
+  const common = COMMON_VALUES.flatMap((id) => all.filter(({ f }) => f.field.id === id));
+  const own = all.filter(
+    ({ category, f }) => category === SPELL_DATA && !TOOLTIPS.includes(f.field.id),
+  );
+  return [...common, ...own].map(({ f }) => f);
+}
+
+function spellType(hero: boolean): string {
+  if (hero) {
+    return "Hero spell";
+  }
+
+  return "Unit spell";
+}
+
+/**
+ * Points the copied tooltips at the spell's own values. Game tooltips name
+ * their ability in placeholders (`<AHtb,DataA1>`), so a copy would keep
+ * showing the original's numbers, in the editor and in game.
+ */
+async function ownValues(id: string, base: string, detail: AbilityDetail): Promise<AbilityDetail> {
+  const reference = new RegExp(`<${base},`, "gi");
+  let updated = detail;
+  for (const fieldId of PLACEHOLDER_TEXTS) {
+    for (const { raw, level } of namedTexts(detail, fieldId)) {
+      const own = raw.replace(reference, `<${id},`);
+      if (own !== raw) {
+        updated = await api.setAbilityField(id, fieldId, level, own);
+      }
+    }
+  }
+
+  return updated;
+}
+
+/** A text field's values with their levels (0 for a field without levels). */
+function namedTexts(detail: AbilityDetail, id: string): { raw: string; level: number }[] {
+  const perLevel = levelField(detail, id);
+  if (perLevel) {
+    return perLevel.cells.map((cell, index) => ({ raw: cell.raw, level: index + 1 }));
+  }
+
+  const plain = plainField(detail, id);
+  if (plain) {
+    return [{ raw: plain.raw, level: NO_LEVEL }];
+  }
+
+  return [];
+}
+
+function plainField(detail: AbilityDetail, id: string): Field | undefined {
+  return detail.sections.flatMap((s) => s.fields).find((f) => f.id === id);
+}
+
+function levelField(detail: AbilityDetail, id: string): LevelField | undefined {
+  return detail.sections.flatMap((s) => s.levelFields).find((f) => f.field.id === id);
+}
+
+/**
+ * Builds a spell step by step: what it does, the game ability it starts from,
+ * then its values. The spell is a custom ability created when the base is
+ * picked, so the values step edits the real thing with a live tooltip;
+ * cancelling or going back removes it again.
+ */
+export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWizardProps) {
+  const [step, setStep] = useState<Step>("kind");
+  const [kinds, setKinds] = useState<SpellKind[]>([]);
+  const [kind, setKind] = useState<SpellKind | null>(null);
+  const [detail, setDetail] = useState<AbilityDetail | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  /** Edits run one after another, so a slow answer never overwrites a newer one. */
+  const queue = useRef<Promise<void>>(Promise.resolve());
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setStep("kind");
+    setKind(null);
+    setDetail(null);
+    setError(null);
+    api
+      .spellKinds()
+      .then(setKinds)
+      .catch((e: unknown) => setError(errorMessage(e)));
+  }, [open]);
+
+  const draft = detail?.card.summary.id ?? null;
+
+  async function discard() {
+    if (!draft) {
+      return;
+    }
+
+    await queue.current;
+    await api.discardSpell(draft);
+    setDetail(null);
+    onMapChanged();
+  }
+
+  async function close() {
+    try {
+      await discard();
+    } catch (e) {
+      setError(errorMessage(e));
+    }
+
+    onClose();
+  }
+
+  async function back() {
+    setError(null);
+    try {
+      if (step === "values") {
+        await discard();
+        setStep("base");
+        return;
+      }
+
+      setStep("kind");
+    } catch (e) {
+      setError(errorMessage(e));
+    }
+  }
+
+  async function start(base: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await api.createAbility(base);
+      onMapChanged();
+      setDetail(await ownValues(created.id, base, await api.abilityDetail(created.id)));
+      setStep("values");
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function edit(change: (id: string) => Promise<AbilityDetail | null>) {
+    if (!draft) {
+      return;
+    }
+
+    queue.current = queue.current.then(async () => {
+      try {
+        const updated = await change(draft);
+        if (updated) {
+          setDetail(updated);
+        }
+
+        setError(null);
+        onMapChanged();
+      } catch (e) {
+        setError(errorMessage(e));
+      }
+    });
+  }
+
+  /**
+   * Renames the spell, and its tooltip titles with it: they start as the base
+   * ability's ("Storm Bolt - [Level 1]"), which would otherwise stay.
+   */
+  const rename = (name: string) =>
+    edit(async (id) => {
+      const before = detail;
+      let updated = await api.setAbilityField(id, NAME, NO_LEVEL, name);
+      const old = before && plainField(before, NAME)?.raw;
+      if (!before || !old || old === name) {
+        return updated;
+      }
+
+      for (const fieldId of NAMED_TEXTS) {
+        for (const { raw, level } of namedTexts(before, fieldId)) {
+          if (raw.includes(old)) {
+            updated = await api.setAbilityField(id, fieldId, level, raw.replaceAll(old, name));
+          }
+        }
+      }
+
+      return updated;
+    });
+
+  const set = (field: string, level: number, value: string) =>
+    edit((id) => api.setAbilityField(id, field, level, value));
+  const reset = (field: string, level: number) =>
+    edit((id) => api.resetAbilityField(id, field, level));
+  const fill = (field: string, fromLevel: number, value: string) =>
+    edit(async (id) => {
+      let updated: AbilityDetail | null = null;
+      for (let level = fromLevel; level <= (detail?.levels ?? fromLevel); level++) {
+        updated = await api.setAbilityField(id, field, level, value);
+      }
+
+      return updated;
+    });
+
+  async function finish() {
+    if (!draft) {
+      return;
+    }
+
+    await queue.current;
+    const created = draft;
+    setDetail(null);
+    onCreated(created);
+  }
+
+  const footer = (
+    <>
+      {step !== "kind" && (
+        <Button onPress={back} disabled={busy}>
+          <span className="flex items-center gap-1.5">
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Back
+          </span>
+        </Button>
+      )}
+      <Button onPress={close}>Cancel</Button>
+      {step === "values" && (
+        <Button primary onPress={finish}>
+          Create spell
+        </Button>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      <DialogShell
+        open={open && !picking}
+        title={STEP_TITLES[step]}
+        onClose={close}
+        footer={footer}
+        wide={step === "values"}
+      >
+        {error && (
+          <p role="alert" className="text-danger">
+            {error}
+          </p>
+        )}
+        {step === "kind" && (
+          <KindStep
+            kinds={kinds}
+            onPick={(picked) => {
+              setKind(picked);
+              setStep("base");
+            }}
+          />
+        )}
+        {step === "base" && kind && (
+          <BaseStep kind={kind} busy={busy} onPick={start} onOther={() => setPicking(true)} />
+        )}
+        {step === "values" && detail && (
+          <ValuesStep
+            detail={detail}
+            onRename={rename}
+            onChange={set}
+            onFill={fill}
+            onReset={reset}
+          />
+        )}
+      </DialogShell>
+      <AbilityPicker
+        open={picking}
+        heroOnly={false}
+        exclude={[]}
+        onPick={(id) => {
+          setPicking(false);
+          start(id);
+        }}
+        onClose={() => setPicking(false)}
+      />
+    </>
+  );
+}
+
+function KindStep({ kinds, onPick }: { kinds: SpellKind[]; onPick: (kind: SpellKind) => void }) {
+  return (
+    <ul aria-label="Kinds of spell" className="grid grid-cols-2 gap-2">
+      {kinds.map((kind) => (
+        <li key={kind.id}>
+          <button
+            type="button"
+            onClick={() => onPick(kind)}
+            className="flex h-full w-full flex-col gap-0.5 rounded-[3px] border border-line bg-well px-3 py-2 text-left outline-none hover:border-gold focus-visible:border-glow"
+          >
+            <span className="font-semibold text-gold-bright">{kind.label}</span>
+            <span className="text-sm text-muted">{kind.description}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+type BaseStepProps = {
+  kind: SpellKind;
+  busy: boolean;
+  onPick: (base: string) => void;
+  onOther: () => void;
+};
+
+function BaseStep({ kind, busy, onPick, onOther }: BaseStepProps) {
+  return (
+    <>
+      <p className="text-muted">
+        {kind.label}: start from one of these game abilities. Your spell is a copy you can change
+        freely; the original stays as it is.
+      </p>
+      <ul aria-label="Suggested abilities" className="flex flex-col gap-2">
+        {kind.bases.map((base) => (
+          <li key={base.card.summary.id}>
+            <BaseChoice base={base} busy={busy} onPick={onPick} />
+          </li>
+        ))}
+      </ul>
+      <div>
+        <Button onPress={onOther} disabled={busy}>
+          Another ability…
+        </Button>
+      </div>
+    </>
+  );
+}
+
+function BaseChoice({
+  base,
+  busy,
+  onPick,
+}: {
+  base: SpellBase;
+  busy: boolean;
+  onPick: (base: string) => void;
+}) {
+  const { summary } = base.card;
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={() => onPick(summary.id)}
+      className="flex w-full items-start gap-3 rounded-[3px] border border-line bg-well px-3 py-2 text-left outline-none hover:border-gold focus-visible:border-glow disabled:opacity-40"
+    >
+      <UnitIcon path={summary.icon} size="small" />
+      <span className="min-w-0 flex-1">
+        <span className="block font-semibold">
+          <GameText text={summary.name} singleLine />
+          {summary.suffix && (
+            <span className="ml-1.5 font-normal text-faint">
+              <GameText text={summary.suffix} singleLine />
+            </span>
+          )}
+        </span>
+        <span className="block text-sm text-muted">{base.why}</span>
+        <span className="block text-xs text-faint">
+          {spellType(summary.hero)} · {levelCount(summary.levels)} ·{" "}
+          <span className="font-mono">{summary.id}</span>
+        </span>
+      </span>
+    </button>
+  );
+}
+
+type ValuesStepProps = {
+  detail: AbilityDetail;
+  /** Renames the spell, and the tooltip titles that repeat its name. */
+  onRename: (name: string) => void;
+  onChange: (field: string, level: number, value: string) => void;
+  onFill: (field: string, fromLevel: number, value: string) => void;
+  onReset: (field: string, level: number) => void;
+};
+
+function ValuesStep({ detail, onRename, onChange, onFill, onReset }: ValuesStepProps) {
+  const name = plainField(detail, NAME);
+  const levels = plainField(detail, LEVELS);
+  const tooltips = TOOLTIPS.map((id) => levelField(detail, id)).filter(
+    (field): field is LevelField => field !== undefined,
+  );
+  const { summary } = detail.card;
+
+  return (
+    <PlaceholderValues.Provider value={detail}>
+      <p className="text-sm text-muted">
+        Based on <GameText text={summary.name} singleLine /> ({summary.base}). Everything else, such
+        as its buff, icon and hotkey, can be changed on its page afterwards.
+      </p>
+      <div className="flex flex-wrap gap-4">
+        {name && <CommitInput label="Name" field={name} onCommit={onRename} />}
+        {levels && (
+          <CommitInput
+            label="Levels"
+            field={levels}
+            numeric
+            onCommit={(value) => onChange(LEVELS, NO_LEVEL, value)}
+          />
+        )}
+      </div>
+      <LevelTable
+        fields={valueFields(detail)}
+        editable
+        onChange={onChange}
+        onFill={onFill}
+        onReset={onReset}
+      />
+      {tooltips.map((field) => (
+        <LevelText
+          key={field.field.id}
+          field={field}
+          editable
+          onChange={(level, value) => onChange(field.field.id, level, value)}
+          onReset={(level) => onReset(field.field.id, level)}
+        />
+      ))}
+    </PlaceholderValues.Provider>
+  );
+}
+
+type CommitInputProps = {
+  label: string;
+  field: Field;
+  numeric?: boolean;
+  onCommit: (value: string) => void;
+};
+
+/** A text box that saves when it loses focus or on Enter. */
+function CommitInput({ label, field, numeric, onCommit }: CommitInputProps) {
+  const [value, setValue] = useState(field.raw);
+  useEffect(() => setValue(field.raw), [field.raw]);
+
+  function commit() {
+    if (value !== field.raw) {
+      onCommit(value);
+    }
+  }
+
+  return (
+    <label className="flex flex-col gap-1 text-sm text-muted">
+      {label}
+      <input
+        value={value}
+        {...(numeric && { type: "number", min: field.min ?? 1, max: field.max ?? undefined })}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            commit();
+          }
+        }}
+        className="rounded-[3px] border border-field bg-well px-3 py-1.5 text-ink outline-none focus:border-glow"
+      />
+    </label>
+  );
+}

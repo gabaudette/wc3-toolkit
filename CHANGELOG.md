@@ -8,6 +8,10 @@ under "What's new".
 
 ### Added
 
+- Spell wizard: "New spell" in the Abilities tab asks what the spell should do (damage, heal,
+  stun, summon, aura and 9 more), suggests game abilities to start from and why, then sets its
+  name, levels, targets, range, cooldown, mana, its own values and tooltips in one table, with
+  the tooltip previewed live. Cancelling leaves the map as it was.
 - Contextual documentation problem links that open a GitHub draft with the page, API or
   field identifier and selected example language.
 - Visual scripting lifecycles for timers, groups and locations, with six responsive diagrams,
@@ -65,6 +69,10 @@ under "What's new".
 
 ### Fixed
 
+- Ability, upgrade and doodad pages no longer keep redrawing in the background while open,
+  which used processor time for nothing.
+- Tooltip previews now update as soon as a value they show changes, not only when the text
+  itself is edited.
 - Long game texts, like tooltips, showed quote marks around their value when edited.
 - Destructables available in several tilesets only showed the first one.
 - Textures and icons imported into a map as `.tga` files now show.

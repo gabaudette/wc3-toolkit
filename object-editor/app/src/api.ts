@@ -15,6 +15,7 @@ import type {
   MapSummary,
   SearchHit,
   SharePreview,
+  SpellKind,
   TransferObject,
   UnitDetail,
   UnitItem,
@@ -57,6 +58,9 @@ export const api = {
   resetAbilityField: (id: string, field: string, level: number) =>
     invoke<AbilityDetail>("reset_ability_field", { id, field, level }),
   createAbility: (base: string) => invoke<AbilitySummary>("create_ability", { base }),
+  spellKinds: () => invoke<SpellKind[]>("spell_kinds"),
+  /** Removes a custom ability the spell wizard created, when it is cancelled. */
+  discardSpell: (id: string) => invoke<void>("discard_spell", { id }),
   fillPlaceholders: (text: string) => invoke<string>("fill_placeholders", { text }),
   hotkeyClashes: (id: string) => invoke<HotkeyClash[]>("hotkey_clashes", { id }),
   setField: (id: string, field: string, value: string) =>

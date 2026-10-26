@@ -168,6 +168,21 @@ export type AbilitySection = {
   levelFields: LevelField[];
 };
 
+/** A base ability the spell wizard suggests for a kind of spell. */
+export type SpellBase = {
+  card: AbilityCard;
+  /** What it brings, and when to pick it over the others. */
+  why: string;
+};
+
+/** What a spell does, as picked on the spell wizard's first step. */
+export type SpellKind = {
+  id: string;
+  label: string;
+  description: string;
+  bases: SpellBase[];
+};
+
 export type AbilityDetail = {
   card: AbilityCard;
   levels: number;

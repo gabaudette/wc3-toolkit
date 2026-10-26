@@ -1,0 +1,220 @@
+# Spell kinds for the spell wizard: what a spell does, and the game abilities
+# that do it best as a base. Written for this project (not taken from the game).
+#
+# [[kind]]         one choice on the wizard's first step, in this order.
+#   id             stable name, used by the app.
+#   label          the choice, as map makers would say it.
+#   description    one sentence: what spells of this kind do.
+# [[kind.base]]    a suggested base ability, best first.
+#   code           the game ability's ID.
+#   why            what it brings, and when to pick it over the others.
+
+[[kind]]
+id = "single-damage"
+label = "Damage one target"
+description = "Hits one enemy unit, usually with a missile."
+
+[[kind.base]]
+code = "AHtb"
+why = "A missile that damages and stuns. Set the stun to 0 for damage only."
+
+[[kind.base]]
+code = "ANfb"
+why = "The same missile and stun as Storm Bolt, for a hero of any race."
+
+[[kind.base]]
+code = "AUdc"
+why = "A missile that damages living enemies and heals undead allies."
+
+[[kind]]
+id = "area-damage"
+label = "Damage an area"
+description = "Hits every enemy in a circle or a line."
+
+[[kind.base]]
+code = "AHfs"
+why = "Burns a circle after a short delay, then keeps damaging it for a few seconds."
+
+[[kind.base]]
+code = "AOsh"
+why = "A wave that damages everything in a line."
+
+[[kind.base]]
+code = "AUfn"
+why = "Damages one target and the area around it, and slows them."
+
+[[kind.base]]
+code = "AOws"
+why = "Damages and stuns everything around the caster; no target needed."
+
+[[kind]]
+id = "bounce"
+label = "Bounce between targets"
+description = "Hits one target, then jumps to nearby ones."
+
+[[kind.base]]
+code = "AOcl"
+why = "Lightning that jumps between enemies, losing some damage on each jump."
+
+[[kind.base]]
+code = "AOhw"
+why = "The healing version: heals an ally, then nearby allies."
+
+[[kind]]
+id = "damage-over-time"
+label = "Damage over time"
+description = "Keeps hurting the target for a few seconds."
+
+[[kind.base]]
+code = "AEsh"
+why = "A poisoned dagger: damage on hit, then damage every second, with a slow."
+
+[[kind.base]]
+code = "AHfs"
+why = "Damages everything standing in the circle each second."
+
+[[kind]]
+id = "heal"
+label = "Heal"
+description = "Restores hit points to allies."
+
+[[kind.base]]
+code = "AHhb"
+why = "Heals one ally at once. Also damages undead enemies."
+
+[[kind.base]]
+code = "Arej"
+why = "Heals one ally a little each second."
+
+[[kind.base]]
+code = "AOhw"
+why = "Heals several allies, jumping from one to the next."
+
+[[kind]]
+id = "stun"
+label = "Stun"
+description = "Stops enemies from moving, attacking and casting for a while."
+
+[[kind.base]]
+code = "AHtb"
+why = "Stuns one enemy, with some damage."
+
+[[kind.base]]
+code = "AOws"
+why = "Stuns every enemy around the caster."
+
+[[kind]]
+id = "slow"
+label = "Slow"
+description = "Makes enemies move and attack slower for a while."
+
+[[kind.base]]
+code = "Aslo"
+why = "Slows the movement and attack speed of one enemy."
+
+[[kind.base]]
+code = "AHtc"
+why = "Damages and slows every enemy around the caster."
+
+[[kind]]
+id = "ally-buff"
+label = "Strengthen an ally"
+description = "Makes an ally stronger for a while."
+
+[[kind.base]]
+code = "Ablo"
+why = "Faster attacks and movement, and a bigger unit."
+
+[[kind.base]]
+code = "Ainf"
+why = "More damage and armor."
+
+[[kind]]
+id = "shield"
+label = "Shield"
+description = "Protects a unit from damage or spells."
+
+[[kind.base]]
+code = "AHds"
+why = "Makes the caster invulnerable for a few seconds."
+
+[[kind.base]]
+code = "ANms"
+why = "Damage takes mana instead of hit points while it is on."
+
+[[kind.base]]
+code = "Aams"
+why = "Blocks spells on one unit for a while."
+
+[[kind]]
+id = "summon"
+label = "Summon"
+description = "Creates units that fight for the caster for a limited time."
+
+[[kind.base]]
+code = "AHwe"
+why = "One summoned unit that fights at range."
+
+[[kind.base]]
+code = "AOsf"
+why = "Several summoned units at once."
+
+[[kind]]
+id = "aura"
+label = "Aura"
+description = "Always on: improves nearby allies without being cast."
+
+[[kind.base]]
+code = "AHad"
+why = "More armor for allies nearby."
+
+[[kind.base]]
+code = "AUau"
+why = "Faster movement and hit point regeneration for allies nearby."
+
+[[kind.base]]
+code = "AHab"
+why = "Faster mana regeneration for allies nearby."
+
+[[kind.base]]
+code = "AEah"
+why = "Allies nearby return melee damage to their attackers."
+
+[[kind]]
+id = "channel"
+label = "Channel"
+description = "The caster stands still and the effect lasts while it keeps casting."
+
+[[kind.base]]
+code = "AHbz"
+why = "Waves of damage over an area while the caster channels."
+
+[[kind.base]]
+code = "AEtq"
+why = "Heals allies around the caster while it channels."
+
+[[kind]]
+id = "move"
+label = "Blink or teleport"
+description = "Moves the caster somewhere else at once."
+
+[[kind.base]]
+code = "AEbl"
+why = "Jumps a short distance to a target point."
+
+[[kind.base]]
+code = "AHmt"
+why = "Teleports the caster and nearby units to an allied unit anywhere on the map."
+
+[[kind]]
+id = "invisibility"
+label = "Invisibility"
+description = "Hides a unit from enemies until it attacks or the time runs out."
+
+[[kind.base]]
+code = "AOwk"
+why = "The caster turns invisible and moves faster; its next attack deals bonus damage."
+
+[[kind.base]]
+code = "Aivs"
+why = "Turns an ally invisible."
