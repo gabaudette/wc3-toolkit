@@ -4,6 +4,25 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-26 · Spell wizard, part 2: the buff (AGE-48)
+
+- A buff step after the values: keep the base ability's buff, give the spell its own, or use
+  another. "Its own" creates a custom buff copying the base's first buff (`B000`, ...), names
+  it after the spell (`fnam`, `ftip`) and puts it in the ability's `abuf` at every level,
+  keeping the base's other buffs (a few abilities leave two). "Another" replaces them all. The
+  tooltip title and text of the spell's own buff are edited in the step, with the preview.
+- Switching away from "its own", cancelling, or going back past the values removes that buff
+  again: `PlainObjects::remove` (with a test) and the `discard_plain` command. On "Create
+  spell" the buff is written again for every level, in case levels were added after it was
+  picked.
+- The values step and the buff step name the base ability from its name at creation: the
+  spell's own name has usually changed by then ("The same buff as Storm Bolt", not "as Fire
+  Bolt").
+- Checked in the app on a copy of the test map: Fire Bolt with its own buff `B000` ("Burning
+  and stunned"), `abuf` = `B000` at levels 1-3, a cancelled second spell left no `B001`, and
+  the saved map's 7 object and string files round-trip identically.
+- Effects (`aeff`) stay the base ability's; picking or creating an effect is not part of this.
+
 ## 2026-10-26 · Spell wizard, part 1 (AGE-47)
 
 - First part of the spell creation tool (AGE-19): the wizard, spell kinds, base ability and

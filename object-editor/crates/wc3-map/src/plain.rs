@@ -367,6 +367,21 @@ impl PlainObjects {
         });
     }
 
+    /// Removes a custom object and the strings this editor added for it, as
+    /// if it had never been created. Returns `false` for game objects (their
+    /// changes are reset field by field) and unknown IDs.
+    pub fn remove(&mut self, strings: &mut MapStrings, id: FourCC) -> bool {
+        let mut removed = false;
+        for data in [&mut self.tables.data, &mut self.tables.skin] {
+            let before = data.custom.len();
+            data.custom.retain(|e| e.id != id);
+            removed |= data.custom.len() != before;
+        }
+
+        self.drop_unused_strings(strings);
+        removed
+    }
+
     /// Creates a custom object copying `base` and returns its new ID, the
     /// next free one of `I000`, `I001`, ... (by the kind's first letter).
     pub fn create(&mut self, db: &UnitDatabase, base: FourCC) -> Result<FourCC> {
@@ -495,4 +510,56 @@ fn same_as_base(db: &UnitDatabase, base: FourCC, field: &FieldMeta, value: &Valu
         let base_value = db.raw_value(&base, field, *mode).unwrap_or_default();
         parse_value(field, &base_value).is_ok_and(|parsed| &parsed == value)
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn id(code: &str) -> FourCC {
+        FourCC::parse(code).unwrap_or(FourCC::ZERO)
+    }
+
+    #[test]
+    fn removing_a_custom_buff_drops_it_and_its_new_strings() {
+        let mut tables = Tables {
+            data: ObjectData::empty(Layout::Plain),
+            skin: ObjectData::empty(Layout::Plain),
+        };
+        let mut strings = MapStrings::default();
+        let kept = strings.add("Kept", None);
+        let added = strings.add("Fire Bolt", None);
+        let added_id = reference_id(&added).unwrap_or_default();
+        for (table, mods) in [
+            (&mut tables.data, Vec::new()),
+            (
+                &mut tables.skin,
+                vec![Modification {
+                    field: id("ftip"),
+                    level: None,
+                    column: None,
+                    value: Value::String(added),
+                    end: FourCC::ZERO,
+                }],
+            ),
+        ] {
+            table.custom.push(ObjectEntry {
+                base: id("BPSE"),
+                id: id("B000"),
+                sets: vec![ModSet { flags: 0, mods }],
+            });
+        }
+        let mut buffs = PlainObjects::from_tables(BUFFS, tables);
+        buffs.added_strings.push(added_id);
+
+        assert!(
+            !buffs.remove(&mut strings, id("BPSE")),
+            "game buffs are not removed"
+        );
+        assert!(buffs.remove(&mut strings, id("B000")));
+        assert!(buffs.objects().is_empty());
+        assert_eq!(strings.get(added_id), None, "its new string is gone");
+        let kept_id = reference_id(&kept).unwrap_or_default();
+        assert_eq!(strings.get(kept_id), Some("Kept"), "other strings stay");
+    }
 }
