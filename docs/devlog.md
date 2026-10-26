@@ -4,6 +4,19 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-26 · Documentation deploys from GitHub Actions
+
+- Every pull request got a Vercel build, comment and check, even editor-only ones. The
+  "ignored build step" script compared the commit with `VERCEL_GIT_PREVIOUS_SHA`, the last
+  deployment of the same branch; a new branch has none, so it always built.
+- Vercel's Git deployments are now off (`git.deploymentEnabled: false` in `vercel.json`), and
+  `docs.yml`, which already runs only for documentation paths, deploys what it builds: it
+  uploads `.vercel/output` (the Build Output API package) as an artifact, and a `deploy` job
+  runs `vercel deploy --prebuilt` (CLI 63.1.2), as a preview for pull requests and to
+  production for `main`, writing the URL to the job summary. The skip script and its test
+  are gone. The job needs a `VERCEL_TOKEN` secret; without one, or for pull requests from
+  forks, the site is still built and checked but not deployed.
+
 ## 2026-10-26 · The app closing on its own on Linux (AGE-46)
 
 - **Cause: real-time threads over their CPU limit.** WebKitGTK asks RealtimeKit (system D-Bus)
