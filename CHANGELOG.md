@@ -91,6 +91,8 @@ under "What's new".
 
 ### Fixed
 
+- Lists of units, items and abilities hold no more than the game allows, as in the World
+  Editor: 12 items or units sold, made or upgraded to, 4 item abilities, 5 hero abilities.
 - "Give to units" no longer gives a hero a sixth hero spell, which the game leaves out of the
   learn menu: it explains the limit of five and which spells the hero already has.
 - Ability, upgrade and doodad pages no longer keep redrawing in the background while open,

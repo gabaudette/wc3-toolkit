@@ -4,6 +4,19 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Lists hold at most what the game allows
+
+- The metadata's `maxVal` on lists of IDs is how many they hold, as the World Editor enforces:
+  5 hero abilities, 4 item abilities, 12 items or units sold, made or upgraded to, 2 per
+  Engineering Upgrade pair. The unit page's ability cards already stopped adding at it; now
+  `parse_value` refuses longer lists for every object type, so lists typed as codes and
+  anything else that sets a field (Give to units, the CLI) keep to it too. On text lists
+  `maxVal` is a length, so they are left alone.
+- The ability cards said "A hero can have at most" for item abilities too; the message now
+  depends on the list.
+- The previous entry said the unit page's "Abilities - Hero" field accepted more than five; it
+  did not.
+
 ## 2026-10-27 · Heroes learn at most five spells
 
 - Found playing the Knockback Wave test map: the spell was the test hero's sixth hero ability,
@@ -15,8 +28,7 @@ single line. Every pull request adds an entry here and to the changelog.
   spell past the fifth gets a warning that the game leaves it out.
 - Real-install test: a Paladin with five hero spells cannot get Blizzard, its fifth spell
   gets no warning, and a sixth one already in the list is flagged.
-- The unit page's own "Abilities - Hero" field still accepts more than five; it lists them
-  like any other ability list.
+- (Corrected later: the unit page's "Abilities - Hero" field already stopped at five.)
 
 ## 2026-10-27 · Spell wizard, part 5: triggered spells with generated Lua (AGE-51)
 

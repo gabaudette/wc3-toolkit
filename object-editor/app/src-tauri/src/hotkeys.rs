@@ -610,18 +610,12 @@ mod tests {
         let fifth = spell_fit(&view, &lookup, hero, id("AHtb")?, true);
         assert!(fifth.blocked.is_none() && fifth.warnings.iter().all(|w| !w.contains("leaves")));
 
-        units.set(&db, hero, field, "AHhb,AHds,AHre,AHad,AHtb,AHbz")?;
-        let view = View {
-            db: &db,
-            guide: &guide,
-            map: Some(&units),
-            mode: ArtMode::Sd,
-        };
-        let sixth = spell_fit(&view, &lookup, hero, id("AHbz")?, true);
-        assert!(sixth.has && sixth.blocked.is_none(), "{sixth:?}");
+        // A sixth cannot be set at all; maps made elsewhere can still have one,
+        // which `spell_fit` warns about.
         assert!(
-            sixth.warnings.iter().any(|w| w.contains("number 6")),
-            "{sixth:?}"
+            units
+                .set(&db, hero, field, "AHhb,AHds,AHre,AHad,AHtb,AHbz")
+                .is_err()
         );
         Ok(())
     }
