@@ -10,9 +10,7 @@ import { Select } from "./Select";
 
 type DialogEditorProps = {
   dialog: DialogDesign;
-  /** Every design, for buttons that show another dialog. */
   designs: Design[];
-  /** The Lua name the module gives it (`ChoosePath` for `UI.ChoosePath`). */
   luaName: string;
   editable: boolean;
   onChange: (dialog: DialogDesign) => void;
@@ -36,7 +34,6 @@ const ACTION_LABELS: Record<ButtonAction["kind"], string> = {
   runFunction: "Run a Lua function",
 };
 
-/** The action a button gets when its kind is picked, keeping what fits. */
 function actionOfKind(kind: ButtonAction["kind"], others: Design[]): ButtonAction {
   if (kind === "showDialog") {
     return { kind, dialog: others[0]?.id ?? "" };
@@ -49,7 +46,6 @@ function actionOfKind(kind: ButtonAction["kind"], others: Design[]): ButtonActio
   return { kind: "close" };
 }
 
-/** A dialog's name, message, buttons and start option, beside its preview. */
 export function DialogEditor({
   dialog,
   designs,
@@ -303,11 +299,6 @@ function IconButton({ label, disabled, onPress, children }: IconButtonProps) {
   );
 }
 
-/**
- * The dialog as the game draws it, on a 16:9 screen: centered, the message
- * on top and one full-width button per row. Sizes follow the preview's width
- * (container units), so it keeps the game's proportions at any size.
- */
 function DialogPreview({ dialog }: { dialog: DialogDesign }) {
   return (
     <figure className="flex min-w-0 flex-col gap-1.5">

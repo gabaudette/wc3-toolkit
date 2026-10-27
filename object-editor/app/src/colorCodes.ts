@@ -30,20 +30,14 @@ export const SWATCHES: Swatch[] = [
 
 export type Edit = {
   text: string;
-  /** The selection after the edit, covering the changed text. */
   start: number;
   end: number;
 };
 
-/** Removes color codes from a piece of text, keeping the words. */
 export function stripColorCodes(text: string): string {
   return text.replace(COLOR_START, "").replace(COLOR_END, "");
 }
 
-/**
- * Colors the selected part of `text`. Codes already inside the selection are
- * removed first so colors never nest.
- */
 export function applyColor(text: string, start: number, end: number, hex: string): Edit {
   const selected = stripColorCodes(text.slice(start, end));
   const colored = `|c${ALPHA}${hex.toLowerCase()}${selected}|r`;
@@ -55,7 +49,6 @@ export function applyColor(text: string, start: number, end: number, hex: string
   };
 }
 
-/** Removes color codes from the selected part of `text`. */
 export function removeColor(text: string, start: number, end: number): Edit {
   const plain = stripColorCodes(text.slice(start, end));
 

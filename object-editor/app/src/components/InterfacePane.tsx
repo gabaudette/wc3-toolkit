@@ -21,22 +21,17 @@ import { LeaderboardEditor } from "./LeaderboardEditor";
 import { MultiboardEditor } from "./MultiboardEditor";
 import { clock, TimerWindowEditor } from "./TimerWindowEditor";
 
-/** How long a new timer window counts down, in seconds. */
 const NEW_TIMER_SECONDS = 90;
 
-/** Typing pauses this long before the window re-reads whether the map is unsaved. */
 const MAP_STATUS_DELAY_MS = 300;
 
 type InterfacePaneProps = {
   editable: boolean;
-  /** The open map's file: design files are saved and looked for beside it. */
   mapPath: string | null;
-  /** Called after every change, so the window can show the map as unsaved. */
   onMapChanged: () => void;
   onError: (message: string | null) => void;
 };
 
-/** The designs with one swapped for its new version. */
 function replaced(designs: Design[], changed: Design): Design[] {
   return designs.map((d) => {
     if (d.id === changed.id) {
@@ -47,7 +42,6 @@ function replaced(designs: Design[], changed: Design): Design[] {
   });
 }
 
-/** A scoreboard to start from: a header row, then a row for each player. */
 function newMultiboard(count: number): MultiboardDesign {
   const cell = (text: string, color: string | null = null) => ({ text, color, icon: null });
 
@@ -81,7 +75,6 @@ function newMultiboard(count: number): MultiboardDesign {
   };
 }
 
-/** The list's second line for a design. */
 function summary(design: Design): string {
   if (design.kind === "multiboard") {
     return `Multiboard · ${counted(design.columns.length, "column")}`;
@@ -108,7 +101,6 @@ function summary(design: Design): string {
   return `Dialog · ${counted(design.buttons.length, "button")}`;
 }
 
-/** A kills leaderboard: one row per player, highest first. */
 function newLeaderboard(count: number): LeaderboardDesign {
   return {
     kind: "leaderboard",
@@ -124,7 +116,6 @@ function newLeaderboard(count: number): LeaderboardDesign {
   };
 }
 
-/** A wave countdown: 90 seconds, started with the game, repeating. */
 function newTimerWindow(count: number): TimerWindowDesign {
   return {
     kind: "timerWindow",
@@ -167,20 +158,12 @@ function newDialog(count: number): DialogDesign {
   };
 }
 
-/**
- * The Interface tab: the map's in-game UI designs (dialogs so far) on the
- * left, the selected one's editor and preview in the middle, and the Lua
- * they become, with the test copy, along the bottom. Designs live in
- * `<map> UI.json` next to the map and are written with it on Save.
- */
 export function InterfacePane({ editable, mapPath, onMapChanged, onError }: InterfacePaneProps) {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [icons, setIcons] = useState<IconChoice[]>([]);
   const [exporting, setExporting] = useState(false);
-  /** The design file being imported. */
   const [importing, setImporting] = useState<string | null>(null);
-  /** Updates run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
   const statusTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const flush = useCallback(() => queue.current, []);
@@ -201,15 +184,9 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
   }, [editable, onError]);
 
   const names = useMemo(() => luaNames(designs), [designs]);
-  /** Every design, ticked when the export window opens; kept stable so it does not reset the window. */
   const exportChoice = useMemo(() => designs.map((d) => d.id), [designs]);
   const design = designs.find((d) => d.id === selected);
 
-  /**
-   * Shows `next` at once and hands it to the map. The window's map status
-   * (unsaved, Save) is re-read once typing pauses: re-reading it on every
-   * keystroke re-renders the whole window and drops keys.
-   */
   function update(next: Design[]) {
     setDesigns(next);
     queue.current = queue.current.then(() =>
@@ -222,7 +199,6 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
   }
 
   useEffect(() => {
-    // Cell icons pick from every icon; loaded once, when a board needs them.
     if (design?.kind !== "multiboard" || icons.length > 0) {
       return;
     }
@@ -235,7 +211,6 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
     setSelected(created.id);
   }
 
-  /** A copy right after the original, named "<name> copy" (numbered when taken). */
   function duplicate(original: Design) {
     const taken = new Set(designs.map((d) => d.name.toLowerCase()));
     let name = `${original.name} copy`;
@@ -277,7 +252,6 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
   }
 
   function remove(id: string) {
-    // Buttons that showed it close their dialog instead.
     const next = designs
       .filter((d) => d.id !== id)
       .map((d) => {
@@ -473,14 +447,11 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
 
 type LuaBarProps = {
   selected: string | null;
-  /** Re-reads the selected design's Lua when any design changes. */
   designs: Design[];
-  /** Waits for the designs' updates to reach the map. */
   flush: () => Promise<void>;
   onSaved: () => void;
 };
 
-/** The Lua folder, the selected design's module, and the test copy. */
 function LuaBar({ selected, designs, flush, onSaved }: LuaBarProps) {
   const [folder, setFolder] = useState("");
   const [showCode, setShowCode] = useState(false);
@@ -494,7 +465,6 @@ function LuaBar({ selected, designs, flush, onSaved }: LuaBarProps) {
   }, []);
 
   useEffect(() => {
-    // The designs are only a trigger: the module is read from the backend.
     if (!showCode || !selected || designs.length === 0) {
       return;
     }

@@ -40,7 +40,6 @@ describe("readableColor", () => {
     const lightened = readableColor("#200000");
 
     expect(lightened).not.toBe("#200000");
-    // Still red: the red channel stays the strongest.
     const [r, g, b] = [1, 3, 5].map((i) => Number.parseInt(lightened.slice(i, i + 2), 16));
 
     expect(r).toBeGreaterThan(g ?? 0);

@@ -5,15 +5,9 @@ import { classes } from "../ui";
 type UnitIconProps = {
   path: string | null;
   size: "small" | "large";
-  /** Called when the image cannot be loaded, so a picker can leave it out. */
   onMissing?: () => void;
 };
 
-/**
- * A unit's game icon, or a plain square when it has none or it fails to load.
- * Icons smaller than their box (the editor's 16 px category icons) are scaled
- * up pixel by pixel instead of blurred.
- */
 export function UnitIcon({ path, size, onMissing }: UnitIconProps) {
   const [failed, setFailed] = useState(false);
   const [pixelated, setPixelated] = useState(false);

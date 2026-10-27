@@ -1,6 +1,3 @@
-// Pre-push check (lefthook.yml): a branch must update both the public
-// changelog and the devlog compared with main. Skip it with `git push --no-verify`.
-
 const BASE = "origin/main";
 const LOGS = ["CHANGELOG.md", "docs/devlog.md"];
 const FAILURE = 1;
@@ -11,7 +8,6 @@ function git(...args: string[]): string {
   return result.stdout.toString().trim();
 }
 
-// Compare with the latest main when the network allows; the last fetch otherwise.
 git("fetch", "--quiet", "origin", "main");
 
 const changed = git("diff", "--name-only", `${BASE}...HEAD`).split("\n").filter(Boolean);

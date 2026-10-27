@@ -5,44 +5,32 @@ import { CommitInput } from "./CommitInput";
 import { GameText, plainGameText } from "./GameText";
 import { UnitIcon } from "./UnitIcon";
 
-/** Which buff the spell leaves on its target. */
 export type BuffChoice =
   | { kind: "base" }
   | { kind: "own"; id: string }
   | { kind: "other"; id: string };
 
 type SpellBuffStepProps = {
-  /** The base ability's name, as the player knows it. */
   baseName: string;
-  /** The base ability's buffs at level 1; empty when it leaves none. */
   baseBuffs: string[];
   choice: BuffChoice;
-  /** The buff the spell uses now: the base's, its own, or the one picked. */
   shown: UnitDetail | null;
-  /** Every buff, the map's first, for "another buff". */
   allBuffs: UnitItem[];
   busy: boolean;
   onOwn: () => void;
   onBase: () => void;
   onOther: (id: string) => void;
-  /** Edits the spell's own buff. */
   onEditOwn: (field: string, value: string) => void;
 };
 
 const TITLE = "ftip";
 const TEXT = "fube";
-/** Buffs listed at once in "another buff"; typing narrows the list. */
 const MAX_LISTED = 40;
 
 function buffField(detail: UnitDetail | null, id: string): Field | undefined {
   return detail?.sections.flatMap((s) => s.fields).find((f) => f.id === id);
 }
 
-/**
- * The spell wizard's buff step: the mark the spell leaves on its target (its
- * icon in the status bar and its tooltip). A spell can keep the base
- * ability's buff, get its own copy named after it, or use another one.
- */
 export function SpellBuffStep({
   baseName,
   baseBuffs,

@@ -26,10 +26,6 @@ const TABS: { id: Tab; label: string }[] = [
 
 const CODE_ROWS = 4;
 
-/**
- * Adds custom objects from a share code, a bundle file or another map, after
- * showing what will be added.
- */
 export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialogProps) {
   const [tab, setTab] = useState<Tab>("code");
   const [code, setCode] = useState("");
@@ -121,7 +117,6 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
     const added = await run(() => api.importObjects(source()));
 
     if (added) {
-      // The next import starts fresh; the chosen map stays for picking more from it.
       setCode("");
       setBundlePath(null);
       setChosen([]);

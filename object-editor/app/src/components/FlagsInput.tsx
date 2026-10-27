@@ -5,19 +5,12 @@ import { CheckChip } from "./Checkbox";
 
 type FlagsInputProps = {
   field: Field;
-  /** The value being edited, which may differ from `field.raw`. */
   raw: string;
-  /** The base object's value, to mark the options that differ from it. */
   baseRaw?: string;
   editable: boolean;
   onChange: (value: string) => void;
 };
 
-/**
- * Bit flags (`flags`) and lists of choices (`flagList`, like targets) as
- * chips that wrap, so even a long list (Targeted As has about 20) takes a
- * few rows. Tab moves between options, Space toggles.
- */
 export function FlagsInput({ field, raw, baseRaw, editable, onChange }: FlagsInputProps) {
   const bits = field.control === "flags";
   const isOn = (value: string, choice: Choice) => {

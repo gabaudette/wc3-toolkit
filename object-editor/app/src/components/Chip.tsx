@@ -1,6 +1,5 @@
 import { classes } from "../ui";
 
-/** The list with `value` added, or removed if it was there. */
 export function toggle<T>(list: T[], value: T): T[] {
   if (list.includes(value)) {
     return list.filter((v) => v !== value);

@@ -9,7 +9,6 @@ type ColoredTextInputProps = {
   label: string;
   className: string;
   onDraft: (text: string) => void;
-  /** Applies the text, like leaving the field. */
   onCommit: (text: string) => void;
 };
 
@@ -20,10 +19,6 @@ type Selection = {
 
 const HEX_PREFIX = "#";
 
-/**
- * A text box for game text. Selecting text shows a small menu that wraps the
- * selection in a color code, or removes colors from it.
- */
 export function ColoredTextInput({
   value,
   multiline,
@@ -54,7 +49,6 @@ export function ColoredTextInput({
     setSelection({ start: selectionStart, end: selectionEnd });
   }
 
-  /** Puts the edited text in place and keeps the new text selected. */
   function show(edit: Edit) {
     onDraft(edit.text);
     setSelection({ start: edit.start, end: edit.end });
@@ -76,7 +70,6 @@ export function ColoredTextInput({
     }
   }
 
-  /** The system color dialog takes focus, so a custom color is applied right away. */
   function customColor(hex: string) {
     if (selection) {
       const edit = applyColor(value, selection.start, selection.end, hex.replace(HEX_PREFIX, ""));
@@ -88,7 +81,6 @@ export function ColoredTextInput({
   }
 
   function blur(e: FocusEvent) {
-    // Focus moving into the menu (the custom color picker) keeps it open.
     if (menuRef.current?.contains(e.relatedTarget as Node | null)) {
       return;
     }
@@ -126,7 +118,6 @@ export function ColoredTextInput({
           ref={menuRef}
           role="toolbar"
           aria-label="Text color"
-          // Clicking a swatch must not move focus out of the text box.
           onMouseDown={(e) => {
             if (!(e.target instanceof HTMLInputElement)) {
               e.preventDefault();

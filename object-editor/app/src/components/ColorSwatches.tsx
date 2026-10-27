@@ -15,17 +15,13 @@ const PLAYER_COLORS: { label: string; value: string }[] = [
 ];
 
 type ColorSwatchesProps = {
-  /** `RRGGBB`, or null for the game's own color. */
   value: string | null;
   onChange: (value: string | null) => void;
-  /** Names the group for screen readers, such as "Message color". */
   label: string;
-  /** What null means here, with its swatch: "Game gold", "White". */
   none: { label: string; swatch: string };
   disabled?: boolean;
 };
 
-/** A row of color swatches: the game's own color first, then the player colors. */
 export function ColorSwatches({ value, onChange, label, none, disabled }: ColorSwatchesProps) {
   const colors = [
     { label: none.label, value: null, swatch: none.swatch },

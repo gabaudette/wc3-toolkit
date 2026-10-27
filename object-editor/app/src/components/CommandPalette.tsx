@@ -18,11 +18,9 @@ import type { AbilitySummary, Catalog, LeveledCatalog, UnitItem } from "../types
 import { GameText, plainGameText } from "./GameText";
 import { UnitIcon } from "./UnitIcon";
 
-/** A command the palette can run, such as saving the map. */
 export type PaletteCommand = {
   id: string;
   label: string;
-  /** Shortcut shown next to the command, if it has one. */
   shortcut?: string;
   run: () => void;
 };
@@ -33,9 +31,7 @@ type CommandPaletteProps = {
   units: UnitItem[];
   onOpenUnit: (id: string) => void;
   onOpenAbility: (id: string) => void;
-  /** Items, buffs and destructables. */
   onOpenPlain: (catalog: Catalog, id: string) => void;
-  /** Upgrades and doodads. */
   onOpenLeveled: (catalog: LeveledCatalog, id: string) => void;
   onClose: () => void;
 };
@@ -50,7 +46,6 @@ type Entry = {
 
 type Group = { name: string; entries: Entry[] };
 
-/** The tabs of objects without levels, in tab order, with their group names. */
 const PLAIN_GROUPS: { catalog: Catalog; name: string }[] = [
   { catalog: "items", name: "Items" },
   { catalog: "buffs", name: "Buffs" },
@@ -66,10 +61,8 @@ const LEVELED_GROUPS: { catalog: LeveledCatalog; name: string }[] = [
 
 const NO_LEVELED: Record<LeveledCatalog, UnitItem[]> = { upgrades: [], doodads: [] };
 
-/** Results shown per group; typing narrows them further. */
 const MAX_PER_GROUP = 8;
 
-/** Match quality: the start of the text, then the start of a word, then anywhere. */
 function rank(text: string, needle: string): number {
   if (text.startsWith(needle)) {
     return 0;
@@ -82,7 +75,6 @@ function rank(text: string, needle: string): number {
   return 2;
 }
 
-/** Items whose text contains the query, best matches first ("holy" finds Holy Light before Unholy Aura). */
 function matching<T>(list: T[], query: string, text: (item: T) => string): T[] {
   const needle = query.trim().toLowerCase();
 
@@ -98,10 +90,6 @@ function matching<T>(list: T[], query: string, text: (item: T) => string): T[] {
     .map((m) => m.item);
 }
 
-/**
- * Ctrl K: one search box for commands, units, abilities, items and upgrades. Arrow keys move,
- * Enter runs, Escape closes.
- */
 export function CommandPalette({
   open,
   commands,
@@ -162,7 +150,6 @@ export function CommandPalette({
         icon: u.icon,
         run: done(() => onOpenUnit(u.id)),
       }));
-    // Abilities, items and upgrades only show once something is typed: there are hundreds.
     const searched = query.trim() !== "";
     const abilityEntries = matching(abilities, query, (a) => `${plainGameText(a.name)} ${a.id}`)
       .filter(() => searched)

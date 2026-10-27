@@ -15,7 +15,6 @@ type AbilityListProps = {
   selected: string | null;
   onSelect: (id: string) => void;
   onError: (message: string) => void;
-  /** Opens the spell wizard; absent while browsing game data only. */
   onNewSpell?: () => void;
 };
 
@@ -68,7 +67,6 @@ export function AbilityList({
   const [origins, setOrigins] = useState<Origin[]>(["map", "game"]);
   const [folded, toggleFolded] = useFolded("wc3-object-editor.fold.abilities");
 
-  // Searches again when the list changes, so edited and new abilities show up.
   useEffect(() => {
     const trimmed = query.trim();
 
@@ -99,8 +97,6 @@ export function AbilityList({
     return abilities.filter(kept).map((ability) => ({ ability, reason: "" }));
   }, [abilities, hits, kinds, origins]);
 
-  // While searching every match shows; otherwise the map's own abilities come
-  // first and the game's fold away under their header.
   const own = shown.filter((r) => Boolean(hits) || r.ability.inMap);
   const game = shown.filter((r) => !hits && !r.ability.inMap);
   const mapHasNone = !abilities.some((a) => a.inMap);

@@ -12,7 +12,6 @@ import { UnitIcon } from "./UnitIcon";
 
 type UnitPageProps = {
   detail: UnitDetail;
-  /** Hotkey clashes; leave out for objects the check does not cover. */
   clashes?: HotkeyClash[];
   editable: boolean;
   onChange: (field: string, value: string) => void;
@@ -20,12 +19,10 @@ type UnitPageProps = {
   onCreateCopy: () => void;
 };
 
-/** The field holding the model, by noun. */
 const MODEL_FIELD: Record<string, string> = { unit: "umdl", item: "ifil", destructable: "bfil" };
 
 const VARIATIONS_FIELD = "bvar";
 
-/** The model the preview loads; destructables number their variations. */
 function modelFile(noun: string, fields: Field[]): string | null {
   const raw = fields.find((f) => f.id === MODEL_FIELD[noun])?.raw;
 
@@ -38,10 +35,8 @@ function modelFile(noun: string, fields: Field[]): string | null {
   return variationModel(raw, variations);
 }
 
-/** Kinds that name themselves; heroes, units and buildings are all "unit". */
 const OWN_NOUNS = ["item", "buff", "destructable"];
 
-/** What the page calls the object: "unit", "item", "buff" or "destructable". */
 function nounOf(item: UnitDetail["item"]): string {
   if (OWN_NOUNS.includes(item.kind)) {
     return item.kind;
@@ -50,7 +45,6 @@ function nounOf(item: UnitDetail["item"]): string {
   return "unit";
 }
 
-/** Sections open by default; the rest start folded to keep the page short. */
 const OPEN_BY_DEFAULT = ["stats", "combat", "abil", "text"];
 
 function visibleFields(section: Section, filter: string, changedOnly: boolean): Field[] {
@@ -65,7 +59,6 @@ function kindLabel(detail: UnitDetail): string {
   return [kind, race].filter(Boolean).join(" · ");
 }
 
-/** Header of the base column: the unit a custom unit copies, else the game's value. */
 function baseLabel(item: UnitDetail["item"]): string {
   if (item.custom) {
     return `Base · ${item.base}`;

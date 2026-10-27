@@ -1,5 +1,3 @@
-// Keyboard movement in the per-level tables: one row per field, one column per level.
-
 export type Cell = {
   row: number;
   column: number;
@@ -21,7 +19,6 @@ export function inside(cell: Cell, rows: number, columns: number): Cell | null {
   return { row, column };
 }
 
-/** Where an arrow, Home or End key moves the active cell; `null` for other keys. */
 export function moved(cell: Cell, key: string, rows: number, columns: number): Cell | null {
   const clamp = (value: number, size: number) => Math.min(size - 1, Math.max(0, value));
 
@@ -43,7 +40,6 @@ export function moved(cell: Cell, key: string, rows: number, columns: number): C
   }
 }
 
-/** Whether a key press types a character, which starts editing a cell with it. */
 export function typesCharacter(key: string, withModifier: boolean): boolean {
   return key.length === 1 && !withModifier;
 }

@@ -17,8 +17,6 @@ type FieldRowProps = {
   editable: boolean;
   onChange: (value: string) => void;
   onReset: () => void;
-  /** Shows the field in the page's inspector (on focus or its info button);
-   * without one, the info button folds out the description in place. */
   onInspect?: (field: Field) => void;
 };
 
@@ -26,7 +24,6 @@ const TRUE = "1";
 const FALSE = "0";
 const REAL_STEP = 0.01;
 const INTEGER_STEP = 1;
-/** Metadata type of fields that hold an icon path. */
 const ICON_TYPE = "icon";
 const LONG_TEXT_ROWS = 3;
 
@@ -41,7 +38,6 @@ function numberStep(field: Field): number {
   return REAL_STEP;
 }
 
-/** Commits a typed value on Enter or blur, so every keystroke is not an edit. */
 function useDraft(field: Field, onChange: (value: string) => void) {
   const [draft, setDraft] = useState(field.raw);
 
@@ -62,7 +58,6 @@ function useDraft(field: Field, onChange: (value: string) => void) {
   return { draft, setDraft, commit, commitText };
 }
 
-/** "3 of 22 on": how many options a long multi-checkbox field has turned on. */
 function flagCount(field: Field): string {
   const on = field.options.filter((choice) => {
     if (field.control === "flags") {
@@ -85,14 +80,12 @@ function abilityCount(raw: string): string {
   return `${count} abilities`;
 }
 
-/** Multi-checkbox fields with more options than this get the row's full width, under it. */
 const INLINE_FLAGS = 4;
 
 function isFlags(field: Field): boolean {
   return field.control === "flags" || field.control === "flagList";
 }
 
-/** Long lists of options lay out under the row, where they fit in a few lines. */
 function wideFlags(field: Field): boolean {
   return isFlags(field) && field.options.length > INLINE_FLAGS;
 }
@@ -177,7 +170,6 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
     );
   }
 
-  // Game text (names, tooltips) gets the color menu and a live preview.
   if (field.preview) {
     const multiline = field.control === "longText";
 
@@ -224,7 +216,6 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
     />
   );
 
-  // Icon paths show the icon they point at; it updates once the edit is saved.
   if (field.valueType === ICON_TYPE) {
     return (
       <div className="flex items-center gap-2">
@@ -248,7 +239,6 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
 
 const numberFormat = new Intl.NumberFormat();
 
-/** "Range 1 – 500,000", "At most 5" or nothing, from the field's limits. */
 export function rangeText(field: Field): string | null {
   const { min, max } = field;
 
@@ -300,7 +290,6 @@ export function FieldRow({ field, editable, onChange, onReset, onInspect }: Fiel
   }
 
   return (
-    // A row groups one field's controls; focusing any of them inspects the field.
     <fieldset
       aria-label={field.name}
       onFocus={() => onInspect?.(field)}

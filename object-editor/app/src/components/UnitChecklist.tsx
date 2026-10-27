@@ -10,7 +10,6 @@ type UnitChecklistProps = {
   onChange: (chosen: string[]) => void;
 };
 
-/** Custom units to tick, with a filter and "all / none" for long lists. */
 export function UnitChecklist({ units, chosen, onChange }: UnitChecklistProps) {
   const [query, setQuery] = useState("");
   const shown = useMemo(() => {

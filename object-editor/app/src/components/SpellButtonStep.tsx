@@ -12,7 +12,6 @@ type Command = Spot & { label: string; hotkey: string };
 type SpellButtonStepProps = {
   detail: AbilityDetail;
   icons: IconChoice[];
-  /** Sets a field without levels, such as the icon or the button's spot. */
   onSet: (field: string, value: string) => void;
   onIcon: (path: string) => void;
   onHotkey: (field: string, key: string) => void;
@@ -20,7 +19,6 @@ type SpellButtonStepProps = {
 
 const COLUMNS = 4;
 const ROWS = 3;
-/** Icons drawn at once; typing narrows the list further. */
 const MAX_ICONS = 120;
 
 /** The commands every unit has: Move, Stop, Hold Position, Attack and Patrol. */
@@ -49,7 +47,6 @@ function spot(detail: AbilityDetail, fields: { x: string; y: string }): Spot {
   return { x: Number(raw(detail, fields.x)) || 0, y: Number(raw(detail, fields.y)) || 0 };
 }
 
-/** What the player would lose, in plain words; nothing when the button fits. */
 function conflicts(at: Spot, hotkey: string, commands: Command[]): string[] {
   const found: string[] = [];
   const covered = commands.find((c) => c.x === at.x && c.y === at.y);
@@ -67,11 +64,6 @@ function conflicts(at: Spot, hotkey: string, commands: Command[]): string[] {
   return found;
 }
 
-/**
- * The spell wizard's button step: the spell's icon, its hotkey and where its
- * button sits on the command card (and on a hero's learn menu). Warns when
- * the button would hide a command every unit has or share its hotkey.
- */
 export function SpellButtonStep({ detail, icons, onSet, onIcon, onHotkey }: SpellButtonStepProps) {
   const { summary } = detail.card;
   const hero = summary.hero;
@@ -133,7 +125,6 @@ type CardEditorProps = {
   onHotkey: (key: string) => void;
 };
 
-/** A 4×3 card with the spell's button where it sits, and the hotkey that presses it. */
 function CardEditor({ title, spot, icon, commands, hotkey, onMove, onHotkey }: CardEditorProps) {
   const warnings = conflicts(spot, hotkey, commands);
   const cells = Array.from({ length: COLUMNS * ROWS }, (_, i) => ({
@@ -213,10 +204,8 @@ type IconPickerProps = {
   onPick: (path: string) => void;
 };
 
-/** The spell's icon, and a searchable grid of the game's and the map's icons. */
 export function IconPicker({ current, icons, onPick }: IconPickerProps) {
   const [query, setQuery] = useState("");
-  /** Icons the game data names but whose image does not load; left out once seen. */
   const [missing, setMissing] = useState<ReadonlySet<string>>(new Set());
   const listed = useMemo(() => {
     const needle = query.trim().toLowerCase();

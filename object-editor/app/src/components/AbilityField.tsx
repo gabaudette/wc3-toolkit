@@ -121,7 +121,6 @@ function Card({ card, onRemove }: { card: AbilityCard; onRemove: (() => void) | 
   );
 }
 
-/** Why "Add ability" is off: the list holds as many as the game allows. */
 function limitText(heroOnly: boolean, max: number | null): string {
   if (heroOnly) {
     return `A hero learns at most ${max} spells; the game leaves out any more.`;
@@ -130,7 +129,6 @@ function limitText(heroOnly: boolean, max: number | null): string {
   return `This list holds at most ${max} abilities.`;
 }
 
-/** Ability lists as cards, with a picker instead of typing codes. */
 export function AbilityField({ field, editable, onChange }: AbilityFieldProps) {
   const [cards, setCards] = useState<AbilityCard[]>([]);
   const [error, setError] = useState<string | null>(null);

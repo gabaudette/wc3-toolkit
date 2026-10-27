@@ -1,5 +1,3 @@
-// Mirrors the Rust types in src-tauri/src/view.rs and commands.rs.
-
 export type UnitKind =
   | "hero"
   | "unit"
@@ -10,13 +8,10 @@ export type UnitKind =
   | "destructable"
   | "doodad";
 
-/** Objects with a value per level (upgrades) or per variation (doodads), on the ability page. */
 export type LeveledCatalog = "upgrades" | "doodads";
 
-/** Objects without levels other than units, which share the unit page. */
 export type Catalog = "items" | "buffs" | "destructables";
 
-/** "game" holds the game's own items, which have no melee or campaign split. */
 export type UnitGroup = "map" | "melee" | "campaign" | "special" | "hidden" | "game";
 
 export type UnitItem = {
@@ -45,7 +40,6 @@ export type FieldControl =
 export type Choice = {
   value: string;
   label: string;
-  /** Other spellings the game accepts, e.g. "invu" for "invulnerable". */
   aliases: string[];
 };
 
@@ -56,9 +50,7 @@ export type Field = {
   display: string;
   raw: string;
   modified: boolean;
-  /** The base object's value, formatted like `display`. */
   base: string;
-  /** The base object's stored value, as `raw` is. */
   baseRaw: string;
   valueType: string;
   control: FieldControl;
@@ -95,7 +87,6 @@ export type UnitDetail = {
   damageBonus: DamageBonus | null;
 };
 
-/** Two or more buttons in one menu with the same hotkey. */
 export type HotkeyClash = {
   key: string;
   menu: string;
@@ -121,7 +112,6 @@ export type MapSummary = {
 
 export type AbilitySummary = {
   id: string;
-  /** The game ability it copies; its own ID for game abilities. */
   base: string;
   name: string;
   suffix: string | null;
@@ -130,9 +120,7 @@ export type AbilitySummary = {
   item: boolean;
   race: string;
   levels: number;
-  /** Added by the map (`A000`). */
   custom: boolean;
-  /** Added or changed by the map. */
   inMap: boolean;
   changedFields: number;
 };
@@ -157,7 +145,6 @@ export type LevelCell = {
   modified: boolean;
 };
 
-/** A field with a value per level; `field` holds its names, control and limits. */
 export type LevelField = {
   field: Field;
   cells: LevelCell[];
@@ -170,28 +157,21 @@ export type AbilitySection = {
   levelFields: LevelField[];
 };
 
-/** A setting of a triggered spell's choice parameter, such as "strength". */
 export type TemplateChoice = { label: string; lua: string };
 
-/** A value a triggered spell's Lua module uses, edited in the wizard. */
 export type TemplateParam = {
   id: string;
   label: string;
-  /** The default for each level; empty for a choice. */
   values: number[];
-  /** Only whole numbers make sense (counts). */
   whole: boolean;
-  /** One setting for every level instead of values; the first is the default. */
   choices: TemplateChoice[];
 };
 
-/** A triggered spell: Channel plus a Lua module made from a template. */
 export type SpellTemplate = {
   id: string;
   label: string;
   description: string;
   file: string;
-  /** Channel's target type. */
   target: "none" | "unit" | "point";
   targets: string;
   icon: string;
@@ -204,55 +184,39 @@ export type SpellTemplate = {
   params: TemplateParam[];
 };
 
-/** Each parameter's value per level, or for a choice the chosen index alone. */
 export type TemplateValues = Record<string, number[]>;
 
-/** The `[DEV]` copy of the map the harness built. */
 export type TestCopy = { path: string; modules: string[] };
 
-/** A button on a command card or learn menu preview. */
 export type CardButton = {
   name: string;
   icon: string | null;
   hotkey: string | null;
   x: number;
   y: number;
-  /** The spell being placed. */
   spell: boolean;
 };
 
-/** How a spell sits, or would sit, on a unit's command card and learn menu. */
 export type SpellFit = {
-  /** The unit already has the spell. */
   has: boolean;
-  /** The spell goes in the hero's learnable abilities rather than the normal ones. */
   learned: boolean;
   card: CardButton[];
-  /** Empty unless the spell is learned. */
   learn: CardButton[];
   warnings: string[];
-  /** Why the spell cannot be given, when it cannot (a hero with five hero spells). */
   blocked: string | null;
 };
 
-/** An icon the spell wizard offers for a spell's button. */
 export type IconChoice = {
-  /** As data files name it, e.g. `ReplaceableTextures\\CommandButtons\\BTNStormBolt.blp`. */
   path: string;
-  /** Its file name without folders or extension, for searching. */
   name: string;
-  /** Imported into the open map rather than from the game. */
   fromMap: boolean;
 };
 
-/** A base ability the spell wizard suggests for a kind of spell. */
 export type SpellBase = {
   card: AbilityCard;
-  /** What it brings, and when to pick it over the others. */
   why: string;
 };
 
-/** What a spell does, as picked on the spell wizard's first step. */
 export type SpellKind = {
   id: string;
   label: string;
@@ -266,36 +230,29 @@ export type AbilityDetail = {
   sections: AbilitySection[];
 };
 
-/** Objects that move between maps: custom units and what they use. */
 export type TransferKind = "unit" | "ability" | "buff" | "item" | "upgrade";
 
 export type TransferObject = {
   kind: TransferKind;
   id: string;
-  /** The ID it gets in this map, when importing. */
   newId: string | null;
   base: string;
   name: string;
   icon: string | null;
-  /** Brought along because a chosen unit uses it. */
   dependency: boolean;
 };
 
-/** What importing a file does: added, already in the map, or the map keeps its own. */
 export type FileStatus = "new" | "same" | "different";
 
-/** A file imported into a map (model, texture, icon) that travels with objects. */
 export type TransferFile = {
   path: string;
   size: number;
-  /** Set when importing. */
   status: FileStatus | null;
 };
 
 export type SharePreview = {
   code: string;
   objects: TransferObject[];
-  /** In bundle files only; share codes leave them out. */
   files: TransferFile[];
   warnings: string[];
 };
@@ -306,23 +263,17 @@ export type ImportPreview = {
   warnings: string[];
 };
 
-/** A design moving between maps, as the export and import windows list it. */
 export type ListedDesign = {
   name: string;
   kind: string;
-  /** Its name in Lua once in the map: `Scoreboard2` for `UI.Scoreboard2`. */
   luaName: string;
-  /** Brought along because this dialog's button shows it. */
   shownBy: string | null;
-  /** Its name in the file, when the map already had a design by that name. */
   renamedFrom: string | null;
 };
 
 export type DesignTransfer = {
   designs: ListedDesign[];
-  /** Files imported into the source map that the designs use. */
   files: TransferFile[];
-  /** Lua functions the designs call, which the map's own code defines. */
   needs: string[];
 };
 
@@ -340,91 +291,66 @@ export type ButtonAction =
 export type DialogButton = {
   id: string;
   text: string;
-  /** One letter or digit, or empty for none. */
   hotkey: string;
-  /** The hotkey's letter in the text turns gold, as in the game's own dialogs. */
   highlightHotkey: boolean;
   action: ButtonAction;
 };
 
-/** A dialog designed in the Interface tab: a message and a column of buttons. */
 export type DialogDesign = {
   kind: "dialog";
-  /** Stable, for references between designs. */
   id: string;
-  /** The name in the tab; the Lua name (`UI.ChoosePath`) comes from it. */
   name: string;
-  /** The message at the top, as plain text. */
   title: string;
-  /** The message's color as `RRGGBB`; the game's own gold when null. */
   titleColor: string | null;
   buttons: DialogButton[];
-  /** Shown to every player shortly after the game starts. */
   showAtStart: boolean;
 };
 
-/** A cell of a multiboard. */
 export type BoardCell = {
-  /** On a player's row, `{player}` is that player's name in their color. */
   text: string;
-  /** `RRGGBB`, or null for white. */
   color: string | null;
   icon: string | null;
 };
 
 export type BoardColumn = {
   id: string;
-  /** How Lua names it: `SetValue(row, "Kills", 5)`. */
   name: string;
-  /** Width in percent of the screen's width. */
   width: number;
 };
 
 export type BoardRow = {
   id: string;
-  /** How Lua names a fixed row; rows per player are named by the player. */
   name: string;
-  /** One row for every playing player, in player order, instead of one. */
   perPlayer: boolean;
-  /** One per column. */
   cells: BoardCell[];
 };
 
-/** A multiboard: a titled board of rows and columns in the top right corner. */
 export type MultiboardDesign = {
   kind: "multiboard";
   id: string;
   name: string;
   title: string;
-  /** `RRGGBB`, or null for the game's own color. */
   titleColor: string | null;
   columns: BoardColumn[];
   rows: BoardRow[];
   showAtStart: boolean;
-  /** Shown folded to its title bar. */
   minimized: boolean;
 };
 
-/** A leaderboard row of the map's own, such as a team. */
 export type LeaderboardLabel = {
   id: string;
-  /** Shown, and how Lua names the row: `SetValue("Alliance", 3)`. */
   name: string;
-  /** `RRGGBB`, or null for white. */
   color: string | null;
   value: number;
 };
 
-/** A leaderboard: a titled list of names and numbers in the top right corner. */
 export type LeaderboardDesign = {
   kind: "leaderboard";
   id: string;
   name: string;
   title: string;
   titleColor: string | null;
-  /** A row for every playing player, with their name in their color. */
   players: boolean;
-  /** What the players' rows start at. */
   playerValue: number;
   /** At most four: the game gives every row a player, and these use the neutral ones. */
   labels: LeaderboardLabel[];
@@ -432,20 +358,16 @@ export type LeaderboardDesign = {
   showAtStart: boolean;
 };
 
-/** A timer window: a countdown with a title, such as "Next wave 1:30". */
 export type TimerWindowDesign = {
   kind: "timerWindow";
   id: string;
   name: string;
   title: string;
   titleColor: string | null;
-  /** In seconds. */
   duration: number;
   repeats: boolean;
   startAtStart: boolean;
-  /** The window goes away when the time runs out (never for repeating ones). */
   hideWhenDone: boolean;
-  /** A global Lua function run when the time runs out, or empty. */
   onDone: string;
 };
 

@@ -32,11 +32,8 @@ import { UnitIcon } from "./UnitIcon";
 type SpellWizardProps = {
   open: boolean;
   onClose: () => void;
-  /** The spell was created; its page opens. */
   onCreated: (id: string) => void;
-  /** Called after every change, so the window can show the map as unsaved. */
   onMapChanged: () => void;
-  /** The spell was given to a unit or taken away, or the units that had it lost it. */
   onUnitsChanged: () => void;
 };
 
@@ -44,9 +41,7 @@ type Step = "kind" | "base" | "values" | "buff" | "effect" | "button" | "units" 
 
 const NAME = "anam";
 const LEVELS = "alev";
-/** Values every spell has, in the order the values step shows them. */
 const COMMON_VALUES = ["atar", "aran", "acdn", "amcs", "aare", "adur", "ahdu"];
-/** The category holding a base ability's own values (damage, stun time, ...). */
 const SPELL_DATA = "data";
 /** The tooltip title and text, per level. */
 const TOOLTIPS = ["atp1", "aub1"];
@@ -83,7 +78,6 @@ const STEP_TITLES: Record<Step, string> = {
   test: "New spell: try it",
 };
 
-/** Values of a triggered spell's own that matter for its template. */
 function triggeredFields(detail: AbilityDetail, template: SpellTemplate): LevelField[] {
   const ids = ["acdn", "amcs"];
 
@@ -106,7 +100,6 @@ function triggeredFields(detail: AbilityDetail, template: SpellTemplate): LevelF
   });
 }
 
-/** The fields the values step edits: the common ones first, then the base ability's own. */
 function valueFields(detail: AbilityDetail): LevelField[] {
   const all = detail.sections.flatMap((s) =>
     s.levelFields.map((f) => ({ f, category: s.category })),
@@ -156,7 +149,6 @@ async function ownValues(
   return updated;
 }
 
-/** A text field's values with their levels (0 for a field without levels). */
 function namedTexts(detail: AbilityDetail, id: string): { raw: string; level: number }[] {
   const perLevel = levelField(detail, id);
 
@@ -173,7 +165,6 @@ function namedTexts(detail: AbilityDetail, id: string): { raw: string; level: nu
   return [];
 }
 
-/** The IDs in a comma list such as `BPSE,BHbd`. */
 function idList(text: string): string[] {
   return text
     .split(",")
@@ -198,7 +189,6 @@ function chosenBuffs(choice: BuffChoice, baseBuffs: string[]): string | null {
   return null;
 }
 
-/** The buff the step shows: the spell's own, the one picked, or the base's first. */
 function buffShown(choice: BuffChoice, baseBuffs: string[]): string | null {
   if (choice.kind !== "base") {
     return choice.id;
@@ -215,12 +205,6 @@ function levelField(detail: AbilityDetail, id: string): LevelField | undefined {
   return detail.sections.flatMap((s) => s.levelFields).find((f) => f.field.id === id);
 }
 
-/**
- * Builds a spell step by step: what it does, the game ability it starts from,
- * then its values. The spell is a custom ability created when the base is
- * picked, so the values step edits the real thing with a live tooltip;
- * cancelling or going back removes it again.
- */
 export function SpellWizard({
   open,
   onClose,
@@ -235,13 +219,11 @@ export function SpellWizard({
   const [picking, setPicking] = useState(false);
   const [buffChoice, setBuffChoice] = useState<BuffChoice>(BASE_BUFF);
   const [baseBuffs, setBaseBuffs] = useState<string[]>([]);
-  /** The base ability's name: the spell's own name may have changed by now. */
   const [baseName, setBaseName] = useState("");
   const [shownBuff, setShownBuff] = useState<UnitDetail | null>(null);
   const [allBuffs, setAllBuffs] = useState<UnitItem[]>([]);
   const [icons, setIcons] = useState<IconChoice[]>([]);
   const [templates, setTemplates] = useState<SpellTemplate[]>([]);
-  /** The triggered spell's template, while making one. */
   const [template, setTemplate] = useState<SpellTemplate | null>(null);
   const [values, setValues] = useState<TemplateValues>({});
   const [folder, setFolder] = useState("");
@@ -249,7 +231,6 @@ export function SpellWizard({
   const [modulePath, setModulePath] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  /** Edits run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
@@ -279,7 +260,6 @@ export function SpellWizard({
     void settle(api.plainDetail("buffs", shownBuffId), setShownBuff, setError);
   }, [shownBuffId]);
 
-  /** Removes the spell and its own buff, as if the wizard had never run. */
   async function discard(): Promise<Result<null>> {
     if (!draft) {
       return ok(null);
@@ -309,7 +289,6 @@ export function SpellWizard({
   }
 
   async function close() {
-    // The spell and its module exist by now; closing keeps them.
     if (step === "test" && draft) {
       done();
       return;
@@ -405,7 +384,6 @@ export function SpellWizard({
     return ownValues(created.value.id, base, copied.value);
   }
 
-  /** Makes a triggered spell from a template: a copy of Channel, set up for it. */
   async function startTriggered(picked: SpellTemplate) {
     setBusy(true);
     setError(null);
@@ -433,7 +411,6 @@ export function SpellWizard({
     setStep("effect");
   }
 
-  /** Changes one of the module's values; the tooltips follow. */
   function setValue(param: string, list: number[]) {
     if (!template) {
       return;
@@ -445,7 +422,6 @@ export function SpellWizard({
     edit((id) => api.setTriggeredValues(id, template.id, next));
   }
 
-  /** Shows the code step: the folder for the module, and the module as it will be. */
   async function toCode() {
     if (!(draft && template)) {
       return;
@@ -474,7 +450,6 @@ export function SpellWizard({
     setStep("code");
   }
 
-  /** Writes the module; the spell is made, and the last step shows how to try it. */
   async function createTriggered() {
     if (!(draft && template)) {
       return;
@@ -564,7 +539,6 @@ export function SpellWizard({
       return updated;
     });
 
-  /** Shows the buff step, with the base ability's buffs and every buff to pick from. */
   async function toBuff() {
     if (!detail) {
       return;
@@ -596,7 +570,6 @@ export function SpellWizard({
     setStep("buff");
   }
 
-  /** The spell's buffs at every level, or the base ability's again for `null`. */
   async function setBuffs(id: string, buffs: string | null): Promise<Result<AbilityDetail> | null> {
     let updated: Result<AbilityDetail> | null = null;
 
@@ -615,7 +588,6 @@ export function SpellWizard({
     return updated;
   }
 
-  /** Drops the spell's own buff when another choice replaces it. */
   async function dropOwnBuff(): Promise<Result<void>> {
     if (buffChoice.kind === "own") {
       return api.discardPlain("buffs", buffChoice.id);
@@ -647,7 +619,6 @@ export function SpellWizard({
       return setBuffs(id, chosenBuffs(other, baseBuffs));
     });
 
-  /** Copies the base ability's buff, names it after the spell, and puts it first. */
   const pickOwnBuff = () =>
     edit(async (id) => {
       const [first] = baseBuffs;
@@ -693,7 +664,6 @@ export function SpellWizard({
       return null;
     });
 
-  /** Shows the button step, with every icon to pick from. */
   async function toButton() {
     setBusy(true);
     setError(null);
@@ -714,7 +684,6 @@ export function SpellWizard({
     setStep("button");
   }
 
-  /** Sets the button's icon, and a hero spell's learn icon with it. */
   const setIcon = (path: string) =>
     edit(async (id) => {
       let updated = await api.setAbilityField(id, ICON, NO_LEVEL, path);
@@ -763,7 +732,6 @@ export function SpellWizard({
       return updated;
     });
 
-  /** Shows the units step, once the button's last edit is in, so its warnings use it. */
   async function toUnits() {
     await queue.current;
     setStep("units");
@@ -775,7 +743,6 @@ export function SpellWizard({
     }
 
     await queue.current;
-    // Levels may have been added after the buff was picked; they get it too.
     const buffs = chosenBuffs(buffChoice, baseBuffs);
 
     if (buffs !== null) {
@@ -862,7 +829,6 @@ export function SpellWizard({
         open={open && !picking}
         title={STEP_TITLES[step]}
         page={step}
-        // A stray click outside would cancel the spell and throw it away.
         dismissable={false}
         onClose={close}
         footer={footer}
@@ -1059,9 +1025,7 @@ function BaseChoice({
 
 type ValuesStepProps = {
   detail: AbilityDetail;
-  /** The base ability's name: the spell's own name may have changed. */
   baseName: string;
-  /** Renames the spell, and the tooltip titles that repeat its name. */
   onRename: (name: string) => void;
   onChange: (field: string, level: number, value: string) => void;
   onFill: (field: string, fromLevel: number, value: string) => void;

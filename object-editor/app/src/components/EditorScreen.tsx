@@ -51,7 +51,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "interface", label: "Interface" },
 ];
 
-/** The tabs of objects with levels or variations, each on the ability page. */
 const LEVELED_TABS: { catalog: LeveledCatalog; list: ListConfig }[] = [
   { catalog: "upgrades", list: UPGRADE_LIST },
   { catalog: "doodads", list: DOODAD_LIST },
@@ -62,7 +61,6 @@ const NO_LEVELED_SELECTION: Record<LeveledCatalog, string | null> = {
   doodads: null,
 };
 
-/** The tabs of objects without levels, each on the unit list and page. */
 const PLAIN_TABS: { catalog: Catalog; list: ListConfig }[] = [
   { catalog: "items", list: ITEM_LIST },
   { catalog: "buffs", list: BUFF_LIST },
@@ -80,7 +78,6 @@ type EditorScreenProps = {
   initialMap: MapSummary | null;
 };
 
-/** Asks before throwing away unsaved changes. Resolves to `true` to discard them. */
 async function confirmDiscard(map: MapSummary): Promise<boolean> {
   const answer = await confirm(`${map.name} has unsaved changes. Discard them?`, {
     title: "Unsaved changes",
@@ -105,7 +102,6 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
   const [selectedPlain, setSelectedPlain] = useState(NO_PLAIN_SELECTION);
   const [selectedLeveled, setSelectedLeveled] = useState(NO_LEVELED_SELECTION);
-  /** Bumped when the map is replaced or imported into, so the ability list reloads. */
   const [revision, setRevision] = useState(0);
   const editable = map !== null;
   const customUnits = useMemo(() => units.filter((u) => u.custom), [units]);
@@ -117,7 +113,6 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     return [];
   }, [selected, customUnits]);
 
-  // The close handler is registered once; it reads the latest map from here.
   const mapRef = useRef(map);
 
   mapRef.current = map;
@@ -150,7 +145,6 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     void settle(api.hotkeyClashes(id), setClashes, setError);
   }, []);
 
-  /** Another tab changed units (gave them an ability): the list and the open page reload. */
   const refreshUnits = useCallback(() => {
     refreshList();
     if (selected) {
@@ -341,8 +335,6 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   }, [map, save]);
 
   return (
-    // Panels scroll on their own; the window never does, even when a hidden
-    // form element sits past its bottom edge.
     <div className="relative flex h-full flex-col gap-2.5 overflow-hidden p-2.5">
       <header className="frame flex flex-wrap items-center gap-3 bg-surface-1 px-4 py-2">
         <h1 className="font-display text-2xl font-bold tracking-wide text-gold">Tinkerbench</h1>

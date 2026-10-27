@@ -33,7 +33,6 @@ function numberOf(field: Field | undefined): number {
   return 0;
 }
 
-/** One small number box that applies on Enter or when leaving it. */
 function Part({
   field,
   label,
@@ -175,7 +174,6 @@ function ButtonGrid({
   );
 }
 
-/** Related fields edited in one row; each part still saves to its own field. */
 export function FieldGroupRow({
   group,
   fields,

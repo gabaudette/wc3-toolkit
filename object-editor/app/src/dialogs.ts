@@ -26,7 +26,6 @@ async function reported<T>(work: () => Promise<T>): Promise<Result<T>> {
   return result;
 }
 
-/** The chosen file or folder, or `null` when the dialog was cancelled. */
 export function choosePath(options: ChooseOptions): Promise<Result<string | null>> {
   return reported(() => open({ ...options, multiple: false }));
 }

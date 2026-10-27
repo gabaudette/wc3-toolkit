@@ -12,7 +12,6 @@ const dialog = (id: string, name: string): DialogDesign => ({
   showAtStart: false,
 });
 
-// The same cases as `lua_names_come_from_names_and_stay_unique` in interface.rs.
 test("Lua names come from names and stay unique", () => {
   const names = luaNames([
     dialog("a", "Choose your path!"),
@@ -27,7 +26,6 @@ test("Lua names come from names and stay unique", () => {
   expect(names.get("d")).toBe("Design");
 });
 
-// The same cases as `hotkey_letters_turn_gold_when_highlighted` in interface.rs.
 test("hotkey letters turn gold when highlighted", () => {
   const hard = {
     id: "hard",

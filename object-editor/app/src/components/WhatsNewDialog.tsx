@@ -29,7 +29,6 @@ function ItemText({ text }: { text: string }) {
   );
 }
 
-/** The changelog, bundled into the app, newest release first. */
 export function WhatsNewDialog({ open, onClose }: WhatsNewDialogProps) {
   const releases = useMemo(() => parseChangelog(changelog), []);
 

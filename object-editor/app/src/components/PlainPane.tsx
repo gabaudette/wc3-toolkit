@@ -7,18 +7,15 @@ import { type ListConfig, UnitList } from "./UnitList";
 import { UnitPage } from "./UnitPage";
 
 type PlainPaneProps = {
-  /** Which objects: items, buffs or destructables. */
   catalog: Catalog;
   list: ListConfig;
   editable: boolean;
   selected: string | null;
   onSelect: (id: string) => void;
-  /** Called after every change, so the window can show the map as unsaved. */
   onMapChanged: () => void;
   onError: (message: string | null) => void;
 };
 
-/** A tab of objects without levels (items, buffs, destructables): the unit list and page over them. */
 export function PlainPane({
   catalog,
   list,
@@ -30,7 +27,6 @@ export function PlainPane({
 }: PlainPaneProps) {
   const [objects, setObjects] = useState<UnitItem[]>([]);
   const [detail, setDetail] = useState<UnitDetail | null>(null);
-  /** Edits run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
 
   const listError = useCallback((message: string) => onError(message), [onError]);

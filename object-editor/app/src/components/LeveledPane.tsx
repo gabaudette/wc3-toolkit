@@ -5,7 +5,6 @@ import type { AbilityDetail, LeveledCatalog, UnitItem } from "../types";
 import { AbilityPage } from "./AbilityPage";
 import { type ListConfig, UnitList } from "./UnitList";
 
-/** What the ability page calls each catalog's objects. */
 const NOUNS: Record<LeveledCatalog, "upgrade" | "doodad"> = {
   upgrades: "upgrade",
   doodads: "doodad",
@@ -17,12 +16,10 @@ type LeveledPaneProps = {
   editable: boolean;
   selected: string | null;
   onSelect: (id: string) => void;
-  /** Called after every change, so the window can show the map as unsaved. */
   onMapChanged: () => void;
   onError: (message: string | null) => void;
 };
 
-/** The Upgrades and Doodads tabs: the unit list over them, and pages with a column per level or variation. */
 export function LeveledPane({
   catalog,
   list,
@@ -34,7 +31,6 @@ export function LeveledPane({
 }: LeveledPaneProps) {
   const [upgrades, setUpgrades] = useState<UnitItem[]>([]);
   const [detail, setDetail] = useState<AbilityDetail | null>(null);
-  /** Edits run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
 
   const listError = useCallback((message: string) => onError(message), [onError]);
