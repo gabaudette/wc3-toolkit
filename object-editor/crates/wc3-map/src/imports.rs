@@ -73,10 +73,12 @@ impl ImportList {
         let count = word(4)?;
         let mut pos = 8;
         let mut entries = Vec::new();
+
         for _ in 0..count {
             let flag = *data.get(pos).ok_or_else(invalid)?;
             let rest = data.get(pos + 1..).ok_or_else(invalid)?;
             let len = rest.iter().position(|b| *b == 0).ok_or_else(invalid)?;
+
             entries.push((flag, String::from_utf8_lossy(&rest[..len]).into_owned()));
             pos += 1 + len + 1;
         }
@@ -92,12 +94,14 @@ impl ImportList {
         let mut out = self.version.to_le_bytes().to_vec();
         // Import lists hold at most a few thousand entries.
         let count = u32::try_from(self.entries.len()).unwrap_or(u32::MAX);
+
         out.extend_from_slice(&count.to_le_bytes());
         for (flag, path) in &self.entries {
             out.push(*flag);
             out.extend_from_slice(path.as_bytes());
             out.push(0);
         }
+
         out
     }
 
@@ -134,6 +138,7 @@ impl MapImports {
             Some(bytes) => Some(ImportList::parse(&bytes)?),
             None => None,
         };
+
         Ok(Self {
             list,
             pending: Vec::new(),
@@ -162,11 +167,13 @@ impl MapImports {
             })
         });
         let mut paths: Vec<String> = Vec::new();
+
         for path in listed.chain(self.pending.iter().map(|f| f.path.clone())) {
             if !paths.iter().any(|p| same_path(p, &path)) {
                 paths.push(path);
             }
         }
+
         paths
     }
 
@@ -189,10 +196,12 @@ impl MapImports {
 
         let mut list = self.list.clone().unwrap_or_else(ImportList::new);
         let mut files = Vec::new();
+
         for file in &self.pending {
             list.add(&file.path);
             files.push((file.path.clone(), file.bytes.clone()));
         }
+
         files.push((IMPORT_LIST_FILE.to_owned(), list.to_bytes()));
         files
     }
@@ -200,9 +209,11 @@ impl MapImports {
     /// After a save: the queued files are now in the map and its list.
     pub fn saved(&mut self) {
         let mut list = self.list.take().unwrap_or_else(ImportList::new);
+
         for file in self.pending.drain(..) {
             list.add(&file.path);
         }
+
         self.list = Some(list);
     }
 }
@@ -210,6 +221,7 @@ impl MapImports {
 /// File name and extension of a path, the extension lowercased.
 fn split_extension(path: &str) -> (&str, Option<String>) {
     let name_start = path.rfind(PATH_SEPARATOR).map_or(0, |i| i + 1);
+
     match path[name_start..].rfind('.') {
         Some(dot) => (
             &path[..name_start + dot],
@@ -224,6 +236,7 @@ fn split_extension(path: &str) -> (&str, Option<String>) {
 /// any of the image formats.
 pub fn candidates(value: &str) -> Vec<String> {
     let path = value.trim().replace('/', "\\");
+
     if path.is_empty() || !(path.contains('.') || path.contains(PATH_SEPARATOR)) {
         return Vec::new();
     }
@@ -240,6 +253,7 @@ pub fn candidates(value: &str) -> Vec<String> {
         None => vec![format!("{stem}.{MODEL_EXTENSION}")],
     };
     let mut seen = HashSet::new();
+
     found.retain(|p| seen.insert(normalized(p)));
     found
 }
@@ -248,9 +262,11 @@ pub fn candidates(value: &str) -> Vec<String> {
 /// icon's greyed-out version.
 fn companions(file: &ImportedFile) -> Vec<String> {
     let (stem, extension) = split_extension(&file.path);
+
     match extension.as_deref() {
         Some(MODEL_EXTENSION) => {
             let mut list = vec![format!("{stem}{PORTRAIT_SUFFIX}.{MODEL_EXTENSION}")];
+
             list.extend(
                 texture_paths(&file.bytes)
                     .iter()
@@ -262,6 +278,7 @@ fn companions(file: &ImportedFile) -> Vec<String> {
             let name_start = file.path.rfind(PATH_SEPARATOR).map_or(0, |i| i + 1);
             let name = &file.path[name_start..];
             let upper = name.to_ascii_uppercase();
+
             if ICON_PREFIXES.iter().any(|p| upper.starts_with(p))
                 && TEXTURE_EXTENSIONS.contains(&ext)
             {
@@ -291,12 +308,14 @@ pub fn files_used<'a>(
     while let Some(path) = queue.pop() {
         let key = normalized(&path);
         let map_file = key.starts_with(MAP_FILE_PREFIX) && !key.contains(PATH_SEPARATOR);
+
         if map_file || !tried.insert(key) {
             continue;
         }
 
         if let Some(bytes) = read(&path) {
             let file = ImportedFile { path, bytes };
+
             queue.extend(companions(&file));
             found.push(file);
         }
@@ -340,8 +359,10 @@ mod tests {
 
     fn model_with_texture(texture: &str) -> Vec<u8> {
         let mut entry = vec![0u8; 268];
+
         entry[4..4 + texture.len()].copy_from_slice(texture.as_bytes());
         let mut out = b"MDLX".to_vec();
+
         out.extend_from_slice(b"TEXS");
         out.extend_from_slice(&u32::try_from(entry.len()).unwrap().to_le_bytes());
         out.extend(entry);
@@ -396,6 +417,7 @@ mod tests {
     #[test]
     fn import_paths_include_the_imported_folder_and_queued_files() {
         let mut list = ImportList::new();
+
         list.entries.push((24, "KoboldDigger.mdx".to_owned()));
         list.entries.push((5, "BTNOld.blp".to_owned()));
         list.entries
@@ -404,10 +426,12 @@ mod tests {
             list: Some(list),
             pending: Vec::new(),
         };
+
         imports.add(ImportedFile {
             path: "war3mapImported\\BTNNew.blp".into(),
             bytes: vec![1],
         });
+
         imports.add(ImportedFile {
             path: "textures\\skin.DDS".into(),
             bytes: vec![2],
@@ -427,8 +451,10 @@ mod tests {
     #[test]
     fn import_lists_round_trip_and_gain_entries_once() {
         let mut list = ImportList::new();
+
         list.entries.push((24, "KoboldDigger.mdx".to_owned()));
         let bytes = list.to_bytes();
+
         assert_eq!(ImportList::parse(&bytes).unwrap(), list);
         assert!(ImportList::parse(&bytes[..bytes.len() - 1]).is_err());
 
@@ -436,20 +462,24 @@ mod tests {
             list: Some(list),
             pending: Vec::new(),
         };
+
         assert!(imports.files().is_empty());
         imports.add(ImportedFile {
             path: "Hero.mdx".into(),
             bytes: vec![1],
         });
+
         imports.add(ImportedFile {
             path: "hero.MDX".into(),
             bytes: vec![2],
         });
 
         let files = imports.files();
+
         assert_eq!(files.len(), 2);
         assert_eq!(files[0], ("hero.MDX".to_owned(), vec![2]));
         let written = ImportList::parse(&files[1].1).unwrap();
+
         assert_eq!(written.entries.len(), 2);
         assert_eq!(written.entries[1], (FULL_PATH_FLAG, "hero.MDX".to_owned()));
 

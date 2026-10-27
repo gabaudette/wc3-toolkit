@@ -64,6 +64,7 @@ pub fn model_file(path: &str) -> String {
         Some(dot) => &path[..name_start + dot],
         None => path,
     };
+
     format!("{stem}{MODEL_EXTENSION}")
 }
 
@@ -71,6 +72,7 @@ pub fn model_file(path: &str) -> String {
 pub fn load_model(files: &GameFiles, path: &str, mode: ArtMode) -> Result<Vec<u8>> {
     let file = model_file(path);
     let data = files.read_art(&file, mode)?;
+
     preview_copy(&data).map_err(|e| e.in_file(file))
 }
 
@@ -80,6 +82,7 @@ fn invalid(reason: String) -> Error {
 
 fn read_u32(data: &[u8], pos: usize) -> Result<u32> {
     let mut bytes = [0u8; U32_SIZE];
+
     bytes.copy_from_slice(
         data.get(pos..pos + U32_SIZE)
             .ok_or_else(|| invalid(format!("cut off at byte {pos}")))?,
@@ -98,6 +101,7 @@ pub fn preview_copy(data: &[u8]) -> Result<Vec<u8>> {
     }
 
     let mut out = Vec::with_capacity(data.len());
+
     out.extend_from_slice(MAGIC);
     let mut pos = MAGIC.len();
     let mut version = None;
@@ -127,6 +131,7 @@ pub fn preview_copy(data: &[u8]) -> Result<Vec<u8>> {
             let version =
                 version.ok_or_else(|| invalid("geosets come before the version".to_owned()))?;
             let geosets = narrow_skins(body, version)?;
+
             out.extend_from_slice(tag);
             out.extend_from_slice(&chunk_size(geosets.len())?.to_le_bytes());
             out.extend_from_slice(&geosets);
@@ -156,6 +161,7 @@ fn narrow_skins(body: &[u8], version: u32) -> Result<Vec<u8>> {
             .get(pos..pos + size)
             .filter(|_| size >= U32_SIZE)
             .ok_or_else(|| invalid(format!("geoset at byte {pos} has a bad size")))?;
+
         narrow_geoset_skin(geoset, version, &mut out)?;
         pos += size;
     }
@@ -167,6 +173,7 @@ fn narrow_skins(body: &[u8], version: u32) -> Result<Vec<u8>> {
 /// when it is stored wide. The value count stays; only its size changes.
 fn narrow_geoset_skin(geoset: &[u8], version: u32, out: &mut Vec<u8>) -> Result<()> {
     let mut pos = U32_SIZE;
+
     for (tag, element_size) in GEOSET_ARRAYS {
         if geoset.get(pos..pos + TAG_SIZE) != Some(tag.as_slice()) {
             return Err(invalid(format!(
@@ -174,6 +181,7 @@ fn narrow_geoset_skin(geoset: &[u8], version: u32, out: &mut Vec<u8>) -> Result<
                 tag.escape_ascii()
             )));
         }
+
         pos += TAG_SIZE + read_len(geoset, pos + TAG_SIZE)? * element_size + U32_SIZE;
     }
 
@@ -181,6 +189,7 @@ fn narrow_geoset_skin(geoset: &[u8], version: u32, out: &mut Vec<u8>) -> Result<
     if version >= GEOSET_NAME_VERSION {
         pos += U32_SIZE + GEOSET_NAME_SIZE;
     }
+
     pos += EXTENT_SIZE;
     pos += U32_SIZE + read_len(geoset, pos)? * EXTENT_SIZE;
 
@@ -207,6 +216,7 @@ fn narrow_geoset_skin(geoset: &[u8], version: u32, out: &mut Vec<u8>) -> Result<
                 let wide_end = data_start + count * WIDE_SKIN_VALUE_SIZE;
                 let narrow = narrow_values(&geoset[data_start..wide_end])?;
                 let size = chunk_size(geoset.len() - (wide_end - data_start) + narrow.len())?;
+
                 out.extend_from_slice(&size.to_le_bytes());
                 out.extend_from_slice(&geoset[U32_SIZE..data_start]);
                 out.extend_from_slice(&narrow);
@@ -233,6 +243,7 @@ fn is_tag_at(data: &[u8], pos: usize, tags: &[&[u8; 4]]) -> bool {
 /// in every game model; a larger value means the layout guess was wrong.
 fn narrow_values(wide: &[u8]) -> Result<Vec<u8>> {
     let (pairs, _) = wide.as_chunks::<WIDE_SKIN_VALUE_SIZE>();
+
     pairs
         .iter()
         .map(|&pair| {
@@ -258,6 +269,7 @@ pub fn texture_paths(data: &[u8]) -> Vec<String> {
 
     let mut paths = Vec::new();
     let mut pos = MAGIC.len();
+
     while let (Some(tag), Ok(size)) = (
         data.get(pos..pos + TAG_SIZE),
         read_len(data, pos + TAG_SIZE),
@@ -269,10 +281,12 @@ pub fn texture_paths(data: &[u8]) -> Vec<String> {
 
         if tag == TEXTURES_CHUNK {
             let (entries, _) = body.as_chunks::<TEXTURE_ENTRY_SIZE>();
+
             for entry in entries {
                 let path = &entry[U32_SIZE..U32_SIZE + TEXTURE_PATH_SIZE];
                 let len = path.iter().position(|b| *b == 0).unwrap_or(path.len());
                 let text = String::from_utf8_lossy(&path[..len]).into_owned();
+
                 if !text.is_empty() && !paths.contains(&text) {
                     paths.push(text);
                 }
@@ -293,6 +307,7 @@ mod tests {
 
     fn chunk(tag: &[u8; 4], body: &[u8]) -> Vec<u8> {
         let mut out = tag.to_vec();
+
         out.extend_from_slice(&u32::try_from(body.len()).unwrap().to_le_bytes());
         out.extend_from_slice(body);
         out
@@ -300,15 +315,18 @@ mod tests {
 
     fn model(chunks: &[Vec<u8>]) -> Vec<u8> {
         let mut out = MAGIC.to_vec();
+
         out.extend(chunk(VERSION_CHUNK, &REFORGED_VERSION.to_le_bytes()));
         for c in chunks {
             out.extend_from_slice(c);
         }
+
         out
     }
 
     fn counted(tag: &[u8; 4], count: u32, data: &[u8]) -> Vec<u8> {
         let mut out = tag.to_vec();
+
         out.extend_from_slice(&count.to_le_bytes());
         out.extend_from_slice(data);
         out
@@ -317,6 +335,7 @@ mod tests {
     /// A one-vertex geoset whose skin chunk holds `skin` (`count` values).
     fn geoset(skin: &[u8], count: u32) -> Vec<u8> {
         let mut body = Vec::new();
+
         body.extend(counted(b"VRTX", 1, &[0; 12]));
         body.extend(counted(b"NRMS", 1, &[0; 12]));
         body.extend(counted(b"PTYP", 1, &4u32.to_le_bytes()));
@@ -338,6 +357,7 @@ mod tests {
             .unwrap()
             .to_le_bytes()
             .to_vec();
+
         out.extend(body);
         out
     }
@@ -380,15 +400,18 @@ mod tests {
         assert!(preview_copy(b"DDS stuff").is_err());
 
         let mut cut = model(&[chunk(b"TEXS", &[5, 6, 7, 8])]);
+
         cut.truncate(cut.len() - 2);
         assert!(preview_copy(&cut).is_err());
 
         let too_big: Vec<u8> = [1u8, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].to_vec();
+
         assert!(preview_copy(&model(&[chunk(GEOSETS_CHUNK, &geoset(&too_big, 8))])).is_err());
     }
 
     fn texture(path: &str) -> Vec<u8> {
         let mut entry = vec![0; TEXTURE_ENTRY_SIZE];
+
         entry[U32_SIZE..U32_SIZE + path.len()].copy_from_slice(path.as_bytes());
         entry
     }
@@ -396,6 +419,7 @@ mod tests {
     #[test]
     fn lists_texture_paths_once() {
         let mut model = MAGIC.to_vec();
+
         model.extend(chunk(b"VERS", &800u32.to_le_bytes()));
         let textures = [
             texture("Hero.blp"),
@@ -404,6 +428,7 @@ mod tests {
             texture("Hero.blp"),
         ]
         .concat();
+
         model.extend(chunk(TEXTURES_CHUNK, &textures));
 
         assert_eq!(texture_paths(&model), ["Hero.blp", "Textures\\Glow.blp"]);

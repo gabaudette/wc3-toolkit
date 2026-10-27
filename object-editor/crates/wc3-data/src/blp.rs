@@ -37,6 +37,7 @@ pub fn decode_blp(data: &[u8]) -> Result<Image> {
 
     let width = read_u32(data, WIDTH_OFFSET)?;
     let height = read_u32(data, HEIGHT_OFFSET)?;
+
     if width == 0 || height == 0 || width > MAX_SIDE || height > MAX_SIDE {
         return Err(invalid(&format!("bad size {width}x{height}")));
     }
@@ -71,6 +72,7 @@ fn read_u32(data: &[u8], offset: usize) -> Result<u32> {
         .get(offset..offset + U32_SIZE)
         .ok_or_else(|| invalid(&format!("cut off at byte {offset}")))?;
     let mut word = [0u8; U32_SIZE];
+
     word.copy_from_slice(bytes);
     Ok(u32::from_le_bytes(word))
 }
@@ -90,11 +92,13 @@ fn decode_jpeg(data: &[u8], mip: &[u8], w: usize, h: usize, alpha: bool) -> Resu
     // transform" mode would not invert, but it returns each row's channels
     // one after another instead of interleaved.
     let mut decoder = jpeg_decoder::Decoder::new(jpeg.as_slice());
+
     decoder.set_color_transform(jpeg_decoder::ColorTransform::CMYK);
     let pixels = decoder
         .decode()
         .map_err(|e| invalid(&format!("JPEG: {e}")))?;
     let info = decoder.info().ok_or_else(|| invalid("JPEG has no image"))?;
+
     if info.pixel_format != jpeg_decoder::PixelFormat::CMYK32 {
         return Err(invalid(&format!(
             "JPEG has {:?} pixels, not four channels",
@@ -104,6 +108,7 @@ fn decode_jpeg(data: &[u8], mip: &[u8], w: usize, h: usize, alpha: bool) -> Resu
 
     // The JPEG can be larger than the texture; the texture is its top-left part.
     let jpeg_width = usize::from(info.width);
+
     if jpeg_width < w || usize::from(info.height) < h {
         return Err(invalid(&format!(
             "JPEG is {}x{}, smaller than the texture",
@@ -112,10 +117,13 @@ fn decode_jpeg(data: &[u8], mip: &[u8], w: usize, h: usize, alpha: bool) -> Resu
     }
 
     let mut rgba = Vec::with_capacity(w * h * CHANNELS);
+
     for row in pixels.chunks_exact(jpeg_width * CHANNELS).take(h) {
         let (row_pixels, _) = row.as_chunks::<CHANNELS>();
+
         for inverted in row_pixels.iter().take(w) {
             let [b, g, r, a] = inverted.map(|c| OPAQUE - c);
+
             rgba.extend_from_slice(&[r, g, b, if alpha { a } else { OPAQUE }]);
         }
     }
@@ -141,6 +149,7 @@ fn decode_paletted(
         1 | 4 | 8 => (count * alpha_bits as usize).div_ceil(BITS_PER_BYTE),
         other => return Err(invalid(&format!("unsupported alpha depth {other}"))),
     };
+
     if mip.len() < count + alpha_size {
         return Err(invalid(&format!(
             "top mip level has {} bytes, {} needed",
@@ -151,9 +160,11 @@ fn decode_paletted(
 
     let (indices, alphas) = mip.split_at(count);
     let mut rgba = Vec::with_capacity(count * CHANNELS);
+
     for (i, &index) in indices.iter().enumerate() {
         let entry = usize::from(index) * CHANNELS;
         let bgr = &palette[entry..entry + 3];
+
         rgba.extend_from_slice(&[bgr[2], bgr[1], bgr[0], alpha_at(alphas, i, alpha_bits)]);
     }
 
@@ -164,11 +175,13 @@ fn alpha_at(alphas: &[u8], i: usize, alpha_bits: u32) -> u8 {
     match alpha_bits {
         1 => {
             let set = alphas[i / BITS_PER_BYTE] >> (i % BITS_PER_BYTE) & 1;
+
             set * OPAQUE
         }
         4 => {
             let byte = alphas[i / 2];
             let nibble = if i.is_multiple_of(2) { byte } else { byte >> 4 };
+
             (nibble & NIBBLE_MASK) * NIBBLE_SCALE
         }
         8 => alphas[i],
@@ -189,20 +202,25 @@ mod tests {
         mip: &[u8],
     ) -> Vec<u8> {
         let mut data = vec![0u8; HEADER_SIZE];
+
         data[..4].copy_from_slice(MAGIC);
         data[COMPRESSION_OFFSET..][..4].copy_from_slice(&PALETTE_COMPRESSION.to_le_bytes());
         data[ALPHA_BITS_OFFSET..][..4].copy_from_slice(&alpha_bits.to_le_bytes());
         data[WIDTH_OFFSET..][..4].copy_from_slice(&width.to_le_bytes());
         data[HEIGHT_OFFSET..][..4].copy_from_slice(&height.to_le_bytes());
         let offset = u32::try_from(HEADER_SIZE + PALETTE_SIZE * CHANNELS).unwrap();
+
         data[MIP_OFFSETS_OFFSET..][..4].copy_from_slice(&offset.to_le_bytes());
         let size = u32::try_from(mip.len()).unwrap();
+
         data[MIP_SIZES_OFFSET..][..4].copy_from_slice(&size.to_le_bytes());
 
         let mut colors = vec![0u8; PALETTE_SIZE * CHANNELS];
+
         for (i, color) in palette.iter().enumerate() {
             colors[i * CHANNELS..][..CHANNELS].copy_from_slice(color);
         }
+
         data.extend(colors);
         data.extend_from_slice(mip);
         data
@@ -232,6 +250,7 @@ mod tests {
             .step_by(4)
             .copied()
             .collect();
+
         assert_eq!(alphas, [255, 0, 255]);
 
         let four_bit = paletted(3, 1, 4, &[RED_BGRA], &[0, 0, 0, 0xF1, 0x08]);
@@ -243,6 +262,7 @@ mod tests {
             .step_by(4)
             .copied()
             .collect();
+
         assert_eq!(alphas, [17, 255, 136]);
     }
 
@@ -271,13 +291,16 @@ mod tests {
         let (header, mip) = TEST_JPEG.split_at(split);
 
         let mut data = vec![0u8; HEADER_SIZE];
+
         data[..4].copy_from_slice(MAGIC);
         data[ALPHA_BITS_OFFSET..][..4].copy_from_slice(&alpha_bits.to_le_bytes());
         data[WIDTH_OFFSET..][..4].copy_from_slice(&width.to_le_bytes());
         data[HEIGHT_OFFSET..][..4].copy_from_slice(&height.to_le_bytes());
         let offset = u32::try_from(HEADER_SIZE + U32_SIZE + header.len()).unwrap();
+
         data[MIP_OFFSETS_OFFSET..][..4].copy_from_slice(&offset.to_le_bytes());
         let size = u32::try_from(mip.len()).unwrap();
+
         data[MIP_SIZES_OFFSET..][..4].copy_from_slice(&size.to_le_bytes());
         data.extend_from_slice(&u32::try_from(header.len()).unwrap().to_le_bytes());
         data.extend_from_slice(header);
@@ -302,6 +325,7 @@ mod tests {
         assert_eq!((image.width, image.height), (16, 8));
         assert_near(&image.rgba[..4], &[200, 80, 40, 255]);
         let right = 15 * CHANNELS;
+
         assert_near(&image.rgba[right..right + 4], &[80, 40, 200, 0]);
     }
 
@@ -323,6 +347,7 @@ mod tests {
         assert!(decode_blp(&jpeg_blp(32, 8, 8)).is_err());
 
         let mut cut = jpeg_blp(16, 8, 8);
+
         cut.truncate(cut.len() - 10);
         assert!(decode_blp(&cut).is_err());
     }

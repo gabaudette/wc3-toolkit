@@ -126,6 +126,7 @@ impl MapUnits {
 
     pub fn kind(&self, db: &UnitDatabase, id: FourCC) -> Option<ObjectKind> {
         let base = self.base_of(db, id)?;
+
         Some(db.kind(&base.to_string()))
     }
 
@@ -177,6 +178,7 @@ impl MapUnits {
         }
 
         let base = self.base_of(db, id)?;
+
         db.raw_value(&base.to_string(), field, mode)
     }
 
@@ -219,6 +221,7 @@ impl MapUnits {
         // Setting the base unit's own value is no change at all: drop the
         // modification instead of storing a copy.
         let parsed = parse_value(field, text)?;
+
         if same_as_base(db, base, field, &parsed) {
             self.reset(id, field);
             return Ok(());
@@ -271,11 +274,14 @@ impl MapUnits {
         };
 
         let mut removed = false;
+
         for data in [&mut self.data, &mut self.skins] {
             let entries = data.custom.iter_mut().chain(data.original.iter_mut());
+
             for entry in entries.filter(|e| e.effective_id() == id) {
                 for set in &mut entry.sets {
                     let before = set.mods.len();
+
                     set.mods.retain(|m| m.field != field_id);
                     removed |= set.mods.len() != before;
                 }
@@ -302,6 +308,7 @@ impl MapUnits {
             .collect();
 
         let strings = &mut self.strings;
+
         self.added_strings.retain(|id| {
             if referenced.contains(id) {
                 return true;
@@ -322,6 +329,7 @@ impl MapUnits {
         let id = self
             .next_id(db, base)
             .ok_or_else(|| Error::Invalid(format!("no free ID for {base}")))?;
+
         for data in [&mut self.data, &mut self.skins] {
             data.custom.push(ObjectEntry {
                 base,
@@ -382,6 +390,7 @@ impl MapUnits {
             field.field
         );
         let reference = self.strings.add(text, Some(&comment));
+
         if let Some(id) = reference_id(&reference) {
             self.added_strings.push(id);
         }
@@ -409,11 +418,13 @@ impl MapUnits {
 
 fn entry_mut(data: &mut ObjectData, id: FourCC) -> &mut ObjectEntry {
     let index = data.custom.iter().position(|e| e.effective_id() == id);
+
     if let Some(i) = index {
         return &mut data.custom[i];
     }
 
     let index = data.original.iter().position(|e| e.effective_id() == id);
+
     match index {
         Some(i) => &mut data.original[i],
         None => {
@@ -423,7 +434,9 @@ fn entry_mut(data: &mut ObjectData, id: FourCC) -> &mut ObjectEntry {
                 id: FourCC::ZERO,
                 sets: Vec::new(),
             });
+
             let last = data.original.len() - 1;
+
             &mut data.original[last]
         }
     }
@@ -433,8 +446,10 @@ fn entry_mut(data: &mut ObjectData, id: FourCC) -> &mut ObjectEntry {
 /// art fields differ between SD and HD; those always keep the change).
 fn same_as_base(db: &UnitDatabase, base: FourCC, field: &FieldMeta, value: &Value) -> bool {
     let base = base.to_string();
+
     [ArtMode::Sd, ArtMode::Hd].iter().all(|mode| {
         let base_value = db.raw_value(&base, field, *mode).unwrap_or_default();
+
         parse_value(field, &base_value).is_ok_and(|parsed| &parsed == value)
     })
 }
@@ -475,6 +490,7 @@ mod tests {
     fn units_lists_custom_then_original_once_with_changes_from_both_files() {
         let mut data = ObjectData::empty(Layout::Plain);
         let mut skins = ObjectData::empty(Layout::Plain);
+
         data.custom = vec![
             entry("Hpal", "H000", &["uhpm"]),
             entry("hfoo", "h001", &["uhpm", "udef"]),
@@ -508,6 +524,7 @@ mod tests {
             ("Hamg", false, 1),
         ]
         .map(|(code, custom, changed)| (code.to_owned(), custom, changed));
+
         assert_eq!(listed, expected);
     }
 }

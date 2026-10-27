@@ -25,6 +25,7 @@ const numberClass =
 
 function numberOf(field: Field | undefined): number {
   const value = Number(field?.raw ?? "");
+
   if (Number.isFinite(value)) {
     return value;
   }
@@ -106,12 +107,14 @@ function ColorPicker({
 
   function pick(value: string) {
     const channels = hexToRgb(value);
+
     if (!channels) {
       return;
     }
 
     for (const [index, field] of fields.entries()) {
       const channel = String(channels[index]);
+
       if (channel !== field.raw) {
         onChange(field.id, channel);
       }

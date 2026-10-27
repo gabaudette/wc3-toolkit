@@ -55,6 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .ok_or("usage: docs_sources GAME_DIR OUTPUT_DIR")?,
     );
     let output = PathBuf::from(args.next().ok_or("missing OUTPUT_DIR")?);
+
     if args.next().is_some() {
         return Err("usage: docs_sources GAME_DIR OUTPUT_DIR".into());
     }
@@ -86,6 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .iter()
             .map(|meta| describe(meta, database.field_name(meta), &units))
             .collect();
+
         catalogs.insert(kind, fields);
     }
 

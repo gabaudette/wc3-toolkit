@@ -65,11 +65,13 @@ pub fn maps_dir(game_dir: &Path) -> Option<PathBuf> {
     };
 
     let maps = documents.join(GAME_FOLDER).join("Maps");
+
     maps.is_dir().then_some(maps)
 }
 
 fn wine_documents(drive_c: &Path) -> Option<PathBuf> {
     let users = std::fs::read_dir(drive_c.join("users")).ok()?;
+
     users
         .filter_map(|entry| entry.ok().map(|e| e.path().join("Documents")))
         .find(|docs| docs.join(GAME_FOLDER).is_dir())
@@ -109,6 +111,7 @@ fn candidates() -> Vec<PathBuf> {
     };
 
     let mut found = Vec::new();
+
     for root in STEAM_ROOTS {
         let Ok(prefixes) = std::fs::read_dir(home.join(root).join("steamapps/compatdata")) else {
             continue;

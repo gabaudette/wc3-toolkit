@@ -29,11 +29,13 @@ pub(crate) fn is_translatable(field: &FieldMeta) -> bool {
 /// metadata's maximum.
 pub(crate) fn parse_value(field: &FieldMeta, text: &str) -> Result<Value> {
     let text = text.trim();
+
     if let Some(max) = list_limit(field) {
         let count = text
             .split(',')
             .filter(|code| !code.trim().is_empty())
             .count();
+
         if count > max {
             return Err(Error::Invalid(format!(
                 "{} holds at most {max}, got {count}",
@@ -59,6 +61,7 @@ pub(crate) fn parse_value(field: &FieldMeta, text: &str) -> Result<Value> {
         "real" => Value::Real(text.parse().map_err(|_| invalid())?),
         "unreal" => {
             let v: f32 = text.parse().map_err(|_| invalid())?;
+
             if v < 0.0 {
                 return Err(invalid());
             }
@@ -136,13 +139,16 @@ mod tests {
     #[test]
     fn id_lists_hold_at_most_the_metadata_maximum() {
         let mut heroes = field("heroAbilityList");
+
         heroes.max = Some("5".to_owned());
         assert!(parse_value(&heroes, "AHhb,AHds,AHre,AHad,AHtb").is_ok());
         let err = parse_value(&heroes, "AHhb,AHds,AHre,AHad,AHtb,AHbz").unwrap_err();
+
         assert!(err.to_string().contains("at most 5"), "{err}");
 
         // On text lists the maximum is a length, not a count.
         let mut names = field("stringList");
+
         names.max = Some("1".to_owned());
         assert!(parse_value(&names, "Arthas,Uther").is_ok());
     }

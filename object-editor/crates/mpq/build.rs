@@ -34,6 +34,7 @@ fn main() {
     } else {
         "storm"
     };
+
     println!("cargo:rustc-link-lib=static={library}");
 
     // StormLib's HTTP stream support uses WinINet and `wsprintf` (user32) on

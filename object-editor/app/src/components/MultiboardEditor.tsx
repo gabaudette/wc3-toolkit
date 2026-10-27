@@ -33,6 +33,7 @@ const inputClass =
 const EMPTY_CELL: BoardCell = { text: "", color: null, icon: null };
 /** The text that becomes a player's name, in their color, on rows per player. */
 const PLAYER_NAME = "{player}";
+
 type SamplePlayer = { name: string; color: string };
 
 /** Players the preview fills rows per player with. */
@@ -68,12 +69,14 @@ function restyled(
   change: Partial<BoardCell>,
 ): MultiboardDesign {
   const targets = covered(board, selection);
+
   return {
     ...board,
     rows: board.rows.map((row, r) => ({
       ...row,
       cells: board.columns.map((_, c) => {
         const cell = cellAt(row, c);
+
         if (targets.some(([tr, tc]) => tr === r && tc === c)) {
           return { ...cell, ...change };
         }
@@ -99,6 +102,7 @@ function shared<K extends keyof BoardCell>(
     return cellAt(row, c)[key];
   });
   const [first] = values;
+
   if (first === undefined || values.some((v) => v !== first)) {
     return null;
   }
@@ -117,18 +121,21 @@ function selectionLabel(board: MultiboardDesign, selection: Selection): string {
 
   const row = board.rows[selection.row]?.name ?? "";
   const column = board.columns[selection.column]?.name ?? "";
+
   return `The cell in row "${row}", column "${column}"`;
 }
 
 /** Moves an item of a list by one place, or leaves the list when it cannot. */
 function moved<T>(list: T[], index: number, by: number): T[] {
   const target = index + by;
+
   if (target < 0 || target >= list.length) {
     return list;
   }
 
   const next = [...list];
   const [item] = next.splice(index, 1);
+
   if (item !== undefined) {
     next.splice(target, 0, item);
   }
@@ -196,6 +203,7 @@ export function MultiboardEditor({
       columns: board.columns.filter((_, i) => i !== index),
       rows: board.rows.map((row) => ({ ...row, cells: row.cells.filter((_, i) => i !== index) })),
     });
+
     setSelection({ kind: "cell", row: 0, column: 0 });
   }
 
@@ -432,6 +440,7 @@ export function MultiboardEditor({
                     const cell = cellAt(row, c);
                     const picked =
                       selection.kind === "cell" && selection.row === r && selection.column === c;
+
                     return (
                       // biome-ignore lint/suspicious/noArrayIndexKey: cells are known by their place.
                       <td key={c} className="align-top">
@@ -555,6 +564,7 @@ function IconButton({ label, disabled, onPress, children }: IconButtonProps) {
 /** A cell's text as the game shows it, with a player's name filled in. */
 function previewText(cell: BoardCell, player: SamplePlayer | null): string {
   let text = cell.text;
+
   if (player) {
     text = text.replaceAll(PLAYER_NAME, `|cff${player.color}${player.name}|r`);
   }
@@ -580,6 +590,7 @@ function BoardPreview({ board }: { board: MultiboardDesign }) {
     return [{ row, player: null }];
   });
   let title = board.title;
+
   if (board.titleColor) {
     title = `|cff${board.titleColor}${board.title}|r`;
   }
@@ -598,6 +609,7 @@ function BoardPreview({ board }: { board: MultiboardDesign }) {
               <div key={i} className="flex">
                 {board.columns.map((column, c) => {
                   const cell = cellAt(row, c);
+
                   return (
                     <div
                       // biome-ignore lint/suspicious/noArrayIndexKey: preview cells are known by their place.

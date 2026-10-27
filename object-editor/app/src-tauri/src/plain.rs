@@ -83,6 +83,7 @@ fn with_view<T>(
         map: changes.as_ref(),
         mode: session.mode,
     };
+
     f(&view)
 }
 
@@ -99,6 +100,7 @@ pub fn plain_detail(
     id: String,
 ) -> Result<UnitDetail, String> {
     let id = fourcc(&id)?;
+
     state.with(|session| {
         with_view(session, catalog, |view| view.detail(id))
             .ok_or(format!("Unknown {} {id}.", catalog.singular()))
@@ -131,6 +133,7 @@ fn edit_field(
     ) -> Result<(), String>,
 ) -> Result<Field, String> {
     let id = fourcc(id)?;
+
     state.with(|session| {
         let db = catalog.database(&session.items, &session.buffs, &session.destructables);
         let field = db
@@ -151,6 +154,7 @@ fn edit_field(
             Catalog::Buffs => buffs,
             Catalog::Destructables => destructables,
         };
+
         change(db, objects, units.strings_mut(), id, field)?;
         Ok(with_view(session, catalog, |view| view.field(id, field)))
     })
@@ -204,6 +208,7 @@ pub fn create_plain(
     base: String,
 ) -> Result<UnitItem, String> {
     let base = fourcc(&base)?;
+
     state.with(|session| {
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         let OpenMap {
@@ -219,6 +224,7 @@ pub fn create_plain(
         };
         let db = catalog.database(&session.items, &session.buffs, &session.destructables);
         let id = objects.create(db, base).map_err(|e| e.to_string())?;
+
         with_view(session, catalog, |view| view.item(id))
             .ok_or(format!("Created {id} but cannot show it."))
     })
@@ -233,6 +239,7 @@ pub fn discard_plain(
     id: String,
 ) -> Result<(), String> {
     let id = fourcc(&id)?;
+
     state.with(|session| {
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         let OpenMap {
@@ -247,6 +254,7 @@ pub fn discard_plain(
             Catalog::Buffs => buffs,
             Catalog::Destructables => destructables,
         };
+
         if objects.remove(units.strings_mut(), id) {
             Ok(())
         } else {

@@ -42,6 +42,7 @@ fn serve<R: Runtime>(
             Ok(bytes) => response(StatusCode::OK, content_type, bytes),
             Err(message) => response(StatusCode::NOT_FOUND, TEXT, message.into_bytes()),
         };
+
         responder.respond(response);
     });
 }
@@ -103,21 +104,26 @@ fn icon_png<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>
         Err(Art::Map(file, data)) => {
             let image = decode_texture(&data).map_err(|e| format!("{file}: {e}"))?;
             let png = image.to_png().map_err(|e| e.to_string())?;
+
             state.with(|session| {
                 if let Some(map) = &mut session.map {
                     map.icons.insert(path.to_owned(), png.clone());
                 }
+
                 Ok(())
             })?;
+
             Ok(png)
         }
         Err(Art::Game(files, mode)) => {
             let image = load_texture(&files, path, mode).map_err(|e| e.to_string())?;
             let png = image.to_png().map_err(|e| e.to_string())?;
+
             state.with(|session| {
                 session.icons.insert((mode, path.to_owned()), png.clone());
                 Ok(())
             })?;
+
             Ok(png)
         }
     }
@@ -140,11 +146,13 @@ fn texture_raw<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<
 
     let image =
         decode_texture_fitting(&data, PREVIEW_TEXTURE_SIZE).map_err(|e| format!("{file}: {e}"))?;
+
     Ok(image.to_raw())
 }
 
 fn model_bytes<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<u8>, String> {
     let state = app.state::<AppState>();
+
     match state.with(|session| Ok(art_source(session, path)))? {
         Art::Map(file, data) => preview_copy(&data).map_err(|e| format!("{file}: {e}")),
         Art::Game(files, mode) => load_model(&files, path, mode).map_err(|e| {
@@ -160,6 +168,7 @@ fn model_bytes<R: Runtime>(app: &tauri::AppHandle<R>, path: &str) -> Result<Vec<
 
 fn response(status: StatusCode, content_type: &str, body: Vec<u8>) -> Response<Vec<u8>> {
     let mut response = Response::new(body);
+
     *response.status_mut() = status;
     if let Ok(value) = content_type.parse() {
         response.headers_mut().insert(header::CONTENT_TYPE, value);

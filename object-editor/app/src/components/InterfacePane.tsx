@@ -49,6 +49,7 @@ function replaced(designs: Design[], changed: Design): Design[] {
 /** A scoreboard to start from: a header row, then a row for each player. */
 function newMultiboard(count: number): MultiboardDesign {
   const cell = (text: string, color: string | null = null) => ({ text, color, icon: null });
+
   return {
     kind: "multiboard",
     id: crypto.randomUUID(),
@@ -81,6 +82,7 @@ function summary(design: Design): string {
 
   if (design.kind === "leaderboard") {
     const rows: string[] = [];
+
     if (design.players) {
       rows.push("players");
     }
@@ -218,12 +220,14 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
   function duplicate(original: Design) {
     const taken = new Set(designs.map((d) => d.name.toLowerCase()));
     let name = `${original.name} copy`;
+
     for (let n = 2; taken.has(name.toLowerCase()); n++) {
       name = `${original.name} copy ${n}`;
     }
 
     const copy: Design = { ...structuredClone(original), id: crypto.randomUUID(), name };
     const at = designs.findIndex((d) => d.id === original.id) + 1;
+
     update([...designs.slice(0, at), copy, ...designs.slice(at)]);
     setSelected(copy.id);
   }
@@ -234,6 +238,7 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
       filters: DESIGN_FILTERS,
       ...(mapPath && { defaultPath: besides(mapPath, "") }),
     });
+
     if (typeof picked === "string") {
       setImporting(picked);
     }
@@ -241,6 +246,7 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
 
   function imported(next: Design[]) {
     const added = next.find((d) => !designs.some((old) => old.id === d.id));
+
     setDesigns(next);
     setSelected(added?.id ?? selected);
     onMapChanged();
@@ -266,6 +272,7 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
           }),
         };
       });
+
     update(next);
     setSelected(next[0]?.id ?? null);
   }
@@ -479,6 +486,7 @@ function LuaBar({ selected, designs, flush, onSaved }: LuaBarProps) {
 
   async function browse() {
     const picked = await open({ directory: true, ...(folder && { defaultPath: folder }) });
+
     if (typeof picked === "string") {
       setFolder(picked);
     }
@@ -490,11 +498,14 @@ function LuaBar({ selected, designs, flush, onSaved }: LuaBarProps) {
     setStatus(null);
     try {
       const dir = folder.trim();
+
       await flush();
       const written = await api.writeUiLua(dir);
+
       await api.saveMap();
       onSaved();
       const copy = await api.buildTestCopy(dir);
+
       setStatus(
         `Wrote ${written.join(", ")} and built ${copy.path} with ${copy.modules.length} module(s).`,
       );

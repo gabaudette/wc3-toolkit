@@ -46,9 +46,11 @@ impl DesignFile {
     pub fn parse(text: &str) -> Result<Self, String> {
         let invalid = |reason: String| format!("Not a design file Tinkerbench can read: {reason}.");
         let file: Self = serde_json::from_str(text).map_err(|e| invalid(e.to_string()))?;
+
         if file.format != FILE_FORMAT {
             return Err(invalid("it is not a .w3ui file".to_owned()));
         }
+
         if file.version > FILE_VERSION {
             return Err(format!(
                 "This design file was made by a newer Tinkerbench (format {}); update to import it.",
@@ -67,6 +69,7 @@ impl DesignFile {
                 let bytes = BASE64
                     .decode(&file.data)
                     .map_err(|_| format!("The design file's copy of {} is damaged.", file.path))?;
+
                 Ok(ImportedFile {
                     path: file.path.clone(),
                     bytes,
@@ -100,11 +103,14 @@ pub fn with_dependencies(all: &[Design], chosen: &[String]) -> Vec<Listed> {
         .collect();
 
     let mut next = 0;
+
     while next < listed.len() {
         let current = listed[next].design.clone();
+
         next += 1;
         for target in shown_dialogs(&current) {
             let known = listed.iter().any(|l| l.design.id() == target);
+
             if let Some(design) = all.iter().find(|d| d.id() == target).filter(|_| !known) {
                 listed.push(Listed {
                     design: design.clone(),
@@ -137,6 +143,7 @@ fn shown_dialogs(design: &Design) -> Vec<String> {
 /// The icon paths the designs name: multiboard cells' icons.
 pub fn icon_paths(designs: &[Design]) -> Vec<String> {
     let mut paths: Vec<String> = Vec::new();
+
     for design in designs {
         let Design::Multiboard(board) = design else {
             continue;
@@ -162,6 +169,7 @@ pub fn icon_paths(designs: &[Design]) -> Vec<String> {
 /// nothing.
 pub fn needs(designs: &[Design]) -> Vec<String> {
     let mut functions: Vec<String> = Vec::new();
+
     for design in designs {
         let called = match design {
             Design::Dialog(dialog) => dialog
@@ -177,6 +185,7 @@ pub fn needs(designs: &[Design]) -> Vec<String> {
             }
             _ => Vec::new(),
         };
+
         for function in called {
             if !functions.contains(&function) {
                 functions.push(function);
@@ -210,6 +219,7 @@ pub fn export(
             })
             .collect(),
     };
+
     (file, listed, files)
 }
 
@@ -269,6 +279,7 @@ pub fn planned(incoming: &[Design], existing: &[Design]) -> Vec<Listed> {
 fn free(id: &str, taken: &HashSet<String>) -> String {
     let mut candidate = id.to_owned();
     let mut n = 2;
+
     while taken.contains(&candidate) {
         candidate = format!("{id}-{n}");
         n += 1;
@@ -348,6 +359,7 @@ mod tests {
         let (file, listed, files) = export(&all, &["a".to_owned(), "d".to_owned()], &read);
 
         let names: Vec<&str> = listed.iter().map(|l| l.design.name()).collect();
+
         assert_eq!(names, ["Mode", "Scoreboard", "Difficulty", "Confirm"]);
         assert_eq!(listed[2].shown_by.as_deref(), Some("Mode"));
         assert_eq!(listed[3].shown_by.as_deref(), Some("Difficulty"));
@@ -357,6 +369,7 @@ mod tests {
         assert_eq!(file.files[0].path, "war3mapImported\\BTNCrown.blp");
 
         let read_back = DesignFile::parse(&file.to_text().unwrap()).unwrap();
+
         assert_eq!(read_back, file);
         assert_eq!(read_back.imported_files().unwrap()[0].bytes, [1, 2, 3]);
     }
@@ -380,6 +393,7 @@ mod tests {
         let Design::Dialog(mode) = &plan[1].design else {
             panic!("not a dialog");
         };
+
         assert_eq!(
             mode.buttons[0].action,
             ButtonAction::ShowDialog {
@@ -393,6 +407,7 @@ mod tests {
             .cloned()
             .chain(plan.into_iter().map(|l| l.design))
             .collect();
+
         assert_eq!(planned(&incoming, &twice)[0].design.name(), "Scoreboard 3");
     }
 
@@ -401,6 +416,7 @@ mod tests {
         assert!(DesignFile::parse("{\"version\": 1, \"designs\": []}").is_err());
         assert!(DesignFile::parse("not json").is_err());
         let newer = format!("{{\"format\": \"{FILE_FORMAT}\", \"version\": 99, \"designs\": []}}");
+
         assert!(DesignFile::parse(&newer).unwrap_err().contains("newer"));
     }
 }

@@ -156,6 +156,7 @@ impl AbilityView<'_> {
     pub fn summary(&self, id: FourCC) -> Option<AbilitySummary> {
         let info = self.info(id)?;
         let entry = self.map.abilities().into_iter().find(|a| a.id == id);
+
         Some(self.summary_with(id, info, entry.as_ref()))
     }
 
@@ -163,6 +164,7 @@ impl AbilityView<'_> {
     fn ids_after(&self, map_abilities: &[MapAbility]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_abilities.iter().map(|a| a.id).collect();
         let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
+
         for id in self.db.ids().iter().filter_map(|id| FourCC::parse(id)) {
             if seen.insert(id) {
                 ids.push(id);
@@ -175,10 +177,12 @@ impl AbilityView<'_> {
     pub fn list(&self) -> Vec<AbilitySummary> {
         let map_abilities = self.map.abilities();
         let by_id: HashMap<FourCC, &MapAbility> = map_abilities.iter().map(|a| (a.id, a)).collect();
+
         self.ids_after(&map_abilities)
             .into_iter()
             .filter_map(|id| {
                 let info = self.info(id)?;
+
                 Some(self.summary_with(id, info, by_id.get(&id).copied()))
             })
             .collect()
@@ -234,6 +238,7 @@ impl AbilityView<'_> {
             .collect();
 
         let entry = self.map.abilities().into_iter().find(|a| a.id == id);
+
         AbilityCard {
             known: true,
             hotkey: info.hotkey.clone(),
@@ -250,6 +255,7 @@ impl AbilityView<'_> {
             self.db
                 .raw_value(&base.to_string(), field, level, self.mode)
         });
+
         FieldValue {
             name: self.db.field_name(field),
             label: format!(
@@ -280,6 +286,7 @@ impl AbilityView<'_> {
             cells: (1..=levels)
                 .map(|level| {
                     let value = self.value(id, field, level);
+
                     LevelCell {
                         raw: value.raw,
                         display: value.display,
@@ -294,25 +301,30 @@ impl AbilityView<'_> {
     /// then data fields by column (`DataA`, `DataB`, ...), then the game's order.
     fn sorted_fields(&self, id: FourCC) -> Vec<&FieldMeta> {
         let mut fields = self.map.fields(self.db, id);
+
         fields.sort_by_key(|f| {
             let order = CATEGORY_ORDER
                 .iter()
                 .position(|c| *c == f.category)
                 .unwrap_or(CATEGORY_ORDER.len());
             let rank = self.guide.rank(&f.id);
+
             (order, rank.is_none(), rank, f.data_column, f.sort.clone())
         });
+
         fields
     }
 
     pub fn detail(&self, id: FourCC) -> Option<AbilityDetail> {
         let card = self.card(&id.to_string());
+
         if !card.known {
             return None;
         }
 
         let levels = self.map.levels(self.db, id);
         let mut sections: Vec<AbilitySection> = Vec::new();
+
         for meta in self.sorted_fields(id) {
             if !matches!(sections.last(), Some(s) if s.category == meta.category) {
                 sections.push(AbilitySection {
@@ -326,6 +338,7 @@ impl AbilityView<'_> {
             let Some(section) = sections.last_mut() else {
                 continue;
             };
+
             if meta.per_level {
                 section
                     .level_fields
@@ -346,6 +359,7 @@ impl AbilityView<'_> {
     /// abilities with a number at any level that equals it (e.g. `75`, `0.5`).
     pub fn search(&self, query: &str) -> Vec<SearchHit> {
         let query = query.trim().to_lowercase();
+
         if query.is_empty() {
             return Vec::new();
         }
@@ -355,6 +369,7 @@ impl AbilityView<'_> {
         let in_map: HashSet<FourCC> = map_abilities.iter().map(|a| a.id).collect();
         let mut by_name = Vec::new();
         let mut by_value = Vec::new();
+
         for id in self.ids_after(&map_abilities) {
             let Some(info) = self.info(id) else {
                 continue;
@@ -368,17 +383,20 @@ impl AbilityView<'_> {
                     .is_some_and(|s| s.to_lowercase().contains(&query))
                 || code.to_lowercase().contains(&query)
                 || info.code.to_lowercase() == query;
+
             if names_match {
                 by_name.push(SearchHit {
                     id: code,
                     reason: String::new(),
                 });
+
                 continue;
             }
 
             let Some(number) = number else {
                 continue;
             };
+
             if let Some(reason) = self.number_match(id, in_map.contains(&id), info.levels, number) {
                 by_value.push(SearchHit { id: code, reason });
             }
@@ -405,6 +423,7 @@ impl AbilityView<'_> {
             let numeric = field.per_level
                 && field.source == DATA_SOURCE
                 && NUMERIC_TYPES.contains(&field.value_type.as_str());
+
             if !numeric {
                 return None;
             }
@@ -412,6 +431,7 @@ impl AbilityView<'_> {
             (1..=levels).find_map(|level| {
                 let value = raw(field, level)?;
                 let matches = value.trim().parse::<f64>().is_ok_and(|v| v == number);
+
                 matches.then(|| format!("{} = {value} (level {level})", self.db.field_name(field)))
             })
         })
@@ -436,6 +456,7 @@ mod tests {
             .map(PathBuf::from)
             .ok_or("set WC3_GAME_DIR")?;
         let files = GameFiles::open(&dir, GameOptions::default())?;
+
         Ok((
             AbilityDatabase::load(&files)?,
             UnitDatabase::load(&files)?,
@@ -477,6 +498,7 @@ mod tests {
             .iter()
             .map(|s| s.category.as_str())
             .collect();
+
         assert_eq!(order.first(), Some(&"stats"));
         let level_field = |field_id: &str| {
             detail
@@ -487,6 +509,7 @@ mod tests {
         };
         let amount = level_field("Hhb1").ok_or("no Hhb1")?;
         let values: Vec<&str> = amount.cells.iter().map(|c| c.raw.as_str()).collect();
+
         assert_eq!(values, ["200", "400", "600"]);
         assert!(level_field("atp1").is_some_and(|f| f.cells.len() == 3));
         assert!(
@@ -498,6 +521,7 @@ mod tests {
             "levels is a single field"
         );
         let targets = level_field("atar").ok_or("no atar")?;
+
         assert_eq!(targets.field.control, "flagList");
         Ok(())
     }
@@ -518,6 +542,7 @@ mod tests {
             Some("AHbz")
         );
         let by_value = view.search("600");
+
         assert!(
             by_value
                 .iter()
@@ -542,6 +567,7 @@ mod tests {
         let mut strings = MapStrings::default();
         let custom = map.create(&dbs.0, id("AHhb")?)?;
         let field = |field_id: &str| dbs.0.field(field_id).ok_or(format!("no {field_id}"));
+
         map.set(
             &dbs.0,
             &mut strings,
@@ -555,11 +581,13 @@ mod tests {
         let view = view(&dbs, &map, &strings);
 
         let first = view.list().into_iter().next().ok_or("empty list")?;
+
         assert_eq!(
             (first.id.as_str(), first.custom, first.base.as_str()),
             ("A000", true, "AHhb")
         );
         let card = view.card("A000");
+
         assert!(card.known);
         assert_eq!(card.summary.name, "Holier Light");
         let amount = card
@@ -567,6 +595,7 @@ mod tests {
             .iter()
             .find(|r| r.label == "Amount Healed/Damaged")
             .ok_or("no amount row")?;
+
         assert_eq!(amount.values, ["250", "400", "600", "600"]);
 
         let detail = view.detail(custom).ok_or("no detail")?;
@@ -576,6 +605,7 @@ mod tests {
             .flat_map(|s| &s.level_fields)
             .find(|f| f.field.id == "Hhb1")
             .map(|f| f.cells.iter().map(|c| c.modified).collect::<Vec<_>>());
+
         assert_eq!(cells, Some(vec![true, false, false, false]));
         assert_eq!(view.fill_placeholders("<A000,DataA1>"), "250");
         Ok(())

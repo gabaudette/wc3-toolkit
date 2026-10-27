@@ -54,17 +54,21 @@ impl UpgradeDatabase {
             .collect();
 
         let mut profile = Profile::new();
+
         for source in SOURCES {
             let path = format!("units\\{source}upgradefunc.txt");
+
             merge_optional(&mut profile, files.read_balanced(&path), &path)?;
         }
 
         for source in SOURCES {
             let path = format!("units\\{source}upgradestrings.txt");
+
             merge_optional(&mut profile, files.read_localized(&path), &path)?;
         }
 
         let mut editor_strings = Profile::new();
+
         for path in EDITOR_STRINGS {
             editor_strings.merge_text(&decode_text(files.read_localized(path)?, path)?);
         }
@@ -97,6 +101,7 @@ impl UpgradeDatabase {
             .iter()
             .find(|(column, _)| field.field.starts_with(column))
             .map_or("", |(_, part)| part);
+
         name.replace("%s", part)
     }
 
@@ -140,11 +145,13 @@ impl UpgradeDatabase {
             .profile
             .get(id, &variant)
             .or_else(|| self.profile.get(id, ICON_KEY))?;
+
         list_item(whole, 0)
     }
 
     fn level_text(&self, id: &str, key: &str, level: u32) -> Option<String> {
         let whole = self.profile.get(id, key)?;
+
         list_item(whole, usize::try_from(level.checked_sub(1)?).ok()?)
     }
 
@@ -171,6 +178,7 @@ impl UpgradeDatabase {
                 0 => field.field.clone(),
                 n => format!("{}{n}", field.field),
             };
+
             return self
                 .profile
                 .get(id, &key)
@@ -187,6 +195,7 @@ impl UpgradeDatabase {
         } else {
             field.index.unwrap_or_default()
         };
+
         list_item(whole, position)
     }
 }

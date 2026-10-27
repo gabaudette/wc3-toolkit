@@ -140,6 +140,7 @@ export function AbilityField({ field, editable, onChange }: AbilityFieldProps) {
 
   useEffect(() => {
     const ids = codesOf(field.raw);
+
     if (ids.length === 0) {
       setCards([]);
       return;
@@ -167,6 +168,7 @@ export function AbilityField({ field, editable, onChange }: AbilityFieldProps) {
       <ul className="flex flex-col gap-1.5">
         {cards.map((card) => {
           let onRemove: (() => void) | null = null;
+
           if (editable) {
             onRemove = () => remove(card.summary.id);
           }

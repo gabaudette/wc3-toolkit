@@ -82,9 +82,11 @@ impl MapStrings {
                 .strip_prefix(ENTRY_PREFIX)
                 .and_then(|n| n.trim().parse::<u32>().ok())
                 .ok_or_else(|| error(i, "expected `STRING <number>`"))?;
+
             i += 1;
 
             let mut comments = Vec::new();
+
             while i < last && lines[i].starts_with("//") {
                 comments.push(lines[i].to_owned());
                 i += 1;
@@ -105,6 +107,7 @@ impl MapStrings {
                 text: lines[start..end].join(newline),
                 blank_lines_after: 0,
             });
+
             i = end + 1;
         }
 
@@ -171,6 +174,7 @@ impl MapStrings {
     /// Removes a string. Returns `false` if there is none with that ID.
     pub fn remove(&mut self, id: u32) -> bool {
         let before = self.entries.len();
+
         self.entries.retain(|e| e.id != id);
         self.entries.len() != before
     }
@@ -239,6 +243,7 @@ mod tests {
         assert_eq!(strings.add("new", None), "TRIGSTR_008");
 
         let reparsed = MapStrings::parse(&strings.to_text()).unwrap();
+
         assert_eq!(reparsed.get(7), Some("Holy\r\nwarrior"));
         assert_eq!(reparsed.get(8), Some("new"));
     }

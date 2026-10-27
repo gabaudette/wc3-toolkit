@@ -41,6 +41,7 @@ export function parseChangelog(text: string): ChangelogRelease[] {
     } else if (line.startsWith(" ") && line.trim() && group && group.items.length > 0) {
       // A wrapped item continues on an indented line.
       const last = group.items.length - 1;
+
       group.items[last] = `${group.items[last]} ${line.trim()}`;
     }
   }
@@ -51,6 +52,7 @@ export function parseChangelog(text: string): ChangelogRelease[] {
 /** Splits item text into plain and `code` runs; bold marks and link targets are dropped. */
 export function parseInline(text: string): InlineRun[] {
   const plain = text.replace(/\*\*(.+?)\*\*/g, "$1").replace(/\[(.+?)\]\([^)]*\)/g, "$1");
+
   return plain
     .split("`")
     .map((part, i) => ({ text: part, code: i % 2 === 1 }))

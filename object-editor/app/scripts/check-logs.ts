@@ -7,6 +7,7 @@ const FAILURE = 1;
 
 function git(...args: string[]): string {
   const result = Bun.spawnSync(["git", ...args], { stderr: "ignore" });
+
   return result.stdout.toString().trim();
 }
 

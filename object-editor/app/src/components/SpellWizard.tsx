@@ -85,6 +85,7 @@ const STEP_TITLES: Record<Step, string> = {
 /** Values of a triggered spell's own that matter for its template. */
 function triggeredFields(detail: AbilityDetail, template: SpellTemplate): LevelField[] {
   const ids = ["acdn", "amcs"];
+
   if (template.target !== "none") {
     ids.push("aran", "atar");
   }
@@ -95,6 +96,7 @@ function triggeredFields(detail: AbilityDetail, template: SpellTemplate): LevelF
 
   return ids.flatMap((id) => {
     const field = levelField(detail, id);
+
     if (field) {
       return [field];
     }
@@ -112,6 +114,7 @@ function valueFields(detail: AbilityDetail): LevelField[] {
   const own = all.filter(
     ({ category, f }) => category === SPELL_DATA && !TOOLTIPS.includes(f.field.id),
   );
+
   return [...common, ...own].map(({ f }) => f);
 }
 
@@ -131,9 +134,11 @@ function spellType(hero: boolean): string {
 async function ownValues(id: string, base: string, detail: AbilityDetail): Promise<AbilityDetail> {
   const reference = new RegExp(`<${base},`, "gi");
   let updated = detail;
+
   for (const fieldId of PLACEHOLDER_TEXTS) {
     for (const { raw, level } of namedTexts(detail, fieldId)) {
       const own = raw.replace(reference, `<${id},`);
+
       if (own !== raw) {
         updated = await api.setAbilityField(id, fieldId, level, own);
       }
@@ -146,11 +151,13 @@ async function ownValues(id: string, base: string, detail: AbilityDetail): Promi
 /** A text field's values with their levels (0 for a field without levels). */
 function namedTexts(detail: AbilityDetail, id: string): { raw: string; level: number }[] {
   const perLevel = levelField(detail, id);
+
   if (perLevel) {
     return perLevel.cells.map((cell, index) => ({ raw: cell.raw, level: index + 1 }));
   }
 
   const plain = plainField(detail, id);
+
   if (plain) {
     return [{ raw: plain.raw, level: NO_LEVEL }];
   }
@@ -360,6 +367,7 @@ export function SpellWizard({
     setError(null);
     try {
       const created = await api.createAbility(base);
+
       // A new copy still has the base ability's name.
       setBaseName(created.name);
       onMapChanged();
@@ -378,6 +386,7 @@ export function SpellWizard({
     setError(null);
     try {
       const created = await api.createTriggeredSpell(picked.id);
+
       onMapChanged();
       setBaseName("Channel");
       setTemplate(picked);
@@ -398,6 +407,7 @@ export function SpellWizard({
     }
 
     const next = { ...values, [param]: list };
+
     setValues(next);
     edit((id) => api.setTriggeredValues(id, template.id, next));
   }
@@ -457,6 +467,7 @@ export function SpellWizard({
     queue.current = queue.current.then(async () => {
       try {
         const updated = await change(draft);
+
         if (updated) {
           setDetail(updated);
         }
@@ -519,6 +530,7 @@ export function SpellWizard({
       await queue.current;
       const base = await api.abilityDetail(detail.card.summary.base);
       const first = levelField(base, BUFFS)?.cells[0]?.raw ?? "";
+
       setBaseBuffs(idList(first));
       setAllBuffs(await api.listPlain("buffs"));
       setStep("buff");
@@ -532,6 +544,7 @@ export function SpellWizard({
   /** The spell's buffs at every level, or the base ability's again for `null`. */
   async function setBuffs(id: string, buffs: string | null): Promise<AbilityDetail | null> {
     let updated: AbilityDetail | null = null;
+
     for (let level = 1; level <= (detail?.levels ?? 1); level++) {
       if (buffs === null) {
         updated = await api.resetAbilityField(id, BUFFS, level);
@@ -670,6 +683,7 @@ export function SpellWizard({
     await queue.current;
     // Levels may have been added after the buff was picked; they get it too.
     const buffs = chosenBuffs(buffChoice, baseBuffs);
+
     if (buffs !== null) {
       await setBuffs(draft, buffs);
     }
@@ -683,6 +697,7 @@ export function SpellWizard({
     }
 
     const created = draft;
+
     setDetail(null);
     setTemplate(null);
     onCreated(created);
@@ -915,6 +930,7 @@ function BaseChoice({
   onPick: (base: string) => void;
 }) {
   const { summary } = base.card;
+
   return (
     <button
       type="button"

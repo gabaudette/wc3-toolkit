@@ -33,11 +33,13 @@ export function FlagsInput({ field, raw, baseRaw, editable, onChange }: FlagsInp
     const changed = field.options.find(
       (choice) => values.includes(choice.value) !== selected.includes(choice.value),
     );
+
     if (!changed) {
       return;
     }
 
     const on = values.includes(changed.value);
+
     if (bits) {
       onChange(withBit(raw, changed, on));
     } else {

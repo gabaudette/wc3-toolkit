@@ -94,6 +94,7 @@ async function loadTextures(
     images.map(async (image) => {
       try {
         const response = await fetch(convertFileSrc(image, TEXTURE_SCHEME), { signal });
+
         if (!response.ok) {
           missing += 1;
           return;
@@ -108,6 +109,7 @@ async function loadTextures(
           TEXTURE_HEADER_BYTES,
           width * height * BYTES_PER_PIXEL,
         );
+
         renderer.setTextureImageData(image, [new ImageData(pixels, width, height)]);
       } catch {
         missing += 1;
@@ -129,6 +131,7 @@ const HIGH_PRECISION = "precision highp float";
  */
 function forceFullPrecision(gl: WebGL2RenderingContext) {
   const shaderSource = gl.shaderSource.bind(gl);
+
   gl.shaderSource = (shader, source) =>
     shaderSource(shader, source.replace(MEDIUM_PRECISION, HIGH_PRECISION));
 }
@@ -149,15 +152,18 @@ let shared: Preview | null = null;
 function previewCanvas(): Preview {
   if (!shared) {
     const canvas = document.createElement("canvas");
+
     canvas.width = CANVAS_SIZE;
     canvas.height = CANVAS_SIZE;
     canvas.setAttribute("aria-label", "3D model preview. Drag to rotate, scroll to zoom.");
     canvas.className = "size-full cursor-grab touch-none active:cursor-grabbing";
     // WebGL2 for the newer HD shader.
     const gl = canvas.getContext("webgl2");
+
     if (gl) {
       forceFullPrecision(gl);
     }
+
     shared = { canvas, gl };
   }
 
@@ -168,6 +174,7 @@ type ShaderProgram = {
   program: WebGLProgram;
   uniforms: Record<string, WebGLUniformLocation | null>;
 };
+
 type ShaderNames = Record<string, string>;
 /** The part of war3-model's renderer `allowMissingUniforms` replaces (private in its types). */
 type ShaderBuilder = {
@@ -193,11 +200,14 @@ function allowMissingUniforms(
 ) {
   const builder = renderer as unknown as ShaderBuilder;
   const build = builder.initShaderProgram.bind(renderer);
+
   builder.initShaderProgram = (vertex, fragment, attributes, uniforms) => {
     const built = build(vertex, fragment, attributes, {});
+
     for (const name of Object.keys(uniforms)) {
       built.uniforms[name] = gl.getUniformLocation(built.program, name);
     }
+
     return built;
   };
 }
@@ -236,8 +246,10 @@ function bounds(model: Model): Bounds {
     }
 
     const vertices = geoset.Vertices;
+
     for (let i = 0; i + COORDS_PER_VERTEX <= vertices.length; i += COORDS_PER_VERTEX) {
       const [x = 0, y = 0, z = 0] = vertices.subarray(i, i + COORDS_PER_VERTEX);
+
       vec3.set(point, x, y, z);
       vec3.min(min, min, point);
       vec3.max(max, max, point);
@@ -249,6 +261,7 @@ function bounds(model: Model): Bounds {
   }
 
   const center = vec3.lerp(vec3.create(), min, max, HALFWAY);
+
   return { center, radius: Math.max(vec3.distance(min, max) * HALFWAY, 1) };
 }
 
@@ -278,11 +291,13 @@ export function ModelViewer({ path }: ModelViewerProps) {
   /** Bumped when the GL context comes back after being lost, to load the model again. */
   const [restored, setRestored] = useState(0);
   const turningRef = useRef(turning);
+
   turningRef.current = turning;
 
   useEffect(() => {
     const holder = holderRef.current;
     const { canvas } = previewCanvas();
+
     if (!holder) {
       return;
     }
@@ -294,6 +309,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
       setStatus({ kind: "error", message: "The 3D preview stopped. It restarts on its own." });
     };
     const back = () => setRestored((n) => n + 1);
+
     canvas.addEventListener("webglcontextlost", lost);
     canvas.addEventListener("webglcontextrestored", back);
     return () => {
@@ -315,6 +331,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
     // Reflection maps are never loaded (see `ENVIRONMENT_MAP`), so the
     // renderer's reflection pre-processing never runs.
     const { gl } = previewCanvas();
+
     if (!gl || gl.isContextLost()) {
       setStatus({ kind: "error", message: "WebGL is not available in this window." });
       return;
@@ -333,17 +350,20 @@ export function ModelViewer({ path }: ModelViewerProps) {
       const response = await fetch(convertFileSrc(modelPath, MODEL_SCHEME), {
         signal: abort.signal,
       });
+
       if (!response.ok) {
         throw new Error(await response.text());
       }
 
       const bytes = await response.arrayBuffer();
+
       if (cancelled) {
         return;
       }
 
       const model = parseMDX(bytes);
       const renderer = new ModelRenderer(model);
+
       allowMissingUniforms(renderer, context);
       renderer.initGL(context);
       renderer.setTeamColor(PLAYER_RED);
@@ -352,11 +372,13 @@ export function ModelViewer({ path }: ModelViewerProps) {
       const animations = model.Sequences.map((s, index) => ({ index, name: s.Name }));
       const stand = animations.findIndex((a) => a.name.toLowerCase().startsWith(STAND_PREFIX));
       const first = Math.max(stand, 0);
+
       if (animations.length > 0) {
         renderer.setSequence(first);
       }
 
       const missing = await loadTextures(renderer, model, abort.signal);
+
       if (cancelled) {
         destroyRenderer(renderer);
         return;
@@ -433,6 +455,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
       if (rendererRef.current) {
         destroyRenderer(rendererRef.current);
       }
+
       rendererRef.current = null;
     };
   }, [path, restored]);
@@ -451,6 +474,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
 
   function pointerMove(e: PointerEvent<HTMLDivElement>) {
     const v = view.current;
+
     if (!v.dragging) {
       return;
     }
@@ -466,6 +490,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
 
   function wheel(e: WheelEvent<HTMLDivElement>) {
     const v = view.current;
+
     v.distance = Math.min(
       MAX_DISTANCE,
       Math.max(MIN_DISTANCE, v.distance * (1 + e.deltaY * ZOOM_STEP)),

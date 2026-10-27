@@ -91,12 +91,14 @@ export function rgbToHex(channels: number[]): string {
   const hex = channels
     .map((c) => clampChannel(c).toString(HEX_RADIX).padStart(HEX_DIGITS, "0"))
     .join("");
+
   return `#${hex}`;
 }
 
 /** "#ffcc00" → [255, 204, 0]; `null` for anything that is not a 6-digit hex color. */
 export function hexToRgb(hex: string): number[] | null {
   const match = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
+
   if (!match) {
     return null;
   }

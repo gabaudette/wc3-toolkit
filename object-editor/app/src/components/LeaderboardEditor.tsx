@@ -50,6 +50,7 @@ export function LeaderboardEditor({
       }),
     });
   let example = `"${board.labels[0]?.name ?? "Alliance"}"`;
+
   if (board.players) {
     example = "player";
   }
@@ -192,6 +193,7 @@ type PreviewRow = { key: string; text: string; value: number };
 /** The rows as the game lists them: sample players, then the map's own, in the chosen order. */
 function previewRows(board: LeaderboardDesign): PreviewRow[] {
   const rows: PreviewRow[] = [];
+
   if (board.players) {
     for (const player of SAMPLE_PLAYERS) {
       rows.push({
@@ -204,6 +206,7 @@ function previewRows(board: LeaderboardDesign): PreviewRow[] {
 
   for (const [index, label] of board.labels.entries()) {
     let text = label.name;
+
     if (label.color) {
       text = `|cff${label.color}${label.name}|r`;
     }
@@ -224,6 +227,7 @@ function previewRows(board: LeaderboardDesign): PreviewRow[] {
 function LeaderboardPreview({ board }: { board: LeaderboardDesign }) {
   const rows = previewRows(board);
   let title = board.title;
+
   if (board.titleColor) {
     title = `|cff${board.titleColor}${board.title}|r`;
   }

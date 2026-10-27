@@ -134,6 +134,7 @@ const SEARCH_DELAY_MS = 200;
 /** One chip per distinct value, in the order the list first shows them. */
 function filtersFrom(units: UnitItem[], filterOf: (unit: UnitItem) => string): Filter[] {
   const values = [...new Set(units.map(filterOf))].filter(Boolean);
+
   return values.map((value) => ({ id: value, label: value }));
 }
 
@@ -152,6 +153,7 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
 
   useEffect(() => {
     const trimmed = query.trim();
+
     if (!trimmed) {
       setHits(null);
       return;
@@ -162,6 +164,7 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
         .then(setHits)
         .catch((e) => onError(errorMessage(e)));
     }, SEARCH_DELAY_MS);
+
     return () => window.clearTimeout(timer);
   }, [query, search, onError]);
 
@@ -186,6 +189,7 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
   const game = shown.filter((r) => !hits && r.unit.group !== "map");
   const mapHasNone = !units.some((u) => u.group === "map");
   let visible = own.length + game.length;
+
   if (folded) {
     visible = own.length;
   }

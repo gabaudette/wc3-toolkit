@@ -68,6 +68,7 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
     setBusy(true);
     try {
       const result = await work();
+
       setError(null);
       return result;
     } catch (e) {
@@ -84,11 +85,13 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
       filters: MAP_FILTERS,
       ...(mapsDir && { defaultPath: mapsDir }),
     });
+
     if (typeof picked !== "string") {
       return;
     }
 
     const units = await run(() => api.mapCustomUnits(picked));
+
     if (units) {
       setOtherMap(picked);
       setOtherUnits(units);
@@ -99,6 +102,7 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
 
   async function pickBundle() {
     const picked = await openFile({ title: "Import a bundle file", filters: BUNDLE_FILTERS });
+
     if (typeof picked === "string") {
       setBundlePath(picked);
       setPreview(null);
@@ -111,6 +115,7 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
 
   async function importNow() {
     const added = await run(() => api.importObjects(source()));
+
     if (added) {
       // The next import starts fresh; the chosen map stays for picking more from it.
       setCode("");

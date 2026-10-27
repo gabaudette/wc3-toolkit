@@ -4,6 +4,28 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Standards, part 1: blank lines after blocks, checked (AGE-58)
+
+- AGE-WS-001 and AGE-WS-002 were followed by hand and had drifted: neither rustfmt nor Biome
+  has a rule for them. `object-editor/app/scripts/blankLines.ts` now finds a finished block,
+  or the last of a group of `let`/`const`/`static` declarations, followed directly by a
+  sibling statement, in every tracked `.rs`, `.ts` and `.tsx` file outside `vendor/`.
+- It relies on formatted code: one statement per line, indentation by nesting, so lines at
+  the same indentation are siblings. A declaration ends where its brackets close on a `;`,
+  so method chains indented deeper still count as one statement. Continuations (`else`,
+  `catch`, closing brackets, method chains), Rust match arms, JSX children and attributes,
+  type members and imports need no blank line.
+- Strings and comments are tokenized first (Rust raw strings like the generated Lua, char
+  literals versus lifetimes, nested block comments; TypeScript template literals with
+  `${...}`), and only lines that start in code are considered, so `--fix` never adds a line
+  inside a string.
+- `--fix` added 1,068 blank lines across 100 files; rustfmt, Biome and every test accept the
+  result unchanged. Its tests found one more gap first: a call to a function named `use`
+  read as a Rust `use` item.
+- Runs as the pre-commit job "blank lines" from the repo root, without lefthook's `root`, so
+  commits touching only Rust run it too. Declaration groups with different purposes are
+  still separated by hand: that takes judgment a script doesn't have.
+
 ## 2026-10-27 · UI tool, part 4: reuse designs across maps (AGE-55)
 
 - Design files (`interface/exchange.rs`): JSON with `format: "tinkerbench-ui"`, a version,

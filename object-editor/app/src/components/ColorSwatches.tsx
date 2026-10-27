@@ -41,6 +41,7 @@ export function ColorSwatches({ value, onChange, label, none, disabled }: ColorS
       <span className="mr-1 text-xs text-faint">Color</span>
       {colors.map((color) => {
         const picked = (value?.toLowerCase() ?? null) === color.value;
+
         return (
           <button
             key={color.label}

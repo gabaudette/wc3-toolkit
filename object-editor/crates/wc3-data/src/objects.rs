@@ -35,6 +35,7 @@ impl FourCC {
     /// Parses a four-character ASCII code.
     pub fn parse(code: &str) -> Option<Self> {
         let bytes: [u8; 4] = code.as_bytes().try_into().ok()?;
+
         Some(Self(bytes))
     }
 
@@ -67,6 +68,7 @@ impl Layout {
     /// Layout of a map file by extension, e.g. `war3map.w3a` → `Leveled`.
     pub fn for_file(name: &str) -> Option<Self> {
         let ext = name.rsplit_once('.')?.1.to_ascii_lowercase();
+
         match ext.as_str() {
             "w3u" | "w3t" | "w3b" | "w3h" => Some(Self::Plain),
             "w3d" | "w3a" | "w3q" => Some(Self::Leveled),
@@ -191,6 +193,7 @@ impl ObjectData {
 
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut out = Vec::new();
+
         out.extend_from_slice(&self.version.to_le_bytes());
         self.write_table(&mut out, &self.original);
         self.write_table(&mut out, &self.custom);
@@ -212,6 +215,7 @@ impl ObjectData {
                 }
             } else {
                 let mods: Vec<Modification> = entry.mods().cloned().collect();
+
                 self.write_mods(out, &mods);
             }
         }
@@ -253,6 +257,7 @@ impl ObjectData {
 fn put_len(out: &mut Vec<u8>, len: usize) {
     // Counts in these files are 32-bit; maps never come close to the limit.
     let len = u32::try_from(len).unwrap_or(u32::MAX);
+
     out.extend_from_slice(&len.to_le_bytes());
 }
 
@@ -276,18 +281,21 @@ impl Reader<'_> {
         };
 
         let bytes = &self.data[self.pos..end];
+
         self.pos = end;
         Ok(bytes)
     }
 
     fn u32(&mut self) -> Result<u32> {
         let mut bytes = [0u8; 4];
+
         bytes.copy_from_slice(self.take(4)?);
         Ok(u32::from_le_bytes(bytes))
     }
 
     fn fourcc(&mut self) -> Result<FourCC> {
         let mut bytes = [0u8; 4];
+
         bytes.copy_from_slice(self.take(4)?);
         Ok(FourCC(bytes))
     }
@@ -301,6 +309,7 @@ impl Reader<'_> {
         let text = std::str::from_utf8(&rest[..len])
             .map_err(|e| self.error(format!("string is not UTF-8: {e}")))?
             .to_owned();
+
         self.pos += len + 1;
         Ok(text)
     }
@@ -402,6 +411,7 @@ mod tests {
         assert_eq!(hero.effective_id().to_string(), "H000");
 
         let name = hero.mods().next().unwrap();
+
         assert_eq!(name.field.to_string(), "unam");
         assert_eq!(name.value, Value::String("TRIGSTR_007".to_owned()));
     }
@@ -441,6 +451,7 @@ mod tests {
     #[test]
     fn round_trips_leveled_mods_and_old_versions() {
         let mut data = ObjectData::empty(Layout::Leveled);
+
         data.version = 2;
         data.custom.push(ObjectEntry {
             base: FourCC::parse("AHhb").unwrap(),
@@ -468,6 +479,7 @@ mod tests {
         assert!(ObjectData::parse(b"\x03\0\0\0\xff\xff\xff\x7f", Layout::Plain).is_err());
 
         let mut trailing = SKIN_W3U.to_vec();
+
         trailing.push(0);
         assert!(ObjectData::parse(&trailing, Layout::Plain).is_err());
     }

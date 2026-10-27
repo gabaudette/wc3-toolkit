@@ -47,8 +47,10 @@ impl DoodadDatabase {
             .collect();
 
         let mut profile = Profile::new();
+
         profile.merge_text(&decode_text(files.read_base(SKINS)?, SKINS)?);
         let mut editor_strings = Profile::new();
+
         for path in EDITOR_STRINGS {
             editor_strings.merge_text(&decode_text(files.read_localized(path)?, path)?);
         }
@@ -71,6 +73,7 @@ impl DoodadDatabase {
             .or_else(|| self.profile.get(id, NAME_COLUMN))
             .map(unquote)
             .unwrap_or(id);
+
         if raw.starts_with(STRING_KEY_PREFIX) {
             return resolve_string(&self.editor_strings, raw).unwrap_or_else(|| raw.to_owned());
         }
@@ -93,6 +96,7 @@ impl DoodadDatabase {
             .then(|| self.table.get(id, key))
             .flatten();
         let variant = format!("{key}:{}", mode.key_suffix());
+
         from_table
             .or_else(|| self.profile.get(id, &variant))
             .or_else(|| self.profile.get(id, key))

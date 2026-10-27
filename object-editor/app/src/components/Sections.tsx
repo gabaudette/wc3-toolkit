@@ -29,6 +29,7 @@ export function FieldHeader({ base }: { base: string }) {
 /** Matches names, codes, values and descriptions, so "armor" also finds Defense Type. */
 export function matches(field: Field, filter: string): boolean {
   const needle = filter.toLowerCase();
+
   return [field.name, field.id, field.display, field.description ?? ""].some((text) =>
     text.toLowerCase().includes(needle),
   );
@@ -130,8 +131,10 @@ export function FieldRows({
 
     const group = FIELD_GROUPS.find((g) => g.ids.includes(field.id));
     const members = group?.ids.map((id) => byId.get(id));
+
     if (group && members?.every(Boolean)) {
       const present = members.filter((m): m is Field => m !== undefined);
+
       for (const id of group.ids) {
         grouped.add(id);
       }

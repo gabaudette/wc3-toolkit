@@ -21,10 +21,12 @@ fn id(code: &str) -> Result<FourCC, String> {
 fn downloadable_files_and_share_codes_carry_the_same_objects_without_assets() -> TestResult {
     for (file, code) in [(HERO_FILE, HERO_CODE), (ITEM_FILE, ITEM_CODE)] {
         let bundle = Bundle::from_file(file)?;
+
         assert_eq!(bundle, Bundle::from_code(code)?);
         assert!(bundle.files().is_empty());
         assert_eq!(Bundle::from_file(&bundle.to_file())?, bundle);
     }
+
     Ok(())
 }
 
@@ -39,6 +41,7 @@ fn downloads_contain_the_documented_hero_and_merchant_item_dependency() -> TestR
             .map(|o| (o.ty, o.id.to_string(), o.base.to_string()))
             .collect::<Vec<_>>()
     };
+
     assert_eq!(
         inventory(&hero),
         vec![(ObjectType::Unit, "H000".into(), "Hpal".into())]
@@ -64,6 +67,7 @@ fn downloads_contain_the_documented_hero_and_merchant_item_dependency() -> TestR
             Some(expected)
         );
     }
+
     for (field, expected) in [
         ("unam", "Wayfarer Draught"),
         ("igol", "125"),
@@ -77,6 +81,7 @@ fn downloads_contain_the_documented_hero_and_merchant_item_dependency() -> TestR
             Some(expected)
         );
     }
+
     assert_eq!(
         item.text(ObjectType::Unit, id("n000")?, "unam").as_deref(),
         Some("Wayfarer Supplies")

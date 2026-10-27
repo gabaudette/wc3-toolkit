@@ -32,11 +32,13 @@ fn open(options: GameOptions) -> TestResult<(GameFiles, UnitDatabase)> {
         ))?;
     let files = GameFiles::open(&dir, options)?;
     let db = UnitDatabase::load(&files)?;
+
     Ok((files, db))
 }
 
 fn value(db: &UnitDatabase, id: &str, field_id: &str, mode: ArtMode) -> TestResult<String> {
     let field = db.field(field_id).ok_or(format!("no field {field_id}"))?;
+
     Ok(db.display_value(id, field, mode))
 }
 
@@ -174,12 +176,14 @@ fn every_unit_model_loads_for_the_preview() -> TestResult {
                     continue;
                 }
             };
+
             loaded += 1;
 
             for texture in texture_paths(&model) {
                 if texture.to_ascii_lowercase().contains("environmentmap") {
                     continue;
                 }
+
                 match load_texture(&files, &texture, mode) {
                     Err(e)
                         if !(e.is_not_found() && MISSING_IN_GAME.contains(&texture.as_str())) =>
@@ -239,6 +243,7 @@ fn game_files_read_the_same_from_several_threads() -> TestResult {
     for result in results {
         assert!(result == expected, "a thread read different bytes");
     }
+
     Ok(())
 }
 
@@ -441,14 +446,17 @@ fn the_upgrade_guide_covers_every_upgrade_field() -> TestResult {
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn every_category_has_an_icon() -> TestResult {
     let (files, db) = open(GameOptions::default())?;
+
     for value_type in ["destructableCategory", "doodadCategory"] {
         let choices = db.enum_values(value_type).ok_or(value_type)?;
+
         assert!(!choices.is_empty(), "no {value_type} choices");
         for choice in choices {
             let path = db
                 .choice_icon(value_type, &choice.value)
                 .ok_or(format!("{value_type} {} has no icon", choice.value))?;
             let image = load_texture(&files, path, ArtMode::Hd)?;
+
             assert!(image.width > 0, "{path}");
         }
     }
@@ -525,11 +533,13 @@ fn buffs_and_destructables_load_with_names_and_values() -> TestResult {
     let files = GameFiles::open(&dir, GameOptions::default())?;
 
     let buffs = UnitDatabase::load_buffs(&files)?;
+
     assert!(buffs.ids().len() > 200, "only {} buffs", buffs.ids().len());
     assert_eq!(buffs.kind("BHbd"), ObjectKind::Buff);
     assert_eq!(buffs.name("BHbd"), "Blizzard");
     assert_eq!(buffs.fields_for("BHbd").count(), buffs.fields().len());
     let tooltip = buffs.field("fube").ok_or("no fube")?;
+
     assert_eq!(
         buffs.raw_value("BHbd", tooltip, ArtMode::Sd).as_deref(),
         Some("This unit is being damaged by Blizzard."),
@@ -542,15 +552,18 @@ fn buffs_and_destructables_load_with_names_and_values() -> TestResult {
     );
 
     let destructables = UnitDatabase::load_destructables(&files)?;
+
     assert!(destructables.ids().len() > 200);
     assert_eq!(destructables.kind("LTlt"), ObjectKind::Destructable);
     assert_eq!(destructables.name("LTlt"), "Summer Tree Wall");
     let category = destructables.field("bcat").ok_or("no bcat")?;
+
     assert_eq!(
         destructables.display_value("LTlt", category, ArtMode::Sd),
         "Trees/Destructibles"
     );
     let tilesets = destructables.field("btil").ok_or("no btil")?;
+
     assert!(
         destructables.ids().iter().any(|id| destructables
             .raw_value(id, tilesets, ArtMode::Sd)
@@ -558,6 +571,7 @@ fn buffs_and_destructables_load_with_names_and_values() -> TestResult {
         "a list field keeps every entry"
     );
     let hit_points = destructables.field("bhps").ok_or("no bhps")?;
+
     assert!(
         destructables
             .raw_value("LTlt", hit_points, ArtMode::Sd)
@@ -579,6 +593,7 @@ fn doodads_load_with_values_per_variation() -> TestResult {
     assert!(db.ids().len() > 500, "only {} doodads", db.ids().len());
     assert!(db.contains("APms"));
     let name = db.name("APms");
+
     assert!(!name.is_empty() && !name.starts_with("WESTRING"), "{name}");
     assert_eq!(db.variations("APms"), 4);
     assert_eq!(
@@ -647,6 +662,7 @@ fn every_suggested_spell_base_exists() -> TestResult {
         .filter(|(_, base)| abilities.info(&base.code).is_none())
         .map(|(kind, base)| format!("{}: {}", kind.id, base.code))
         .collect();
+
     assert!(missing.is_empty(), "not game abilities: {missing:?}");
     Ok(())
 }
@@ -670,6 +686,7 @@ fn holy_light_card_data() -> TestResult {
             .is_some_and(|i| i.contains("BTNHolyBolt"))
     );
     let none = wc3_data::abilities::NoPlaceholders;
+
     assert!(
         abilities
             .description("AHhb", 2, &none)
@@ -682,6 +699,7 @@ fn holy_light_card_data() -> TestResult {
             .find(|r| r.label == label)
             .map(|r| r.values.join("/"))
     };
+
     assert_eq!(row("Mana Cost").as_deref(), Some("65/65/65"));
     assert_eq!(row("Cast Range").as_deref(), Some("800/800/800"));
     assert_eq!(row("Amount Healed/Damaged").as_deref(), Some("200/400/600"));
@@ -705,12 +723,15 @@ fn ability_tooltip_placeholders_resolve() -> TestResult {
         let texts = (1..=levels)
             .filter_map(|level| abilities.description(id, level, &units))
             .chain(abilities.learn_description(id, &units));
+
         for text in texts {
             let mut rest = text.as_str();
+
             while let Some(start) = rest.find('<') {
                 let Some(end) = rest[start..].find('>') else {
                     break;
                 };
+
                 unresolved.push(format!("{id}: {}", &rest[start..start + end + 1]));
                 rest = &rest[start + end + 1..];
             }
@@ -794,6 +815,7 @@ fn ability_values_per_level() -> TestResult {
     assert_eq!(value("Hhb1", 5)?, None, "Holy Light has no level 5 data");
 
     let fields = abilities.fields_for("AHhb", true, false);
+
     assert!(fields.iter().any(|f| f.id == "Hhb1"));
     assert!(
         fields.iter().any(|f| f.id == "arut"),
@@ -804,6 +826,7 @@ fn ability_values_per_level() -> TestResult {
         "Bash's data is not Holy Light's"
     );
     let column = abilities.column_field("AHhb", "DataA2");
+
     assert_eq!(
         column.map(|(f, level)| (f.id.as_str(), level)),
         Some(("Hhb1", 2))
@@ -825,6 +848,7 @@ fn choices_know_other_spellings() -> TestResult {
     assert!(invulnerable.matches("invu"));
     let field = db.field("ua1g").ok_or("no ua1g")?;
     let shown = db.format_value(field, Some("air,invu".to_owned()));
+
     assert_eq!(shown, format!("Air, {}", invulnerable.label));
     Ok(())
 }

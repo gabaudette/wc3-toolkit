@@ -17,6 +17,12 @@ pre-commit:
         - "**/*.{ts,tsx,js,css,json,jsonc,html}"
       run: bun run check
 
+    # No `root`: Rust changes live outside the app folder.
+    - name: blank lines
+      glob:
+        - "**/*.{rs,ts,tsx}"
+      run: bun object-editor/app/scripts/check-blank-lines.ts
+
     - name: frontend test and build
       root: object-editor/app/
       glob: *frontend

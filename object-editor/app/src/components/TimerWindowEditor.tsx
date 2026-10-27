@@ -21,6 +21,7 @@ export function clock(seconds: number): string {
   const whole = Math.max(0, Math.ceil(seconds));
   const minutes = Math.floor(whole / SECONDS_PER_MINUTE);
   const rest = whole % SECONDS_PER_MINUTE;
+
   return `${minutes}:${String(rest).padStart(2, "0")}`;
 }
 
@@ -39,12 +40,14 @@ export function TimerWindowEditor({
 
   function setLength(nextMinutes: number, nextSeconds: number) {
     const total = nextMinutes * SECONDS_PER_MINUTE + nextSeconds;
+
     if (Number.isFinite(total) && total > 0 && total <= MAX_SECONDS) {
       set({ duration: total });
     }
   }
 
   let title = timer.title;
+
   if (timer.titleColor) {
     title = `|cff${timer.titleColor}${timer.title}|r`;
   }

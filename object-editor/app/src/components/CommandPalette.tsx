@@ -84,6 +84,7 @@ function rank(text: string, needle: string): number {
 /** Items whose text contains the query, best matches first ("holy" finds Holy Light before Unholy Aura). */
 function matching<T>(list: T[], query: string, text: (item: T) => string): T[] {
   const needle = query.trim().toLowerCase();
+
   if (!needle) {
     return list;
   }
@@ -132,6 +133,7 @@ export function CommandPalette({
         .then((list) => setPlain((current) => ({ ...current, [catalog]: list })))
         .catch(() => setPlain((current) => ({ ...current, [catalog]: [] })));
     }
+
     for (const { catalog } of LEVELED_GROUPS) {
       api
         .listLeveled(catalog)

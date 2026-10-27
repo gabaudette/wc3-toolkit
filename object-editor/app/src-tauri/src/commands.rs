@@ -86,6 +86,7 @@ pub fn detect_game_dir() -> Option<String> {
 #[tauri::command]
 pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<GameSummary, String> {
     let dir = PathBuf::from(dir);
+
     if !platform::is_game_dir(&dir) {
         return Err(format!(
             "{} is not a Warcraft III folder (it has no Data folder).",
@@ -115,6 +116,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
     };
 
     let mode = if hd { ArtMode::Hd } else { ArtMode::Sd };
+
     state.replace(Session {
         files: Arc::new(files),
         db,
@@ -135,6 +137,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
         map: None,
         icons: HashMap::new(),
     })?;
+
     Ok(summary)
 }
 
@@ -142,6 +145,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
 pub fn open_map(state: State<'_, AppState>, path: String) -> Result<MapSummary, String> {
     // Read before taking the session lock, so a large map does not block it.
     let open = OpenMap::load(PathBuf::from(path)).map_err(|e| e.to_string())?;
+
     state.with(|session| {
         session.map = Some(open);
         Ok(map_summary(session))
@@ -150,6 +154,7 @@ pub fn open_map(state: State<'_, AppState>, path: String) -> Result<MapSummary, 
 
 pub(crate) fn map_summary(session: &Session) -> MapSummary {
     let map = session.map.as_ref();
+
     MapSummary {
         path: map.map(|m| path_text(&m.path)).unwrap_or_default(),
         name: map
@@ -173,6 +178,7 @@ pub fn list_units(state: State<'_, AppState>) -> Result<Vec<UnitItem>, String> {
 #[tauri::command]
 pub fn unit_detail(state: State<'_, AppState>, id: String) -> Result<UnitDetail, String> {
     let id = fourcc(&id)?;
+
     state.with(|session| {
         view(session)
             .detail(id)
@@ -201,6 +207,7 @@ pub fn ability_cards(
 #[tauri::command]
 pub fn ability_detail(state: State<'_, AppState>, id: String) -> Result<AbilityDetail, String> {
     let id = fourcc(&id)?;
+
     state.with(|session| {
         with_abilities(session, |abilities| abilities.detail(id))
             .ok_or(format!("Unknown ability {id}."))
@@ -222,6 +229,7 @@ pub fn search_abilities(
 #[tauri::command]
 pub fn hotkey_clashes(state: State<'_, AppState>, id: String) -> Result<Vec<Clash>, String> {
     let id = fourcc(&id)?;
+
     state.with(|session| {
         Ok(with_abilities(session, |abilities| {
             hotkeys::clashes(&view(session), &|ability| abilities.info(ability), id)
@@ -257,12 +265,14 @@ fn edit_field(
     ) -> Result<(), String>,
 ) -> Result<Field, String> {
     let id = fourcc(id)?;
+
     state.with(|session| {
         let field = session
             .db
             .field(field_id)
             .ok_or(format!("Unknown field {field_id}."))?;
         let map = session.map.as_mut().ok_or(NO_MAP)?;
+
         change(&session.db, &mut map.units, id, field)?;
         Ok(view(session).field(id, field))
     })
@@ -291,12 +301,14 @@ pub fn reset_field(state: State<'_, AppState>, id: String, field: String) -> Res
 #[tauri::command]
 pub fn create_unit(state: State<'_, AppState>, base: String) -> Result<UnitItem, String> {
     let base = fourcc(&base)?;
+
     state.with(|session| {
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         let id = map
             .units
             .create(&session.db, base)
             .map_err(|e| e.to_string())?;
+
         view(session)
             .item(id)
             .ok_or(format!("Created {id} but cannot show it."))
@@ -317,12 +329,14 @@ fn edit_ability(
     ) -> Result<(), String>,
 ) -> Result<AbilityDetail, String> {
     let id = fourcc(id)?;
+
     state.with(|session| {
         let field = session
             .abilities
             .field(field_id)
             .ok_or(format!("Unknown field {field_id}."))?;
         let map = session.map.as_mut().ok_or(NO_MAP)?;
+
         change(
             &session.abilities,
             &mut map.abilities,
@@ -367,12 +381,14 @@ pub fn reset_ability_field(
 #[tauri::command]
 pub fn create_ability(state: State<'_, AppState>, base: String) -> Result<AbilitySummary, String> {
     let base = fourcc(&base)?;
+
     state.with(|session| {
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         let id = map
             .abilities
             .create(&session.abilities, base)
             .map_err(|e| e.to_string())?;
+
         with_abilities(session, |abilities| abilities.summary(id))
             .ok_or(format!("Created {id} but cannot show it."))
     })
@@ -386,6 +402,7 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
         let files = map.files();
         let imported = map.imports.files();
         let mut written = files.clone();
+
         written.extend(
             imported
                 .iter()
@@ -396,6 +413,7 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
             interface::save(&map.path, &map.ui)?;
             map.saved_ui = map.ui.clone();
         }
+
         map.saved_files = files;
         map.imports.saved();
         Ok(map_summary(session))

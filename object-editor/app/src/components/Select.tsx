@@ -22,6 +22,7 @@ export function fieldChoices(
   display: string,
 ): { options: SelectOption[]; value: string } {
   const current = choices.find((c) => c.value.toLowerCase() === raw.toLowerCase());
+
   if (current) {
     return { options: choices, value: current.value };
   }

@@ -42,6 +42,7 @@ describe("parseChangelog", () => {
 
   test("the real changelog parses into releases with items", () => {
     const releases = parseChangelog(changelog);
+
     expect(releases.length).toBeGreaterThan(0);
     expect(releases.every((r) => r.groups.every((g) => g.items.length > 0))).toBe(true);
   });

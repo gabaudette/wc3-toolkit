@@ -56,6 +56,7 @@ export function PlainPane({
     queue.current = queue.current.then(async () => {
       try {
         const updated = await edit();
+
         setDetail((current) => current && replaceField(current, updated));
         onError(null);
         onMapChanged();
@@ -75,6 +76,7 @@ export function PlainPane({
 
     try {
       const created = await api.createPlain(catalog, detail.item.base);
+
       onMapChanged();
       refreshList();
       onSelect(created.id);

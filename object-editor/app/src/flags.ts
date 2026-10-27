@@ -8,6 +8,7 @@ const BINARY = 2;
 
 function bitOf(choice: Choice): number | null {
   const bit = Number.parseInt(choice.value, 10);
+
   if (Number.isInteger(bit) && bit >= 0) {
     return bit;
   }
@@ -17,6 +18,7 @@ function bitOf(choice: Choice): number | null {
 
 function bitsOf(raw: string): number {
   const bits = Number.parseInt(raw, 10);
+
   if (Number.isInteger(bits)) {
     return bits;
   }
@@ -27,17 +29,20 @@ function bitsOf(raw: string): number {
 /** Whether a choice is on in a bit flags value like "5" (bits 0 and 2). */
 export function hasBit(raw: string, choice: Choice): boolean {
   const bit = bitOf(choice);
+
   return bit !== null && Math.floor(bitsOf(raw) / BINARY ** bit) % BINARY === 1;
 }
 
 /** The bit flags value with one choice switched on or off. */
 export function withBit(raw: string, choice: Choice, on: boolean): string {
   const bit = bitOf(choice);
+
   if (bit === null || hasBit(raw, choice) === on) {
     return String(bitsOf(raw));
   }
 
   const value = BINARY ** bit;
+
   if (on) {
     return String(bitsOf(raw) + value);
   }
@@ -60,6 +65,7 @@ function spellings(choice: Choice): string[] {
 /** Whether a choice is in a list value like "air,ground" (case does not matter). */
 export function inList(raw: string, choice: Choice): boolean {
   const wanted = spellings(choice);
+
   return items(raw).some((item) => wanted.includes(item.toLowerCase()));
 }
 
@@ -74,6 +80,7 @@ export function withListItem(raw: string, choice: Choice, on: boolean): string {
 
   const wanted = spellings(choice);
   const others = items(raw).filter((item) => !wanted.includes(item.toLowerCase()));
+
   if (on) {
     return [...others, choice.value].join(LIST_SEPARATOR);
   }

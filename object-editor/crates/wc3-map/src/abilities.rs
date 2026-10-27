@@ -76,6 +76,7 @@ impl MapAbilities {
             data: read(ABILITIES_FILE)?,
             skin: read(ABILITY_SKINS_FILE)?,
         };
+
         Ok(Self {
             tables,
             loaded,
@@ -183,6 +184,7 @@ impl MapAbilities {
         };
 
         let flag = |field_id| found.plain_value(db, field_id).as_deref() == Some(TRUE);
+
         db.fields_for(&code, flag(HERO), flag(ITEM))
     }
 
@@ -289,6 +291,7 @@ impl MapAbilities {
         }
 
         let parsed = parse_value(field, text)?;
+
         if same_as_base(db, base, field, level, &parsed) {
             self.reset(strings, id, field, level);
             return Ok(());
@@ -303,6 +306,7 @@ impl MapAbilities {
 
         let (stored_level, column) = stored_position(field, level);
         let entry = entry_mut(&mut self.tables, field.netsafe, id);
+
         if entry.sets.is_empty() {
             entry.sets.push(ModSet {
                 flags: 0,
@@ -311,6 +315,7 @@ impl MapAbilities {
         }
 
         let set = &mut entry.sets[0];
+
         match set
             .mods
             .iter_mut()
@@ -344,11 +349,14 @@ impl MapAbilities {
         };
 
         let mut removed = false;
+
         for data in [&mut self.tables.data, &mut self.tables.skin] {
             let entries = data.custom.iter_mut().chain(data.original.iter_mut());
+
             for entry in entries.filter(|e| e.effective_id() == id) {
                 for set in &mut entry.sets {
                     let before = set.mods.len();
+
                     set.mods
                         .retain(|m| !(m.field == field_id && at_level(field, m, level)));
                     removed |= set.mods.len() != before;
@@ -398,6 +406,7 @@ impl MapAbilities {
             !self.has(id) && !db.contains(&id.to_string())
         })
         .ok_or_else(|| Error::Invalid(format!("no free ID for {base}")))?;
+
         for data in [&mut self.tables.data, &mut self.tables.skin] {
             data.custom.push(ObjectEntry {
                 base,
@@ -417,8 +426,10 @@ impl MapAbilities {
     /// changes are reset field by field) and unknown IDs.
     pub fn remove(&mut self, strings: &mut MapStrings, id: FourCC) -> bool {
         let mut removed = false;
+
         for data in [&mut self.tables.data, &mut self.tables.skin] {
             let before = data.custom.len();
+
             data.custom.retain(|e| e.id != id);
             removed |= data.custom.len() != before;
         }
@@ -453,11 +464,13 @@ impl MapAbilities {
             db.field_name(field),
             field.field
         );
+
         if field.per_level {
             comment.push_str(&format!(", level {level}"));
         }
 
         let reference = strings.add(text, Some(&comment));
+
         if let Some(number) = reference_id(&reference) {
             self.added_strings.push(number);
         }
@@ -536,6 +549,7 @@ impl<'a> Found<'a> {
         }
 
         let base = self.base(db)?;
+
         db.raw_value(&base.to_string(), field, level, mode)
     }
 
@@ -543,11 +557,13 @@ impl<'a> Found<'a> {
     /// table needed.
     fn plain_value(&self, db: &AbilityDatabase, field_id: &str) -> Option<String> {
         let field = db.field(field_id)?;
+
         if let Some(value) = self.modification(field, 0) {
             return Some(value.to_string());
         }
 
         let base = self.base(db)?;
+
         db.raw_value(&base.to_string(), field, 0, ArtMode::Sd)
     }
 
@@ -599,11 +615,14 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
             id,
             sets: Vec::new(),
         });
+
         let last = data.custom.len() - 1;
+
         return &mut data.custom[last];
     }
 
     let index = data.original.iter().position(|e| e.effective_id() == id);
+
     match index {
         Some(i) => &mut data.original[i],
         None => {
@@ -612,7 +631,9 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
                 id: FourCC::ZERO,
                 sets: Vec::new(),
             });
+
             let last = data.original.len() - 1;
+
             &mut data.original[last]
         }
     }
@@ -628,8 +649,10 @@ fn same_as_base(
     value: &Value,
 ) -> bool {
     let base = base.to_string();
+
     [ArtMode::Sd, ArtMode::Hd].iter().all(|mode| {
         let base_value = db.raw_value(&base, field, level, *mode).unwrap_or_default();
+
         parse_value(field, &base_value).is_ok_and(|parsed| &parsed == value)
     })
 }
@@ -647,6 +670,7 @@ pub struct MapPlaceholders<'a> {
 impl PlaceholderSource for MapPlaceholders<'_> {
     fn placeholder(&self, id: &str, column: &str) -> Option<String> {
         let in_map = FourCC::parse(id).filter(|code| self.abilities.has(*code));
+
         if let Some(ability) = in_map
             && let Some(code) = self.abilities.code(self.db, ability)
             && let Some((field, level)) = self.db.column_field(&code, column)
@@ -700,6 +724,7 @@ mod tests {
             data: ObjectData::empty(Layout::Leveled),
             skin: ObjectData::empty(Layout::Leveled),
         };
+
         for (table, entries) in [(&mut tables.data, data), (&mut tables.skin, skin)] {
             for e in entries {
                 if e.id.is_zero() {
@@ -723,6 +748,7 @@ mod tests {
         let kept = strings.add("Kept", None);
         let added = strings.add("Fire Bolt", None);
         let added_id = reference_id(&added).unwrap_or_default();
+
         map.added_strings.push(added_id);
         map.tables.skin.custom[0].sets[0].mods.push(Modification {
             field: id("anam"),
@@ -741,6 +767,7 @@ mod tests {
         assert!(map.abilities().is_empty());
         assert_eq!(strings.get(added_id), None, "its new string is gone");
         let kept_id = reference_id(&kept).unwrap_or_default();
+
         assert_eq!(strings.get(kept_id), Some("Kept"), "other strings stay");
     }
 
@@ -759,6 +786,7 @@ mod tests {
             .iter()
             .map(|a| (a.id.to_string(), a.is_custom, a.modified_fields))
             .collect();
+
         assert_eq!(
             listed,
             [("A000".to_owned(), true, 3), ("AHds".to_owned(), false, 1)]
@@ -770,10 +798,12 @@ mod tests {
     #[test]
     fn writes_ability_files_only_when_needed() {
         let empty = abilities(Vec::new(), Vec::new());
+
         assert!(empty.files().is_empty());
 
         let changed = abilities(vec![entry("AHds", "", vec![change("acdn", 1)])], Vec::new());
         let names: Vec<&str> = changed.files().iter().map(|(n, _)| *n).collect();
+
         assert_eq!(names, [ABILITIES_FILE]);
     }
 
@@ -782,6 +812,7 @@ mod tests {
         let mut map = abilities(vec![entry("AHhb", "A000", Vec::new())], Vec::new());
 
         let created = entry_mut(&mut map.tables, true, id("A000"));
+
         assert_eq!((created.base, created.id), (id("AHhb"), id("A000")));
         assert!(map.tables.skin.original.is_empty());
     }

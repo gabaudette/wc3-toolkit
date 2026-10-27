@@ -36,6 +36,7 @@ export function variationModel(raw: string, variations: number): string {
   }
 
   let file = raw;
+
   if (variations > 1) {
     file = `${file}0`;
   }
@@ -47,6 +48,7 @@ export function variationModel(raw: string, variations: number): string {
 /** `C:\Maps\test.w3m` → `C:\Maps\file.w3ui`: a file name in the same folder. */
 export function besides(path: string, name: string): string {
   const at = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+
   if (at < 0) {
     return name;
   }

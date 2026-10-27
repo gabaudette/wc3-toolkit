@@ -107,12 +107,14 @@ impl FieldGuide {
         })?;
 
         let mut entries = HashMap::new();
+
         for field in file.field {
             let entry = GuideEntry {
                 description: field.description,
                 advanced: field.advanced,
                 unverified: field.unverified,
             };
+
             for id in field.ids {
                 if entries.insert(id.clone(), entry.clone()).is_some() {
                     return Err(invalid(format!("field {id} is described twice")));
@@ -121,6 +123,7 @@ impl FieldGuide {
         }
 
         let mut ranks = HashMap::new();
+
         for (category, ids) in &file.order {
             for (rank, id) in ids.iter().enumerate() {
                 if !entries.contains_key(id) {

@@ -46,6 +46,7 @@ struct Header {
 fn header(data: &[u8]) -> Result<Header> {
     let invalid =
         |reason: &str| Error::Image(format!("not a TGA file this editor reads: {reason}"));
+
     if data.len() < HEADER_SIZE {
         return Err(invalid("too short"));
     }
@@ -56,6 +57,7 @@ fn header(data: &[u8]) -> Result<Header> {
 
     let image_type = data[IMAGE_TYPE];
     let gray = matches!(image_type, GRAYSCALE | RLE_GRAYSCALE);
+
     if !gray && !matches!(image_type, TRUE_COLOR | RLE_TRUE_COLOR) {
         return Err(invalid("unknown image type"));
     }
@@ -69,6 +71,7 @@ fn header(data: &[u8]) -> Result<Header> {
 
     let width = usize::from(u16::from_le_bytes([data[WIDTH], data[WIDTH + 1]]));
     let height = usize::from(u16::from_le_bytes([data[HEIGHT], data[HEIGHT + 1]]));
+
     if width == 0 || height == 0 {
         return Err(invalid("empty image"));
     }
@@ -98,6 +101,7 @@ pub fn decode_tga(data: &[u8]) -> Result<Image> {
 
     let row_bytes = header.width * RGBA_CHANNELS;
     let mut rgba = vec![0u8; pixels * RGBA_CHANNELS];
+
     for (i, pixel) in stored.chunks_exact(header.pixel_bytes).enumerate() {
         let (row, column) = (i / header.width, i % header.width);
         let out_row = if header.top_down {
@@ -106,6 +110,7 @@ pub fn decode_tga(data: &[u8]) -> Result<Image> {
             header.height - 1 - row
         };
         let at = out_row * row_bytes + column * RGBA_CHANNELS;
+
         rgba[at..at + RGBA_CHANNELS].copy_from_slice(&to_rgba(pixel));
     }
 
@@ -137,16 +142,21 @@ fn unpack_rle(data: &[u8], header: &Header, pixels: usize) -> Result<Vec<u8>> {
 
     while out.len() < pixels * size {
         let packet = *data.get(pos).ok_or_else(truncated)?;
+
         pos += 1;
         let count = usize::from(packet & PACKET_COUNT) + 1;
+
         if packet & RUN_PACKET != 0 {
             let pixel = data.get(pos..pos + size).ok_or_else(truncated)?;
+
             for _ in 0..count {
                 out.extend_from_slice(pixel);
             }
+
             pos += size;
         } else {
             let raw = data.get(pos..pos + count * size).ok_or_else(truncated)?;
+
             out.extend_from_slice(raw);
             pos += count * size;
         }
@@ -163,6 +173,7 @@ mod tests {
 
     fn tga(image_type: u8, bits: u8, width: u16, height: u16, top_down: bool) -> Vec<u8> {
         let mut data = vec![0u8; HEADER_SIZE];
+
         data[IMAGE_TYPE] = image_type;
         data[WIDTH..WIDTH + 2].copy_from_slice(&width.to_le_bytes());
         data[HEIGHT..HEIGHT + 2].copy_from_slice(&height.to_le_bytes());
@@ -170,11 +181,13 @@ mod tests {
         if top_down {
             data[DESCRIPTOR] = TOP_DOWN;
         }
+
         data
     }
 
     fn pixel(image: &Image, x: usize, y: usize) -> &[u8] {
         let at = (y * image.width as usize + x) * RGBA_CHANNELS;
+
         &image.rgba[at..at + RGBA_CHANNELS]
     }
 
@@ -182,6 +195,7 @@ mod tests {
     fn reads_bottom_up_24_bit_images() {
         // Two rows of one pixel, stored bottom first: blue at the bottom, red on top.
         let mut data = tga(TRUE_COLOR, 24, 1, 2, false);
+
         data.extend_from_slice(&[255, 0, 0, 0, 0, 255]);
         let image = decode_tga(&data).unwrap();
 
@@ -193,6 +207,7 @@ mod tests {
     #[test]
     fn reads_top_down_32_bit_images_with_alpha_and_an_id() {
         let mut data = tga(TRUE_COLOR, 32, 2, 1, true);
+
         data[ID_LENGTH] = 3;
         data.extend_from_slice(b"abc");
         data.extend_from_slice(&[10, 20, 30, 40, 50, 60, 70, 80]);
@@ -206,6 +221,7 @@ mod tests {
     fn expands_run_length_packets() {
         // Three pixels: a run of two greens, then one raw white.
         let mut data = tga(RLE_TRUE_COLOR, 24, 3, 1, true);
+
         data.extend_from_slice(&[0x81, 0, 255, 0, 0x00, 255, 255, 255]);
         let image = decode_tga(&data).unwrap();
 
@@ -217,6 +233,7 @@ mod tests {
     #[test]
     fn reads_grayscale_images() {
         let mut data = tga(RLE_GRAYSCALE, 8, 2, 1, true);
+
         data.extend_from_slice(&[0x81, 128]);
         let image = decode_tga(&data).unwrap();
 
@@ -230,6 +247,7 @@ mod tests {
         assert!(!is_tga(&tga(TRUE_COLOR, 16, 2, 2, true)), "16 bits");
         assert!(decode_tga(&tga(TRUE_COLOR, 24, 4, 4, true)).is_err());
         let mut rle = tga(RLE_TRUE_COLOR, 24, 4, 1, true);
+
         rle.push(0x83);
         assert!(decode_tga(&rle).is_err());
     }

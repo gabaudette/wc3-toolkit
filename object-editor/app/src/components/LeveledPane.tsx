@@ -60,6 +60,7 @@ export function LeveledPane({
     queue.current = queue.current.then(async () => {
       try {
         const updated = await edit();
+
         if (updated) {
           setDetail(updated);
         }
@@ -77,6 +78,7 @@ export function LeveledPane({
     run(async () => {
       let updated: AbilityDetail | null = null;
       const levels = detail?.levels ?? fromLevel;
+
       for (let level = fromLevel; level <= levels; level++) {
         updated = await api.setLeveledField(catalog, id, field, level, value);
       }
@@ -92,6 +94,7 @@ export function LeveledPane({
 
     try {
       const created = await api.createLeveled(catalog, detail.card.summary.base);
+
       onMapChanged();
       refreshList();
       onSelect(created.id);

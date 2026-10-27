@@ -37,6 +37,7 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
 
   async function browseGame() {
     const picked = await open({ directory: true, title: "Warcraft III folder" });
+
     if (typeof picked === "string") {
       setDir(picked);
     }
@@ -47,6 +48,7 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
     setError(null);
     try {
       const summary = await api.openGame(dir, hd);
+
       remembered.set(GAME_DIR_KEY, dir);
       remembered.set(HD_KEY, String(hd));
       setGame(summary);
@@ -62,6 +64,7 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
     setError(null);
     try {
       const map = await api.openMap(path);
+
       remembered.set(MAP_PATH_KEY, path);
       onReady(summary, map);
     } catch (e) {
@@ -78,6 +81,7 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
       ...(lastMap && { defaultPath: lastMap }),
       ...(!lastMap && summary.mapsDir && { defaultPath: summary.mapsDir }),
     });
+
     if (typeof picked === "string") {
       await openMap(picked, summary);
     }

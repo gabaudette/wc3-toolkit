@@ -261,6 +261,7 @@ impl<M: PlainChanges> View<'_, M> {
     fn ids_after(&self, map_units: &[MapUnit]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_units.iter().map(|u| u.id).collect();
         let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
+
         for id in self.db.ids().iter().filter_map(|id| FourCC::parse(id)) {
             if seen.insert(id) {
                 ids.push(id);
@@ -311,6 +312,7 @@ impl<M: PlainChanges> View<'_, M> {
 
     pub fn item(&self, id: FourCC) -> Option<UnitItem> {
         let map_unit = self.map_units().into_iter().find(|u| u.id == id);
+
         self.item_with(id, map_unit.as_ref())
     }
 
@@ -343,6 +345,7 @@ impl<M: PlainChanges> View<'_, M> {
     fn category_icon(&self, id: FourCC) -> Option<String> {
         let field = self.db.field(CATEGORY_FIELD)?;
         let category = self.raw_by_id(id, CATEGORY_FIELD)?;
+
         self.db
             .choice_icon(&field.value_type, &category)
             .map(str::to_owned)
@@ -384,6 +387,7 @@ impl<M: PlainChanges> View<'_, M> {
         let base = self
             .base(id)
             .and_then(|base| self.db.raw_value(&base.to_string(), field, self.mode));
+
         build_field(
             self.db,
             field,
@@ -403,6 +407,7 @@ impl<M: PlainChanges> View<'_, M> {
     pub fn detail(&self, id: FourCC) -> Option<UnitDetail> {
         let item = self.item(id)?;
         let mut fields = self.fields(id);
+
         fields.sort_by_key(|f| {
             let order = CATEGORY_ORDER
                 .iter()
@@ -410,12 +415,15 @@ impl<M: PlainChanges> View<'_, M> {
                 .unwrap_or(CATEGORY_ORDER.len());
             // The guide's important fields first, then alphabetical.
             let rank = self.guide.rank(&f.id);
+
             (order, rank.is_none(), rank, self.db.field_name(f))
         });
 
         let mut sections: Vec<Section> = Vec::new();
+
         for meta in fields {
             let field = self.field(id, meta);
+
             match sections.last_mut() {
                 Some(section) if section.category == meta.category => section.fields.push(field),
                 _ => sections.push(Section {
@@ -459,6 +467,7 @@ impl<M: PlainChanges> View<'_, M> {
             .iter()
             .find(|(code, _)| primary.eq_ignore_ascii_case(code))
             .map(|(_, field)| *field)?;
+
         Some(DamageBonus {
             amount: self.number(id, field),
             attribute: self.shown(id, "upra"),
@@ -526,12 +535,14 @@ impl<M: PlainChanges> View<'_, M> {
     /// whose shown value equals it (e.g. `1000`, `Metal`).
     pub fn search(&self, query: &str) -> Vec<SearchHit> {
         let query = query.trim().to_lowercase();
+
         if query.is_empty() {
             return Vec::new();
         }
 
         let mut by_name = Vec::new();
         let mut by_field = Vec::new();
+
         for id in self.ids() {
             let code = id.to_string();
             let base = self.base(id).map(|b| b.to_string()).unwrap_or_default();
@@ -544,6 +555,7 @@ impl<M: PlainChanges> View<'_, M> {
                     id: code,
                     reason: String::new(),
                 });
+
                 continue;
             }
 
@@ -551,6 +563,7 @@ impl<M: PlainChanges> View<'_, M> {
                 .fields(id)
                 .into_iter()
                 .find(|f| self.display(id, f).to_lowercase() == query);
+
             if let Some(field) = matching {
                 by_field.push(SearchHit {
                     id: code,
@@ -672,6 +685,7 @@ mod tests {
         let dir = std::env::var_os("WC3_GAME_DIR")
             .map(PathBuf::from)
             .ok_or("set WC3_GAME_DIR")?;
+
         Ok(UnitDatabase::load(&GameFiles::open(
             &dir,
             GameOptions::default(),
@@ -706,6 +720,7 @@ mod tests {
                 .find(|s| s.label == label)
                 .map(|s| s.value.clone())
         };
+
         assert_eq!(stat("Damage").as_deref(), Some("24–34"));
         assert_eq!(stat("Str / Agi / Int").as_deref(), Some("22 / 13 / 17"));
 
@@ -715,6 +730,7 @@ mod tests {
             .flat_map(|s| &s.fields)
             .find(|f| f.id == "uarm")
             .ok_or("no uarm")?;
+
         assert_eq!(armor.control, "select");
         assert!(armor.options.iter().any(|o| o.value == "Metal"));
         assert!(
@@ -726,6 +742,7 @@ mod tests {
 
         let stats = detail.sections.first().ok_or("no sections")?;
         let first: Vec<&str> = stats.fields.iter().take(3).map(|f| f.id.as_str()).collect();
+
         assert_eq!(first, ["uhpm", "umpm", "umpi"]);
         assert!(
             detail
@@ -758,6 +775,7 @@ mod tests {
             Some("Hamg")
         );
         let by_value = view.search("Metal");
+
         assert!(
             by_value
                 .iter()
@@ -776,6 +794,7 @@ mod tests {
         let mut units = MapUnits::load(&Map::open(&path)?)?;
         let hero = units.create(&db, FourCC::parse("Hpal").ok_or("bad id")?)?;
         let hp = db.field("uhpm").ok_or("no uhpm")?;
+
         units.set(&db, hero, hp, "1000")?;
 
         let guide = FieldGuide::units()?;
@@ -785,8 +804,10 @@ mod tests {
             map: Some(&units),
             mode: ArtMode::Sd,
         };
+
         assert_eq!(view.ids().first(), Some(&hero));
         let field = view.field(hero, hp);
+
         assert!(field.modified);
         assert_eq!(field.display, "1000");
         assert_eq!(view.item(hero).map(|i| i.group), Some("map"));
@@ -806,9 +827,11 @@ mod tests {
         let mut units = MapUnits::load(&Map::open(&path)?)?;
         let name = db.field("unam").ok_or("no unam")?;
         let mut created = Vec::new();
+
         for n in 0..CUSTOM_UNITS {
             let base = FourCC::parse(BASES[n % BASES.len()]).ok_or("bad id")?;
             let unit = units.create(&db, base)?;
+
             units.set(&db, unit, name, &format!("Unit {n}"))?;
             created.push(unit);
         }
@@ -825,6 +848,7 @@ mod tests {
 
         let ids: Vec<String> = view.ids().iter().map(ToString::to_string).collect();
         let listed: Vec<String> = items.iter().map(|i| i.id.clone()).collect();
+
         assert_eq!(listed, ids);
         for (item, unit) in items.iter().zip(&created) {
             assert_eq!(item.id, unit.to_string());
@@ -836,6 +860,7 @@ mod tests {
         for item in items.iter().step_by(CUSTOM_UNITS / BASES.len()) {
             let id = FourCC::parse(&item.id).ok_or("bad id")?;
             let row = view.item(id).ok_or("no row")?;
+
             assert_eq!(
                 (row.name, row.group, row.custom, row.changed_fields),
                 (
@@ -846,6 +871,7 @@ mod tests {
                 )
             );
         }
+
         Ok(())
     }
 }

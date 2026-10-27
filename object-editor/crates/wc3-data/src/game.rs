@@ -64,6 +64,7 @@ impl GameFiles {
     /// Opens the game install at `game_dir` (the folder containing `Data/`).
     pub fn open(game_dir: &Path, options: GameOptions) -> Result<Self> {
         let storage = casc::Storage::open(game_dir)?;
+
         Ok(Self { storage, options })
     }
 
@@ -84,6 +85,7 @@ impl GameFiles {
     pub fn read_balanced(&self, path: &str) -> Result<Vec<u8>> {
         if let Some(set) = &self.options.balance {
             let layered = format!("{ROOT}_balance\\{set}.w3mod:{path}");
+
             if let Some(data) = self.storage.read_optional(&layered)? {
                 return Ok(data);
             }
@@ -95,6 +97,7 @@ impl GameFiles {
     /// Reads text from the locale layer when it has the file, else from the base.
     pub fn read_localized(&self, path: &str) -> Result<Vec<u8>> {
         let layered = format!("{ROOT}_locales\\{}.w3mod:{path}", self.options.locale);
+
         if let Some(data) = self.storage.read_optional(&layered)? {
             return Ok(data);
         }

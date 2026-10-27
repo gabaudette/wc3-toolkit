@@ -69,6 +69,7 @@ fn parse(text: &str) -> Result<Vec<SpellKind>> {
         line: 0,
         reason: e.to_string(),
     })?;
+
     Ok(file.kind)
 }
 
@@ -138,6 +139,7 @@ pub fn spell_templates() -> Result<Vec<SpellTemplate>> {
         }
         .in_file(TEMPLATES_FILE)
     })?;
+
     Ok(file.template)
 }
 
@@ -162,6 +164,7 @@ pub fn fill_tooltip(
     let mut text = template
         .tooltip
         .replace("{area}", &format!("<{spell_id},Area{level}>"));
+
     for param in &template.params {
         let given = values.get(&param.id);
         let shown = if param.choices.is_empty() {
@@ -179,6 +182,7 @@ pub fn fill_tooltip(
                 .map(|c| c.label.clone())
                 .unwrap_or_default()
         };
+
         text = text.replace(&format!("{{{}}}", param.id), &shown);
     }
 
@@ -195,6 +199,7 @@ pub fn render_template(
     values: &HashMap<String, Vec<f64>>,
 ) -> Result<String> {
     let invalid = |reason: String| Error::Parse { line: 0, reason }.in_file(&template.file);
+
     if spell_id.len() != 4 || !spell_id.chars().all(|c| c.is_ascii_alphanumeric()) {
         return Err(invalid(format!("{spell_id:?} is not an ability ID")));
     }
@@ -214,6 +219,7 @@ pub fn render_template(
         .replace("{{SPELL_ID}}", spell_id)
         .replace("{{SPELL_NAME}}", &name)
         .replace("{{TEMPLATE}}", &template.label);
+
     for param in &template.params {
         let given = values.get(&param.id);
         let lua = if param.choices.is_empty() {
@@ -237,12 +243,14 @@ pub fn render_template(
                 .lua
                 .clone()
         };
+
         text = text.replace(&format!("{{{{{}}}}}", param.id), &lua);
     }
 
     if let Some(at) = text.find("{{") {
         let rest = &text[at..];
         let end = rest.find("}}").map_or(rest.len(), |e| e + 2);
+
         return Err(invalid(format!("unknown placeholder {}", &rest[..end])));
     }
 
@@ -256,9 +264,11 @@ mod tests {
     #[test]
     fn every_kind_has_a_label_and_suggested_bases() {
         let kinds = spell_kinds().unwrap();
+
         assert!(kinds.len() >= 10, "only {} kinds", kinds.len());
 
         let mut ids: Vec<&str> = kinds.iter().map(|k| k.id.as_str()).collect();
+
         ids.sort_unstable();
         ids.dedup();
         assert_eq!(ids.len(), kinds.len(), "kind IDs repeat");
@@ -288,9 +298,11 @@ mod tests {
     #[test]
     fn templates_fill_in_ids_names_and_values() {
         let templates = spell_templates().unwrap();
+
         assert!(templates.len() >= 3);
         for template in &templates {
             let text = render_template(template, "A00K", "Test\nName", &HashMap::new()).unwrap();
+
             assert!(text.contains("FourCC(\"A00K\")"), "{}", template.id);
             assert!(!text.contains("{{"), "{}", template.id);
         }
@@ -298,6 +310,7 @@ mod tests {
         let wave = templates.iter().find(|t| t.id == "knockback-wave").unwrap();
         let values = HashMap::from([("damage".to_owned(), vec![10.0, 20.5])]);
         let text = render_template(wave, "A001", "Wave", &values).unwrap();
+
         assert!(text.contains("local DAMAGE = { 10, 20.5 }"), "{text}");
     }
 
@@ -306,9 +319,11 @@ mod tests {
         let templates = spell_templates().unwrap();
         let arc = templates.iter().find(|t| t.id == "bounce-damage").unwrap();
         let none = HashMap::new();
+
         assert!(render_template(arc, "A0\"1", "x", &none).is_err());
 
         let half_bounce = HashMap::from([("bounces".to_owned(), vec![1.5])]);
+
         assert!(render_template(arc, "A001", "x", &half_bounce).is_err());
 
         let strike = templates
@@ -316,6 +331,7 @@ mod tests {
             .find(|t| t.id == "attribute-damage")
             .unwrap();
         let fourth = HashMap::from([("attribute".to_owned(), vec![3.0])]);
+
         assert!(render_template(strike, "A001", "x", &fourth).is_err());
     }
 }

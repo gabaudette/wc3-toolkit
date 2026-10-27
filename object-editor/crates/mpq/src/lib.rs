@@ -21,8 +21,10 @@ const CREATE_FLAGS: u32 = 0x0010_0000;
 
 /// StormLib reports errors as Windows error codes, mapped to errno values elsewhere.
 const ERROR_FILE_NOT_FOUND: u32 = 2;
+
 #[cfg(windows)]
 const ERROR_DISK_FULL: u32 = 112;
+
 #[cfg(not(windows))]
 const ERROR_DISK_FULL: u32 = 28; // ENOSPC
 
@@ -126,6 +128,7 @@ impl Archive {
         // SAFETY: `c_path` is NUL-terminated and outlives the call; `handle` is a valid out-pointer.
         let created =
             unsafe { SFileCreateArchive(c_path.as_ptr(), CREATE_FLAGS, max_files, &mut handle) };
+
         if !created {
             return Err(Error::Open {
                 path: display,
@@ -144,6 +147,7 @@ impl Archive {
         // SAFETY: `c_path` is NUL-terminated and outlives the call; `handle` is a valid out-pointer.
         let opened =
             unsafe { SFileOpenArchive(c_path.as_ptr(), PRIORITY_DEFAULT, flags, &mut handle) };
+
         if !opened {
             return Err(Error::Open {
                 path: display,
@@ -177,8 +181,10 @@ impl Archive {
                 &mut file,
             )
         };
+
         if !opened {
             let code = last_error();
+
             if code == ERROR_FILE_NOT_FOUND {
                 return Err(Error::NotFound(name.to_owned()));
             }
@@ -272,6 +278,7 @@ impl Archive {
                 &mut file,
             )
         };
+
         if !created {
             return Err(write_error());
         }
@@ -282,6 +289,7 @@ impl Archive {
 
         // SAFETY: `file` is finished (and thereby closed) exactly once, whether or not writing succeeded.
         let finished = unsafe { SFileFinishFile(file) };
+
         if !written || !finished {
             return Err(write_error());
         }
@@ -301,6 +309,7 @@ impl Archive {
 
         // SAFETY: as above; the handle is closed exactly once.
         let closed = unsafe { SFileCloseArchive(handle) };
+
         if !flushed {
             return Err(Error::Save { code: flush_code });
         }
@@ -321,6 +330,7 @@ fn read_open_file(file: Handle, name: &str) -> Result<Vec<u8>> {
 
     // SAFETY: `file` is an open StormLib file; a null high-size pointer is allowed.
     let size = unsafe { SFileGetFileSize(file, ptr::null_mut()) };
+
     if size == SFILE_INVALID_SIZE {
         return Err(read_error());
     }
@@ -339,6 +349,7 @@ fn read_open_file(file: Handle, name: &str) -> Result<Vec<u8>> {
             ptr::null_mut(),
         )
     };
+
     if !ok || read != size {
         return Err(read_error());
     }
@@ -367,16 +378,19 @@ mod tests {
         let path = dir.path().join("test.mpq");
 
         let mut archive = Archive::create(&path, SMALL_TABLE).unwrap();
+
         archive
             .write("war3map.wts", b"STRING 1\n{\nhello\n}\n")
             .unwrap();
         archive.save().unwrap();
 
         let mut archive = Archive::open_writable(&path).unwrap();
+
         archive.write("war3map.wts", b"replaced").unwrap();
         archive.save().unwrap();
 
         let archive = Archive::open(&path).unwrap();
+
         assert_eq!(archive.read("war3map.wts").unwrap(), b"replaced");
         assert!(archive.contains("war3map.wts"));
         assert!(matches!(
@@ -402,9 +416,11 @@ mod tests {
                 .write(&format!("file{i}.txt"), i.to_string().as_bytes())
                 .unwrap();
         }
+
         archive.save().unwrap();
 
         let archive = Archive::open(&path).unwrap();
+
         assert_eq!(archive.read("file15.txt").unwrap(), b"15");
     }
 }

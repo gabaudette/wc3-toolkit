@@ -110,6 +110,7 @@ impl LeveledView<'_> {
 
     fn category_icon(&self, field_id: &str, category: &str) -> Option<String> {
         let field = self.db.field(field_id)?;
+
         self.units
             .choice_icon(&field.value_type, category)
             .map(str::to_owned)
@@ -119,6 +120,7 @@ impl LeveledView<'_> {
     fn ids_after(&self, map_upgrades: &[LeveledObject]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_upgrades.iter().map(|u| u.id).collect();
         let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
+
         for id in self.db.ids().iter().filter_map(|id| FourCC::parse(id)) {
             if seen.insert(id) {
                 ids.push(id);
@@ -160,6 +162,7 @@ impl LeveledView<'_> {
         let map_upgrades = self.map.objects();
         let by_id: HashMap<FourCC, &LeveledObject> =
             map_upgrades.iter().map(|u| (u.id, u)).collect();
+
         self.ids_after(&map_upgrades)
             .into_iter()
             .filter_map(|id| self.item_with(id, by_id.get(&id).copied()))
@@ -168,6 +171,7 @@ impl LeveledView<'_> {
 
     pub fn item(&self, id: FourCC) -> Option<UnitItem> {
         let entry = self.map.objects().into_iter().find(|u| u.id == id);
+
         self.item_with(id, entry.as_ref())
     }
 
@@ -177,6 +181,7 @@ impl LeveledView<'_> {
             self.db
                 .raw_value(&base.to_string(), field, level, self.mode)
         });
+
         FieldValue {
             name: self.db.field_name(field),
             label: format!(
@@ -207,6 +212,7 @@ impl LeveledView<'_> {
             cells: (1..=levels)
                 .map(|level| {
                     let value = self.value(id, field, level);
+
                     LevelCell {
                         raw: value.raw,
                         display: value.display,
@@ -221,14 +227,17 @@ impl LeveledView<'_> {
     /// then the game's order.
     fn sorted_fields(&self) -> Vec<&FieldMeta> {
         let mut fields: Vec<&FieldMeta> = self.db.fields().iter().collect();
+
         fields.sort_by_key(|f| {
             let order = CATEGORY_ORDER
                 .iter()
                 .position(|c| *c == f.category)
                 .unwrap_or(CATEGORY_ORDER.len());
             let rank = self.guide.rank(&f.id);
+
             (order, rank.is_none(), rank, f.sort.clone())
         });
+
         fields
     }
 
@@ -237,6 +246,7 @@ impl LeveledView<'_> {
         let item = self.item(id)?;
         let levels = self.map.levels(self.db, id);
         let mut sections: Vec<AbilitySection> = Vec::new();
+
         for meta in self.sorted_fields() {
             if !matches!(sections.last(), Some(s) if s.category == meta.category) {
                 sections.push(AbilitySection {
@@ -250,6 +260,7 @@ impl LeveledView<'_> {
             let Some(section) = sections.last_mut() else {
                 continue;
             };
+
             if meta.per_level {
                 section
                     .level_fields
@@ -275,6 +286,7 @@ impl LeveledView<'_> {
             in_map: item.group == "map",
             changed_fields: item.changed_fields,
         };
+
         Some(AbilityDetail {
             card: AbilityCard {
                 summary,
@@ -293,21 +305,25 @@ impl LeveledView<'_> {
     /// later level's name that does (`Mithril` finds Iron Forged Swords).
     pub fn search(&self, query: &str) -> Vec<SearchHit> {
         let query = query.trim().to_lowercase();
+
         if query.is_empty() {
             return Vec::new();
         }
 
         let mut by_name = Vec::new();
         let mut by_level = Vec::new();
+
         for upgrade in self.list() {
             let names_match = upgrade.name.to_lowercase().contains(&query)
                 || upgrade.id.to_lowercase().contains(&query)
                 || upgrade.base.to_lowercase() == query;
+
             if names_match {
                 by_name.push(SearchHit {
                     id: upgrade.id,
                     reason: String::new(),
                 });
+
                 continue;
             }
 
@@ -327,6 +343,7 @@ impl LeveledView<'_> {
                     .contains(&query)
                     .then(|| format!("level {level}: {name}"))
             });
+
             if let Some(reason) = level_name {
                 by_level.push(SearchHit {
                     id: upgrade.id,
@@ -356,6 +373,7 @@ fn with_view<T>(session: &Session, catalog: Catalog, f: impl FnOnce(&LeveledView
     };
 
     let (db, guide) = catalog.data(session);
+
     f(&LeveledView {
         catalog,
         db,
@@ -379,6 +397,7 @@ pub fn leveled_detail(
     id: String,
 ) -> Result<AbilityDetail, String> {
     let id = fourcc(&id)?;
+
     state.with(|session| {
         with_view(session, catalog, |view| view.detail(id))
             .ok_or(format!("Unknown {} {id}.", catalog.describe().singular))
@@ -410,6 +429,7 @@ fn edit(
 ) -> Result<AbilityDetail, String> {
     let id = fourcc(id)?;
     let singular = catalog.describe().singular;
+
     state.with(|session| {
         // The databases and the open map are separate fields of the session,
         // and the objects and string table separate fields of the map.
@@ -431,6 +451,7 @@ fn edit(
             Catalog::Upgrades => upgrades,
             Catalog::Doodads => doodads,
         };
+
         change(db, objects, units.strings_mut(), id, field)?;
         with_view(session, catalog, |view| view.detail(id))
             .ok_or(format!("Unknown {singular} {id}."))
@@ -488,6 +509,7 @@ pub fn create_leveled(
     base: String,
 ) -> Result<UnitItem, String> {
     let base = fourcc(&base)?;
+
     state.with(|session| {
         let db: &dyn LeveledData = match catalog {
             Catalog::Upgrades => &session.upgrades,
@@ -499,6 +521,7 @@ pub fn create_leveled(
             Catalog::Doodads => &mut map.doodads,
         };
         let id = objects.create(db, base).map_err(|e| e.to_string())?;
+
         with_view(session, catalog, |view| view.item(id))
             .ok_or(format!("Created {id} but cannot show it."))
     })
@@ -532,6 +555,7 @@ mod tests {
         let swords = FourCC::parse("Rhme").ok_or("bad id")?;
         let custom = map.create(&db, swords)?;
         let levels = db.field("glvl").ok_or("no glvl")?;
+
         map.set(&db, &mut strings, custom, levels, 0, "4")?;
         let view = LeveledView {
             catalog: Catalog::Upgrades,
@@ -544,11 +568,13 @@ mod tests {
         };
 
         let first = view.list().into_iter().next().ok_or("empty list")?;
+
         assert_eq!(
             (first.id.as_str(), first.custom, first.race.as_str()),
             ("R000", true, "Human")
         );
         let detail = view.detail(custom).ok_or("no detail")?;
+
         assert_eq!(detail.levels, 4);
         assert_eq!(detail.card.summary.name, "Iron Forged Swords");
         let order: Vec<&str> = detail
@@ -556,6 +582,7 @@ mod tests {
             .iter()
             .map(|s| s.category.as_str())
             .collect();
+
         assert_eq!(order, ["stats", "data", "text", "art", "tech"]);
         let names = detail
             .sections
@@ -564,6 +591,7 @@ mod tests {
             .find(|f| f.field.id == "gnam")
             .ok_or("no gnam")?;
         let raws: Vec<&str> = names.cells.iter().map(|c| c.raw.as_str()).collect();
+
         assert_eq!(
             raws,
             [

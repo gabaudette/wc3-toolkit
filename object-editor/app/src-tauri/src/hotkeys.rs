@@ -100,6 +100,7 @@ impl Menu {
             (Some(a), true) => (a.learn_hotkey.as_deref(), a.learn_button),
             (None, _) => (None, None),
         };
+
         self.buttons.push(Button {
             key: key.and_then(parse_hotkey),
             name: ability_name(info, ability),
@@ -112,6 +113,7 @@ impl Menu {
 
     fn clashes(&self) -> Vec<Clash> {
         let mut keys: Vec<char> = self.buttons.iter().filter_map(|b| b.key).collect();
+
         keys.sort_unstable();
         keys.dedup();
 
@@ -124,6 +126,7 @@ impl Menu {
                     && same_key
                         .iter()
                         .all(|b| b.replaces_on_slot && b.slot == first_slot);
+
                 if same_key.len() < 2 || replacements {
                     return None;
                 }
@@ -153,6 +156,7 @@ fn unit_hotkey(view: &View<'_>, id: FourCC) -> Option<char> {
 /// The unit's button slot on its producer's command card.
 fn unit_slot(view: &View<'_>, id: FourCC) -> Slot {
     let coordinate = |field: &str| view.raw_by_id(id, field)?.trim().parse::<u32>().ok();
+
     Some((coordinate("ubpx")?, coordinate("ubpy")?))
 }
 
@@ -187,6 +191,7 @@ fn menus(
     let raw = |field: &str| view.raw_by_id(id, field);
     let is_building = raw("ubdg").as_deref() == Some("1");
     let (mut unit_abilities, mut hero_abilities) = ability_lists(view, id);
+
     if let Some((spell, learned)) = extra
         && !unit_abilities.contains(&spell)
         && !hero_abilities.contains(&spell)
@@ -205,6 +210,7 @@ fn menus(
             card.add(Some(key), name, view.db.command_button(section));
         }
     };
+
     if !is_building {
         command("CmdStop");
         if raw("umvs").is_some_and(|s| s != NO_MOVEMENT) {
@@ -223,6 +229,7 @@ fn menus(
     }
 
     let trains = codes(raw("utra"));
+
     if is_building && !trains.is_empty() {
         command("CmdRally");
     }
@@ -242,19 +249,23 @@ fn menus(
 
     for upgrade in codes(raw("ures")) {
         let code = upgrade.to_string();
+
         card.add_replaceable(view.db.hotkey(&code), view.db.name(&code), None, None);
     }
 
     let mut learn = Menu::new("Learn menu");
+
     if !hero_abilities.is_empty() {
         // Its key is Esc, which never clashes with a letter.
         learn.add(None, CANCEL.to_owned(), view.db.command_button("CmdCancel"));
     }
+
     for ability in &hero_abilities {
         learn.add_ability(*ability, abilities(*ability).as_ref(), true);
     }
 
     let mut build = Menu::new("Build menu");
+
     for structure in codes(raw("ubui")) {
         build.add_replaceable(
             unit_hotkey(view, structure),
@@ -309,6 +320,7 @@ fn preview(menu: &Menu, spell: FourCC) -> Vec<CardButton> {
         .iter()
         .filter_map(|b| {
             let (x, y) = b.slot?;
+
             Some(CardButton {
                 name: b.name.clone(),
                 icon: b.icon.clone(),
@@ -337,6 +349,7 @@ fn menu_preposition(menu: &str) -> &'static str {
 
 fn capitalized(text: &str) -> String {
     let mut chars = text.chars();
+
     chars.next().map_or_else(String::new, |first| {
         first.to_uppercase().chain(chars).collect()
     })
@@ -364,6 +377,7 @@ fn menu_warnings(menu: &Menu, spell: FourCC, warnings: &mut Vec<String>) {
             .filter(|b| b.key == Some(key))
             .map(|b| b.name.clone())
             .collect();
+
         if !names.is_empty() {
             warnings.push(format!(
                 "{}, {key} is also the hotkey of {}.",
@@ -374,6 +388,7 @@ fn menu_warnings(menu: &Menu, spell: FourCC, warnings: &mut Vec<String>) {
     }
 
     let mut taken: Vec<(u32, u32)> = others.iter().filter_map(|b| b.slot).collect();
+
     taken.sort_unstable();
     taken.dedup();
     if taken.len() >= SPOTS {
@@ -384,6 +399,7 @@ fn menu_warnings(menu: &Menu, spell: FourCC, warnings: &mut Vec<String>) {
             .filter(|b| b.slot == Some(slot))
             .map(|b| b.name.clone())
             .collect();
+
         if !names.is_empty() {
             warnings.push(format!(
                 "{}, its button shares a spot with {}.",
@@ -432,6 +448,7 @@ pub fn spell_fit(
     let [card, learn, _] = menus(view, abilities, unit, Some((spell, learned)));
     let mut warnings = Vec::new();
     let place = hero_abilities.iter().position(|a| *a == spell);
+
     if let Some(index) = place.filter(|i| *i >= MAX_HERO_SPELLS) {
         warnings.push(format!(
             "The game leaves this spell out: it is the hero's spell number {}, and heroes learn \
@@ -439,12 +456,14 @@ pub fn spell_fit(
             index + 1
         ));
     }
+
     if hero_spell && !learned {
         warnings.push(
             "Not a hero, so the spell is a normal ability at level 1; only heroes learn levels."
                 .to_owned(),
         );
     }
+
     menu_warnings(&card, spell, &mut warnings);
     if learned {
         menu_warnings(&learn, spell, &mut warnings);
@@ -488,6 +507,7 @@ mod tests {
             .map(PathBuf::from)
             .ok_or("set WC3_GAME_DIR")?;
         let files = GameFiles::open(&dir, GameOptions::default())?;
+
         Ok((
             UnitDatabase::load(&files)?,
             AbilityDatabase::load(&files)?,
@@ -534,6 +554,7 @@ mod tests {
     #[test]
     fn lists_read_naturally() {
         let names = |list: &[&str]| list.iter().map(|n| (*n).to_owned()).collect::<Vec<_>>();
+
         assert_eq!(and_list(&names(&["Move"])), "Move");
         assert_eq!(and_list(&names(&["Move", "Stop"])), "Move and Stop");
         assert_eq!(
@@ -557,9 +578,11 @@ mod tests {
         let storm_bolt = id("AHtb")?;
 
         let paladin = spell_fit(&view, &lookup, id("Hpal")?, storm_bolt, true);
+
         assert!(!paladin.has && paladin.learned, "{paladin:?}");
         assert!(paladin.learn.iter().any(|b| b.spell), "{paladin:?}");
         let holy_light = "On the command card, T is also the hotkey of Holy Light.";
+
         assert!(
             paladin.warnings.iter().any(|w| w == holy_light),
             "{paladin:?}"
@@ -573,6 +596,7 @@ mod tests {
         );
 
         let footman = spell_fit(&view, &lookup, id("hfoo")?, storm_bolt, false);
+
         assert!(!footman.learned && footman.learn.is_empty(), "{footman:?}");
         assert!(footman.warnings[0].starts_with("Not a hero"), "{footman:?}");
         assert!(footman.card.iter().any(|b| b.spell), "{footman:?}");
@@ -600,6 +624,7 @@ mod tests {
             mode: ArtMode::Sd,
         };
         let blizzard = spell_fit(&view, &lookup, hero, id("AHbz")?, true);
+
         assert!(
             blizzard
                 .blocked
@@ -608,6 +633,7 @@ mod tests {
             "{blizzard:?}"
         );
         let fifth = spell_fit(&view, &lookup, hero, id("AHtb")?, true);
+
         assert!(fifth.blocked.is_none() && fifth.warnings.iter().all(|w| !w.contains("leaves")));
 
         // A sixth cannot be set at all; maps made elsewhere can still have one,
@@ -630,6 +656,7 @@ mod tests {
         let mut units = MapUnits::load(&Map::open(&path)?)?;
         let hero = units.create(&db, FourCC::parse("Hpal").ok_or("bad id")?)?;
         let field = db.field("uhab").ok_or("no uhab")?;
+
         units.set(&db, hero, field, "AHhb,AHds,AHre,AHad,AHtb")?;
 
         let view = View {
@@ -643,6 +670,7 @@ mod tests {
         let both = |c: &Clash| {
             c.names.contains(&"Holy Light".to_owned()) && c.names.contains(&"Storm Bolt".to_owned())
         };
+
         assert!(
             found
                 .iter()

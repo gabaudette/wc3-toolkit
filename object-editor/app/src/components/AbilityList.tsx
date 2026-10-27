@@ -70,6 +70,7 @@ export function AbilityList({
   // Searches again when the list changes, so edited and new abilities show up.
   useEffect(() => {
     const trimmed = query.trim();
+
     if (!trimmed || abilities.length === 0) {
       setHits(null);
       return;
@@ -81,6 +82,7 @@ export function AbilityList({
         .then(setHits)
         .catch((e) => onError(errorMessage(e)));
     }, SEARCH_DELAY_MS);
+
     return () => window.clearTimeout(timer);
   }, [query, abilities, onError]);
 
@@ -105,6 +107,7 @@ export function AbilityList({
   const game = shown.filter((r) => !hits && !r.ability.inMap);
   const mapHasNone = !abilities.some((a) => a.inMap);
   let visible = own.length + game.length;
+
   if (folded) {
     visible = own.length;
   }

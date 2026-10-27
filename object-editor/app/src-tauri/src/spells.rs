@@ -88,6 +88,7 @@ pub struct IconChoice {
 /// The file name of a path without its folders and extension.
 fn file_stem(path: &str) -> &str {
     let name = path.rsplit(['\\', '/']).next().unwrap_or(path);
+
     name.rsplit_once('.').map_or(name, |(stem, _)| stem)
 }
 
@@ -109,6 +110,7 @@ fn icon_choices(session: &Session) -> Vec<IconChoice> {
     if let Some(map) = &session.map {
         for path in map.imports.paths() {
             let extension = path.rsplit_once('.').map(|(_, e)| e.to_ascii_lowercase());
+
             if extension.is_some_and(|e| IMAGE_EXTENSIONS.contains(&e.as_str())) {
                 add(path, true);
             }
@@ -116,11 +118,13 @@ fn icon_choices(session: &Session) -> Vec<IconChoice> {
     }
 
     let mode = session.mode;
+
     for id in session.abilities.ids() {
         if let Some(icon) = session.abilities.info(id).and_then(|info| info.icon) {
             add(icon, false);
         }
     }
+
     for db in [&session.db, &session.items, &session.buffs] {
         for id in db.ids() {
             if let Some(icon) = db.icon_path(id, mode) {
@@ -136,6 +140,7 @@ fn icon_choices(session: &Session) -> Vec<IconChoice> {
                 .cmp(&b.name.to_ascii_lowercase())
         })
     });
+
     choices
 }
 
@@ -149,6 +154,7 @@ pub fn spell_icons(state: State<'_, AppState>) -> Result<Vec<IconChoice>, String
 #[tauri::command]
 pub fn spell_kinds(state: State<'_, AppState>) -> Result<Vec<SpellKind>, String> {
     let kinds = kinds().map_err(|e| e.to_string())?;
+
     state.with(|session| {
         Ok(with_abilities(session, |abilities| {
             kinds
@@ -175,6 +181,7 @@ pub fn spell_kinds(state: State<'_, AppState>) -> Result<Vec<SpellKind>, String>
 fn fit(session: &Session, spell: FourCC, unit: FourCC) -> Result<SpellFit, String> {
     let view = view(session);
     let item = view.item(unit).ok_or(format!("Unknown unit {unit}."))?;
+
     Ok(with_abilities(session, |abilities| {
         hotkeys::spell_fit(
             &view,
@@ -199,6 +206,7 @@ fn set_list(
         .ok_or(format!("Unknown field {field_id}."))?;
     let map = session.map.as_mut().ok_or(NO_MAP)?;
     let text: Vec<String> = list.iter().map(ToString::to_string).collect();
+
     map.units
         .set(&session.db, unit, field, &text.join(","))
         .map_err(|e| e.to_string())
@@ -207,9 +215,11 @@ fn set_list(
 /// Takes `spell` out of both of the unit's ability lists.
 fn take(session: &mut Session, spell: FourCC, unit: FourCC) -> Result<(), String> {
     let (normal, learned) = hotkeys::ability_lists(&view(session), unit);
+
     for (field_id, list) in [(ABILITY_LIST, normal), (HERO_ABILITY_LIST, learned)] {
         if list.contains(&spell) {
             let kept: Vec<FourCC> = list.into_iter().filter(|a| *a != spell).collect();
+
             set_list(session, unit, field_id, &kept)?;
         }
     }
@@ -220,10 +230,12 @@ fn take(session: &mut Session, spell: FourCC, unit: FourCC) -> Result<(), String
 /// The units, heroes and buildings that have `spell`, the map's first.
 fn holders(session: &Session, spell: FourCC) -> Vec<FourCC> {
     let view = view(session);
+
     view.ids()
         .into_iter()
         .filter(|id| {
             let (normal, learned) = hotkeys::ability_lists(&view, *id);
+
             normal.contains(&spell) || learned.contains(&spell)
         })
         .collect()
@@ -232,6 +244,7 @@ fn holders(session: &Session, spell: FourCC) -> Vec<FourCC> {
 #[tauri::command]
 pub fn spell_units(state: State<'_, AppState>, spell: String) -> Result<Vec<String>, String> {
     let spell = fourcc(&spell)?;
+
     state.with(|session| {
         Ok(holders(session, spell)
             .iter()
@@ -247,6 +260,7 @@ pub fn spell_fit(
     unit: String,
 ) -> Result<SpellFit, String> {
     let (spell, unit) = (fourcc(&spell)?, fourcc(&unit)?);
+
     state.with(|session| fit(session, spell, unit))
 }
 
@@ -259,14 +273,17 @@ pub fn give_spell(
     unit: String,
 ) -> Result<SpellFit, String> {
     let (spell, unit) = (fourcc(&spell)?, fourcc(&unit)?);
+
     state.with(|session| {
         let before = fit(session, spell, unit)?;
+
         if let Some(reason) = before.blocked {
             return Err(reason);
         }
 
         if !before.has {
             let (mut normal, mut learned) = hotkeys::ability_lists(&view(session), unit);
+
             if before.learned {
                 learned.push(spell);
                 set_list(session, unit, HERO_ABILITY_LIST, &learned)?;
@@ -287,6 +304,7 @@ pub fn take_spell(
     unit: String,
 ) -> Result<SpellFit, String> {
     let (spell, unit) = (fourcc(&spell)?, fourcc(&unit)?);
+
     state.with(|session| {
         take(session, spell, unit)?;
         fit(session, spell, unit)
@@ -315,6 +333,7 @@ fn set_ability(
         .ok_or(format!("Unknown field {field_id}."))?;
     let map = session.map.as_mut().ok_or(NO_MAP)?;
     let levels = if field.per_level { 1..=levels } else { 0..=0 };
+
     for level in levels {
         map.abilities
             .set(
@@ -375,6 +394,7 @@ pub fn create_triggered_spell(
 ) -> Result<AbilitySummary, String> {
     let template = self::template(&template)?;
     let base = fourcc(CHANNEL)?;
+
     state.with(|session| {
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         let id = map
@@ -429,12 +449,15 @@ pub fn create_triggered_spell(
             ("Ncl5", "0".to_owned()),
             (CHANNEL_ORDER, order),
         ];
+
         if !template.targets.is_empty() {
             fields.push(("atar", template.targets.clone()));
         }
+
         for (field, text) in &fields {
             set_ability(session, id, field, levels, text)?;
         }
+
         set_tooltips(session, id, &template, &HashMap::new())?;
 
         with_abilities(session, |abilities| abilities.summary(id))
@@ -455,8 +478,10 @@ fn set_tooltips(
         .ok_or(format!("Unknown field {TOOLTIP_TEXT}."))?;
     let map = session.map.as_mut().ok_or(NO_MAP)?;
     let levels = map.abilities.levels(&session.abilities, spell);
+
     for level in 1..=levels {
         let text = fill_tooltip(template, &spell.to_string(), level, values);
+
         map.abilities
             .set(
                 &session.abilities,
@@ -482,6 +507,7 @@ pub fn set_triggered_values(
 ) -> Result<crate::abilities::AbilityDetail, String> {
     let template = self::template(&template)?;
     let spell = fourcc(&spell)?;
+
     state.with(|session| {
         set_tooltips(session, spell, &template, &values)?;
         with_abilities(session, |abilities| abilities.detail(spell))
@@ -501,6 +527,7 @@ fn module_source(
         .ok_or(format!("Unknown ability {spell}."))?;
     let source =
         render_template(template, &spell.to_string(), &name, values).map_err(|e| e.to_string())?;
+
     check_syntax(&template.file, &source).map_err(|e| e.to_string())?;
     Ok(source)
 }
@@ -511,6 +538,7 @@ fn without_color_codes(text: &str) -> String {
 
     let mut plain = String::new();
     let mut rest = text;
+
     while let Some(at) = rest.find('|') {
         plain.push_str(&rest[..at]);
         let code = &rest[at..];
@@ -526,8 +554,10 @@ fn without_color_codes(text: &str) -> String {
                 1
             }
         };
+
         rest = &code[skip.min(code.len())..];
     }
+
     plain.push_str(rest);
     plain
 }
@@ -535,6 +565,7 @@ fn without_color_codes(text: &str) -> String {
 /// `Knockback Wave` (A001) → `knockback_wave_a001.lua`.
 fn module_file_name(name: &str, spell: FourCC) -> String {
     let mut slug = String::new();
+
     for c in name.chars() {
         if c.is_ascii_alphanumeric() {
             slug.push(c.to_ascii_lowercase());
@@ -542,8 +573,10 @@ fn module_file_name(name: &str, spell: FourCC) -> String {
             slug.push('_');
         }
     }
+
     let slug = slug.trim_end_matches('_');
     let id = spell.to_string().to_ascii_lowercase();
+
     if slug.is_empty() {
         format!("spell_{id}.lua")
     } else {
@@ -561,6 +594,7 @@ pub fn triggered_spell_lua(
 ) -> Result<String, String> {
     let template = self::template(&template)?;
     let spell = fourcc(&spell)?;
+
     state.with(|session| module_source(session, spell, &template, &values))
 }
 
@@ -576,6 +610,7 @@ pub fn write_triggered_spell_lua(
     let template = self::template(&template)?;
     let spell = fourcc(&spell)?;
     let dir = PathBuf::from(dir);
+
     state.with(|session| {
         let source = module_source(session, spell, &template, &values)?;
         let name = with_abilities(session, |abilities| abilities.summary(spell))
@@ -596,6 +631,7 @@ pub fn default_lua_folder(state: State<'_, AppState>) -> Result<Option<String>, 
     state.with(|session| {
         Ok(session.map.as_ref().map(|map| {
             let stem = map.path.file_stem().unwrap_or_default().to_string_lossy();
+
             map.path
                 .with_file_name(format!("{stem} Lua"))
                 .display()
@@ -617,6 +653,7 @@ pub struct TestCopy {
 pub fn build_test_copy(state: State<'_, AppState>, dir: String) -> Result<TestCopy, String> {
     state.with(|session| {
         let map = session.map.as_ref().ok_or(NO_MAP)?;
+
         if map.unsaved() {
             return Err(
                 "Save the map first: the test copy is made from the saved file.".to_owned(),
@@ -626,6 +663,7 @@ pub fn build_test_copy(state: State<'_, AppState>, dir: String) -> Result<TestCo
         let output = default_output(&map.path);
         let report =
             build_dev_map(&map.path, Path::new(&dir), &output).map_err(|e| e.to_string())?;
+
         Ok(TestCopy {
             path: report.output.display().to_string(),
             modules: report.modules,
@@ -639,12 +677,14 @@ pub fn build_test_copy(state: State<'_, AppState>, dir: String) -> Result<TestCo
 #[tauri::command]
 pub fn discard_spell(state: State<'_, AppState>, id: String) -> Result<(), String> {
     let id = fourcc(&id)?;
+
     state.with(|session| {
         for unit in holders(session, id) {
             take(session, id, unit)?;
         }
 
         let map = session.map.as_mut().ok_or(NO_MAP)?;
+
         if map.abilities.remove(map.units.strings_mut(), id) {
             Ok(())
         } else {
@@ -678,6 +718,7 @@ mod tests {
     #[test]
     fn module_files_are_named_after_the_spell_and_its_id() {
         let id = FourCC::parse("A00B").unwrap();
+
         assert_eq!(
             module_file_name("Knockback Wave", id),
             "knockback_wave_a00b.lua"
