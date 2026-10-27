@@ -4,6 +4,37 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Spell wizard, part 5: triggered spells with generated Lua (AGE-51)
+
+- Last part of AGE-19. `data/spell-templates.toml` lists triggered spells; each is a copy of
+  Channel (`ANcl`) plus a Lua module from `data/spell-templates/` (Attribute Strike, Knockback
+  Wave, Arc Bolt). `wc3-data::spells::render_template` fills in `{{SPELL_ID}}`, the name and
+  each parameter (a Lua table with a value per level, or a choice's Lua expression), refusing
+  unknown placeholders, half bounces and bad IDs; `fill_tooltip` writes the per-level tooltip,
+  with the area of effect as `<A001,Area1>` so it follows the field. A `wc3-map` test checks
+  every template as Lua 5.3, alone and inside the harness script.
+- The modules are `do ... end` blocks with locals only, so several spells never clash, and
+  they hook `Dev.OnStart` like `map/src`. Radii come from the spell's own Area of Effect
+  (`BlzGetAbilityRealLevelField`), and levels past a list's end use its last value, so adding
+  levels on the page doesn't break the code.
+- `create_triggered_spell` sets Channel up as a 3-level hero spell: target type from the
+  template, Visible (plus the targeting image for point spells), no follow-through or art,
+  other abilities usable, and a base order no other Channel copy in the map uses, from a list
+  of orders checked against the game's ability data (two spells with one order on a unit
+  would cast each other). The button goes to the bottom row (Channel's own spot hides Hold
+  Position) and the learn menu's second row (Channel has none).
+- The wizard's triggered path: effect (name, values per level, cooldown and the like, the
+  tooltip they make) → button → units → Lua code (folder, default `<map> Lua` next to the
+  map; the module as it will be) → try it. "Create spell" writes `<name>_<id>.lua`; "Save and
+  build test copy" saves the map and runs the harness's `build_dev_map` into `<map>_dev.w3m`.
+- `DialogShell` gained `page`, which starts a new wizard step scrolled to the top, and
+  `dismissable`; the wizard turns that off, since a click on the backdrop (easy when a step
+  gets shorter) cancelled the spell and deleted it.
+- Checked in the app on a copy of the test map: Knockback Wave given to `test_hero`, its
+  Channel fields as intended, the module written, and the `[DEV]` copy built (5 object and
+  string files round-trip; its string table differs only by the prefix). **Not yet played in
+  game.**
+
 ## 2026-10-27 · Spell wizard, part 4: give the spell to units (AGE-50)
 
 - `SpellUnits` lists units, heroes and buildings (those with the spell first, then the map's,

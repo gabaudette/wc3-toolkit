@@ -284,6 +284,20 @@ mod tests {
     }
 
     #[test]
+    fn every_spell_template_is_valid_lua_in_the_harness() {
+        let templates = wc3_data::spells::spell_templates().unwrap();
+        let none = std::collections::HashMap::new();
+        for template in &templates {
+            let source =
+                wc3_data::spells::render_template(template, "A001", "Test spell", &none).unwrap();
+            check_syntax(&template.file, &source).unwrap();
+
+            let script = build_script(EDITOR_SCRIPT, &[module(&template.file, &source)]);
+            check_syntax("combined script", &script).unwrap();
+        }
+    }
+
+    #[test]
     fn output_sits_next_to_the_map() {
         let out = default_output(Path::new("maps/test.w3m"));
 

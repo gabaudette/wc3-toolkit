@@ -18,6 +18,9 @@ import type {
   SharePreview,
   SpellFit,
   SpellKind,
+  SpellTemplate,
+  TemplateValues,
+  TestCopy,
   TransferObject,
   UnitDetail,
   UnitItem,
@@ -68,6 +71,21 @@ export const api = {
   spellFit: (spell: string, unit: string) => invoke<SpellFit>("spell_fit", { spell, unit }),
   giveSpell: (spell: string, unit: string) => invoke<SpellFit>("give_spell", { spell, unit }),
   takeSpell: (spell: string, unit: string) => invoke<SpellFit>("take_spell", { spell, unit }),
+  spellTemplates: () => invoke<SpellTemplate[]>("spell_templates"),
+  /** Creates a copy of Channel set up for the template: name, button, costs, tooltips. */
+  createTriggeredSpell: (template: string) =>
+    invoke<AbilitySummary>("create_triggered_spell", { template }),
+  /** Rewrites the spell's tooltips for new values. */
+  setTriggeredValues: (spell: string, template: string, values: TemplateValues) =>
+    invoke<AbilityDetail>("set_triggered_values", { spell, template, values }),
+  triggeredSpellLua: (spell: string, template: string, values: TemplateValues) =>
+    invoke<string>("triggered_spell_lua", { spell, template, values }),
+  /** Writes the spell's Lua module into `dir` and returns the file's path. */
+  writeTriggeredSpellLua: (spell: string, template: string, values: TemplateValues, dir: string) =>
+    invoke<string>("write_triggered_spell_lua", { spell, template, values, dir }),
+  defaultLuaFolder: () => invoke<string | null>("default_lua_folder"),
+  /** Builds the saved map's `[DEV]` copy with the modules in `dir`. */
+  buildTestCopy: (dir: string) => invoke<TestCopy>("build_test_copy", { dir }),
   /** Removes a custom ability the spell wizard created, when it is cancelled. */
   discardSpell: (id: string) => invoke<void>("discard_spell", { id }),
   fillPlaceholders: (text: string) => invoke<string>("fill_placeholders", { text }),

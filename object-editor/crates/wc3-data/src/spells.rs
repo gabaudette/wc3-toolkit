@@ -1,13 +1,36 @@
 //! Spell kinds for the spell wizard: what a spell does, and the game abilities
 //! that make the best base for it, with the reason for each. The list is
 //! `data/spell-recipes.toml`, written for this project.
+//!
+//! Also the triggered spells, for effects no game ability provides: a copy of
+//! Channel plus a Lua module made from a template in `data/spell-templates/`
+//! (listed in `data/spell-templates.toml`).
 
-use serde::Deserialize;
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
 
 use crate::{Error, Result};
 
 const RECIPES: &str = include_str!("../data/spell-recipes.toml");
 const RECIPES_FILE: &str = "spell-recipes.toml";
+const TEMPLATES: &str = include_str!("../data/spell-templates.toml");
+const TEMPLATES_FILE: &str = "spell-templates.toml";
+/// The Lua templates by file name, as `spell-templates.toml` names them.
+const TEMPLATE_SOURCES: &[(&str, &str)] = &[
+    (
+        "attribute_damage.lua",
+        include_str!("../data/spell-templates/attribute_damage.lua"),
+    ),
+    (
+        "knockback_wave.lua",
+        include_str!("../data/spell-templates/knockback_wave.lua"),
+    ),
+    (
+        "bounce_damage.lua",
+        include_str!("../data/spell-templates/bounce_damage.lua"),
+    ),
+];
 
 /// One choice on the wizard's first step, such as "Damage one target".
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -49,6 +72,183 @@ fn parse(text: &str) -> Result<Vec<SpellKind>> {
     Ok(file.kind)
 }
 
+/// A triggered spell: Channel set up for a target type, and a Lua module that
+/// runs the effect when it is cast.
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct SpellTemplate {
+    pub id: String,
+    pub label: String,
+    pub description: String,
+    pub file: String,
+    /// Channel's target type: `none`, `unit` or `point`.
+    pub target: String,
+    /// Targets allowed, as the editor stores them; empty for none.
+    pub targets: String,
+    pub icon: String,
+    pub hotkey: String,
+    pub range: f64,
+    pub area: f64,
+    pub cooldown: f64,
+    pub mana: f64,
+    /// Per-level tooltip text: `{param}` is that level's value, `{area}` the area of effect.
+    pub tooltip: String,
+    #[serde(rename(deserialize = "param"))]
+    pub params: Vec<TemplateParam>,
+}
+
+/// A value the module uses, edited in the wizard.
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct TemplateParam {
+    /// Its name in the Lua template, written `{{id}}` there.
+    pub id: String,
+    pub label: String,
+    /// The default for each level; empty for a choice.
+    #[serde(default)]
+    pub values: Vec<f64>,
+    /// Only whole numbers make sense (counts).
+    #[serde(default)]
+    pub whole: bool,
+    /// One setting for every level instead of values; the first is the default.
+    #[serde(default)]
+    pub choices: Vec<TemplateChoice>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct TemplateChoice {
+    pub label: String,
+    /// What the module gets, as a Lua expression.
+    pub lua: String,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct TemplateFile {
+    template: Vec<SpellTemplate>,
+}
+
+/// The triggered spell templates, in the order the wizard shows them.
+pub fn spell_templates() -> Result<Vec<SpellTemplate>> {
+    let file: TemplateFile = toml::from_str(TEMPLATES).map_err(|e| {
+        Error::Parse {
+            line: 0,
+            reason: e.to_string(),
+        }
+        .in_file(TEMPLATES_FILE)
+    })?;
+    Ok(file.template)
+}
+
+/// `50`, `0.5`: numbers as Lua source.
+fn lua_number(value: f64) -> String {
+    if value.fract() == 0.0 && value.abs() < 1e15 {
+        format!("{}", value as i64)
+    } else {
+        format!("{value}")
+    }
+}
+
+/// The template's tooltip for one level, with that level's values and the
+/// area of effect as a placeholder for the spell's own field, so it follows
+/// edits to it.
+pub fn fill_tooltip(
+    template: &SpellTemplate,
+    spell_id: &str,
+    level: u32,
+    values: &HashMap<String, Vec<f64>>,
+) -> String {
+    let mut text = template
+        .tooltip
+        .replace("{area}", &format!("<{spell_id},Area{level}>"));
+    for param in &template.params {
+        let given = values.get(&param.id);
+        let shown = if param.choices.is_empty() {
+            let numbers = given.unwrap_or(&param.values);
+            let index = (level as usize).clamp(1, numbers.len().max(1)) - 1;
+            numbers
+                .get(index)
+                .map(|v| lua_number(*v))
+                .unwrap_or_default()
+        } else {
+            let index = given.and_then(|v| v.first()).copied().unwrap_or(0.0) as usize;
+            param
+                .choices
+                .get(index)
+                .map(|c| c.label.clone())
+                .unwrap_or_default()
+        };
+        text = text.replace(&format!("{{{}}}", param.id), &shown);
+    }
+
+    text
+}
+
+/// Fills a template in for one spell. `values` holds each parameter's value
+/// per level, or for a choice the chosen index as its only value; missing
+/// parameters keep their defaults.
+pub fn render_template(
+    template: &SpellTemplate,
+    spell_id: &str,
+    spell_name: &str,
+    values: &HashMap<String, Vec<f64>>,
+) -> Result<String> {
+    let invalid = |reason: String| Error::Parse { line: 0, reason }.in_file(&template.file);
+    if spell_id.len() != 4 || !spell_id.chars().all(|c| c.is_ascii_alphanumeric()) {
+        return Err(invalid(format!("{spell_id:?} is not an ability ID")));
+    }
+
+    let source = TEMPLATE_SOURCES
+        .iter()
+        .find(|(name, _)| *name == template.file)
+        .map(|(_, source)| *source)
+        .ok_or_else(|| invalid("no such template file".to_owned()))?;
+    // The name only goes in comments: one line, no Lua comment ends.
+    let name: String = spell_name
+        .chars()
+        .map(|c| if c.is_control() { ' ' } else { c })
+        .collect();
+
+    let mut text = source
+        .replace("{{SPELL_ID}}", spell_id)
+        .replace("{{SPELL_NAME}}", &name)
+        .replace("{{TEMPLATE}}", &template.label);
+    for param in &template.params {
+        let given = values.get(&param.id);
+        let lua = if param.choices.is_empty() {
+            let numbers = given.unwrap_or(&param.values);
+            if numbers.is_empty() || numbers.iter().any(|v| !v.is_finite()) {
+                return Err(invalid(format!("{} needs a number per level", param.label)));
+            }
+            if param.whole && numbers.iter().any(|v| v.fract() != 0.0) {
+                return Err(invalid(format!("{} takes whole numbers", param.label)));
+            }
+
+            let list: Vec<String> = numbers.iter().map(|v| lua_number(*v)).collect();
+            format!("{{ {} }}", list.join(", "))
+        } else {
+            let index = given.and_then(|v| v.first()).copied().unwrap_or(0.0);
+            param
+                .choices
+                .get(index as usize)
+                .filter(|_| index >= 0.0 && index.fract() == 0.0)
+                .ok_or_else(|| invalid(format!("no choice {index} for {}", param.label)))?
+                .lua
+                .clone()
+        };
+        text = text.replace(&format!("{{{{{}}}}}", param.id), &lua);
+    }
+
+    if let Some(at) = text.find("{{") {
+        let rest = &text[at..];
+        let end = rest.find("}}").map_or(rest.len(), |e| e + 2);
+        return Err(invalid(format!("unknown placeholder {}", &rest[..end])));
+    }
+
+    Ok(text)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,5 +283,39 @@ mod tests {
             parse("[[kind]]\nid = \"x\"\nlabel = \"X\"\ndescription = \"x\"\nbase = []\nextra = 1")
                 .is_err()
         );
+    }
+
+    #[test]
+    fn templates_fill_in_ids_names_and_values() {
+        let templates = spell_templates().unwrap();
+        assert!(templates.len() >= 3);
+        for template in &templates {
+            let text = render_template(template, "A00K", "Test\nName", &HashMap::new()).unwrap();
+            assert!(text.contains("FourCC(\"A00K\")"), "{}", template.id);
+            assert!(!text.contains("{{"), "{}", template.id);
+        }
+
+        let wave = templates.iter().find(|t| t.id == "knockback-wave").unwrap();
+        let values = HashMap::from([("damage".to_owned(), vec![10.0, 20.5])]);
+        let text = render_template(wave, "A001", "Wave", &values).unwrap();
+        assert!(text.contains("local DAMAGE = { 10, 20.5 }"), "{text}");
+    }
+
+    #[test]
+    fn templates_reject_bad_ids_and_values() {
+        let templates = spell_templates().unwrap();
+        let arc = templates.iter().find(|t| t.id == "bounce-damage").unwrap();
+        let none = HashMap::new();
+        assert!(render_template(arc, "A0\"1", "x", &none).is_err());
+
+        let half_bounce = HashMap::from([("bounces".to_owned(), vec![1.5])]);
+        assert!(render_template(arc, "A001", "x", &half_bounce).is_err());
+
+        let strike = templates
+            .iter()
+            .find(|t| t.id == "attribute-damage")
+            .unwrap();
+        let fourth = HashMap::from([("attribute".to_owned(), vec![3.0])]);
+        assert!(render_template(strike, "A001", "x", &fourth).is_err());
     }
 }

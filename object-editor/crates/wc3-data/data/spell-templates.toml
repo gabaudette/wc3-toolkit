@@ -1,0 +1,122 @@
+# Triggered spells for the spell wizard: effects no game ability provides. Each
+# is a copy of Channel (ANcl), set up for its target type, plus a Lua module
+# made from a template in spell-templates/ that runs the effect when the spell
+# is cast. Written for this project (not taken from the game).
+#
+# [[template]]       one choice in the wizard's "Triggered spells" group, in this order.
+#   id               stable name, used by the app.
+#   label            the choice, as map makers would say it; also the spell's first name.
+#   description      one sentence: what the spell does.
+#   file             the Lua template in spell-templates/.
+#   target           "none" (instant), "unit" or "point": Channel's target type.
+#   targets          targets allowed, as the editor stores them; empty for none.
+#   icon, hotkey     the spell's button.
+#   range, area      cast range and area of effect (every level), 0 when unused.
+#   cooldown, mana   every level.
+#   tooltip          per-level tooltip text: {param} is that level's value of a
+#                    parameter, {area} the spell's area of effect.
+# [[template.param]] a value the module uses, edited in the wizard.
+#   id               the name in the Lua template, written {{id}} there.
+#   label            what the wizard shows.
+#   values           the default for each level (3 levels); a Lua table in the module.
+#   whole            true when only whole numbers make sense (counts).
+#   choices          instead of values: one setting for every level, as
+#                    { label, lua } pairs; the first is the default.
+#
+# Lua templates use {{SPELL_ID}} (the spell's raw code), {{SPELL_NAME}} and
+# {{TEMPLATE}} (this label), and {{id}} for each parameter.
+
+[[template]]
+id = "attribute-damage"
+label = "Attribute Strike"
+description = "Damages one enemy based on the caster's strength, agility or intelligence."
+file = "attribute_damage.lua"
+target = "unit"
+targets = "air,enemies,ground,neutral,organic"
+icon = "ReplaceableTextures\\CommandButtons\\BTNFireBolt.blp"
+hotkey = "R"
+range = 600
+area = 0
+cooldown = 8
+mana = 75
+tooltip = "Deals {base_damage} damage plus {per_point} times the caster's {attribute} to one enemy."
+
+[[template.param]]
+id = "attribute"
+label = "Attribute"
+choices = [
+  { label = "strength", lua = "0" },
+  { label = "agility", lua = "1" },
+  { label = "intelligence", lua = "2" },
+]
+
+[[template.param]]
+id = "base_damage"
+label = "Damage"
+values = [25, 50, 75]
+
+[[template.param]]
+id = "per_point"
+label = "Damage per point of the attribute"
+values = [1, 2, 3]
+
+[[template]]
+id = "knockback-wave"
+label = "Knockback Wave"
+description = "Damages enemies around the caster and pushes them away."
+file = "knockback_wave.lua"
+target = "none"
+targets = ""
+icon = "ReplaceableTextures\\CommandButtons\\BTNWarStomp.blp"
+hotkey = "W"
+range = 0
+area = 300
+cooldown = 12
+mana = 100
+tooltip = "Deals {damage} damage to enemies within {area} of the caster and pushes them {distance} away."
+
+[[template.param]]
+id = "damage"
+label = "Damage"
+values = [50, 100, 150]
+
+[[template.param]]
+id = "distance"
+label = "Push distance"
+values = [200, 300, 400]
+
+[[template.param]]
+id = "duration"
+label = "Push time (seconds)"
+values = [0.5, 0.5, 0.5]
+
+[[template]]
+id = "bounce-damage"
+label = "Arc Bolt"
+description = "Hits one enemy, then bounces to the nearest enemies it has not hit, weaker each time."
+file = "bounce_damage.lua"
+target = "unit"
+targets = "air,enemies,ground,neutral,organic"
+icon = "ReplaceableTextures\\CommandButtons\\BTNChainLightning.blp"
+hotkey = "B"
+range = 700
+area = 500
+cooldown = 9
+mana = 110
+tooltip = "Hits an enemy for {damage} damage, then bounces to up to {bounces} more within {area}, {reduction}% weaker each time."
+
+[[template.param]]
+id = "damage"
+label = "Damage"
+values = [80, 120, 160]
+
+[[template.param]]
+id = "bounces"
+label = "Bounces"
+values = [3, 4, 5]
+whole = true
+
+[[template.param]]
+id = "reduction"
+label = "Damage lost per bounce (%)"
+values = [15, 15, 15]
