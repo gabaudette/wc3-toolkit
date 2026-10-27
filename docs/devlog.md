@@ -4,6 +4,37 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Illustrated hero and item tutorials (PR #55, AGE-25)
+
+- Expanded the existing hero/item URLs into short walkthroughs with seven real Tinkerbench
+  screenshots, full-size links, alt text, descriptive captions and the shared centered,
+  muted change notice. Kept the original section anchors and the separate spell guide.
+- Sunwell Warden copies Paladin (`Hpal`, assigned `H001` here), keeps the four game hero
+  spells and normal inventory, and sets starting STR/AGI/INT to 24/15/20 with gains 2/1/3.
+  Wayfarer Draught copies `phea` as `I000`, keeps Item Healing (`AIh1`), sets three charges
+  and a 125-gold cost, and has its own name/shop/extended tooltip. Explained base life versus
+  hero bonuses, normal/hero ability lists, tooltip versus effect, and to/by-merchant flags.
+- Followed both workflows in the current app on a disposable map. Saved fields/text were
+  read back; all seven object/string files round-trip identically. Recorded refresh
+  conventions in the website README; no app behavior or starter downloads changed.
+- Played a separate copy in Warcraft III **3.0.1.24371** on Linux/GE-Proton11-7. A temporary
+  Lua harness spawned the saved objects, disabled the solo fixture's melee victory timer,
+  and checked ten runtime conditions: level-1 attributes, Holy Light rank 1, level-3
+  attributes (28/17/26), Holy Light rank 2, three-charge pickup, dropping/reacquisition,
+  first/second healing uses (two/one charges), final-charge consumption and merchant sale.
+  All pass; [gameplay evidence](verification/age25-gameplay.png) shows the result and HUD.
+  The initial rapid-use check hit the item's cooldown; the successful rerun keeps its real
+  cooldown and waits 65 game seconds between uses. The guide calls out that wait and the
+  need for missing health. No game map, game script or standalone art was committed.
+- Website validation: 119 tests pass; Astro checks 35 files with no diagnostics; the
+  6,610-page build and full-site local link/asset check pass. A focused built-page audit
+  checked seven image dimensions, alt texts, full-size links and notices, seven retained
+  section anchors and 34 internal fragments. Browser checks pass at 1440 × 1000 and
+  320 × 740 in both themes, without horizontal overflow; images load, notices stay centered
+  and muted, and keyboard activation opens the full-size PNGs. Guides-filtered search
+  ranks Sunwell Warden/hero attribute growth and Wayfarer Draught/item charges first on
+  their respective pages. No browser errors.
+
 ## 2026-10-27 · Spell wizard walkthrough (PR #54, AGE-56)
 
 - Replaced the manual-copy custom-spell introduction with the finished New spell workflow:

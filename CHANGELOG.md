@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Illustrated hero and item walkthroughs, with attribute growth, existing game abilities,
+  a three-charge healing potion and in-game progression and inventory checks.
 - Illustrated spell-wizard walkthrough: create a three-level hero spell, choose its buff
   and button, assign it to a hero, and build a generated-Lua spell in a separate test copy.
 - An Interface tab for in-game UI, starting with dialogs: a message in the color you pick and

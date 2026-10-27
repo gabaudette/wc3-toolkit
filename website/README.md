@@ -47,6 +47,16 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   Read saved object data and the generated test-copy script back before describing them
   as checked. The guide labels in-game casting as unverified; recording an actual play
   test is required before changing that statement.
+- `src/content/docs/guides/hero.md` and `item.md`: illustrated object-editing walkthroughs
+  using existing game abilities. Refresh `public/screenshots/tutorial-hero-*.png` and
+  `tutorial-item-*.png` on a disposable map: Sunwell Warden copies `Hpal`, with starting
+  attributes 24/15/20 and gains 2/1/3; Wayfarer Draught copies `phea`, has three charges,
+  costs 125 gold and retains Item Healing. Use the current assigned custom IDs; the
+  captures use `H001` and `I000`. Keep the hero's four game spells and normal inventory.
+  These full-window captures are 1440 × 900. Check saved values, captions and notices,
+  then play-test level progression/learning and pickup, dropping, healing uses, final
+  consumption and selling. Allow for missing health and the real item cooldown.
+  The pages record the tested game build; update that evidence when the examples change.
 - `src/content/docs/reference/field-tasks.md`: authored goal-to-field index. It sits outside
   the generated reference subdirectories. Recheck linked field labels, object types and
   companion settings against `data/fields.toml` and the shared TOML explanations when
