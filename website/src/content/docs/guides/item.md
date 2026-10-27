@@ -7,6 +7,9 @@ description: "Create a three-charge healing potion, retain its game ability, che
 Make **Wayfarer Draught**, a consumable copied from Potion of Healing. It keeps the game’s
 healing ability and has **three charges**. Select a screenshot to open it at full size.
 
+To inspect the finished example, [download the Wayfarer Draught starter](../starters/#wayfarer-draught-and-its-merchant).
+It includes a merchant whose stock reference brings the custom potion through sharing.
+
 [Open a disposable test map](../../editor/first-map/) with a hero that has **Inventory (Hero)**,
 such as the [hero walkthrough’s Paladin](../hero/). Close the map in the World Editor before
 saving from Tinkerbench. Map names and assigned raw codes in screenshots are examples.

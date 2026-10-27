@@ -8,6 +8,9 @@ Create **Sunwell Warden**, a Paladin-based hero with custom attributes and predi
 gains. This walkthrough keeps the Paladin’s existing game abilities and artwork.
 Select a screenshot to open it at full size.
 
+[Download the Sunwell Warden starter](../starters/#sunwell-warden) to inspect the finished
+example in a separate test map.
+
 [Load game data and open a disposable map copy](../../editor/first-map/) first. Close that
 map in the World Editor before saving it from Tinkerbench. The screenshots use
 `hero-item-workshop.w3m`; your map name and assigned raw codes can differ.
