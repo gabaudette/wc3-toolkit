@@ -101,6 +101,7 @@ struct OtherMap {
 impl OtherMap {
     fn load(path: &str) -> Result<Self, String> {
         let map = Map::open(&PathBuf::from(path)).map_err(|e| e.to_string())?;
+
         Ok(Self {
             units: MapUnits::load(&map).map_err(|e| e.to_string())?,
             abilities: MapAbilities::load(&map).map_err(|e| e.to_string())?,
@@ -202,6 +203,7 @@ fn parse_ids(ids: &[String]) -> Result<Vec<FourCC>, String> {
     if ids.is_empty() {
         return Err("Pick at least one unit.".to_owned());
     }
+
     ids.iter().map(|id| fourcc(id)).collect()
 }
 
@@ -242,6 +244,7 @@ pub(crate) fn listed_files(
 #[tauri::command]
 pub fn share_code(state: State<'_, AppState>, ids: Vec<String>) -> Result<SharePreview, String> {
     let chosen = parse_ids(&ids)?;
+
     state.with(|session| {
         let Export {
             bundle,
@@ -249,11 +252,13 @@ pub fn share_code(state: State<'_, AppState>, ids: Vec<String>) -> Result<ShareP
             mut warnings,
         } = export_open_map(session, &chosen)?;
         let count = bundle.files().len();
+
         if count > 0 {
             let files = match count {
                 1 => "1 imported file (model, texture or icon) is".to_owned(),
                 n => format!("{n} imported files (models, textures, icons) are"),
             };
+
             warnings.insert(
                 0,
                 format!(
@@ -291,8 +296,10 @@ pub fn save_bundle(
 #[tauri::command]
 pub fn map_custom_units(state: State<'_, AppState>, path: String) -> Result<Vec<UnitItem>, String> {
     let other = OtherMap::load(&path)?;
+
     state.with(|session| {
         let mut shown = view(session);
+
         shown.map = Some(&other.units);
         Ok(shown.items().into_iter().filter(|u| u.custom).collect())
     })
@@ -311,6 +318,7 @@ fn bundled_units(bundle: &Bundle) -> Vec<FourCC> {
 /// How each bundled file compares with the open map's file at that path.
 fn statuses(session: &Session, bundle: &Bundle) -> Result<Vec<FileStatus>, String> {
     let map = session.map.as_ref().ok_or(NO_MAP)?;
+
     Ok(file_statuses(bundle.files(), &map.reader()))
 }
 
@@ -324,12 +332,14 @@ fn bundle_from(
         (ImportSource::Code { code }, _) => {
             let bundle = Bundle::from_code(code).map_err(|e| e.to_string())?;
             let units = bundled_units(&bundle);
+
             Ok((bundle, units, Vec::new()))
         }
         (ImportSource::Bundle { path }, _) => {
             let bytes = std::fs::read(path).map_err(|e| format!("Cannot read {path}: {e}"))?;
             let bundle = Bundle::from_file(&bytes).map_err(|e| e.to_string())?;
             let units = bundled_units(&bundle);
+
             Ok((bundle, units, Vec::new()))
         }
         (ImportSource::Map { ids, .. }, Some(other)) => {
@@ -339,6 +349,7 @@ fn bundle_from(
                     other.read(path)
                 })
                 .map_err(|e| e.to_string())?;
+
             Ok((export.bundle, chosen, export.warnings))
         }
         (ImportSource::Map { .. }, None) => Err("The other map is not loaded.".to_owned()),
@@ -386,6 +397,7 @@ fn listed(
                 id: p.id,
                 base: p.base,
             };
+
             describe(session, bundle, &object, Some(p.new_id), chosen)
         })
         .collect()
@@ -398,11 +410,13 @@ pub fn preview_import(
     source: ImportSource,
 ) -> Result<ImportPreview, String> {
     let other = load_other(&source)?;
+
     state.with(|session| {
         let (bundle, chosen, warnings) = bundle_from(session, &source, other.as_ref())?;
         let plan = planned(session, &bundle)?;
         let statuses = statuses(session, &bundle)?;
         let mut warnings = warnings;
+
         for (file, status) in bundle.files().iter().zip(&statuses) {
             if *status == FileStatus::Different {
                 warnings.push(format!(
@@ -428,6 +442,7 @@ pub fn import_objects(
     source: ImportSource,
 ) -> Result<Vec<TransferObject>, String> {
     let other = load_other(&source)?;
+
     state.with(|session| {
         let (bundle, chosen, _) = bundle_from(session, &source, other.as_ref())?;
         let plan = planned(session, &bundle)?;
@@ -436,6 +451,7 @@ pub fn import_objects(
         let statuses = statuses(session, &bundle)?;
 
         let map = session.map.as_mut().ok_or(NO_MAP)?;
+
         for (file, status) in bundle.files().iter().zip(statuses) {
             if status == FileStatus::New {
                 map.imports.add(file.clone());

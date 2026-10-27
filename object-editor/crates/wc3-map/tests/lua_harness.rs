@@ -12,6 +12,7 @@ const STRINGS: &[u8] = b"\xef\xbb\xbfSTRING 3\r\n{\r\nTest map\r\n}\r\n\r\n";
 
 fn make_map(path: &Path) -> mpq::Result<()> {
     let mut archive = mpq::Archive::create(path, MAX_FILES)?;
+
     archive.write(SCRIPT_FILE, EDITOR_SCRIPT)?;
     archive.write(STRINGS_FILE, STRINGS)?;
     archive.save()
@@ -23,6 +24,7 @@ fn builds_a_dev_copy_with_the_modules() {
     let map = dir.path().join("test.w3m");
     let modules = dir.path().join("src");
     let output = dir.path().join("test_dev.w3m");
+
     make_map(&map).unwrap();
     std::fs::create_dir(&modules).unwrap();
     std::fs::write(
@@ -46,6 +48,7 @@ fn builds_a_dev_copy_with_the_modules() {
 
     let dev = Map::open(&output).unwrap();
     let script = String::from_utf8(dev.read_file(SCRIPT_FILE).unwrap().unwrap()).unwrap();
+
     assert!(script.starts_with("function main()"));
     assert!(script.find("A = true").unwrap() < script.find("B = true").unwrap());
     assert_eq!(dev.strings().unwrap().get(3), Some("[DEV] Test map"));
@@ -57,6 +60,7 @@ fn a_syntax_error_stops_the_build_before_writing() {
     let map = dir.path().join("test.w3m");
     let modules = dir.path().join("src");
     let output = dir.path().join("test_dev.w3m");
+
     make_map(&map).unwrap();
     std::fs::create_dir(&modules).unwrap();
     std::fs::write(modules.join("broken.lua"), "function oops(\n").unwrap();
@@ -75,6 +79,7 @@ fn a_map_without_a_lua_script_is_reported() {
     let dir = tempfile::tempdir().unwrap();
     let map = dir.path().join("jass.w3m");
     let mut archive = mpq::Archive::create(&map, MAX_FILES).unwrap();
+
     archive
         .write(
             "war3map.j",

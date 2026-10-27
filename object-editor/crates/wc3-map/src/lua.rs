@@ -87,6 +87,7 @@ pub fn load_modules(dir: &Path) -> Result<Vec<Module>> {
                     .is_some_and(|e| e.eq_ignore_ascii_case(MODULE_EXTENSION))
         })
         .collect();
+
     paths.sort();
 
     paths
@@ -98,6 +99,7 @@ pub fn load_modules(dir: &Path) -> Result<Vec<Module>> {
                 .unwrap_or_default()
                 .to_string_lossy()
                 .into_owned();
+
             Ok(Module {
                 name,
                 source: strip_bom(&source).to_owned(),
@@ -118,6 +120,7 @@ pub fn check_syntax(file: &str, source: &str) -> Result<()> {
     };
 
     let (start, _) = first.range();
+
     Err(Error::Lua {
         file: file.to_owned(),
         line: start.line(),
@@ -129,6 +132,7 @@ pub fn check_syntax(file: &str, source: &str) -> Result<()> {
 /// The editor's script followed by the loader, every module and the hook.
 pub fn build_script(editor_script: &str, modules: &[Module]) -> String {
     let mut script = String::from(editor_script);
+
     script.push_str(PRELUDE);
 
     for module in modules {
@@ -167,6 +171,7 @@ fn map_name_reference(editor_script: &str) -> Option<u32> {
 
     let start = editor_script.find(CALL)? + CALL.len();
     let end = start + editor_script[start..].find('"')?;
+
     reference_id(&editor_script[start..end])
 }
 
@@ -189,15 +194,18 @@ pub fn build_dev_map(map: &Path, modules_dir: &Path, output: &Path) -> Result<Bu
         .map_err(|_| Error::Invalid(format!("{SCRIPT_FILE} is not UTF-8")))?;
     let editor_script = strip_bom(&editor_script);
     let mut strings = source_map.strings()?;
+
     drop(source_map);
 
     check_syntax(SCRIPT_FILE, editor_script)?;
     let modules = load_modules(modules_dir)?;
+
     for module in &modules {
         check_syntax(&module.name, &module.source)?;
     }
 
     let script = build_script(editor_script, &modules);
+
     check_syntax("combined script", &script)?;
     let renamed = mark_dev_name(editor_script, &mut strings);
 
@@ -205,6 +213,7 @@ pub fn build_dev_map(map: &Path, modules_dir: &Path, output: &Path) -> Result<Bu
         (SCRIPT_FILE, script.clone().into_bytes()),
         (STRINGS_FILE, strings.to_text().into_bytes()),
     ];
+
     save_files(map, output, &files)?;
 
     Ok(BuildReport {
@@ -247,6 +256,7 @@ mod tests {
         .iter()
         .map(|needle| script.find(needle).unwrap())
         .collect();
+
         assert!(order.windows(2).all(|w| w[0] < w[1]), "{order:?}");
         assert!(check_syntax("script", &script).is_ok());
     }
@@ -258,6 +268,7 @@ mod tests {
         let Error::Lua { file, line, .. } = err else {
             panic!("unexpected error {err}");
         };
+
         assert_eq!(file, "broken.lua");
         assert!(line >= 2, "line {line}");
     }
@@ -287,12 +298,15 @@ mod tests {
     fn every_spell_template_is_valid_lua_in_the_harness() {
         let templates = wc3_data::spells::spell_templates().unwrap();
         let none = std::collections::HashMap::new();
+
         for template in &templates {
             let source =
                 wc3_data::spells::render_template(template, "A001", "Test spell", &none).unwrap();
+
             check_syntax(&template.file, &source).unwrap();
 
             let script = build_script(EDITOR_SCRIPT, &[module(&template.file, &source)]);
+
             check_syntax("combined script", &script).unwrap();
         }
     }

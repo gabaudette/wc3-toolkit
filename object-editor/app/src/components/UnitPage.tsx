@@ -28,11 +28,13 @@ const VARIATIONS_FIELD = "bvar";
 /** The model the preview loads; destructables number their variations. */
 function modelFile(noun: string, fields: Field[]): string | null {
   const raw = fields.find((f) => f.id === MODEL_FIELD[noun])?.raw;
+
   if (!raw || noun !== "destructable") {
     return raw || null;
   }
 
   const variations = Number(fields.find((f) => f.id === VARIATIONS_FIELD)?.raw ?? "1");
+
   return variationModel(raw, variations);
 }
 
@@ -59,6 +61,7 @@ function visibleFields(section: Section, filter: string, changedOnly: boolean): 
 
 function kindLabel(detail: UnitDetail): string {
   const { kind, race } = detail.item;
+
   return [kind, race].filter(Boolean).join(" · ");
 }
 

@@ -13,7 +13,7 @@ Every change must pass these checks with zero errors and zero warnings.
 
 Every check runs before each commit, through [lefthook](lefthook.yml): rustfmt, Clippy and
 `cargo test --workspace` when Rust files are staged; Biome, the TypeScript check, the frontend
-tests and the build when frontend files are. After a small change the whole hook takes a few
+tests and the build when frontend files are; the blank-line check when either is. After a small change the whole hook takes a few
 seconds. `bun install` in `object-editor/app` sets it up. CI does not lint; it builds and runs
 the tests on a clean machine: on Windows, and on Linux for every crate but the app (which needs
 system libraries that take minutes to install there). Fix what the hook reports with
@@ -48,6 +48,13 @@ bun run test
 bun run build
 ```
 
+Blank lines after blocks and declarations (AGE-WS-001/002) in both languages:
+
+```bash
+cd object-editor/app
+bun scripts/check-blank-lines.ts
+```
+
 The Rust app crate embeds the built frontend, so run `bun run build` once before
 `cargo lint` or `cargo test`.
 
@@ -65,8 +72,11 @@ in them must rewrite byte for byte. Building also needs CMake (for the bundled S
 - **AGE-QUAL-006** — `rustfmt` owns Rust formatting (default settings, 100 columns).
 - **AGE-ERR-001/003** — Fallible code returns `Result`. Parsers report malformed data with
   line or row context instead of skipping it. No `unwrap`, `expect` or `panic!` outside tests.
-- **AGE-WS-001/002** — One blank line after a completed block and between groups of
-  declarations with a different purpose, where `rustfmt` does not decide otherwise.
+- **AGE-WS-001/002** — One blank line after a completed block and after the last of a group
+  of declarations, before the next statement, where `rustfmt` and Biome do not decide
+  otherwise. Neither formatter checks this, so `scripts/check-blank-lines.ts` does, in the
+  pre-commit hook; `bun scripts/check-blank-lines.ts --fix` (from `object-editor/app`) adds
+  the missing lines. Separate declarations with different purposes by hand.
 - **AGE-TECH-005** — Platform-agnostic by default: no hardcoded OS or install paths in
   libraries, and cargo aliases or Rust tools instead of shell scripts.
 - Library crates do not print to stdout or stderr; binaries may print intentionally.

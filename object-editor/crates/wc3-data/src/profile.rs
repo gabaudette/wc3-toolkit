@@ -26,6 +26,7 @@ impl Profile {
 
         for raw in text.lines() {
             let line = raw.trim_start_matches(BYTE_ORDER_MARK).trim();
+
             if line.is_empty() || line.starts_with("//") {
                 continue;
             }
@@ -96,6 +97,7 @@ mod tests {
     #[test]
     fn merges_and_overrides() {
         let mut p = Profile::new();
+
         p.merge_text("// comment\n[Hpal]\nButtonpos=2,2\nName=Paladin\n");
         p.merge_text("[Hpal]\nname=Better Paladin\n");
 

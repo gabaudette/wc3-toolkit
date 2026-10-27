@@ -87,6 +87,7 @@ impl OpenMap {
             saved_ui: ui.clone(),
             ui,
         };
+
         map.saved_files = map.files();
         Ok(map)
     }
@@ -94,6 +95,7 @@ impl OpenMap {
     /// Every file the editor writes into the map.
     pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
         let mut files = self.units.files();
+
         files.extend(self.abilities.files());
         files.extend(self.items.files());
         files.extend(self.upgrades.files());
@@ -113,6 +115,7 @@ impl OpenMap {
     /// file on disk (opened once per reader).
     pub fn reader(&self) -> impl Fn(&str) -> Option<Vec<u8>> + '_ {
         let archive = Map::open(&self.path).ok();
+
         move |path| {
             self.imports
                 .pending(path)
@@ -127,6 +130,7 @@ impl OpenMap {
     /// file applies.
     pub fn art(&self, path: &str) -> Option<(String, Vec<u8>)> {
         let read = self.reader();
+
         candidates(path)
             .into_iter()
             .find_map(|file| read(&file).map(|bytes| (file, bytes)))
@@ -150,6 +154,7 @@ impl AppState {
     pub fn with<T>(&self, f: impl FnOnce(&mut Session) -> Result<T, String>) -> Result<T, String> {
         let mut guard = self.0.lock().map_err(|_| poisoned())?;
         let session = guard.as_mut().ok_or(NO_GAME)?;
+
         f(session)
     }
 }
@@ -173,17 +178,20 @@ mod tests {
         let dir = tempfile::tempdir()?;
         let path = dir.path().join("map.w3x");
         let mut archive = mpq::Archive::create(&path, MAX_FILES)?;
+
         archive.write("Haramad.mdx", b"model")?;
         archive.write("Textures\\Skin.dds", b"texture")?;
         archive.save()?;
 
         let mut open = OpenMap::load(path.clone())?;
+
         open.imports.add(ImportedFile {
             path: "war3mapImported\\BTNHero.blp".to_owned(),
             bytes: b"icon".to_vec(),
         });
 
         let found = |art: &str| open.art(art).map(|(file, bytes)| (file, bytes.len()));
+
         assert_eq!(found("Haramad.mdl"), Some(("Haramad.mdx".to_owned(), 5)));
         assert_eq!(
             found("Textures/Skin.blp"),
@@ -203,6 +211,7 @@ mod tests {
     fn imported_tga_art_is_found_and_decoded() -> TestResult {
         // A 1x1 top-down true-color TGA holding one red pixel (stored BGR).
         let mut tga = vec![0u8; 18];
+
         tga[2] = 2;
         tga[12] = 1;
         tga[14] = 1;
@@ -213,6 +222,7 @@ mod tests {
         let dir = tempfile::tempdir()?;
         let path = dir.path().join("map.w3x");
         let mut archive = mpq::Archive::create(&path, MAX_FILES)?;
+
         archive.write("war3mapImported\\BTNRed.tga", &tga)?;
         archive.save()?;
 
@@ -220,8 +230,10 @@ mod tests {
         let (file, bytes) = open
             .art("war3mapImported\\BTNRed.blp")
             .ok_or("the TGA was not found")?;
+
         assert_eq!(file, "war3mapImported\\BTNRed.tga");
         let image = wc3_data::icon::decode_texture(&bytes)?;
+
         assert_eq!((image.width, image.height), (1, 1));
         assert_eq!(image.rgba, [255, 0, 0, 255]);
         Ok(())

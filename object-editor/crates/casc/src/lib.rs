@@ -108,6 +108,7 @@ impl Storage {
         // SAFETY: `c_path` is a valid NUL-terminated string that outlives the call,
         // and `handle` is a valid out-pointer.
         let opened = unsafe { CascOpenStorage(c_path.as_ptr(), CASC_LOCALE_ALL, &mut handle) };
+
         if !opened {
             return Err(Error::OpenStorage {
                 path,
@@ -134,8 +135,10 @@ impl Storage {
                 &mut file,
             )
         };
+
         if !opened {
             let code = last_error();
+
             if code == ERROR_FILE_NOT_FOUND {
                 return Err(Error::NotFound(name.to_owned()));
             }
@@ -180,6 +183,7 @@ impl Storage {
                 &mut size,
             )
         };
+
         if find.is_null() || find.addr() == INVALID_HANDLE_ADDR {
             return Ok(entries);
         }
@@ -187,6 +191,7 @@ impl Storage {
         loop {
             // SAFETY: the shim wrote a NUL-terminated string into `name`.
             let entry_name = unsafe { CStr::from_ptr(name.as_ptr()) };
+
             entries.push(Entry {
                 name: entry_name.to_string_lossy().into_owned(),
                 size,
@@ -195,6 +200,7 @@ impl Storage {
             // SAFETY: `find` is a live search handle and `name` is writable as above.
             let found =
                 unsafe { casc_shim_find_next(find, name.as_mut_ptr(), NAME_CAPACITY, &mut size) };
+
             if !found {
                 break;
             }
@@ -228,6 +234,7 @@ fn read_open_file(file: Handle, name: &str) -> Result<Vec<u8>> {
         // SAFETY: `chunk` has `READ_CHUNK_SIZE` writable bytes and `got` is a valid out-pointer.
         let read =
             unsafe { CascReadFile(file, chunk.as_mut_ptr().cast(), READ_CHUNK_SIZE, &mut got) };
+
         if !read {
             return Err(read_error());
         }

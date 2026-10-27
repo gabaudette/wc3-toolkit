@@ -59,6 +59,7 @@ export function AbilitiesPane({
     queue.current = queue.current.then(async () => {
       try {
         const updated = await edit();
+
         if (updated) {
           setDetail(updated);
         }
@@ -80,6 +81,7 @@ export function AbilitiesPane({
     run(async () => {
       let updated: AbilityDetail | null = null;
       const levels = detail?.levels ?? fromLevel;
+
       for (let level = fromLevel; level <= levels; level++) {
         updated = await api.setAbilityField(id, field, level, value);
       }
@@ -99,6 +101,7 @@ export function AbilitiesPane({
 
     try {
       const created = await api.createAbility(detail.card.summary.base);
+
       onMapChanged();
       refreshList();
       onSelect(created.id);

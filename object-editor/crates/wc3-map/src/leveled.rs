@@ -119,6 +119,7 @@ impl LeveledObjects {
             data: read(kind.data_file)?,
             skin: read(kind.skin_file)?,
         };
+
         Ok(Self {
             kind,
             tables,
@@ -263,6 +264,7 @@ impl LeveledObjects {
         mode: ArtMode,
     ) -> Option<LeveledInfo> {
         let found = self.find(id);
+
         found.base(db)?;
         let text = |field_id: &str| {
             db.field(field_id)
@@ -304,6 +306,7 @@ impl LeveledObjects {
         }
 
         let parsed = parse_value(field, text)?;
+
         if same_as_base(db, base, field, level, &parsed) {
             self.reset(strings, id, field, level);
             return Ok(());
@@ -318,6 +321,7 @@ impl LeveledObjects {
 
         let stored_level = if field.per_level { level } else { 0 };
         let entry = entry_mut(&mut self.tables, field.netsafe, id);
+
         if entry.sets.is_empty() {
             entry.sets.push(ModSet {
                 flags: 0,
@@ -326,6 +330,7 @@ impl LeveledObjects {
         }
 
         let set = &mut entry.sets[0];
+
         match set
             .mods
             .iter_mut()
@@ -359,11 +364,14 @@ impl LeveledObjects {
         };
 
         let mut removed = false;
+
         for data in [&mut self.tables.data, &mut self.tables.skin] {
             let entries = data.custom.iter_mut().chain(data.original.iter_mut());
+
             for entry in entries.filter(|e| e.effective_id() == id) {
                 for set in &mut entry.sets {
                     let before = set.mods.len();
+
                     set.mods
                         .retain(|m| !(m.field == field_id && at_level(field, m, level)));
                     removed |= set.mods.len() != before;
@@ -416,6 +424,7 @@ impl LeveledObjects {
             !self.has(id) && !db.contains(&id.to_string())
         })
         .ok_or_else(|| Error::Invalid(format!("no free ID for {base}")))?;
+
         for data in [&mut self.tables.data, &mut self.tables.skin] {
             data.custom.push(ObjectEntry {
                 base,
@@ -457,11 +466,13 @@ impl LeveledObjects {
             db.field_name(field),
             field.field
         );
+
         if field.per_level {
             comment.push_str(&format!(", level {level}"));
         }
 
         let reference = strings.add(text, Some(&comment));
+
         if let Some(number) = reference_id(&reference) {
             self.added_strings.push(number);
         }
@@ -539,6 +550,7 @@ impl<'a> Found<'a> {
         }
 
         let base = self.base(db)?;
+
         db.raw_value(&base.to_string(), field, level, mode)
     }
 
@@ -547,6 +559,7 @@ impl<'a> Found<'a> {
             return 1;
         };
         let changed = self.modification(field, 0).map(Value::to_string);
+
         changed
             .or_else(|| db.raw_value(&self.base(db)?.to_string(), field, 0, ArtMode::Sd))
             .and_then(|v| v.trim().parse::<u32>().ok())
@@ -591,11 +604,14 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
             id,
             sets: Vec::new(),
         });
+
         let last = data.custom.len() - 1;
+
         return &mut data.custom[last];
     }
 
     let index = data.original.iter().position(|e| e.effective_id() == id);
+
     match index {
         Some(i) => &mut data.original[i],
         None => {
@@ -604,7 +620,9 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
                 id: FourCC::ZERO,
                 sets: Vec::new(),
             });
+
             let last = data.original.len() - 1;
+
             &mut data.original[last]
         }
     }
@@ -620,8 +638,10 @@ fn same_as_base(
     value: &Value,
 ) -> bool {
     let base = base.to_string();
+
     [ArtMode::Sd, ArtMode::Hd].iter().all(|mode| {
         let base_value = db.raw_value(&base, field, level, *mode).unwrap_or_default();
+
         parse_value(field, &base_value).is_ok_and(|parsed| &parsed == value)
     })
 }

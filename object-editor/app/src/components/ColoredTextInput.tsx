@@ -40,6 +40,7 @@ export function ColoredTextInput({
 
   function trackSelection(e: SyntheticEvent<HTMLInputElement | HTMLTextAreaElement>) {
     const { selectionStart, selectionEnd } = e.currentTarget;
+
     if (
       readOnly ||
       selectionStart === null ||
@@ -79,6 +80,7 @@ export function ColoredTextInput({
   function customColor(hex: string) {
     if (selection) {
       const edit = applyColor(value, selection.start, selection.end, hex.replace(HEX_PREFIX, ""));
+
       onDraft(edit.text);
       onCommit(edit.text);
       setSelection(null);

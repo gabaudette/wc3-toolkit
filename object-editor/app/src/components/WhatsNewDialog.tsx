@@ -14,6 +14,7 @@ function ItemText({ text }: { text: string }) {
     <>
       {parseInline(text).map((run, i) => {
         const key = `${i}-${run.text}`;
+
         if (run.code) {
           return (
             <code key={key} className="font-mono text-[0.9em] text-gold-bright">

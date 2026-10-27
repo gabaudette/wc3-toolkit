@@ -45,6 +45,7 @@ fn env_dir(var: &str) -> Result<PathBuf, String> {
 fn find_maps(dir: &Path, found: &mut Vec<PathBuf>) -> std::io::Result<()> {
     for entry in std::fs::read_dir(dir)? {
         let path = entry?.path();
+
         if path.is_dir() {
             find_maps(&path, found)?;
         } else if path
@@ -64,12 +65,14 @@ fn find_maps(dir: &Path, found: &mut Vec<PathBuf>) -> std::io::Result<()> {
 #[ignore = "needs maps (WC3_MAPS_DIR)"]
 fn every_map_round_trips() -> TestResult {
     let mut maps = Vec::new();
+
     find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
     let mut failures = Vec::new();
     let mut files = 0;
 
     for path in &maps {
         let map = Map::open(path)?;
+
         for name in OBJECT_FILES.iter().copied().chain([STRINGS_FILE]) {
             let Some(original) = map.read_file(name)? else {
                 continue;
@@ -103,6 +106,7 @@ fn every_map_round_trips() -> TestResult {
 fn field_ids(map: &Map, file: &str, id: FourCC) -> Result<Vec<String>, Box<dyn std::error::Error>> {
     let data = map.object_data(file)?.ok_or(format!("{file} missing"))?;
     let entry = data.find(id).ok_or(format!("{id} missing from {file}"))?;
+
     Ok(entry.mods().map(|m| m.field.to_string()).collect())
 }
 
@@ -123,6 +127,7 @@ fn edited_units_save_and_read_back() -> TestResult {
     // A text change that is reset again leaves no string behind.
     let untouched = units.files();
     let tooltip = db.field("utub").ok_or("no utub")?;
+
     units.set(&db, paladin, tooltip, "|cffffcc00New|r tooltip")?;
     assert_ne!(units.files(), untouched);
     units.reset(paladin, tooltip);
@@ -135,12 +140,14 @@ fn edited_units_save_and_read_back() -> TestResult {
     let hero = units.create(&db, paladin)?;
     let hp = db.field("uhpm").ok_or("no uhpm")?;
     let name = db.field("unam").ok_or("no unam")?;
+
     units.set(&db, hero, hp, "1000")?;
     units.set(&db, hero, name, "Holy Tank")?;
     save_files(&path, &path, &units.files())?;
 
     let map = Map::open(&path)?;
     let reloaded = MapUnits::load(&map)?;
+
     assert_eq!(hero.to_string(), "H000");
     assert_eq!(reloaded.display_value(&db, hero, hp, ArtMode::Sd), "1000");
     assert_eq!(reloaded.name(&db, hero), "Holy Tank");
@@ -150,6 +157,7 @@ fn edited_units_save_and_read_back() -> TestResult {
 
     let mut edited = reloaded;
     let abilities = db.field("uhab").ok_or("no uhab")?;
+
     edited.set(&db, hero, abilities, "AHhb,AHds,AHre,AHad,AHtb")?;
     assert!(edited.is_modified(hero, abilities));
     edited.set(&db, hero, abilities, "AHhb,AHds,AHre,AHad")?;
@@ -179,6 +187,7 @@ fn edited_items_save_and_read_back() -> TestResult {
     let map = Map::open(&path)?;
     let mut units = MapUnits::load(&map)?;
     let mut items = PlainObjects::load(&map, ITEMS)?;
+
     drop(map);
     let claws = FourCC::parse("ratf").ok_or("bad id")?;
     let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
@@ -186,6 +195,7 @@ fn edited_items_save_and_read_back() -> TestResult {
 
     // A text change that is reset again leaves no string behind.
     let untouched = (units.files(), items.files());
+
     items.set(&db, units.strings_mut(), claws, tooltip, "|cffffcc00New|r")?;
     assert_ne!((units.files(), items.files()), untouched);
     items.reset(units.strings_mut(), claws, tooltip);
@@ -196,15 +206,18 @@ fn edited_items_save_and_read_back() -> TestResult {
     );
 
     let custom = items.create(&db, claws)?;
+
     items.set(&db, units.strings_mut(), custom, gold, "250")?;
     items.set(&db, units.strings_mut(), custom, name, "Claws of Testing")?;
     let mut written = units.files();
+
     written.extend(items.files());
     save_files(&path, &path, &written)?;
 
     let map = Map::open(&path)?;
     let reloaded = PlainObjects::load(&map, ITEMS)?;
     let strings = map.strings()?;
+
     assert_eq!(custom.to_string(), "I000");
     assert_eq!(reloaded.base_of(&db, custom), Some(claws));
     assert_eq!(
@@ -219,6 +232,7 @@ fn edited_items_save_and_read_back() -> TestResult {
 
     let mut edited = reloaded;
     let mut strings = strings;
+
     edited.set(&db, &mut strings, custom, gold, "800")?;
     assert!(
         !edited.is_modified(custom, gold),
@@ -277,20 +291,24 @@ fn edited_buffs_and_destructables_save_and_read_back() -> TestResult {
         let map = Map::open(&path)?;
         let mut units = MapUnits::load(&map)?;
         let mut objects = PlainObjects::load(&map, case.kind)?;
+
         drop(map);
         let base = FourCC::parse(case.base).ok_or("bad id")?;
         let (number, name) = (field(&db, case.number.0)?, field(&db, case.name)?);
 
         let custom = objects.create(&db, base)?;
+
         objects.set(&db, units.strings_mut(), custom, number, case.number.1)?;
         objects.set(&db, units.strings_mut(), custom, name, "Testing Name")?;
         let mut written = units.files();
+
         written.extend(objects.files());
         save_files(&path, &path, &written)?;
 
         let map = Map::open(&path)?;
         let reloaded = PlainObjects::load(&map, case.kind)?;
         let strings = map.strings()?;
+
         assert_eq!(custom.to_string(), case.first_id);
         assert_eq!(reloaded.base_of(&db, custom), Some(base));
         assert_eq!(
@@ -305,6 +323,7 @@ fn edited_buffs_and_destructables_save_and_read_back() -> TestResult {
         assert_eq!(field_ids(&map, case.files.0, custom)?, [case.number.0]);
         assert_eq!(field_ids(&map, case.files.1, custom)?, [case.name]);
     }
+
     Ok(())
 }
 
@@ -316,6 +335,7 @@ fn level_and_column(
 ) -> Result<Vec<(u32, u32)>, Box<dyn std::error::Error>> {
     let data = map.object_data(file)?.ok_or(format!("{file} missing"))?;
     let entry = data.find(id).ok_or(format!("{id} missing from {file}"))?;
+
     Ok(entry
         .mods()
         .filter(|m| m.field.to_string() == field)
@@ -338,6 +358,7 @@ fn edited_abilities_save_and_read_back() -> TestResult {
     let map = Map::open(&path)?;
     let mut units = MapUnits::load(&map)?;
     let mut abilities = MapAbilities::load(&map)?;
+
     drop(map);
     let holy_light = FourCC::parse("AHhb").ok_or("bad id")?;
     let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
@@ -351,6 +372,7 @@ fn edited_abilities_save_and_read_back() -> TestResult {
 
     // A text change that is reset again leaves no string behind.
     let untouched = (units.files(), abilities.files());
+
     abilities.set(
         &db,
         units.strings_mut(),
@@ -368,11 +390,13 @@ fn edited_abilities_save_and_read_back() -> TestResult {
     );
 
     let custom = abilities.create(&db, holy_light)?;
+
     abilities.set(&db, units.strings_mut(), custom, amount, 2, "500")?;
     abilities.set(&db, units.strings_mut(), custom, cooldown, 3, "2.5")?;
     abilities.set(&db, units.strings_mut(), custom, levels, 0, "4")?;
     abilities.set(&db, units.strings_mut(), custom, name, 0, "Holier Light")?;
     let mut written = units.files();
+
     written.extend(abilities.files());
     save_files(&path, &path, &written)?;
 
@@ -383,6 +407,7 @@ fn edited_abilities_save_and_read_back() -> TestResult {
     let raw = |abilities: &MapAbilities, field, level| {
         abilities.raw_value(&db, strings, custom, field, level, ArtMode::Sd)
     };
+
     assert_eq!(custom.to_string(), "A000");
     assert_eq!(raw(&reloaded, amount, 1).as_deref(), Some("200"));
     assert_eq!(raw(&reloaded, amount, 2).as_deref(), Some("500"));
@@ -392,6 +417,7 @@ fn edited_abilities_save_and_read_back() -> TestResult {
     let info = reloaded
         .info(&db, strings, custom, ArtMode::Sd)
         .ok_or("no info")?;
+
     assert!(info.hero && info.code == "AHhb" && info.levels == 4);
     assert_eq!(
         level_and_column(&map, ABILITIES_FILE, custom, "Hhb1")?,
@@ -415,6 +441,7 @@ fn edited_abilities_save_and_read_back() -> TestResult {
         mode: ArtMode::Sd,
         others: &units_db,
     };
+
     assert_eq!(
         db.fill_placeholders("<A000,DataA2> and <A000,Cool3>", &placeholders),
         "500 and 2.5"
@@ -422,6 +449,7 @@ fn edited_abilities_save_and_read_back() -> TestResult {
 
     // Typing the base ability's value again is no change.
     let mut strings = units.strings().clone();
+
     reloaded.set(&db, &mut strings, custom, amount, 2, "400")?;
     assert!(!reloaded.is_modified(custom, amount, 2));
     assert!(reloaded.reset(&mut strings, custom, cooldown, 3));
@@ -455,6 +483,7 @@ fn custom_units_move_between_maps() -> TestResult {
     };
 
     let mut maps = Vec::new();
+
     find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
     let dir = tempfile::tempdir()?;
     let (mut moved_maps, mut objects, mut files_moved) = (0, 0, 0);
@@ -472,6 +501,7 @@ fn custom_units_move_between_maps() -> TestResult {
             .filter(|u| u.is_custom)
             .map(|u| u.id)
             .collect();
+
         if custom.is_empty() {
             continue;
         }
@@ -487,6 +517,7 @@ fn custom_units_move_between_maps() -> TestResult {
             map.read_file(path).ok().flatten()
         })?;
         let bundle = Bundle::from_file(&export.bundle.to_file())?;
+
         assert_eq!(
             bundle,
             export.bundle,
@@ -495,6 +526,7 @@ fn custom_units_move_between_maps() -> TestResult {
         );
         // Share codes carry the objects; imported files only travel in bundle files.
         let from_code = Bundle::from_code(&export.bundle.to_code())?;
+
         assert_eq!(
             from_code.objects(),
             bundle.objects(),
@@ -517,6 +549,7 @@ fn custom_units_move_between_maps() -> TestResult {
             buffs: &target_buffs,
         };
         let plan = transfer::plan(&bundle, target, &in_game)?;
+
         assert!(
             plan.iter().all(|p| p.new_id != p.id),
             "{}: an ID that is taken was kept",
@@ -540,15 +573,19 @@ fn custom_units_move_between_maps() -> TestResult {
         let max_files = MOVED_MAX_FILES + u32::try_from(bundle.files().len())?;
         mpq::Archive::create(&copy, max_files)?.save()?;
         let mut imports = MapImports::load(&Map::open(&copy)?)?;
+
         for file in bundle.files() {
             imports.add(file.clone());
         }
+
         let mut written = target_units.files();
+
         written.extend(target_abilities.files());
         written.extend(target_items.files());
         written.extend(target_upgrades.files());
         written.extend(target_buffs.files());
         let import_files = imports.files();
+
         written.extend(import_files.iter().map(|(p, b)| (p.as_str(), b.clone())));
         save_files(&copy, &copy, &written)?;
 
@@ -563,6 +600,7 @@ fn custom_units_move_between_maps() -> TestResult {
                 file.path
             );
         }
+
         let reread = MapUnits::load(&saved)?;
         let reread_abilities = MapAbilities::load(&saved)?;
         let reread_items = PlainObjects::load(&saved, ITEMS)?;
@@ -579,6 +617,7 @@ fn custom_units_move_between_maps() -> TestResult {
                 planned.new_id
             );
         }
+
         for planned in plan.iter().filter(|p| p.ty == ObjectType::Item) {
             assert!(
                 reread_items
@@ -590,6 +629,7 @@ fn custom_units_move_between_maps() -> TestResult {
                 planned.new_id
             );
         }
+
         for planned in plan.iter().filter(|p| p.ty == ObjectType::Ability) {
             assert!(
                 reread_abilities
@@ -601,11 +641,13 @@ fn custom_units_move_between_maps() -> TestResult {
                 planned.new_id
             );
         }
+
         let old_ids: Vec<FourCC> = plan
             .iter()
             .filter(|p| p.ty == ObjectType::Unit)
             .map(|p| p.id)
             .collect();
+
         for planned in plan.iter().filter(|p| p.ty == ObjectType::Unit) {
             assert!(
                 reread
@@ -628,6 +670,7 @@ fn custom_units_move_between_maps() -> TestResult {
                             .iter()
                             .any(|u| u.id == *id && !plan.iter().any(|p| p.id == *id))
                 });
+
                 assert!(
                     stale.is_none(),
                     "{}: {} still names {stale:?}",
@@ -679,6 +722,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
     let swords = FourCC::parse("Rhme").ok_or("bad id")?;
     let upgrade = upgrades.create(&upgrades_db, swords)?;
     let upgrade_name = upgrades_db.field("gnam").ok_or("no gnam")?;
+
     upgrades.set(
         &upgrades_db,
         units.strings_mut(),
@@ -688,6 +732,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
         "Swords of Sharing",
     )?;
     let item = items.create(&items_db, FourCC::parse("ratf").ok_or("bad id")?)?;
+
     items.set(
         &items_db,
         units.strings_mut(),
@@ -696,6 +741,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
         "Claws of Sharing",
     )?;
     let shop = units.create(&db, FourCC::parse("ngme").ok_or("bad id")?)?;
+
     units.set(&db, shop, field(&db, "usei")?, &format!("{item},stwp"))?;
     units.set(&db, shop, field(&db, "ures")?, &upgrade.to_string())?;
 
@@ -707,6 +753,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
         buffs: &buffs,
     };
     let export = transfer::export(source, &refs, &[shop], &|_| None)?;
+
     assert!(export.warnings.is_empty(), "{:?}", export.warnings);
     let bundle = Bundle::from_code(&export.bundle.to_code())?;
 
@@ -719,6 +766,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
     let mut target_items = PlainObjects::load(&map, ITEMS)?;
     let mut target_upgrades = LeveledObjects::load(&map, UPGRADES)?;
     let mut target_buffs = PlainObjects::load(&map, BUFFS)?;
+
     drop(map);
     target_items.create(&items_db, FourCC::parse("phea").ok_or("bad id")?)?;
     target_upgrades.create(&upgrades_db, swords)?;
@@ -752,6 +800,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
         .find(|p| p.ty == ObjectType::Upgrade)
         .ok_or("the upgrade did not come along")?
         .new_id;
+
     assert_eq!(
         (new_item.to_string(), new_upgrade.to_string()),
         ("I001".into(), "R001".into())
@@ -769,6 +818,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
         },
     );
     let mut written = target_units.files();
+
     written.extend(target_items.files());
     written.extend(target_upgrades.files());
     save_files(&target_path, &target_path, &written)?;
@@ -778,6 +828,7 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
         (MapUnits::load(&saved)?, PlainObjects::load(&saved, ITEMS)?);
     let reread_upgrades = LeveledObjects::load(&saved, UPGRADES)?;
     let strings = saved.strings()?;
+
     assert_eq!(
         reread_units
             .raw_value(&db, new_shop, field(&db, "usei")?, ArtMode::Sd)
@@ -828,24 +879,29 @@ fn edited_doodads_save_and_read_back() -> TestResult {
     let map = Map::open(&path)?;
     let mut units = MapUnits::load(&map)?;
     let mut doodads = LeveledObjects::load(&map, DOODADS)?;
+
     drop(map);
     let mushrooms = FourCC::parse("APms").ok_or("bad id")?;
     let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
     let (red, scale) = (field("dvr1")?, field("ddes")?);
 
     let custom = doodads.create(&db, mushrooms)?;
+
     doodads.set(&db, units.strings_mut(), custom, red, 2, "100")?;
     doodads.set(&db, units.strings_mut(), custom, scale, 0, "1.5")?;
     let mut written = units.files();
+
     written.extend(doodads.files());
     save_files(&path, &path, &written)?;
 
     let map = Map::open(&path)?;
     let reloaded = LeveledObjects::load(&map, DOODADS)?;
     let strings = map.strings()?;
+
     assert_eq!(custom.to_string(), "D000");
     assert_eq!(reloaded.levels(&db, custom), 4);
     let value = |field, level| reloaded.raw_value(&db, &strings, custom, field, level, ArtMode::Sd);
+
     assert_eq!(value(red, 2).as_deref(), Some("100"));
     assert_eq!(value(red, 1).as_deref(), Some("255"));
     assert_eq!(value(scale, 0).as_deref(), Some("1.5"));
@@ -874,6 +930,7 @@ fn edited_upgrades_save_and_read_back() -> TestResult {
     let map = Map::open(&path)?;
     let mut units = MapUnits::load(&map)?;
     let mut upgrades = LeveledObjects::load(&map, UPGRADES)?;
+
     drop(map);
     let swords = FourCC::parse("Rhme").ok_or("bad id")?;
     let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
@@ -886,6 +943,7 @@ fn edited_upgrades_save_and_read_back() -> TestResult {
 
     // A text change that is reset again leaves no string behind.
     let untouched = (units.files(), upgrades.files());
+
     upgrades.set(&db, units.strings_mut(), swords, name, 2, "|cffffcc00New|r")?;
     assert_ne!((units.files(), upgrades.files()), untouched);
     upgrades.reset(units.strings_mut(), swords, name, 2);
@@ -896,6 +954,7 @@ fn edited_upgrades_save_and_read_back() -> TestResult {
     );
 
     let custom = upgrades.create(&db, swords)?;
+
     upgrades.set(&db, units.strings_mut(), custom, gold, 0, "250")?;
     upgrades.set(&db, units.strings_mut(), custom, levels, 0, "4")?;
     upgrades.set(
@@ -908,15 +967,18 @@ fn edited_upgrades_save_and_read_back() -> TestResult {
     )?;
     upgrades.set(&db, units.strings_mut(), custom, requirements, 4, "hcas")?;
     let mut written = units.files();
+
     written.extend(upgrades.files());
     save_files(&path, &path, &written)?;
 
     let map = Map::open(&path)?;
     let reloaded = LeveledObjects::load(&map, UPGRADES)?;
     let strings = map.strings()?;
+
     assert_eq!(custom.to_string(), "R000");
     assert_eq!(reloaded.levels(&db, custom), 4);
     let value = |field, level| reloaded.raw_value(&db, &strings, custom, field, level, ArtMode::Sd);
+
     assert_eq!(value(gold, 0).as_deref(), Some("250"));
     assert_eq!(value(name, 1).as_deref(), Some("Iron Forged Swords"));
     assert_eq!(value(name, 4).as_deref(), Some("Adamantite Swords"));
@@ -932,6 +994,7 @@ fn edited_upgrades_save_and_read_back() -> TestResult {
 
     let mut edited = reloaded;
     let mut strings = strings;
+
     edited.set(&db, &mut strings, custom, gold, 0, "100")?;
     assert!(
         !edited.is_modified(custom, gold, 0),
@@ -960,6 +1023,7 @@ fn imported_art_decodes() -> TestResult {
     );
 
     let mut maps = Vec::new();
+
     find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
     let (mut models, mut textures) = (0, 0);
     let mut failures = Vec::new();
@@ -995,6 +1059,7 @@ fn imported_art_decodes() -> TestResult {
             } else {
                 continue;
             };
+
             if let Err(e) = decoded {
                 failures.push(format!("{}: {}: {e}", path.display(), file.path));
             }

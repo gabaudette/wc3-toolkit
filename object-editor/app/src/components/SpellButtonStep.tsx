@@ -53,11 +53,13 @@ function spot(detail: AbilityDetail, fields: { x: string; y: string }): Spot {
 function conflicts(at: Spot, hotkey: string, commands: Command[]): string[] {
   const found: string[] = [];
   const covered = commands.find((c) => c.x === at.x && c.y === at.y);
+
   if (covered) {
     found.push(`This spot holds ${covered.label}; the spell's button would hide it.`);
   }
 
   const shared = commands.find((c) => c.hotkey === hotkey.toUpperCase());
+
   if (shared) {
     found.push(`${hotkey.toUpperCase()} is already the hotkey of ${shared.label}.`);
   }
@@ -78,6 +80,7 @@ export function SpellButtonStep({ detail, icons, onSet, onIcon, onHotkey }: Spel
   const hotkey = raw(detail, HOTKEY);
   const learnHotkey = raw(detail, LEARN_HOTKEY);
   let commands = UNIT_COMMANDS;
+
   if (hero) {
     commands = HERO_COMMANDS;
   }
@@ -145,6 +148,7 @@ function CardEditor({ title, spot, icon, commands, hotkey, onMove, onHotkey }: C
         {cells.map((cell) => {
           const here = cell.x === spot.x && cell.y === spot.y;
           const command = commands.find((c) => c.x === cell.x && c.y === cell.y);
+
           return (
             <button
               key={`${cell.x}-${cell.y}`}
@@ -171,6 +175,7 @@ function CardEditor({ title, spot, icon, commands, hotkey, onMove, onHotkey }: C
           maxLength={1}
           onChange={(e) => {
             const key = e.target.value.toUpperCase();
+
             if (key) {
               onHotkey(key);
             }
@@ -190,6 +195,7 @@ function CardEditor({ title, spot, icon, commands, hotkey, onMove, onHotkey }: C
 
 function cellLabel(cell: Spot, here: boolean, command: Command | undefined): string {
   const place = `Column ${cell.x + 1}, row ${cell.y + 1}`;
+
   if (here) {
     return `${place}: the spell`;
   }

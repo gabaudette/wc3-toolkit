@@ -52,6 +52,7 @@ const OPEN_BY_DEFAULT = ["stats", "data", "text"];
 /** Doodads have no stats or data: their art is what people change. */
 const DOODAD_OPEN_BY_DEFAULT = ["text", "art"];
 const NO_LEVEL = 0;
+
 /** Keys of the level tables, shown under the page header ("level" or "variation"). */
 function levelKeys(level: string): [string, string][] {
   return [
@@ -76,6 +77,7 @@ function isText(field: LevelField): boolean {
 
 function levelFieldMatches(field: LevelField, filter: string, changedOnly: boolean): boolean {
   const changed = field.cells.some((c) => c.modified);
+
   return (!changedOnly || changed) && (!filter || matches(field.field, filter));
 }
 
@@ -91,12 +93,14 @@ function visible(section: AbilitySection, filter: string, changedOnly: boolean):
 
 function changedIn(fields: Field[], levelFields: LevelField[]): number {
   const cells = levelFields.flatMap((f) => f.cells).filter((c) => c.modified).length;
+
   return fields.filter((f) => f.modified).length + cells;
 }
 
 /** Header of the base column: the ability a custom one copies, else the game's value. */
 function baseLabel(detail: AbilityDetail): string {
   const { summary } = detail.card;
+
   if (summary.custom) {
     return `Base · ${summary.base}`;
   }
@@ -116,8 +120,10 @@ function plural(count: number): string {
 function facts(detail: AbilityDetail, noun: Noun): string {
   const { summary, hotkey, requiredLevel } = detail.card;
   let kind = "Unit ability";
+
   if (noun === "doodad") {
     const variations = `${detail.levels} variation${plural(detail.levels)}`;
+
     return ["Doodad", summary.race, variations].filter(Boolean).join(" · ");
   }
 
@@ -171,9 +177,11 @@ export function AbilityPage({
   // Doodads show their model; abilities and upgrades have none to show.
   const doodadModel = single.find((f) => f.id === DOODAD_MODEL)?.raw;
   let modelPath: string | null = null;
+
   if (noun === "doodad" && doodadModel) {
     modelPath = variationModel(doodadModel, detail.levels);
   }
+
   const changedCount = detail.sections.reduce(
     (sum, s) => sum + changedIn(s.fields, s.levelFields),
     0,

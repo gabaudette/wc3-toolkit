@@ -71,11 +71,13 @@ function flagCount(field: Field): string {
 
     return inList(field.raw, choice);
   }).length;
+
   return `${on} of ${field.options.length} on`;
 }
 
 function abilityCount(raw: string): string {
   const count = raw.split(",").filter((code) => code.trim()).length;
+
   if (count === 1) {
     return "1 ability";
   }
@@ -105,6 +107,7 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
   if (wideFlags(field)) {
     return <p className="pt-1 text-sm text-faint">{flagCount(field)}</p>;
   }
+
   const commitOnEnter = (e: KeyboardEvent) => {
     if (e.key === "Enter") {
       commit();
@@ -177,6 +180,7 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
   // Game text (names, tooltips) gets the color menu and a live preview.
   if (field.preview) {
     const multiline = field.control === "longText";
+
     return (
       <div>
         <ColoredTextInput
@@ -247,6 +251,7 @@ const numberFormat = new Intl.NumberFormat();
 /** "Range 1 – 500,000", "At most 5" or nothing, from the field's limits. */
 export function rangeText(field: Field): string | null {
   const { min, max } = field;
+
   if (min !== null && max !== null) {
     return `Range ${numberFormat.format(min)} – ${numberFormat.format(max)}`;
   }

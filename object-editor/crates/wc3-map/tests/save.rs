@@ -8,6 +8,7 @@ const MAX_FILES: u32 = 8;
 
 fn make_map(path: &Path, files: &[(&str, &[u8])]) -> mpq::Result<()> {
     let mut archive = mpq::Archive::create(path, MAX_FILES)?;
+
     for (name, data) in files {
         archive.write(name, data)?;
     }
@@ -20,6 +21,7 @@ fn saving_to_a_new_file_leaves_the_source_untouched() {
     let dir = tempfile::tempdir().unwrap();
     let source = dir.path().join("source.w3m");
     let dest = dir.path().join("dest.w3m");
+
     make_map(&source, &[("war3map.lua", b"-- script")]).unwrap();
     let before = std::fs::read(&source).unwrap();
 
@@ -32,6 +34,7 @@ fn saving_to_a_new_file_leaves_the_source_untouched() {
 
     assert_eq!(std::fs::read(&source).unwrap(), before);
     let saved = Map::open(&dest).unwrap();
+
     assert_eq!(
         saved.read_file("war3map.lua").unwrap().unwrap(),
         b"-- script"
@@ -43,11 +46,13 @@ fn saving_to_a_new_file_leaves_the_source_untouched() {
 fn saving_over_the_source_replaces_it() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("map.w3m");
+
     make_map(&path, &[("war3map.lua", b"-- old")]).unwrap();
 
     save_files(&path, &path, &[("war3map.lua", b"-- new".to_vec())]).unwrap();
 
     let saved = Map::open(&path).unwrap();
+
     assert_eq!(saved.read_file("war3map.lua").unwrap().unwrap(), b"-- new");
     assert_eq!(
         std::fs::read_dir(dir.path()).unwrap().count(),

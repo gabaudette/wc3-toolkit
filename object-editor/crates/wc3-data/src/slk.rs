@@ -43,6 +43,7 @@ impl Slk {
                     Some(b'Y') => &mut y,
                     _ => continue,
                 };
+
                 *target = part[1..].parse().map_err(|_| Error::Parse {
                     line: line_index + 1,
                     reason: format!("invalid cell coordinate {part:?}"),
@@ -54,6 +55,7 @@ impl Slk {
                     .strip_prefix('"')
                     .and_then(|v| v.strip_suffix('"'))
                     .unwrap_or(v);
+
                 cells.insert((x, y), v.to_owned());
                 max_x = max_x.max(x);
                 max_y = max_y.max(y);
@@ -108,6 +110,7 @@ impl Slk {
     pub fn get(&self, key: &str, column: &str) -> Option<&str> {
         let row = &self.rows[*self.row_index.get(key)?];
         let col = *self.column_index.get(&column.to_ascii_lowercase())?;
+
         row.get(col)?.as_deref()
     }
 

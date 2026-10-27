@@ -167,12 +167,15 @@ impl Tables {
     /// Custom object IDs in file order, each once.
     fn custom_ids(&self) -> Vec<(FourCC, FourCC)> {
         let mut ids: Vec<(FourCC, FourCC)> = Vec::new();
+
         for entry in self.both().iter().flat_map(|t| &t.custom) {
             let id = entry.effective_id();
+
             if !ids.iter().any(|(known, _)| *known == id) {
                 ids.push((id, entry.base));
             }
         }
+
         ids
     }
 }
@@ -192,6 +195,7 @@ impl MapObjects<'_> {
         match ty {
             ObjectType::Unit => {
                 let (data, skin, _) = self.units.parts();
+
                 data.find(id).is_some() || skin.find(id).is_some()
             }
             ObjectType::Ability => self.abilities.has(id),
@@ -238,6 +242,7 @@ impl References {
         upgrade_fields: &[FieldMeta],
     ) -> Self {
         let mut fields = HashMap::new();
+
         for (ty, metas) in [
             (ObjectType::Unit, unit_fields),
             (ObjectType::Ability, ability_fields),
@@ -252,6 +257,7 @@ impl References {
                 }
             }
         }
+
         Self { fields }
     }
 
@@ -353,6 +359,7 @@ impl Bundle {
     /// A field's value for an object, with string references resolved.
     pub fn text(&self, ty: ObjectType, id: FourCC, field: &str) -> Option<String> {
         let field = FourCC::parse(field)?;
+
         self.tables(ty)
             .both()
             .iter()
@@ -367,17 +374,20 @@ impl Bundle {
     /// The object files and strings, and the imported files when asked.
     fn payload(&self, with_files: bool) -> Vec<u8> {
         let mut payload = PAYLOAD_MAGIC.to_vec();
+
         payload.push(PAYLOAD_VERSION);
 
         for ty in ObjectType::ALL {
             let tables = self.tables(ty);
             let (data_file, skin_file) = ty.files();
+
             for (file, data) in [(data_file, &tables.data), (skin_file, &tables.skin)] {
                 if !data.custom.is_empty() {
                     put_section(&mut payload, file, &data.to_bytes());
                 }
             }
         }
+
         if !self.strings.entries.is_empty() {
             put_section(
                 &mut payload,
@@ -385,8 +395,10 @@ impl Bundle {
                 self.strings.to_text().as_bytes(),
             );
         }
+
         if with_files && !self.files.is_empty() {
             let mut files = Vec::new();
+
             for file in &self.files {
                 // Archive paths are at most 260 bytes; files far below 4 GiB.
                 files.extend_from_slice(
@@ -402,6 +414,7 @@ impl Bundle {
                 );
                 files.extend_from_slice(&file.bytes);
             }
+
             put_section(&mut payload, IMPORTS_SECTION, &files);
         }
 
@@ -417,6 +430,7 @@ impl Bundle {
     /// The bundle file (`.w3obj`): the objects and the imported files they use.
     pub fn to_file(&self) -> Vec<u8> {
         let mut out = FILE_MAGIC.to_vec();
+
         out.extend(self.payload(true));
         out
     }
@@ -457,14 +471,17 @@ impl Bundle {
 
         let mut bundle = Self::new();
         let mut pos = 0;
+
         while pos < rest.len() {
             let (name, bytes, next) =
                 read_section(rest, pos).ok_or_else(|| invalid("its contents are damaged"))?;
+
             pos = next;
 
             if name == STRINGS_FILE {
                 let text =
                     std::str::from_utf8(bytes).map_err(|_| invalid("its text is not UTF-8"))?;
+
                 bundle.strings = MapStrings::parse(text)?;
                 continue;
             }
@@ -484,9 +501,11 @@ impl Bundle {
                 })
                 .ok_or_else(|| invalid("it holds an unknown file"))?;
             let mut data = ObjectData::parse(bytes, ty.layout())?;
+
             // Only custom objects move between maps.
             data.original.clear();
             let tables = bundle.tables_mut(ty);
+
             if is_skin {
                 tables.skin = data;
             } else {
@@ -521,6 +540,7 @@ impl Bundle {
 
 fn compress(bytes: &[u8]) -> Vec<u8> {
     let mut encoder = DeflateEncoder::new(Vec::new(), Compression::best());
+
     // Writing to a Vec cannot fail.
     encoder
         .write_all(bytes)
@@ -542,6 +562,7 @@ fn decompress(bytes: &[u8], limit: u64) -> Option<Vec<u8>> {
 fn read_files(data: &[u8]) -> Option<Vec<ImportedFile>> {
     let mut files = Vec::new();
     let mut pos = 0;
+
     while pos < data.len() {
         let path_len = usize::from(u16::from_le_bytes([*data.get(pos)?, *data.get(pos + 1)?]));
         let path_end = pos + 2 + path_len;
@@ -552,9 +573,11 @@ fn read_files(data: &[u8]) -> Option<Vec<ImportedFile>> {
         let size = u32::from_le_bytes([size[0], size[1], size[2], size[3]]) as usize;
         let start = path_end + 4;
         let bytes = data.get(start..start + size)?.to_vec();
+
         files.push(ImportedFile { path, bytes });
         pos = start + size;
     }
+
     Some(files)
 }
 
@@ -572,9 +595,11 @@ fn read_section(data: &[u8], pos: usize) -> Option<(&str, &[u8], usize)> {
     let name_end = pos + 1 + name_len;
     let name = std::str::from_utf8(data.get(pos + 1..name_end)?).ok()?;
     let mut len = [0u8; 4];
+
     len.copy_from_slice(data.get(name_end..name_end + 4)?);
     let start = name_end + 4;
     let end = start + u32::from_le_bytes(len) as usize;
+
     Some((name, data.get(start..end)?, end))
 }
 
@@ -620,19 +645,23 @@ pub fn export(
 
         let from = tables(ty);
         let mut base = None;
+
         for (is_skin, input) in [(false, &from.data), (true, &from.skin)] {
             for entry in input.custom.iter().filter(|e| e.effective_id() == id) {
                 base = Some(entry.base);
                 let mut entry = entry.clone();
+
                 for m in entry.sets.iter_mut().flat_map(|s| s.mods.iter_mut()) {
                     if let Value::String(s) = &m.value
                         && let Some(number) = reference_id(s)
                     {
                         let text = strings.get(number).unwrap_or_default();
+
                         m.value = Value::String(bundle.strings.add(text, None));
                     }
 
                     let targets = refs.targets(ty, m.field);
+
                     for code in list_ids(&m.value) {
                         if let Some(other) = targets.iter().find(|t| tables(**t).is_custom(code)) {
                             queue.push_back((*other, code));
@@ -642,6 +671,7 @@ pub fn export(
                         if !targets.iter().any(|t| tables(*t).is_changed(code)) {
                             continue;
                         }
+
                         match left_behind.iter_mut().find(|l| l.code == code) {
                             Some(known) if !known.users.contains(&id) => known.users.push(id),
                             Some(_) => {}
@@ -659,6 +689,7 @@ pub fn export(
                 } else {
                     &mut output.data
                 };
+
                 output.custom.push(entry);
             }
         }
@@ -699,9 +730,11 @@ impl LeftBehind {
             .take(NAMED_USERS)
             .map(FourCC::to_string)
             .collect();
+
         if self.users.len() > NAMED_USERS {
             users.push(format!("{} more", self.users.len() - NAMED_USERS));
         }
+
         format!("{what}. Used by {}.", users.join(", "))
     }
 }
@@ -754,6 +787,7 @@ pub fn plan(
 
 pub(crate) fn next_free_id(prefix: u8, free: impl Fn(FourCC) -> bool) -> Option<FourCC> {
     let radix = ID_ALPHABET.len();
+
     (0..radix.pow(ID_SUFFIX_LEN))
         .map(|n| {
             FourCC([
@@ -816,6 +850,7 @@ pub fn apply(
                 .filter(|e| e.effective_id() == planned.id)
             {
                 let mut entry = entry.clone();
+
                 entry.id = planned.new_id;
                 for m in entry.sets.iter_mut().flat_map(|s| s.mods.iter_mut()) {
                     if m.end == planned.id {
@@ -826,10 +861,12 @@ pub fn apply(
                         && let Some(number) = reference_id(s)
                     {
                         let text = bundle.strings.get(number).unwrap_or_default();
+
                         m.value = Value::String(strings.add(text, Some(&comment)));
                     }
 
                     let targets = refs.targets(ty, m.field);
+
                     if !targets.is_empty()
                         && let Value::String(list) = &m.value
                     {
@@ -843,9 +880,11 @@ pub fn apply(
                                     .map_or_else(|| code.to_owned(), FourCC::to_string)
                             })
                             .collect();
+
                         m.value = Value::String(rewritten.join(","));
                     }
                 }
+
                 output.custom.push(entry);
             }
         }
@@ -899,6 +938,7 @@ mod tests {
 
     fn table(layout: Layout, custom: Vec<ObjectEntry>) -> ObjectData {
         let mut data = ObjectData::empty(layout);
+
         data.custom = custom;
         data
     }
@@ -916,6 +956,7 @@ mod tests {
             .into_iter()
             .map(|((ty, field), targets)| ((ty, id(field)), targets))
             .collect();
+
         fields.insert(
             (ObjectType::Upgrade, id(UPGRADE_REQUIREMENTS)),
             &[ObjectType::Unit, ObjectType::Upgrade],
@@ -1054,6 +1095,7 @@ mod tests {
             )],
         );
         let mut changed = entry("AHhb", "AHhb", vec![]);
+
         changed.id = FourCC::ZERO;
         objects.abilities.tables_mut().data.original.push(changed);
         objects
@@ -1092,6 +1134,7 @@ mod tests {
             .iter()
             .map(|o| (o.ty, o.id.to_string()))
             .collect();
+
         assert_eq!(
             objects,
             [
@@ -1117,6 +1160,7 @@ mod tests {
     #[test]
     fn only_custom_units_can_be_shared() {
         let source = source();
+
         assert!(export(source.borrow(), &refs(), &[id("hfoo")], &no_files).is_err());
     }
 
@@ -1134,6 +1178,7 @@ mod tests {
             .enumerate()
             .flat_map(|(i, c)| if i % 40 == 39 { vec![c, '\n'] } else { vec![c] })
             .collect();
+
         assert_eq!(Bundle::from_code(&wrapped).unwrap(), bundle);
 
         assert!(Bundle::from_code("hello").is_err());
@@ -1150,6 +1195,7 @@ mod tests {
             .bundle;
 
         let paths: Vec<&str> = bundle.files().iter().map(|f| f.path.as_str()).collect();
+
         assert_eq!(paths, ["Elite.mdx"]);
         assert_eq!(Bundle::from_file(&bundle.to_file()).unwrap(), bundle);
         assert!(
@@ -1160,6 +1206,7 @@ mod tests {
         );
 
         let file = bundle.to_file();
+
         assert!(Bundle::from_file(&file[..file.len() - 4]).is_err());
         assert!(Bundle::from_file(bundle.to_code().as_bytes()).is_err());
     }
@@ -1187,6 +1234,7 @@ mod tests {
             .iter()
             .map(|p| (p.id.to_string(), p.new_id.to_string()))
             .collect();
+
         assert_eq!(
             new_ids,
             [
@@ -1219,6 +1267,7 @@ mod tests {
             .mods()
             .map(|m| m.value.clone())
             .collect();
+
         assert_eq!(
             barracks,
             [
@@ -1229,22 +1278,27 @@ mod tests {
         );
         let imported = data.find(id("h002")).unwrap();
         let abilities = imported.mods().next().unwrap();
+
         assert_eq!(abilities.value, Value::String("A001,AHhb".into()));
         let name = skin.find(id("h002")).unwrap().mods().next().unwrap();
+
         assert_eq!(name.end, id("h002"));
         assert_eq!(strings.resolve(&name.value.to_string()), "Elite Footman");
         let ability = target.abilities.tables().data.find(id("A001")).unwrap();
+
         assert_eq!(
             ability.mods().next().unwrap().value,
             Value::String("B000".into())
         );
         let item = target.items.tables().data.find(id("I001")).unwrap();
+
         assert_eq!(item.base, id("ratf"));
         assert_eq!(
             item.mods().next().unwrap().value,
             Value::String("A001".into())
         );
         let upgrade = target.upgrades.tables().data.find(id("R000")).unwrap();
+
         assert_eq!(
             upgrade.mods().next().unwrap().value,
             Value::String("h002".into())
@@ -1255,6 +1309,7 @@ mod tests {
     #[test]
     fn writes_buff_files_only_when_needed() {
         let empty = Objects::new(no_units(), Vec::new(), Vec::new(), Vec::new(), Vec::new());
+
         assert!(empty.buffs.files().is_empty());
 
         let with_buff = Objects::new(
@@ -1265,6 +1320,7 @@ mod tests {
             Vec::new(),
         );
         let names: Vec<&str> = with_buff.buffs.files().iter().map(|(n, _)| *n).collect();
+
         assert_eq!(names, [BUFFS_FILE]);
     }
 }

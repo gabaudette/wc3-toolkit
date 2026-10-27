@@ -95,14 +95,17 @@ impl AbilityDatabase {
             .collect();
 
         let mut profile = Profile::new();
+
         for source in SOURCES {
             let path = format!("units\\{source}abilityfunc.txt");
+
             merge_optional(&mut profile, files.read_balanced(&path), &path)?;
         }
 
         merge_optional(&mut profile, files.read_base(SKIN), SKIN)?;
         for source in SOURCES {
             let path = format!("units\\{source}abilitystrings.txt");
+
             merge_optional(&mut profile, files.read_localized(&path), &path)?;
         }
 
@@ -113,6 +116,7 @@ impl AbilityDatabase {
         )?;
 
         let mut editor_strings = Profile::new();
+
         for path in EDITOR_STRINGS {
             editor_strings.merge_text(&decode_text(files.read_localized(path)?, path)?);
         }
@@ -145,6 +149,7 @@ impl AbilityDatabase {
             .filter(|f| {
                 let for_kind =
                     (hero && f.use_hero) || (item && f.use_item) || (!hero && !item && f.use_unit);
+
                 for_kind && f.applies_to_id(code)
             })
             .collect()
@@ -232,6 +237,7 @@ impl AbilityDatabase {
             None => unquote(whole).to_owned(),
         };
         let value = value.trim();
+
         (!value.is_empty() && value != "-" && value != "_").then(|| value.to_owned())
     }
 
@@ -272,6 +278,7 @@ impl AbilityDatabase {
         let items = split_list(raw);
         let index = usize::try_from(level.saturating_sub(1)).ok()?;
         let text = items.get(index).or(items.last())?.trim().to_owned();
+
         (!text.is_empty()).then(|| self.fill_placeholders(&text, others))
     }
 
@@ -327,8 +334,10 @@ impl AbilityDatabase {
                     && NUMERIC_TYPES.contains(&f.value_type.as_str())
             })
             .collect();
+
         fields.sort_by_key(|f| {
             let generic = GENERIC_ORDER.iter().position(|g| *g == f.field);
+
             (generic.is_none(), generic, f.data_column, f.sort.clone())
         });
 
@@ -337,6 +346,7 @@ impl AbilityDatabase {
 
         for field in fields {
             let column = field.column(1);
+
             if seen_columns.contains(&column) {
                 continue;
             }
@@ -350,6 +360,7 @@ impl AbilityDatabase {
                         .unwrap_or_default()
                 })
                 .collect();
+
             if values.iter().all(|v| v.is_empty() || v == "0") {
                 continue;
             }
@@ -368,6 +379,7 @@ impl AbilityDatabase {
     pub fn column_field(&self, code: &str, column: &str) -> Option<(&FieldMeta, u32)> {
         let digits = column.len() - column.trim_end_matches(|c: char| c.is_ascii_digit()).len();
         let level: u32 = column.get(column.len() - digits..)?.parse().ok()?;
+
         self.fields
             .iter()
             .filter(|f| f.per_level && f.source == DATA_SOURCE && f.applies_to_id(code))
@@ -392,6 +404,7 @@ impl AbilityDatabase {
             };
 
             let inner = &after[..end];
+
             match self.placeholder_value(inner, others) {
                 Some(value) => out.push_str(&value),
                 None => {
@@ -420,6 +433,7 @@ impl AbilityDatabase {
 
         if percent {
             let value: f64 = raw.parse().ok()?;
+
             return Some(format_number(&(value * PERCENT_SCALE).to_string()));
         }
 
@@ -439,6 +453,7 @@ impl PlaceholderSource for NoPlaceholders {
 /// A button slot such as `0,2` → (column 0, row 2).
 pub(crate) fn parse_button(value: &str) -> Option<(u32, u32)> {
     let (x, y) = value.split_once(',')?;
+
     Some((x.trim().parse().ok()?, y.trim().parse().ok()?))
 }
 
@@ -452,6 +467,7 @@ fn format_number(raw: &str) -> String {
 
     let fixed = format!("{value:.MAX_DECIMALS$}");
     let trimmed = fixed.trim_end_matches('0').trim_end_matches('.');
+
     if trimmed == "-0" {
         return "0".to_owned();
     }

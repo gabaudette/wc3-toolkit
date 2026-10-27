@@ -21,6 +21,7 @@ const boxClass =
  */
 export function CommitInput({ label, field, numeric, multiline, onCommit }: CommitInputProps) {
   const [value, setValue] = useState(field.raw);
+
   useEffect(() => setValue(field.raw), [field.raw]);
 
   function commit() {

@@ -116,6 +116,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
 
   // The close handler is registered once; it reads the latest map from here.
   const mapRef = useRef(map);
+
   mapRef.current = map;
 
   const fail = useCallback((e: unknown) => setError(errorMessage(e)), []);
@@ -172,6 +173,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   async function applyField(edit: Promise<Field>) {
     try {
       const updated = await edit;
+
       setDetail((current) => current && replaceField(current, updated));
       setMap(await api.mapStatus());
       setError(null);
@@ -191,6 +193,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
 
     try {
       const created = await api.createUnit(detail.item.base);
+
       setMap(await api.mapStatus());
       refreshList();
       setSelected(created.id);
@@ -206,6 +209,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       setMap(await api.mapStatus());
       refreshList();
       const firstUnit = objects.find((o) => o.kind === "unit" && !o.dependency);
+
       if (firstUnit) {
         setSelected(firstUnit.newId ?? firstUnit.id);
       }
@@ -236,6 +240,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       filters: MAP_FILTERS,
       ...(game.mapsDir && { defaultPath: game.mapsDir }),
     });
+
     if (typeof picked !== "string") {
       return;
     }
@@ -256,16 +261,20 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   }
 
   const commands: PaletteCommand[] = [];
+
   if (map?.unsaved) {
     commands.push({ id: "save", label: "Save the map", shortcut: "Ctrl S", run: save });
   }
+
   commands.push({ id: "open", label: "Open a map…", run: openOtherMap });
   if (map) {
     commands.push({ id: "import", label: "Import objects…", run: () => setDialog("import") });
   }
+
   if (map && customUnits.length > 0) {
     commands.push({ id: "share", label: "Share units…", run: () => setDialog("share") });
   }
+
   for (const t of TABS.filter((other) => other.id !== tab)) {
     commands.push({ id: `tab-${t.id}`, label: `Go to ${t.label}`, run: () => setTab(t.id) });
   }

@@ -45,6 +45,7 @@ const OUTPUT_CLOSED: &str = "\0output closed";
 /// panicking like `println!` does.
 fn emit(line: std::fmt::Arguments<'_>) -> Result<(), String> {
     let mut stdout = std::io::stdout().lock();
+
     match writeln!(stdout, "{line}") {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe => Err(OUTPUT_CLOSED.to_owned()),
@@ -121,6 +122,7 @@ fn check(map: &Map) -> Result<(), String> {
         };
 
         let same = rewritten == original;
+
         say!(
             "  {name:<18} {:>8} bytes  {}",
             original.len(),
@@ -149,6 +151,7 @@ fn load_db(args: &Args) -> Result<UnitDatabase, String> {
 fn list_units(db: &UnitDatabase, units: &MapUnits) -> Result<(), String> {
     for unit in units.units() {
         let kind = if unit.is_custom { "custom " } else { "changed" };
+
         say!(
             "{}  {kind}  based on {}  {} field(s) changed  {}",
             unit.id,
@@ -175,12 +178,14 @@ fn show_unit(db: &UnitDatabase, units: &MapUnits, id: FourCC, mode: ArtMode) -> 
             )
         })
         .collect();
+
     if rows.is_empty() {
         return Err(format!("unknown unit {id}"));
     }
 
     rows.sort();
     let changed = rows.iter().filter(|r| r.2).count();
+
     say!(
         "{id}: {}, {} fields, {changed} changed",
         units.name(db, id),
@@ -188,6 +193,7 @@ fn show_unit(db: &UnitDatabase, units: &MapUnits, id: FourCC, mode: ArtMode) -> 
     );
     for (label, value, modified, field_id) in rows {
         let mark = if modified { '*' } else { ' ' };
+
         say!("{mark} {field_id}  {label:<55} {value}");
     }
 
@@ -231,17 +237,20 @@ fn run(args: Args) -> Result<(), String> {
     };
 
     let map_path = Path::new(map_arg);
+
     if let ["lua", modules_dir] = command {
         return build_lua(map_path, Path::new(modules_dir), &args);
     }
 
     let map = Map::open(map_path).map_err(|e| e.to_string())?;
+
     if command == ["check"] {
         return check(&map);
     }
 
     let db = load_db(&args)?;
     let mut units = MapUnits::load(&map).map_err(|e| e.to_string())?;
+
     drop(map);
 
     match command {
@@ -252,6 +261,7 @@ fn run(args: Args) -> Result<(), String> {
             let field = db
                 .field(field_id)
                 .ok_or(format!("unknown field {field_id}"))?;
+
             units
                 .set(&db, id, field, value)
                 .map_err(|e| e.to_string())?;
@@ -266,6 +276,7 @@ fn run(args: Args) -> Result<(), String> {
             let id = units
                 .create(&db, fourcc(base)?)
                 .map_err(|e| e.to_string())?;
+
             say!("created {id} based on {base}");
             save(map_path, args.output.as_ref(), &units)?;
         }

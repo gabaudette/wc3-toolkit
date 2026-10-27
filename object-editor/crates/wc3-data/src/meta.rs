@@ -106,6 +106,7 @@ impl FieldMeta {
     /// Whether the field applies to the object with this ID (or base code).
     pub fn applies_to_id(&self, code: &str) -> bool {
         let allowed = self.use_specific.is_empty() || self.use_specific.iter().any(|s| s == code);
+
         allowed && !self.not_specific.iter().any(|s| s == code)
     }
 

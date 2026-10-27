@@ -83,6 +83,7 @@ impl Design {
             Design::Leaderboard(l) => (&mut l.id, &mut l.name),
             Design::TimerWindow(t) => (&mut t.id, &mut t.name),
         };
+
         *old_id = id;
         *old_name = name;
     }
@@ -158,6 +159,7 @@ pub fn title_text(dialog: &DialogDesign) -> Result<String, String> {
 /// letter stays as it is.
 pub fn button_text(button: &DialogButton) -> String {
     let key = button.hotkey.trim();
+
     if !button.highlight_hotkey || key.chars().count() != 1 {
         return button.text.clone();
     }
@@ -170,6 +172,7 @@ pub fn button_text(button: &DialogButton) -> String {
         return button.text.clone();
     };
     let end = at + letter.len_utf8();
+
     format!(
         "{}|cff{HOTKEY_COLOR}{letter}|r{}",
         &button.text[..at],
@@ -193,6 +196,7 @@ pub enum ButtonAction {
 /// `test.w3m` → `test UI.json`, beside it.
 pub fn file_for(map: &Path) -> PathBuf {
     let stem = map.file_stem().unwrap_or_default().to_string_lossy();
+
     map.with_file_name(format!("{stem} UI.json"))
 }
 
@@ -210,6 +214,7 @@ pub fn load(map: &Path) -> Result<Vec<Design>, String> {
             path.display()
         )
     })?;
+
     if file.version > FORMAT_VERSION {
         return Err(format!(
             "{} was made by a newer Tinkerbench (format {}); update to edit it.",
@@ -233,6 +238,7 @@ pub fn save(map: &Path, designs: &[Design]) -> Result<(), String> {
 
 fn is_identifier(name: &str) -> bool {
     let mut chars = name.chars();
+
     chars
         .next()
         .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
@@ -243,13 +249,16 @@ fn is_identifier(name: &str) -> bool {
 /// `Choose your path!` → `ChooseYourPath`; `Design` when nothing is left.
 fn pascal_case(name: &str) -> String {
     let mut out = String::new();
+
     for word in name.split(|c: char| !c.is_ascii_alphanumeric()) {
         let mut chars = word.chars();
+
         if let Some(first) = chars.next() {
             out.push(first.to_ascii_uppercase());
             out.extend(chars);
         }
     }
+
     if out.is_empty() || out.starts_with(|c: char| c.is_ascii_digit()) {
         out.insert_str(0, "Design");
     }
@@ -260,16 +269,19 @@ fn pascal_case(name: &str) -> String {
 /// Each design's Lua name, by ID: from its name, numbered when two match.
 pub fn lua_names(designs: &[Design]) -> HashMap<String, String> {
     let mut taken = HashSet::new();
+
     designs
         .iter()
         .map(|design| {
             let base = pascal_case(design.name());
             let mut name = base.clone();
             let mut n = 2;
+
             while !taken.insert(name.to_ascii_lowercase()) {
                 name = format!("{base}{n}");
                 n += 1;
             }
+
             (design.id().to_owned(), name)
         })
         .collect()
@@ -278,6 +290,7 @@ pub fn lua_names(designs: &[Design]) -> HashMap<String, String> {
 /// A Lua string literal for any text.
 fn lua_string(text: &str) -> String {
     let mut out = String::from("\"");
+
     for c in text.chars() {
         match c {
             '"' => out.push_str("\\\""),
@@ -288,6 +301,7 @@ fn lua_string(text: &str) -> String {
             c => out.push(c),
         }
     }
+
     out.push('"');
     out
 }
@@ -295,6 +309,7 @@ fn lua_string(text: &str) -> String {
 /// The code `DialogAddButton` takes for a hotkey: the letter's character code.
 fn hotkey_code(hotkey: &str) -> Result<u32, String> {
     let mut chars = hotkey.trim().chars();
+
     match (chars.next(), chars.next()) {
         (None, _) => Ok(0),
         (Some(c), None) if c.is_ascii_alphanumeric() => Ok(u32::from(c.to_ascii_uppercase())),
@@ -312,6 +327,7 @@ pub fn dialog_lua(
         .get(&dialog.id)
         .ok_or_else(|| format!("{} has no Lua name", dialog.name))?;
     let mut buttons = String::new();
+
     for (i, button) in dialog.buttons.iter().enumerate() {
         let n = i + 1;
         let problem = |what: String| format!("{}, button {n}: {what}", dialog.name);
@@ -337,6 +353,7 @@ pub fn dialog_lua(
                 )
             }
         };
+
         buttons.push_str(&format!(
             "        buttons[{n}] = DialogAddButton(dialog, {}, {hotkey})\n        actions[{n}] = {action}\n",
             lua_string(&button_text(button))
@@ -415,6 +432,7 @@ end
         source_comment = comment_text(source),
         title = lua_string(&title_text(dialog)?),
     );
+
     check_syntax(&module_file(name), &code).map_err(|e| e.to_string())?;
     Ok(code)
 }
@@ -436,23 +454,28 @@ fn module_file(lua_name: &str) -> String {
 /// Every design's module by file name.
 fn modules(designs: &[Design], source: &str) -> Result<Vec<(String, String)>, String> {
     let names = lua_names(designs);
+
     designs
         .iter()
         .map(|design| match design {
             Design::Dialog(dialog) => {
                 let code = dialog_lua(dialog, &names, source)?;
+
                 Ok((module_file(&names[&dialog.id]), code))
             }
             Design::Multiboard(board) => {
                 let code = multiboard_lua(board, &names, source)?;
+
                 Ok((module_file(&names[&board.id]), code))
             }
             Design::Leaderboard(board) => {
                 let code = leaderboard_lua(board, &names, source)?;
+
                 Ok((module_file(&names[&board.id]), code))
             }
             Design::TimerWindow(timer) => {
                 let code = timer_lua(timer, &names, source)?;
+
                 Ok((module_file(&names[&timer.id]), code))
             }
         })
@@ -468,12 +491,14 @@ pub fn write_modules(dir: &Path, designs: &[Design], source: &str) -> Result<Vec
     let current: HashSet<&str> = modules.iter().map(|(file, _)| file.as_str()).collect();
     let entries =
         std::fs::read_dir(dir).map_err(|e| format!("Cannot read {}: {e}", dir.display()))?;
+
     for entry in entries.flatten() {
         let file = entry.file_name().to_string_lossy().into_owned();
         let ours = file.starts_with(MODULE_PREFIX)
             && file.ends_with(".lua")
             && !current.contains(file.as_str())
             && std::fs::read_to_string(entry.path()).is_ok_and(|t| t.starts_with(MODULE_MARKER));
+
         if ours {
             std::fs::remove_file(entry.path())
                 .map_err(|e| format!("Cannot remove {}: {e}", entry.path().display()))?;
@@ -520,6 +545,7 @@ pub fn ui_lua(state: State<'_, AppState>, id: String) -> Result<String, String> 
         let map = session.map.as_ref().ok_or(NO_MAP)?;
         let names = lua_names(&map.ui);
         let source = source_name(&map.path);
+
         match map.ui.iter().find(|d| d.id() == id) {
             Some(Design::Dialog(dialog)) => dialog_lua(dialog, &names, &source),
             Some(Design::Multiboard(board)) => multiboard_lua(board, &names, &source),
@@ -535,6 +561,7 @@ pub fn ui_lua(state: State<'_, AppState>, id: String) -> Result<String, String> 
 pub fn write_ui_lua(state: State<'_, AppState>, dir: String) -> Result<Vec<String>, String> {
     state.with(|session| {
         let map = session.map.as_ref().ok_or(NO_MAP)?;
+
         write_modules(Path::new(&dir), &map.ui, &source_name(&map.path))
     })
 }
@@ -586,6 +613,7 @@ pub fn ui_export_preview(
     state.with(|session| {
         let map = session.map.as_ref().ok_or(NO_MAP)?;
         let (file, listed, files) = exchange::export(&map.ui, &ids, &map.reader());
+
         Ok(DesignTransfer {
             designs: listed_designs(&listed, &lua_names(&map.ui)),
             files: listed_files(&files, None),
@@ -613,6 +641,7 @@ fn read_design_file(path: &str) -> Result<(DesignFile, Vec<ImportedFile>), Strin
     let text = std::fs::read_to_string(path).map_err(|e| format!("Cannot read {path}: {e}"))?;
     let file = DesignFile::parse(&text)?;
     let files = file.imported_files()?;
+
     Ok((file, files))
 }
 
@@ -623,6 +652,7 @@ pub fn ui_import_preview(
     path: String,
 ) -> Result<DesignTransfer, String> {
     let (file, files) = read_design_file(&path)?;
+
     state.with(|session| {
         let map = session.map.as_ref().ok_or(NO_MAP)?;
         let plan = exchange::planned(&file.designs, &map.ui);
@@ -633,6 +663,7 @@ pub fn ui_import_preview(
             .chain(plan.iter().map(|l| l.design.clone()))
             .collect();
         let statuses = file_statuses(&files, &map.reader());
+
         Ok(DesignTransfer {
             designs: listed_designs(&plan, &lua_names(&after)),
             files: listed_files(&files, Some(&statuses)),
@@ -647,15 +678,18 @@ pub fn ui_import_preview(
 #[tauri::command]
 pub fn import_ui_file(state: State<'_, AppState>, path: String) -> Result<Vec<Design>, String> {
     let (file, files) = read_design_file(&path)?;
+
     state.with(|session| {
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         let plan = exchange::planned(&file.designs, &map.ui);
         let statuses = file_statuses(&files, &map.reader());
+
         for (file, status) in files.into_iter().zip(statuses) {
             if status == FileStatus::New {
                 map.imports.add(file);
             }
         }
+
         map.ui.extend(plan.into_iter().map(|l| l.design));
         Ok(map.ui.clone())
     })
@@ -694,6 +728,7 @@ mod tests {
             Design::Dialog(dialog("d", "", vec![])),
         ];
         let names = lua_names(&designs);
+
         assert_eq!(names["a"], "ChooseYourPath");
         assert_eq!(names["b"], "ChooseYOURPath2");
         assert_eq!(names["c"], "Design3Lives");
@@ -748,6 +783,7 @@ mod tests {
     #[test]
     fn hotkey_letters_turn_gold_when_highlighted() {
         let mut hard = button("Hard", "h", ButtonAction::Close);
+
         assert_eq!(button_text(&hard), "|cffffcc00H|rard");
         hard.text = "Go Ahead".to_owned();
         assert_eq!(button_text(&hard), "Go A|cffffcc00h|read");
@@ -762,6 +798,7 @@ mod tests {
     fn bad_buttons_are_reported() {
         let names = |d: &DialogDesign| lua_names(&[Design::Dialog(d.clone())]);
         let two_keys = dialog("a", "A", vec![button("x", "ab", ButtonAction::Close)]);
+
         assert!(dialog_lua(&two_keys, &names(&two_keys), "s").is_err());
 
         let bad_function = dialog(
@@ -775,6 +812,7 @@ mod tests {
                 },
             )],
         );
+
         assert!(dialog_lua(&bad_function, &names(&bad_function), "s").is_err());
 
         let gone = dialog(
@@ -789,6 +827,7 @@ mod tests {
             )],
         );
         let err = dialog_lua(&gone, &names(&gone), "s").unwrap_err();
+
         assert!(err.contains("no longer exists"), "{err}");
     }
 
@@ -816,6 +855,7 @@ mod tests {
     fn design_files_round_trip_and_refuse_newer_formats() {
         let dir = tempfile::tempdir().unwrap();
         let map = dir.path().join("test.w3m");
+
         assert!(load(&map).unwrap().is_empty());
 
         let designs = vec![Design::Dialog(dialog(
@@ -823,6 +863,7 @@ mod tests {
             "Welcome",
             vec![button("Go", "G", ButtonAction::Close)],
         ))];
+
         save(&map, &designs).unwrap();
         assert!(dir.path().join("test UI.json").exists());
         assert_eq!(load(&map).unwrap(), designs);

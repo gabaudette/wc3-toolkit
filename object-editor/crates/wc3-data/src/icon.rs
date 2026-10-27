@@ -33,6 +33,7 @@ impl Image {
     /// than PNG for large textures that are only passed to a renderer.
     pub fn to_raw(&self) -> Vec<u8> {
         let mut out = Vec::with_capacity(RAW_HEADER_SIZE + self.rgba.len());
+
         out.extend_from_slice(&self.width.to_le_bytes());
         out.extend_from_slice(&self.height.to_le_bytes());
         out.extend_from_slice(&self.rgba);
@@ -42,10 +43,12 @@ impl Image {
     pub fn to_png(&self) -> Result<Vec<u8>> {
         let mut out = Vec::new();
         let mut encoder = png::Encoder::new(&mut out, self.width, self.height);
+
         encoder.set_color(png::ColorType::Rgba);
         encoder.set_depth(png::BitDepth::Eight);
 
         let mut writer = encoder.write_header().map_err(png_error)?;
+
         writer.write_image_data(&self.rgba).map_err(png_error)?;
         writer.finish().map_err(png_error)?;
         Ok(out)
@@ -62,6 +65,7 @@ pub fn load_texture(files: &GameFiles, path: &str, mode: ArtMode) -> Result<Imag
     let dds_path = dds_file(path);
 
     let data = files.read_art(&dds_path, mode)?;
+
     decode_dds(&data).map_err(|e| e.in_file(dds_path))
 }
 
@@ -136,6 +140,7 @@ pub fn decode_dds_fitting(data: &[u8], max_side: u32) -> Result<Image> {
     let levels = read_u32(data, MIP_COUNT_OFFSET).max(1);
     let (mut width, mut height) = (width, height);
     let mut start = DDS_HEADER_SIZE;
+
     for _ in 1..levels {
         if width <= max_side && height <= max_side {
             break;
@@ -149,6 +154,7 @@ pub fn decode_dds_fitting(data: &[u8], max_side: u32) -> Result<Image> {
     let (w, h) = (width as usize, height as usize);
     let compressed = data.get(start..).unwrap_or_default();
     let needed = format.compressed_size(w, h);
+
     if compressed.len() < needed {
         return Err(Error::Image(format!(
             "DDS data truncated: {} bytes, {needed} needed for {width}x{height}",
@@ -157,6 +163,7 @@ pub fn decode_dds_fitting(data: &[u8], max_side: u32) -> Result<Image> {
     }
 
     let mut rgba = vec![0u8; w * h * RGBA_CHANNELS];
+
     format.decompress(&compressed[..needed], w, h, &mut rgba);
     Ok(Image {
         width,
@@ -167,6 +174,7 @@ pub fn decode_dds_fitting(data: &[u8], max_side: u32) -> Result<Image> {
 
 fn read_u32(data: &[u8], offset: usize) -> u32 {
     let mut bytes = [0u8; 4];
+
     bytes.copy_from_slice(&data[offset..offset + 4]);
     u32::from_le_bytes(bytes)
 }
@@ -177,6 +185,7 @@ mod tests {
 
     fn dds_header(width: u32, height: u32, fourcc: &[u8; 4]) -> Vec<u8> {
         let mut data = vec![0u8; DDS_HEADER_SIZE];
+
         data[..4].copy_from_slice(DDS_MAGIC);
         data[HEIGHT_OFFSET..HEIGHT_OFFSET + 4].copy_from_slice(&height.to_le_bytes());
         data[WIDTH_OFFSET..WIDTH_OFFSET + 4].copy_from_slice(&width.to_le_bytes());
@@ -188,6 +197,7 @@ mod tests {
     fn decodes_a_solid_dxt1_block() {
         // One 4x4 BC1 block: both endpoints pure red (RGB565 0xF800), all indices 0.
         let mut data = dds_header(4, 4, b"DXT1");
+
         data.extend_from_slice(&[0x00, 0xF8, 0x00, 0xF8, 0, 0, 0, 0]);
 
         let image = decode_dds(&data).unwrap();
@@ -204,25 +214,30 @@ mod tests {
         let green = [0xE0, 0x07, 0xE0, 0x07, 0, 0, 0, 0];
         let blue = [0x1F, 0x00, 0x1F, 0x00, 0, 0, 0, 0];
         let mut data = dds_header(8, 8, b"DXT1");
+
         data[MIP_COUNT_OFFSET..MIP_COUNT_OFFSET + 4].copy_from_slice(&4u32.to_le_bytes());
         for _ in 0..4 {
             data.extend_from_slice(&red);
         }
+
         data.extend_from_slice(&green);
         data.extend_from_slice(&blue);
         data.extend_from_slice(&blue);
 
         let full = decode_dds(&data).unwrap();
+
         assert_eq!(
             (full.width, full.rgba[..4].to_vec()),
             (8, vec![255, 0, 0, 255])
         );
         let half = decode_dds_fitting(&data, 4).unwrap();
+
         assert_eq!(
             (half.width, half.rgba[..4].to_vec()),
             (4, vec![0, 255, 0, 255])
         );
         let smallest = decode_dds_fitting(&data, 0).unwrap();
+
         assert_eq!((smallest.width, smallest.height), (1, 1));
 
         // Without mip levels the full image is all there is.
@@ -234,6 +249,7 @@ mod tests {
     fn decodes_ati2_normal_maps() {
         // One 4x4 BC5 block: red and green both at 255 everywhere.
         let mut data = dds_header(4, 4, b"ATI2");
+
         data.extend_from_slice(&[255, 255, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0, 0]);
 
         let image = decode_dds(&data).unwrap();

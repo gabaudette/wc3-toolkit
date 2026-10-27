@@ -121,6 +121,7 @@ impl Map {
         };
 
         let data = ObjectData::parse(&bytes, layout).map_err(|e| e.in_file(name))?;
+
         Ok(Some(data))
     }
 
@@ -136,6 +137,7 @@ impl Map {
                 e.utf8_error().valid_up_to()
             ))
         })?;
+
         Ok(MapStrings::parse(&text).map_err(|e| e.in_file(STRINGS_FILE))?)
     }
 }
@@ -145,6 +147,7 @@ impl Map {
 /// temporary copy next to `dest`, which replaces `dest` only once fully saved.
 pub fn save_files(source: &Path, dest: &Path, files: &[(&str, Vec<u8>)]) -> Result<()> {
     let mut temp_name = dest.file_name().unwrap_or_default().to_os_string();
+
     temp_name.push(TEMP_SUFFIX);
     let temp = dest.with_file_name(temp_name);
 

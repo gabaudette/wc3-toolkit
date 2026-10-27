@@ -20,6 +20,7 @@ test("Lua names come from names and stay unique", () => {
     dialog("c", "3 lives"),
     dialog("d", ""),
   ]);
+
   expect(names.get("a")).toBe("ChooseYourPath");
   expect(names.get("b")).toBe("ChooseYOURPath2");
   expect(names.get("c")).toBe("Design3Lives");
@@ -34,6 +35,7 @@ test("hotkey letters turn gold when highlighted", () => {
     highlightHotkey: true,
     action: { kind: "close" as const },
   };
+
   expect(buttonText(hard)).toBe("|cffffcc00H|rard");
   expect(buttonText({ ...hard, text: "Go Ahead" })).toBe("Go A|cffffcc00h|read");
   expect(buttonText({ ...hard, text: "Normal" })).toBe("Normal");
@@ -42,6 +44,7 @@ test("hotkey letters turn gold when highlighted", () => {
 
 test("titles take their color", () => {
   const d = { ...dialog("a", "A"), title: "Pick" } as const;
+
   expect(titleText(d)).toBe("Pick");
   expect(titleText({ ...d, titleColor: "FF0303" })).toBe("|cffff0303Pick|r");
 });

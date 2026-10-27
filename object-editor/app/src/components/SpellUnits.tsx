@@ -91,6 +91,7 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
     setError(null);
     try {
       let updated: SpellFit;
+
       if (fit.has) {
         updated = await api.takeSpell(spell, selected);
       } else {
@@ -100,6 +101,7 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
       setFit(updated);
       setHolders((current) => {
         const next = new Set(current);
+
         if (updated.has) {
           next.add(selected);
         } else {
@@ -108,6 +110,7 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
 
         return next;
       });
+
       onChanged();
     } catch (e) {
       setError(errorMessage(e));
@@ -228,6 +231,7 @@ function placement(fit: SpellFit): string {
 
 function UnitFit({ unit, fit, busy, onToggle }: UnitFitProps) {
   let action = "Give the spell";
+
   if (fit.has) {
     action = "Take the spell away";
   }
@@ -281,6 +285,7 @@ function CardPreview({ title, buttons }: { title: string; buttons: CardButton[] 
           const here = buttons.filter((b) => b.x === cell.x && b.y === cell.y);
           const shown = here.find((b) => b.spell) ?? here[0];
           const names = here.map((b) => b.name).join(", ");
+
           return (
             <li
               key={`${cell.x}-${cell.y}`}

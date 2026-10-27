@@ -79,11 +79,13 @@ const CONTRAST_OFFSET = 0.05;
 
 function channels(hex: string): [number, number, number] {
   const value = (start: number) => Number.parseInt(hex.slice(start, start + HEX_PAIR), HEX_RADIX);
+
   return [value(1), value(1 + HEX_PAIR), value(1 + 2 * HEX_PAIR)];
 }
 
 function linear(channel: number): number {
   const c = channel / CHANNEL_MAX;
+
   if (c <= LINEAR_LIMIT) {
     return c / LINEAR_SCALE;
   }
@@ -93,6 +95,7 @@ function linear(channel: number): number {
 
 function luminance(hex: string): number {
   const [r, g, b] = channels(hex);
+
   return RED_WEIGHT * linear(r) + GREEN_WEIGHT * linear(g) + BLUE_WEIGHT * linear(b);
 }
 
@@ -114,6 +117,7 @@ function toHex(rgb: number[]): string {
 export function readableColor(hex: string): string {
   let rgb: number[] = channels(hex);
   let color = hex;
+
   for (let step = 0; step < MAX_STEPS && contrast(color) < MIN_CONTRAST; step++) {
     rgb = rgb.map((c) => c + (CHANNEL_MAX - c) * LIGHTEN_STEP);
     color = toHex(rgb);
@@ -131,6 +135,7 @@ type GameTextProps = {
 /** Renders game text with its colors and line breaks, like in-game tooltips. */
 export function GameText({ text, singleLine = false }: GameTextProps): ReactNode {
   let className = "whitespace-pre-line";
+
   if (singleLine) {
     className = "";
   }
@@ -140,6 +145,7 @@ export function GameText({ text, singleLine = false }: GameTextProps): ReactNode
       {parseGameText(text).map((run, index) => {
         const key = `${index}-${run.text.length}`;
         let shown = run.text;
+
         if (singleLine) {
           shown = shown.replace(/\n/g, " ");
         }

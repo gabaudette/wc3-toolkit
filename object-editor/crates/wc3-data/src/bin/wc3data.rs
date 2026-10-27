@@ -37,6 +37,7 @@ const OUTPUT_CLOSED: &str = "\0output closed";
 /// panicking like `println!` does.
 fn emit(line: std::fmt::Arguments<'_>) -> Result<(), String> {
     let mut stdout = std::io::stdout().lock();
+
     match writeln!(stdout, "{line}") {
         Ok(()) => Ok(()),
         Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe => Err(OUTPUT_CLOSED.to_owned()),
@@ -75,6 +76,7 @@ fn parse_args() -> Result<Args, String> {
     }
 
     let game_dir = game_dir.ok_or(format!("no game folder: pass --game or set {GAME_DIR_VAR}"))?;
+
     Ok(Args {
         game_dir,
         options,
@@ -99,6 +101,7 @@ fn list(db: &UnitDatabase, heroes_only: bool) -> Result<(), String> {
 
     for id in db.ids() {
         let kind = db.kind(id);
+
         if heroes_only && kind != ObjectKind::Hero {
             continue;
         }
@@ -126,6 +129,7 @@ fn show_unit(db: &UnitDatabase, id: &str, mode: ArtMode) -> Result<(), String> {
             )
         })
         .collect();
+
     rows.sort();
 
     say!(

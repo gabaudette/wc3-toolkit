@@ -67,6 +67,7 @@ export function ShareDialog({ open, units, initial, onClose }: ShareDialogProps)
       filters: BUNDLE_FILTERS,
       defaultPath: `${plainGameText(first?.name ?? "units")}${BUNDLE_EXTENSION}`,
     });
+
     if (!path) {
       return;
     }

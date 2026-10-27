@@ -51,6 +51,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .ok_or("usage: starter_examples GAME_DIR OUTPUT_DIR")?,
     );
     let output = PathBuf::from(args.next().ok_or("missing OUTPUT_DIR")?);
+
     if args.next().is_some() {
         return Err("usage: starter_examples GAME_DIR OUTPUT_DIR".into());
     }
@@ -79,10 +80,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let buffs = PlainObjects::load(&map, BUFFS)?;
 
     let hero = units.create(&db, id("Hpal")?)?;
+
     for (code, value) in HERO_FIELDS {
         units.set(&db, hero, field(&db, code)?, value)?;
     }
+
     let item = items.create(&item_db, id("phea")?)?;
+
     for (code, value) in ITEM_FIELDS {
         items.set(
             &item_db,
@@ -92,7 +96,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             value,
         )?;
     }
+
     let shop = units.create(&db, id("ngme")?)?;
+
     units.set(&db, shop, field(&db, "unam")?, SHOP_NAME)?;
     units.set(&db, shop, field(&db, "usei")?, &item.to_string())?;
 
@@ -118,6 +124,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             &[root],
             &|_| None,
         )?;
+
         if !export.warnings.is_empty()
             || !export.bundle.files().is_empty()
             || export.objects.len() != expected
@@ -133,5 +140,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             format!("{}\n", export.bundle.to_code()),
         )?;
     }
+
     Ok(())
 }

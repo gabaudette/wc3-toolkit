@@ -39,15 +39,19 @@ pub struct TimerWindowDesign {
 
 fn check(timer: &TimerWindowDesign) -> Result<(), String> {
     let problem = |what: String| Err(format!("{}: {what}", timer.name));
+
     if !(timer.duration > 0.0 && timer.duration <= MAX_DURATION) {
         return problem("the countdown must last more than 0 seconds and at most a day".to_owned());
     }
+
     let function = timer.on_done.trim();
+
     if !function.is_empty() && !is_identifier(function) {
         return problem(format!(
             "{function:?} is not a Lua function name (letters, digits and _, not starting with a digit)"
         ));
     }
+
     if let Some(color) = &timer.title_color {
         color_code(color).map_err(|e| format!("{}: {e}", timer.name))?;
     }
@@ -151,6 +155,7 @@ end
         repeats = timer.repeats,
         hide_when_done = timer.hide_when_done,
     );
+
     check_syntax(&module_file(name), &code).map_err(|e| e.to_string())?;
     Ok(code)
 }
@@ -194,9 +199,11 @@ mod tests {
         assert!(code.contains("UI.NextWave.Start()"), "{code}");
 
         let mut quiet = next_wave();
+
         quiet.on_done.clear();
         quiet.start_at_start = false;
         let code = timer_lua(&quiet, &names(&quiet), "s").unwrap();
+
         assert!(!code.contains("SpawnWave"), "{code}");
         assert!(!code.contains("UI.NextWave.Start()\n"), "{code}");
     }
@@ -204,10 +211,12 @@ mod tests {
     #[test]
     fn bad_timer_windows_are_reported() {
         let mut instant = next_wave();
+
         instant.duration = 0.0;
         assert!(timer_lua(&instant, &names(&instant), "s").is_err());
 
         let mut bad_function = next_wave();
+
         bad_function.on_done = "spawn wave".to_owned();
         assert!(timer_lua(&bad_function, &names(&bad_function), "s").is_err());
     }

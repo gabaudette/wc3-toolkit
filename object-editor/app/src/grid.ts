@@ -13,6 +13,7 @@ export type Cell = {
 export function inside(cell: Cell, rows: number, columns: number): Cell | null {
   const row = Math.max(0, Math.min(cell.row, rows - 1));
   const column = Math.max(0, Math.min(cell.column, columns - 1));
+
   if (row === cell.row && column === cell.column) {
     return null;
   }

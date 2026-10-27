@@ -36,6 +36,7 @@ export function TextPreview({ text }: { text: string }) {
           // The raw text is still shown; a failed lookup only leaves placeholders unfilled.
         });
     }, FILL_DELAY_MS);
+
     return () => window.clearTimeout(timer);
   }, [text, values]);
 

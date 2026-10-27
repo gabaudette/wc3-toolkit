@@ -95,6 +95,7 @@ export function ExportDesignsDialog({
     }
 
     let current = true;
+
     flush()
       .then(() => api.uiExportPreview(chosen))
       .then((next) => {
@@ -121,16 +122,19 @@ export function ExportDesignsDialog({
   async function saveFile() {
     const first = designs.find((d) => d.id === chosen[0]);
     let name = "designs";
+
     if (chosen.length === 1 && first) {
       name = first.name;
     }
 
     let defaultPath = `${name}${DESIGN_EXTENSION}`;
+
     if (mapPath) {
       defaultPath = besides(mapPath, defaultPath);
     }
 
     const path = await save({ title: "Save design file", filters: DESIGN_FILTERS, defaultPath });
+
     if (!path) {
       return;
     }
@@ -210,6 +214,7 @@ export function ImportDesignsDialog({
     }
 
     let current = true;
+
     flush()
       .then(() => api.uiImportPreview(path))
       .then((next) => {
@@ -238,6 +243,7 @@ export function ImportDesignsDialog({
   }
 
   let count = "";
+
   if (preview) {
     count = counted(preview.designs.length, "design");
   }

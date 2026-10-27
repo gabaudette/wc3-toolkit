@@ -58,9 +58,11 @@ pub enum LeaderboardSort {
 
 fn check(board: &LeaderboardDesign) -> Result<(), String> {
     let problem = |what: String| Err(format!("{}: {what}", board.name));
+
     if !board.players && board.labels.is_empty() {
         return problem("it shows no rows: add players or a row of your own".to_owned());
     }
+
     if board.labels.len() > MAX_LABELS {
         return problem(format!(
             "at most {MAX_LABELS} rows of your own (the game gives each row a player, and these use the neutral ones)"
@@ -68,17 +70,21 @@ fn check(board: &LeaderboardDesign) -> Result<(), String> {
     }
 
     let mut seen = HashSet::new();
+
     for (i, label) in board.labels.iter().enumerate() {
         if label.name.trim().is_empty() {
             return problem(format!("row {} needs a name", i + 1));
         }
+
         if !seen.insert(label.name.trim().to_lowercase()) {
             return problem(format!("two rows are named {:?}", label.name.trim()));
         }
+
         if let Some(color) = &label.color {
             color_code(color).map_err(|e| format!("{}: {e}", board.name))?;
         }
     }
+
     if let Some(color) = &board.title_color {
         color_code(color).map_err(|e| format!("{}: {e}", board.name))?;
     }
@@ -246,6 +252,7 @@ end
         player_value = board.player_value,
         labels = labels.join("\n"),
     );
+
     check_syntax(&module_file(name), &code).map_err(|e| e.to_string())?;
     Ok(code)
 }
@@ -296,24 +303,30 @@ mod tests {
         assert!(code.contains("UI.Kills.Show()"), "{code}");
 
         let mut unsorted = kills();
+
         unsorted.sort = LeaderboardSort::None;
         let code = leaderboard_lua(&unsorted, &names(&unsorted), "s").unwrap();
+
         assert!(code.contains("local LOWEST_FIRST = nil"), "{code}");
     }
 
     #[test]
     fn bad_leaderboards_are_reported() {
         let mut empty = kills();
+
         empty.players = false;
         empty.labels.clear();
         assert!(leaderboard_lua(&empty, &names(&empty), "s").is_err());
 
         let mut crowded = kills();
+
         crowded.labels = (0..5).map(|i| label(&format!("Team {i}"), 0)).collect();
         let err = leaderboard_lua(&crowded, &names(&crowded), "s").unwrap_err();
+
         assert!(err.contains("at most 4"), "{err}");
 
         let mut twins = kills();
+
         twins.labels.push(label("creeps", 1));
         assert!(leaderboard_lua(&twins, &names(&twins), "s").is_err());
     }

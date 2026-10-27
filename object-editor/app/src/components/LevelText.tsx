@@ -148,6 +148,7 @@ export function LevelText({
       {showInfo && meta.description && <Description field={meta} />}
       {field.cells.map((cell, index) => {
         const level = index + 1;
+
         return (
           <LevelInput
             key={level}

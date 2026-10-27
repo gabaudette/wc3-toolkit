@@ -72,6 +72,7 @@ struct CatalogSpec {
     source: &'static str,
     table: &'static str,
 }
+
 const RACES: &[&str] = &["campaign", "human", "neutral", "nightelf", "orc", "undead"];
 
 /// Text files that only name other objects (abilities, items, upgrades), used
@@ -170,8 +171,10 @@ impl UnitDatabase {
             .collect();
 
         let mut tables = HashMap::new();
+
         for (source, path) in TABLES {
             let table = load_slk(files.read_balanced(path)?, path)?;
+
             tables.insert(source.to_ascii_lowercase(), table);
         }
 
@@ -212,6 +215,7 @@ impl UnitDatabase {
             Catalog::Buffs => "abilitybuffdata",
             Catalog::Destructables => "destructabledata",
         };
+
         self.tables.get(main).is_some_and(|t| t.has_row(id))
     }
 
@@ -227,6 +231,7 @@ impl UnitDatabase {
     /// Fields the Object Editor shows for this unit.
     pub fn fields_for(&self, id: &str) -> impl Iterator<Item = &FieldMeta> {
         let kind = self.kind(id);
+
         self.fields.iter().filter(move |f| {
             f.applies_to(kind)
                 && (f.use_specific.is_empty() || f.use_specific.iter().any(|s| s == id))
@@ -238,6 +243,7 @@ impl UnitDatabase {
     /// names are shared with units.
     pub fn load_items(files: &GameFiles) -> Result<Self> {
         let mut profile = load_profile(files, &[ITEM_FUNC], GameFiles::read_balanced)?;
+
         profile.merge_text(&decode_text(files.read_base(ITEM_SKIN)?, ITEM_SKIN)?);
         for path in ITEM_STRINGS {
             profile.merge_text(&decode_text(files.read_localized(path)?, path)?);
@@ -257,14 +263,17 @@ impl UnitDatabase {
     /// and art from the ability profiles, where they sit next to abilities.
     pub fn load_buffs(files: &GameFiles) -> Result<Self> {
         let mut profile = Profile::new();
+
         for source in ABILITY_PROFILES {
             let path = format!("units\\{source}abilityfunc.txt");
+
             merge_optional(&mut profile, files.read_balanced(&path), &path)?;
         }
 
         merge_optional(&mut profile, files.read_base(ABILITY_SKIN), ABILITY_SKIN)?;
         for source in ABILITY_PROFILES {
             let path = format!("units\\{source}abilitystrings.txt");
+
             merge_optional(&mut profile, files.read_localized(&path), &path)?;
         }
 
@@ -311,6 +320,7 @@ impl UnitDatabase {
         let table = load_slk(files.read_balanced(spec.table)?, spec.table)?;
         let ids = table.keys().map(str::to_owned).collect();
         let mut tables = HashMap::new();
+
         tables.insert(spec.source.to_ascii_lowercase(), table);
 
         let editor_strings = load_profile(files, EDITOR_STRINGS, GameFiles::read_localized)?;
@@ -347,6 +357,7 @@ impl UnitDatabase {
             .get("unitbalance")
             .and_then(|t| t.get(id, "isbldg"))
             == Some("1");
+
         if is_building {
             return ObjectKind::Building;
         }
@@ -370,6 +381,7 @@ impl UnitDatabase {
                 object_name(&self.profile, id)
             }
         };
+
         own.map(|name| self.display_text(&name))
             .or_else(|| object_name(&self.names, id))
             .unwrap_or_else(|| id.to_owned())
@@ -379,6 +391,7 @@ impl UnitDatabase {
     /// with editor string keys (`WESTRING_DEST_...`), which resolve here.
     pub fn display_text(&self, text: &str) -> String {
         let (key, rest) = text.split_once(' ').unwrap_or((text, ""));
+
         if !key.starts_with(STRING_KEY_PREFIX) {
             return text.to_owned();
         }
@@ -433,6 +446,7 @@ impl UnitDatabase {
         let index = field
             .index
             .filter(|i| *i > 0 || !field.value_type.ends_with(LIST_SUFFIX));
+
         match index {
             // Long text is quoted in profiles (`Buffubertip="..."`); the value is what is inside.
             None => Some(unquote(&whole).to_owned()),
@@ -509,6 +523,7 @@ impl UnitDatabase {
             .get(section, "Tip")
             .map_or(section, unquote)
             .to_owned();
+
         Some((name, key))
     }
 
@@ -526,11 +541,13 @@ impl UnitDatabase {
             Catalog::Buffs => "Buffart",
             Catalog::Destructables => return None,
         };
+
         self.profile_value(id, key, mode)
     }
 
     fn profile_value(&self, id: &str, key: &str, mode: ArtMode) -> Option<String> {
         let variant = format!("{key}:{}", mode.key_suffix());
+
         self.profile
             .get(id, &variant)
             .or_else(|| self.profile.get(id, key))
@@ -608,6 +625,7 @@ impl crate::abilities::PlaceholderSource for UnitDatabase {
 pub fn parse_hotkey(value: &str) -> Option<char> {
     let mut chars = unquote(value).trim().chars();
     let key = chars.next()?;
+
     (chars.next().is_none() && key.is_ascii_alphanumeric()).then(|| key.to_ascii_uppercase())
 }
 
@@ -622,6 +640,7 @@ pub(crate) fn resolve_string(strings: &Profile, key: &str) -> Option<String> {
 
     for _ in 0..MAX_STRING_REDIRECTS {
         let target = unquote(value);
+
         if !target.starts_with(STRING_KEY_PREFIX) {
             break;
         }
@@ -636,11 +655,13 @@ pub(crate) fn resolve_string(strings: &Profile, key: &str) -> Option<String> {
     let display = text
         .split_once(MENU_LABEL_SEPARATOR)
         .map_or(text, |(label, _)| label);
+
     Some(display.replace('&', ""))
 }
 
 fn object_name(profile: &Profile, id: &str) -> Option<String> {
     let name = unquote(profile.get(id, "Name")?);
+
     match profile.get(id, "EditorSuffix").map(unquote) {
         Some(suffix) if !suffix.is_empty() => Some(format!("{name} {}", suffix.trim())),
         _ => Some(name.to_owned()),
@@ -669,12 +690,14 @@ fn editor_enums(
 ) -> Result<HashMap<String, Vec<EnumValue>>> {
     let mut enums = parse_enums(editor_data, editor_strings);
     let world_edit = decode_text(files.read_base(WORLD_EDIT_DATA)?, WORLD_EDIT_DATA)?;
+
     for (section, value_type) in CATEGORY_SECTIONS {
         enums.insert(
             (*value_type).to_owned(),
             letter_choices(&world_edit, section, editor_strings),
         );
     }
+
     Ok(enums)
 }
 
@@ -682,6 +705,7 @@ fn editor_enums(
 /// Read from the text itself: profiles lowercase their keys, and these keep their case.
 fn letter_choices(text: &str, section: &str, editor_strings: &Profile) -> Vec<EnumValue> {
     let header = format!("[{section}]");
+
     text.lines()
         .map(str::trim)
         .skip_while(|line| *line != header)
@@ -692,6 +716,7 @@ fn letter_choices(text: &str, section: &str, editor_strings: &Profile) -> Vec<En
             let (value, rest) = line.split_once('=')?;
             let mut parts = split_list(rest).into_iter();
             let key = parts.next()?;
+
             Some(EnumValue {
                 value: value.trim().to_owned(),
                 label: resolve_string(editor_strings, key.trim())
@@ -716,6 +741,7 @@ fn parse_enums(editor_data: &Profile, editor_strings: &Profile) -> HashMap<Strin
                 .iter()
                 .filter(|(k, _)| k.chars().all(|c| c.is_ascii_digit()))
                 .collect();
+
             entries.sort_by_key(|(k, _)| k.parse::<u32>().unwrap_or(u32::MAX));
 
             let values: Vec<EnumValue> = entries
@@ -758,6 +784,7 @@ type Reader = fn(&GameFiles, &str) -> Result<Vec<u8>>;
 
 fn load_profile(files: &GameFiles, paths: &[&str], read: Reader) -> Result<Profile> {
     let mut profile = Profile::new();
+
     for path in paths {
         profile.merge_text(&decode_text(read(files, path)?, path)?);
     }
@@ -838,6 +865,7 @@ mod tests {
         let text = "[Other]\nX=1\n[DoodadCategories]\n// comment\n\
                     O=WESTRING_PROPS,ReplaceableTextures\\WorldEditUI\\Doodad-Prop\nZ=Cinematic\n";
         let mut strings = Profile::new();
+
         strings.merge_text("[WorldEditStrings]\nWESTRING_PROPS=Props\n");
         let choices = letter_choices(text, "DoodadCategories", &strings);
 

@@ -196,12 +196,14 @@ type NumberCellProps = {
 function NumberCell({ param, level, values, onValue }: NumberCellProps) {
   const value = values[level - 1] ?? values[values.length - 1] ?? 0;
   const [text, setText] = useState(String(value));
+
   useEffect(() => setText(String(value)), [value]);
 
   function commit() {
     const parsed = Number(text.trim());
     const valid =
       text.trim() !== "" && Number.isFinite(parsed) && (!param.whole || Number.isInteger(parsed));
+
     if (!valid) {
       setText(String(value));
       return;
@@ -209,6 +211,7 @@ function NumberCell({ param, level, values, onValue }: NumberCellProps) {
 
     if (parsed !== value) {
       const next = [...values];
+
       next[level - 1] = parsed;
       onValue(param.id, next);
     }
@@ -241,6 +244,7 @@ type CodeStepProps = {
 export function CodeStep({ folder, source, onFolder }: CodeStepProps) {
   async function browse() {
     const picked = await open({ directory: true, ...(folder && { defaultPath: folder }) });
+
     if (typeof picked === "string") {
       onFolder(picked);
     }

@@ -107,6 +107,7 @@ impl PlainObjects {
             data: read(kind.data_file)?,
             skin: read(kind.skin_file)?,
         };
+
         Ok(Self {
             kind,
             tables,
@@ -249,6 +250,7 @@ impl PlainObjects {
         }
 
         let base = self.base_of(db, id)?;
+
         db.raw_value(&base.to_string(), field, mode)
     }
 
@@ -282,6 +284,7 @@ impl PlainObjects {
         };
 
         let parsed = parse_value(field, text)?;
+
         if same_as_base(db, base, field, &parsed) {
             self.reset(strings, id, field);
             return Ok(());
@@ -295,6 +298,7 @@ impl PlainObjects {
         };
 
         let entry = entry_mut(&mut self.tables, field.netsafe, id);
+
         if entry.sets.is_empty() {
             entry.sets.push(ModSet {
                 flags: 0,
@@ -303,6 +307,7 @@ impl PlainObjects {
         }
 
         let set = &mut entry.sets[0];
+
         match set.mods.iter_mut().find(|m| m.field == field_id) {
             Some(existing) => existing.value = value,
             None => set.mods.push(Modification {
@@ -325,11 +330,14 @@ impl PlainObjects {
         };
 
         let mut removed = false;
+
         for data in [&mut self.tables.data, &mut self.tables.skin] {
             let entries = data.custom.iter_mut().chain(data.original.iter_mut());
+
             for entry in entries.filter(|e| e.effective_id() == id) {
                 for set in &mut entry.sets {
                     let before = set.mods.len();
+
                     set.mods.retain(|m| m.field != field_id);
                     removed |= set.mods.len() != before;
                 }
@@ -372,8 +380,10 @@ impl PlainObjects {
     /// changes are reset field by field) and unknown IDs.
     pub fn remove(&mut self, strings: &mut MapStrings, id: FourCC) -> bool {
         let mut removed = false;
+
         for data in [&mut self.tables.data, &mut self.tables.skin] {
             let before = data.custom.len();
+
             data.custom.retain(|e| e.id != id);
             removed |= data.custom.len() != before;
         }
@@ -396,6 +406,7 @@ impl PlainObjects {
             !self.has(id) && !db.contains(&id.to_string())
         })
         .ok_or_else(|| Error::Invalid(format!("no free ID for {base}")))?;
+
         for data in [&mut self.tables.data, &mut self.tables.skin] {
             data.custom.push(ObjectEntry {
                 base,
@@ -437,6 +448,7 @@ impl PlainObjects {
             field.field
         );
         let reference = strings.add(text, Some(&comment));
+
         if let Some(number) = reference_id(&reference) {
             self.added_strings.push(number);
         }
@@ -484,11 +496,14 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
             id,
             sets: Vec::new(),
         });
+
         let last = data.custom.len() - 1;
+
         return &mut data.custom[last];
     }
 
     let index = data.original.iter().position(|e| e.effective_id() == id);
+
     match index {
         Some(i) => &mut data.original[i],
         None => {
@@ -497,7 +512,9 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
                 id: FourCC::ZERO,
                 sets: Vec::new(),
             });
+
             let last = data.original.len() - 1;
+
             &mut data.original[last]
         }
     }
@@ -506,8 +523,10 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
 /// Whether `value` equals the base object's game value in both art modes.
 fn same_as_base(db: &UnitDatabase, base: FourCC, field: &FieldMeta, value: &Value) -> bool {
     let base = base.to_string();
+
     [ArtMode::Sd, ArtMode::Hd].iter().all(|mode| {
         let base_value = db.raw_value(&base, field, *mode).unwrap_or_default();
+
         parse_value(field, &base_value).is_ok_and(|parsed| &parsed == value)
     })
 }
@@ -530,6 +549,7 @@ mod tests {
         let kept = strings.add("Kept", None);
         let added = strings.add("Fire Bolt", None);
         let added_id = reference_id(&added).unwrap_or_default();
+
         for (table, mods) in [
             (&mut tables.data, Vec::new()),
             (
@@ -549,7 +569,9 @@ mod tests {
                 sets: vec![ModSet { flags: 0, mods }],
             });
         }
+
         let mut buffs = PlainObjects::from_tables(BUFFS, tables);
+
         buffs.added_strings.push(added_id);
 
         assert!(
@@ -560,6 +582,7 @@ mod tests {
         assert!(buffs.objects().is_empty());
         assert_eq!(strings.get(added_id), None, "its new string is gone");
         let kept_id = reference_id(&kept).unwrap_or_default();
+
         assert_eq!(strings.get(kept_id), Some("Kept"), "other strings stay");
     }
 }

@@ -10,6 +10,7 @@ function pascalCase(name: string): string {
     .filter(Boolean)
     .map((word) => word[0]?.toUpperCase() + word.slice(1))
     .join("");
+
   if (out === "" || /^[0-9]/.test(out)) {
     out = `Design${out}`;
   }
@@ -21,10 +22,12 @@ function pascalCase(name: string): string {
 export function luaNames(designs: Design[]): Map<string, string> {
   const taken = new Set<string>();
   const names = new Map<string, string>();
+
   for (const design of designs) {
     const base = pascalCase(design.name);
     let name = base;
     let n = 2;
+
     while (taken.has(name.toLowerCase())) {
       name = `${base}${n}`;
       n++;
@@ -52,15 +55,18 @@ export function titleText(dialog: DialogDesign): string {
 /** A button's text as the game gets it, like `button_text` in Rust. */
 export function buttonText(button: DialogButton): string {
   const key = button.hotkey.trim();
+
   if (!button.highlightHotkey || [...key].length !== 1) {
     return button.text;
   }
 
   const at = button.text.toLowerCase().indexOf(key.toLowerCase());
+
   if (at < 0) {
     return button.text;
   }
 
   const letter = button.text.slice(at, at + key.length);
+
   return `${button.text.slice(0, at)}|cff${HOTKEY_COLOR}${letter}|r${button.text.slice(at + key.length)}`;
 }

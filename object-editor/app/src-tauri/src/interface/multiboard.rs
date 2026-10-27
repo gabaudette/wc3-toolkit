@@ -70,19 +70,24 @@ pub struct BoardCell {
 /// Problems that would make the board misbehave, as sentences.
 fn check(board: &MultiboardDesign) -> Result<(), String> {
     let problem = |what: String| Err(format!("{}: {what}", board.name));
+
     if board.columns.is_empty() {
         return problem("it needs at least one column".to_owned());
     }
 
     let mut seen = HashSet::new();
+
     for (i, column) in board.columns.iter().enumerate() {
         let n = i + 1;
+
         if column.name.trim().is_empty() {
             return problem(format!("column {n} needs a name"));
         }
+
         if !seen.insert(column.name.trim().to_lowercase()) {
             return problem(format!("two columns are named {:?}", column.name.trim()));
         }
+
         if !(column.width > 0.0 && column.width <= MAX_WIDTH) {
             return problem(format!(
                 "column {:?} must be wider than 0% and at most 100% of the screen",
@@ -92,16 +97,19 @@ fn check(board: &MultiboardDesign) -> Result<(), String> {
     }
 
     let mut seen = HashSet::new();
+
     for (i, row) in board.rows.iter().enumerate() {
         if !row.per_player && !seen.insert(row.name.trim().to_lowercase()) {
             return problem(format!("two rows are named {:?}", row.name.trim()));
         }
+
         for cell in &row.cells {
             if let Some(color) = &cell.color {
                 color_code(color).map_err(|e| format!("{}, row {}: {e}", board.name, i + 1))?;
             }
         }
     }
+
     if let Some(color) = &board.title_color {
         color_code(color).map_err(|e| format!("{}: {e}", board.name))?;
     }
@@ -114,6 +122,7 @@ fn lua_cell(cell: &BoardCell) -> String {
         Some(v) => lua_string(v),
         None => "nil".to_owned(),
     };
+
     format!(
         "{{ text = {}, color = {}, icon = {} }}",
         lua_string(&cell.text),
@@ -344,6 +353,7 @@ end
         columns = columns.join("\n"),
         rows = rows.join("\n"),
     );
+
     check_syntax(&module_file(name), &code).map_err(|e| e.to_string())?;
     Ok(code)
 }
@@ -438,8 +448,10 @@ mod tests {
     #[test]
     fn short_rows_get_empty_cells() {
         let mut board = scoreboard();
+
         board.rows[0].cells.truncate(1);
         let code = multiboard_lua(&board, &names(&board), "s").unwrap();
+
         assert!(
             code.contains("{ text = \"\", color = nil, icon = nil }"),
             "{code}"
@@ -449,24 +461,30 @@ mod tests {
     #[test]
     fn bad_boards_are_reported() {
         let mut no_columns = scoreboard();
+
         no_columns.columns.clear();
         assert!(multiboard_lua(&no_columns, &names(&no_columns), "s").is_err());
 
         let mut twin_columns = scoreboard();
+
         twin_columns.columns[1].name = "player".to_owned();
         let err = multiboard_lua(&twin_columns, &names(&twin_columns), "s").unwrap_err();
+
         assert!(err.contains("two columns"), "{err}");
 
         let mut too_wide = scoreboard();
+
         too_wide.columns[0].width = 0.0;
         assert!(multiboard_lua(&too_wide, &names(&too_wide), "s").is_err());
 
         let mut twin_rows = scoreboard();
+
         twin_rows.rows[1].per_player = false;
         twin_rows.rows[1].name = "HEADER".to_owned();
         assert!(multiboard_lua(&twin_rows, &names(&twin_rows), "s").is_err());
 
         let mut bad_color = scoreboard();
+
         bad_color.rows[0].cells[0].color = Some("gold".to_owned());
         assert!(multiboard_lua(&bad_color, &names(&bad_color), "s").is_err());
     }

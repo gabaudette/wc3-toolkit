@@ -71,6 +71,7 @@ function isTyped(field: LevelField): boolean {
 
 function shownValue(field: LevelField, cell: LevelCell): string {
   const { control } = field.field;
+
   if (control === "number" && !cell.raw) {
     return "0";
   }
@@ -125,12 +126,14 @@ function FlagsPopover({ anchor, label, onKey, onCommit, children }: FlagsPopover
 
   useLayoutEffect(() => {
     const cell = anchor?.getBoundingClientRect();
+
     if (!cell) {
       return;
     }
 
     const { clientWidth, clientHeight } = document.documentElement;
     const right = clientWidth - cell.right;
+
     if (cell.bottom > clientHeight / HALF) {
       setPlacement({ right, bottom: clientHeight - cell.top + POPOVER_GAP });
     } else {
@@ -188,6 +191,7 @@ function CellEditor({
 
   if (meta.control === "select") {
     const choices = fieldChoices(meta.options, editing.draft, editing.draft);
+
     return (
       // A list under the cell, like the flags: picking applies; Escape,
       // Tab or a click away leave the cell as it was.
@@ -208,6 +212,7 @@ function CellEditor({
             selectedKeys={[optionKey(choices.value)]}
             onSelectionChange={(keys) => {
               const [key] = [...keys];
+
               if (key !== undefined) {
                 onChoice(optionValue(key));
               }
@@ -275,6 +280,7 @@ export function LevelTable({
   const focusActive = useRef(false);
   // The commit handlers run from events and must see the latest edit.
   const editingRef = useRef(editing);
+
   editingRef.current = editing;
 
   const levels = Math.max(0, ...fields.map((f) => f.cells.length));
@@ -284,6 +290,7 @@ export function LevelTable({
   // ability's text section), which used to re-render forever.
   useEffect(() => {
     const kept = inside(active, fields.length, levels);
+
     if (kept) {
       setActive(kept);
     }
@@ -304,11 +311,13 @@ export function LevelTable({
   function apply(cell: Cell, value: string, fill: boolean) {
     const field = fields[cell.row];
     const current = field?.cells[cell.column];
+
     if (!field || !current) {
       return;
     }
 
     const level = cell.column + 1;
+
     if (fill) {
       onFill(field.field.id, level, value);
     } else if (value !== current.raw) {
@@ -319,6 +328,7 @@ export function LevelTable({
   /** Applies the edit in progress, once. */
   function commit(fill = false) {
     const edit = editingRef.current;
+
     if (!edit) {
       return;
     }
@@ -338,6 +348,7 @@ export function LevelTable({
   function startEditing(cell: Cell, draft: string | null) {
     const field = fields[cell.row];
     const current = field?.cells[cell.column];
+
     if (!editable || !field || !current) {
       return;
     }
@@ -354,11 +365,13 @@ export function LevelTable({
   function cellKeyDown(e: KeyboardEvent, cell: Cell) {
     const field = fields[cell.row];
     const current = field?.cells[cell.column];
+
     if (!field || !current) {
       return;
     }
 
     const target = moved(cell, e.key, fields.length, levels);
+
     if (target) {
       e.preventDefault();
       moveTo(target);
@@ -378,6 +391,7 @@ export function LevelTable({
     }
 
     const withModifier = e.ctrlKey || e.metaKey || e.altKey;
+
     if (isTyped(field) && typesCharacter(e.key, withModifier)) {
       e.preventDefault();
       startEditing(cell, e.key);
@@ -386,6 +400,7 @@ export function LevelTable({
 
   function editorKeyDown(e: KeyboardEvent) {
     const edit = editingRef.current;
+
     if (!edit) {
       return;
     }
@@ -404,6 +419,7 @@ export function LevelTable({
 
     const next = { row: edit.row, column: Math.min(levels - 1, edit.column + 1) };
     const previous = { row: edit.row, column: Math.max(0, edit.column - 1) };
+
     if (e.key === "Enter" || (e.key === "Tab" && !e.shiftKey)) {
       e.preventDefault();
       commit();
@@ -425,6 +441,7 @@ export function LevelTable({
     }
 
     const id = field.id;
+
     if (info.includes(id)) {
       setInfo(info.filter((i) => i !== id));
     } else {
