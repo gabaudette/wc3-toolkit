@@ -14,6 +14,7 @@ use std::path::{Path, PathBuf};
 /// threads stay normal. Nothing else here uses the system bus (file dialogs
 /// and accessibility use the session bus).
 #[cfg(all(unix, not(target_os = "macos")))]
+#[allow(unsafe_code)]
 pub fn keep_threads_at_normal_priority() {
     const SYSTEM_BUS_VAR: &str = "DBUS_SYSTEM_BUS_ADDRESS";
     /// A socket under `/dev/null`, which is not a folder.

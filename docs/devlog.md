@@ -4,6 +4,26 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Standards, part 5: unsafe only in thin FFI wrappers (AGE-62)
+
+- `unsafe` was spread through `casc` (14 uses) and `mpq` (18), next to the logic, kept
+  sound by comments saying a handle was "closed exactly once". Each crate now has an
+  `ffi.rs` with the C declarations and owned handle types: `StorageHandle`, `FileHandle`
+  and `Search` (an iterator) for CascLib; `ArchiveHandle` and `FileHandle` for StormLib.
+  They close themselves on `Drop`, and files and searches borrow their storage or archive
+  (`PhantomData<&'a …>`), so the compiler now rules out using one after its parent closed.
+- `ArchiveHandle::add_file` creates, writes and finishes a file in one call, so the
+  handle is always finished exactly once; the write's error code is kept before finishing
+  overwrites it. `ArchiveHandle::save` consumes the archive through `ManuallyDrop` instead
+  of `mem::forget`. `Send`/`Sync` and their reasons moved with the handles.
+- `lib.rs` in both crates has no `unsafe` left and keeps every flag, error mapping and
+  retry (growing a full file table). `unsafe_code = "deny"` in `[workspace.lints.rust]`
+  stops new `unsafe` anywhere else; `ffi.rs` allows it module-wide and `platform.rs` only
+  on `keep_threads_at_normal_priority` (`std::env::set_var` is `unsafe` since Rust 2024).
+  A throwaway `unsafe {}` in `wc3-data` failed to compile, as intended.
+- Checked with the crate tests (archive write, read, replace and file-table growth) and
+  the real-install tests, which read CASC files and lists through the new handles.
+
 ## 2026-10-27 · Standards, part 3: errors as values in the frontend, and a log (AGE-60)
 
 - AGE-ERR-001/002: the frontend let Tauri's `invoke` rejections act as exceptions, caught in

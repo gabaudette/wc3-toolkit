@@ -8,6 +8,11 @@ version = "0.1.0"
 license = "MIT"
 repository = "https://github.com/gabaudette/wc3-toolkit"
 
+[workspace.lints.rust]
+# Unsafe is a last resort: only the CascLib and StormLib wrappers (`ffi.rs`) and
+# `platform.rs` allow it.
+unsafe_code = "deny"
+
 [workspace.lints.clippy]
 all = { level = "warn", priority = -1 }
 
