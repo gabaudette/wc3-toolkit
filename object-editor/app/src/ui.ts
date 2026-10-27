@@ -44,6 +44,25 @@ export function variationModel(raw: string, variations: number): string {
 }
 
 /** "1 object", "3 objects". */
+/** `C:\Maps\test.w3m` → `C:\Maps\file.w3ui`: a file name in the same folder. */
+export function besides(path: string, name: string): string {
+  const at = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
+  if (at < 0) {
+    return name;
+  }
+
+  return `${path.slice(0, at + 1)}${name}`;
+}
+
+/** "1 button", "3 buttons". */
+export function counted(count: number, word: string): string {
+  if (count === 1) {
+    return `1 ${word}`;
+  }
+
+  return `${count} ${word}s`;
+}
+
 export function objectCount(count: number): string {
   if (count === 1) {
     return "1 object";
@@ -80,6 +99,7 @@ export const MAP_FILTERS = [{ name: "Warcraft III maps", extensions: ["w3m", "w3
 
 /** File types the bundle file pickers offer. */
 export const BUNDLE_FILTERS = [{ name: "Object bundles", extensions: ["w3obj"] }];
+export const DESIGN_FILTERS = [{ name: "Interface designs", extensions: ["w3ui"] }];
 
 const KILOBYTE = 1024;
 const MEGABYTE = KILOBYTE * KILOBYTE;

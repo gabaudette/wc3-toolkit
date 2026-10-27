@@ -7,6 +7,7 @@ import type {
   AbilitySummary,
   Catalog,
   Design,
+  DesignTransfer,
   Field,
   GameSummary,
   HotkeyClash,
@@ -94,6 +95,12 @@ export const api = {
   uiLua: (id: string) => invoke<string>("ui_lua", { id }),
   /** Writes every design's Lua module into `dir`; returns the file names. */
   writeUiLua: (dir: string) => invoke<string[]>("write_ui_lua", { dir }),
+  uiExportPreview: (ids: string[]) => invoke<DesignTransfer>("ui_export_preview", { ids }),
+  /** Saves the designs, the dialogs they show and the map's files they use as a `.w3ui` file. */
+  saveUiFile: (ids: string[], path: string) => invoke<void>("save_ui_file", { ids, path }),
+  uiImportPreview: (path: string) => invoke<DesignTransfer>("ui_import_preview", { path }),
+  /** Adds a design file's designs to the map; returns the map's designs. */
+  importUiFile: (path: string) => invoke<Design[]>("import_ui_file", { path }),
   /** Removes a custom ability the spell wizard created, when it is cancelled. */
   discardSpell: (id: string) => invoke<void>("discard_spell", { id }),
   fillPlaceholders: (text: string) => invoke<string>("fill_placeholders", { text }),

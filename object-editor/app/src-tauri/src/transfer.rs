@@ -219,7 +219,10 @@ fn export_open_map(session: &Session, chosen: &[FourCC]) -> Result<Export, Strin
     transfer::export(source, &references(session), chosen, &map.reader()).map_err(|e| e.to_string())
 }
 
-fn listed_files(files: &[ImportedFile], statuses: Option<&[FileStatus]>) -> Vec<TransferFile> {
+pub(crate) fn listed_files(
+    files: &[ImportedFile],
+    statuses: Option<&[FileStatus]>,
+) -> Vec<TransferFile> {
     files
         .iter()
         .enumerate()

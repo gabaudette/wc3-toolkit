@@ -306,6 +306,26 @@ export type ImportPreview = {
   warnings: string[];
 };
 
+/** A design moving between maps, as the export and import windows list it. */
+export type ListedDesign = {
+  name: string;
+  kind: string;
+  /** Its name in Lua once in the map: `Scoreboard2` for `UI.Scoreboard2`. */
+  luaName: string;
+  /** Brought along because this dialog's button shows it. */
+  shownBy: string | null;
+  /** Its name in the file, when the map already had a design by that name. */
+  renamedFrom: string | null;
+};
+
+export type DesignTransfer = {
+  designs: ListedDesign[];
+  /** Files imported into the source map that the designs use. */
+  files: TransferFile[];
+  /** Lua functions the designs call, which the map's own code defines. */
+  needs: string[];
+};
+
 export type ImportSource =
   | { kind: "code"; code: string }
   | { kind: "bundle"; path: string }

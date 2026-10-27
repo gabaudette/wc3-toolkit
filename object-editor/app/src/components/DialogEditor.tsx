@@ -1,10 +1,10 @@
-import { ArrowDown, ArrowUp, Plus, Trash01, XClose } from "@untitledui/icons";
+import { ArrowDown, ArrowUp, Plus, XClose } from "@untitledui/icons";
 import { buttonText, titleText } from "../interface";
 import type { ButtonAction, Design, DialogButton, DialogDesign } from "../types";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { ColorSwatches } from "./ColorSwatches";
-import { designInputClass } from "./DesignBasics";
+import { DesignHeader, designInputClass } from "./DesignBasics";
 import { GameText } from "./GameText";
 import { Select } from "./Select";
 
@@ -16,6 +16,7 @@ type DialogEditorProps = {
   luaName: string;
   editable: boolean;
   onChange: (dialog: DialogDesign) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 };
 
@@ -53,6 +54,7 @@ export function DialogEditor({
   luaName,
   editable,
   onChange,
+  onDuplicate,
   onDelete,
 }: DialogEditorProps) {
   const others = designs.filter((d) => d.id !== dialog.id);
@@ -79,26 +81,14 @@ export function DialogEditor({
   return (
     <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-5 overflow-y-auto p-5">
       <div className="flex min-w-0 flex-col gap-4">
-        <div className="flex items-end gap-3">
-          <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm text-muted">
-            Name
-            <input
-              value={dialog.name}
-              disabled={!editable}
-              onChange={(e) => set({ name: e.target.value })}
-              className={designInputClass}
-            />
-          </label>
-          <Button onPress={onDelete} disabled={!editable} label={`Delete ${dialog.name}`}>
-            <span className="flex items-center gap-1.5">
-              <Trash01 className="size-4" aria-hidden="true" />
-              Delete
-            </span>
-          </Button>
-        </div>
-        <p className="-mt-2 text-xs text-faint">
-          In Lua: <code className="font-mono text-muted">UI.{luaName}.Show(player)</code>
-        </p>
+        <DesignHeader
+          name={dialog.name}
+          lua={`UI.${luaName}.Show(player)`}
+          editable={editable}
+          onRename={(name) => set({ name })}
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+        />
 
         <label className="flex flex-col gap-1 text-sm text-muted">
           Message

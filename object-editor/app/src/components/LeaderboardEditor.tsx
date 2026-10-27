@@ -12,6 +12,7 @@ type LeaderboardEditorProps = {
   luaName: string;
   editable: boolean;
   onChange: (board: LeaderboardDesign) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 };
 
@@ -34,6 +35,7 @@ export function LeaderboardEditor({
   luaName,
   editable,
   onChange,
+  onDuplicate,
   onDelete,
 }: LeaderboardEditorProps) {
   const set = (change: Partial<LeaderboardDesign>) => onChange({ ...board, ...change });
@@ -62,6 +64,7 @@ export function LeaderboardEditor({
           lua={`UI.${luaName}.AddValue(${example}, 1)`}
           editable={editable}
           onChange={set}
+          onDuplicate={onDuplicate}
           onDelete={onDelete}
         />
 

@@ -60,36 +60,7 @@ export function TransferList({ objects, files, warnings }: TransferListProps) {
           </li>
         ))}
       </ul>
-      {files.length > 0 && (
-        <>
-          <p className="text-sm text-muted">
-            {files.length} imported file{files.length > 1 && "s"} (models, textures, icons)
-          </p>
-          <ul
-            className="max-h-40 overflow-y-auto rounded-[3px] border border-line"
-            aria-label="Imported files"
-          >
-            {files.map((file) => (
-              <li key={file.path} className="flex items-center gap-3 px-3 py-1 text-xs">
-                <span className="min-w-0 flex-1 truncate font-mono" title={file.path}>
-                  {file.path}
-                </span>
-                <span className="text-faint">{fileSize(file.size)}</span>
-                {file.status && (
-                  <span
-                    className={classes(
-                      file.status === "different" && "text-gold",
-                      file.status !== "different" && "text-muted",
-                    )}
-                  >
-                    {FILE_STATUS_LABELS[file.status]}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+      <TransferFiles files={files} />
       {warnings.length > 0 && (
         <div className="rounded-[3px] border border-gold/40 bg-gold-soft p-2 text-xs">
           <p className="mb-1 font-medium text-gold">Not included</p>
@@ -101,5 +72,43 @@ export function TransferList({ objects, files, warnings }: TransferListProps) {
         </div>
       )}
     </div>
+  );
+}
+
+/** Files imported into the source map (models, textures, icons) that travel along. */
+export function TransferFiles({ files }: { files: TransferFile[] }) {
+  if (files.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      <p className="text-sm text-muted">
+        {files.length} imported file{files.length > 1 && "s"} (models, textures, icons)
+      </p>
+      <ul
+        className="max-h-40 overflow-y-auto rounded-[3px] border border-line"
+        aria-label="Imported files"
+      >
+        {files.map((file) => (
+          <li key={file.path} className="flex items-center gap-3 px-3 py-1 text-xs">
+            <span className="min-w-0 flex-1 truncate font-mono" title={file.path}>
+              {file.path}
+            </span>
+            <span className="text-faint">{fileSize(file.size)}</span>
+            {file.status && (
+              <span
+                className={classes(
+                  file.status === "different" && "text-gold",
+                  file.status !== "different" && "text-muted",
+                )}
+              >
+                {FILE_STATUS_LABELS[file.status]}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

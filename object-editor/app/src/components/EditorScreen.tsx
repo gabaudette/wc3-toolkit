@@ -428,6 +428,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
           <InterfacePane
             key={revision}
             editable={editable}
+            mapPath={map?.path ?? null}
             onMapChanged={refreshMap}
             onError={setError}
           />

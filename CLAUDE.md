@@ -40,7 +40,7 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI
   (`abilities.rs` the same for abilities: list, cards, pages with per-level cells),
   `commands.rs` (Tauri commands), `interface.rs` (the Interface tab: dialogs, multiboards, leaderboards and timer windows, in `interface/`, designed visually,
-  kept in `<map> UI.json` beside the map, and the Lua modules they become), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
+  kept in `<map> UI.json` beside the map, and the Lua modules they become; `.w3ui` design files carry them and their imported icons between maps), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
   the open map's imported file first, then the game's; they read game files outside the
   session lock, since `casc::Storage` is `Sync`, and textures decode at most 512 px),
   `platform.rs` (install/maps folder detection, and on Linux keeping WebKitGTK's threads off
