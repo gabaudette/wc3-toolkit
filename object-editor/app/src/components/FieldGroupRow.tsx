@@ -21,7 +21,7 @@ type FieldGroupRowProps = {
 };
 
 const numberClass =
-  "w-full rounded border border-field bg-well px-2 py-1 font-mono outline-none focus:border-glow read-only:opacity-70";
+  "w-full rounded border border-field bg-well px-2 py-1 font-mono outline-none focus:border-focus read-only:opacity-70";
 
 function numberOf(field: Field | undefined): number {
   const value = Number(field?.raw ?? "");

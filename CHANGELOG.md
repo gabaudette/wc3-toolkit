@@ -74,6 +74,12 @@ under "What's new".
 
 ### Changed
 
+- New checkboxes everywhere: a gold box with a check mark when on. Fields with many options,
+  like Targets Allowed, Targeted As or Classification, show them as chips that wrap across the
+  row, so even 31 options take about four lines; checked ones are gold, and a gold dot marks
+  an option that differs from the game value.
+- Keyboard focus is a light ring instead of a teal one, and a focused text box gets a light
+  edge, so focus no longer clashes with the gold.
 - The spell wizard no longer closes, and throws the spell away, when clicking outside it.
 - Dialogs open near the top of the window and stay there while their content grows or
   shrinks, so buttons no longer move under the pointer.

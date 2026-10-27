@@ -3,7 +3,7 @@
 /*
  * Arcane: Warcraft III Reforged's menus. Deep navy surfaces, fine gold
  * double-line frames, gold for headings and changes, a teal glow for
- * selection and focus. Decided in AGE-23; the mockups live on the
+ * the selected item, and a plain light ring for keyboard focus. Decided in AGE-23; the mockups live on the
  * "WC3 Editor Redesign Directions" canvas.
  *
  * Every text color passes 4.5:1 on every surface it is used on.
@@ -30,8 +30,11 @@
   --color-frame-inner: #3b3420;
   --color-changed: #e2c27d;
   --color-changed-soft: #1c1a12;
-  /* Teal glow: selection and keyboard focus. */
+  /* Teal glow: the selected list item and palette result. */
   --color-glow: #6fd3e0;
+  /* Keyboard focus and the edge of the focused input: light and neutral, so it
+     never reads as gold's "on" or "changed". */
+  --color-focus: #e8ecf5;
   --color-danger: #ff8a8a;
 
   --font-sans: "Nunito Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -63,9 +66,9 @@ body {
   font-size: 14px;
 }
 
-/* Keyboard focus glows teal everywhere; mouse focus stays quiet. */
+/* Keyboard focus shows a light ring everywhere; mouse focus stays quiet. */
 :focus-visible {
-  outline: 2px solid var(--color-glow);
+  outline: 2px solid var(--color-focus);
   outline-offset: 1px;
 }
 

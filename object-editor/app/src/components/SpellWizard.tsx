@@ -864,7 +864,7 @@ function KindStep({ kinds, onPick }: { kinds: SpellKind[]; onPick: (kind: SpellK
           <button
             type="button"
             onClick={() => onPick(kind)}
-            className="flex h-full w-full flex-col gap-0.5 rounded-[3px] border border-line bg-well px-3 py-2 text-left outline-none hover:border-gold focus-visible:border-glow"
+            className="flex h-full w-full flex-col gap-0.5 rounded-[3px] border border-line bg-well px-3 py-2 text-left outline-none hover:border-gold focus-visible:border-focus"
           >
             <span className="font-semibold text-gold-bright">{kind.label}</span>
             <span className="text-sm text-muted">{kind.description}</span>
@@ -920,7 +920,7 @@ function BaseChoice({
       type="button"
       disabled={busy}
       onClick={() => onPick(summary.id)}
-      className="flex w-full items-start gap-3 rounded-[3px] border border-line bg-well px-3 py-2 text-left outline-none hover:border-gold focus-visible:border-glow disabled:opacity-40"
+      className="flex w-full items-start gap-3 rounded-[3px] border border-line bg-well px-3 py-2 text-left outline-none hover:border-gold focus-visible:border-focus disabled:opacity-40"
     >
       <UnitIcon path={summary.icon} size="small" />
       <span className="min-w-0 flex-1">

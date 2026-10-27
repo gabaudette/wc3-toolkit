@@ -170,7 +170,7 @@ export function AbilityList({
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search abilities: Holy Light, AHhb, 75…"
           aria-label="Search abilities"
-          className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
+          className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-focus"
         />
         <div className="flex flex-wrap gap-1">
           {KINDS.map((k) => (

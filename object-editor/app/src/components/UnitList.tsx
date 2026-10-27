@@ -238,7 +238,7 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
           onChange={(e) => setQuery(e.target.value)}
           placeholder={config.placeholder}
           aria-label={`Search ${config.noun}`}
-          className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
+          className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-focus"
         />
         <div className="flex flex-wrap gap-1">
           {filters.map((f) => (

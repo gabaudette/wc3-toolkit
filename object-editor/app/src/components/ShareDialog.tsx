@@ -134,7 +134,7 @@ export function ShareDialog({ open, units, initial, onClose }: ShareDialogProps)
             rows={3}
             aria-label="Share code"
             onFocus={(e) => e.currentTarget.select()}
-            className="break-all rounded-[3px] border border-field bg-well px-3 py-2 font-mono text-xs outline-none focus:border-glow"
+            className="break-all rounded-[3px] border border-field bg-well px-3 py-2 font-mono text-xs outline-none focus:border-focus"
           />
           <TransferList
             objects={preview.objects}

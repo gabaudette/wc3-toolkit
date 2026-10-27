@@ -1,9 +1,10 @@
 # Editor design: Arcane
 
 The editor looks like Warcraft III Reforged's own menus: deep navy surfaces, fine gold
-double-line frames, gold for headings and changes, a teal glow for focus and selection. The
-layout is a workbench: object types along the top, the map's objects on the left, the object's
-fields in the middle, an inspector on the right, and Ctrl K to jump anywhere.
+double-line frames, gold for headings and changes, a teal glow for the selected item, a light
+ring for focus. The layout is a workbench: object types along the top, the map's objects on
+the left, the object's fields in the middle, an inspector on the right, and Ctrl K to jump
+anywhere.
 
 Decided in AGE-23 after two rounds of mockups (the "WC3 Editor Redesign Directions" canvas):
 four first directions (Refined Classic, Workbench, Codex, Balance Sheet), then three takes on
@@ -42,10 +43,11 @@ Tailwind theme colors; use them by name (`bg-surface-1`, `text-gold`), never raw
 | `ink` | `#e8ecf5` | Body text |
 | `muted` | `#a9b4cc` | Secondary text |
 | `faint` | `#8f9bb5` | Codes, counts, hints |
-| `gold` / `gold-bright` | `#e2c27d` / `#f3dba6` | Headings, the brand, the primary action, changed values |
+| `gold` / `gold-bright` | `#e2c27d` / `#f3dba6` | Headings, the brand, the primary action, changed values, checked boxes |
 | `gold-soft` | `#2a2414` | Primary button and chip fill |
 | `changed` / `changed-soft` | `#e2c27d` / `#1c1a12` | Marker and fill of changed fields |
-| `glow` | `#6fd3e0` | Keyboard focus, the selected list item, the palette's active result |
+| `glow` | `#6fd3e0` | The selected list item, the palette's active result |
+| `focus` | `#e8ecf5` | Keyboard focus rings and the edge of the focused input |
 | `danger` | `#ff8a8a` | Errors |
 
 Contrast, measured: every text color is at least **5.5:1** on every surface (the weakest is
@@ -70,13 +72,22 @@ would also need a CSP change.
 - **Corners** are 3 px everywhere (`rounded-[3px]`), like the game's menus.
 - **Buttons** (`Button`): primary is gold text on `gold-soft` with a gold edge, one per view
   (Save, the dialog's main action); secondary is `ink` on `surface-2` with a `field` edge.
-- **Inputs** sit in a `well` with a `field` edge; focus turns the edge `glow`.
-- **Focus**: every focusable element shows a 2 px `glow` outline on keyboard focus
-  (`:focus-visible`).
+- **Inputs** sit in a `well` with a `field` edge; focus turns the edge `focus`.
+- **Checkboxes** (`Checkbox`): a 16 px box with a `field` edge in a `well`; on, it fills with
+  `gold` and shows a dark check, so the state reads by shape, not only color. Its label is
+  part of the target (24 px tall). Fields with many options (targets, classification,
+  pathing) are a `CheckboxGroup` of chips that wrap (`CheckChip`, in `FlagsInput`), under the
+  row when there are more than four: off is `muted` text on a `field` edge; on is gold
+  (`gold-soft` fill, `gold` edge, `gold-bright` semibold text) with a checked box. Here gold
+  means "on"; an option that differs from the base gets a gold dot after its label. Tab moves
+  between options and Space toggles; read-only groups stay focusable.
+- **Focus**: every focusable element shows a 2 px `focus` outline on keyboard focus
+  (`:focus-visible`). It is light and neutral (it was teal until AGE-39), so it never reads as
+  gold's "on" or "changed"; on a checkbox it goes around the whole option.
 - **Selection**: the selected list item and the palette's active result get `surface-2` and a
   2 px `glow` bar on the left.
 - **Changed fields**: `changed-soft` fill and a 2 px gold bar on the left; section headers
-  count them in gold. Gold always means "differs from the base".
+  count them in gold. Gold means "differs from the base", except on a checked box or option.
 - **Field rows** share one grid (`FIELD_ROW_GRID` in `ui.ts`): name, value, base value, reset.
   A header row (`FieldHeader`) names the base: `Base · hfoo` for custom objects, `Game value`
   for the game's own. The base column shows numbers as stored and choices by their label.
@@ -105,6 +116,7 @@ Audited against WCAG 2.2 AA when the redesign landed. Fixed then:
 | Unsaved state, "Copied" and "Saved" not announced | 4.1.3 Status messages | `aria-live` on the map state; status region in the share dialog |
 | The model turns on its own | 2.2.2 Pause, stop, hide | It stays still under `prefers-reduced-motion` (and "Turn" switches it) |
 | Field rows were plain `div`s with focus handling | 1.3.1 | Each row is a `fieldset` named after its field |
+| Native checkboxes: thin edge, no styled focus, state by color only on some systems | 1.4.11, 2.4.7 Focus visible | `Checkbox` and `CheckChip`: `field` edge, check mark, `focus` ring around the whole option; Windows high contrast keeps the mark |
 
 Already fine: dialogs and the palette trap focus and close on Escape (react-aria); every input
 has a label; icons are decorative (`aria-hidden`) next to visible text; the level tables use a
