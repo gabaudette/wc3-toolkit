@@ -3,6 +3,10 @@ import { api, errorMessage } from "../api";
 import type { AbilityDetail, AbilitySummary } from "../types";
 import { AbilityList } from "./AbilityList";
 import { AbilityPage } from "./AbilityPage";
+import { Button } from "./Button";
+import { DialogShell } from "./DialogShell";
+import { plainGameText } from "./GameText";
+import { SpellUnits } from "./SpellUnits";
 import { SpellWizard } from "./SpellWizard";
 
 type AbilitiesPaneProps = {
@@ -11,6 +15,8 @@ type AbilitiesPaneProps = {
   onSelect: (id: string) => void;
   /** Called after every change, so the window can show the map as unsaved. */
   onMapChanged: () => void;
+  /** An ability was given to units or taken from them, so the units reload. */
+  onUnitsChanged: () => void;
   onError: (message: string | null) => void;
 };
 
@@ -19,11 +25,13 @@ export function AbilitiesPane({
   selected,
   onSelect,
   onMapChanged,
+  onUnitsChanged,
   onError,
 }: AbilitiesPaneProps) {
   const [abilities, setAbilities] = useState<AbilitySummary[]>([]);
   const [detail, setDetail] = useState<AbilityDetail | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [givingOpen, setGivingOpen] = useState(false);
   /** Edits run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
 
@@ -118,7 +126,29 @@ export function AbilitiesPane({
             onSelect(id);
           }}
           onMapChanged={onMapChanged}
+          onUnitsChanged={onUnitsChanged}
         />
+      )}
+      {givingOpen && detail && (
+        <DialogShell
+          open={givingOpen}
+          title={`Units with ${plainGameText(detail.card.summary.name)}`}
+          onClose={() => setGivingOpen(false)}
+          footer={
+            <Button primary onPress={() => setGivingOpen(false)}>
+              Done
+            </Button>
+          }
+          wide
+        >
+          <SpellUnits
+            spell={detail.card.summary.id}
+            onChanged={() => {
+              onMapChanged();
+              onUnitsChanged();
+            }}
+          />
+        </DialogShell>
       )}
       {detail && (
         <AbilityPage
@@ -129,6 +159,7 @@ export function AbilitiesPane({
           onFill={(field, level, value) => fill(detail.card.summary.id, field, level, value)}
           onReset={(field, level) => reset(detail.card.summary.id, field, level)}
           onCreateCopy={createCopy}
+          onGiveToUnits={() => setGivingOpen(true)}
         />
       )}
       {!detail && (

@@ -16,6 +16,7 @@ import type {
   MapSummary,
   SearchHit,
   SharePreview,
+  SpellFit,
   SpellKind,
   TransferObject,
   UnitDetail,
@@ -62,6 +63,11 @@ export const api = {
   spellKinds: () => invoke<SpellKind[]>("spell_kinds"),
   /** Icons for a spell's button: the map's imported images first, then the game's. */
   spellIcons: () => invoke<IconChoice[]>("spell_icons"),
+  /** The units, heroes and buildings that have the spell, the map's first. */
+  spellUnits: (spell: string) => invoke<string[]>("spell_units", { spell }),
+  spellFit: (spell: string, unit: string) => invoke<SpellFit>("spell_fit", { spell, unit }),
+  giveSpell: (spell: string, unit: string) => invoke<SpellFit>("give_spell", { spell, unit }),
+  takeSpell: (spell: string, unit: string) => invoke<SpellFit>("take_spell", { spell, unit }),
   /** Removes a custom ability the spell wizard created, when it is cancelled. */
   discardSpell: (id: string) => invoke<void>("discard_spell", { id }),
   fillPlaceholders: (text: string) => invoke<string>("fill_placeholders", { text }),

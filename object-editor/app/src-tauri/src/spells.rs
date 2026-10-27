@@ -1,17 +1,22 @@
-//! The spell wizard: spell kinds with their suggested base abilities, and
-//! removing a spell the wizard created when it is cancelled. The spell itself
-//! is an ordinary custom ability, created and edited with the ability commands.
+//! The spell wizard: spell kinds with their suggested base abilities, the
+//! icons to pick from, giving the spell to units, and removing a spell the
+//! wizard created when it is cancelled. The spell itself is an ordinary custom
+//! ability, created and edited with the ability commands.
 
 use serde::Serialize;
 use tauri::State;
 use wc3_data::spells::spell_kinds as kinds;
 
+use wc3_map::FourCC;
+
 use crate::abilities::AbilityCard;
-use crate::commands::{fourcc, with_abilities};
+use crate::commands::{fourcc, view, with_abilities};
+use crate::hotkeys::{self, ABILITY_LIST, HERO_ABILITY_LIST, SpellFit};
 use crate::state::{AppState, NO_MAP, Session};
 
 /// Images a map can import as icons.
 const IMAGE_EXTENSIONS: &[&str] = &["blp", "dds", "tga"];
+const HERO_KIND: &str = "hero";
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -128,12 +133,135 @@ pub fn spell_kinds(state: State<'_, AppState>) -> Result<Vec<SpellKind>, String>
     })
 }
 
+/// How `spell` sits, or would sit, on `unit`'s command card and learn menu.
+fn fit(session: &Session, spell: FourCC, unit: FourCC) -> Result<SpellFit, String> {
+    let view = view(session);
+    let item = view.item(unit).ok_or(format!("Unknown unit {unit}."))?;
+    Ok(with_abilities(session, |abilities| {
+        hotkeys::spell_fit(
+            &view,
+            &|ability| abilities.info(ability),
+            unit,
+            spell,
+            item.kind == HERO_KIND,
+        )
+    }))
+}
+
+/// Replaces one of a unit's ability lists in the open map.
+fn set_list(
+    session: &mut Session,
+    unit: FourCC,
+    field_id: &str,
+    list: &[FourCC],
+) -> Result<(), String> {
+    let field = session
+        .db
+        .field(field_id)
+        .ok_or(format!("Unknown field {field_id}."))?;
+    let map = session.map.as_mut().ok_or(NO_MAP)?;
+    let text: Vec<String> = list.iter().map(ToString::to_string).collect();
+    map.units
+        .set(&session.db, unit, field, &text.join(","))
+        .map_err(|e| e.to_string())
+}
+
+/// Takes `spell` out of both of the unit's ability lists.
+fn take(session: &mut Session, spell: FourCC, unit: FourCC) -> Result<(), String> {
+    let (normal, learned) = hotkeys::ability_lists(&view(session), unit);
+    for (field_id, list) in [(ABILITY_LIST, normal), (HERO_ABILITY_LIST, learned)] {
+        if list.contains(&spell) {
+            let kept: Vec<FourCC> = list.into_iter().filter(|a| *a != spell).collect();
+            set_list(session, unit, field_id, &kept)?;
+        }
+    }
+
+    Ok(())
+}
+
+/// The units, heroes and buildings that have `spell`, the map's first.
+fn holders(session: &Session, spell: FourCC) -> Vec<FourCC> {
+    let view = view(session);
+    view.ids()
+        .into_iter()
+        .filter(|id| {
+            let (normal, learned) = hotkeys::ability_lists(&view, *id);
+            normal.contains(&spell) || learned.contains(&spell)
+        })
+        .collect()
+}
+
+#[tauri::command]
+pub fn spell_units(state: State<'_, AppState>, spell: String) -> Result<Vec<String>, String> {
+    let spell = fourcc(&spell)?;
+    state.with(|session| {
+        Ok(holders(session, spell)
+            .iter()
+            .map(ToString::to_string)
+            .collect())
+    })
+}
+
+#[tauri::command]
+pub fn spell_fit(
+    state: State<'_, AppState>,
+    spell: String,
+    unit: String,
+) -> Result<SpellFit, String> {
+    let (spell, unit) = (fourcc(&spell)?, fourcc(&unit)?);
+    state.with(|session| fit(session, spell, unit))
+}
+
+/// Adds the spell to the unit's learnable hero abilities or its normal ones,
+/// as `spell_fit` says.
+#[tauri::command]
+pub fn give_spell(
+    state: State<'_, AppState>,
+    spell: String,
+    unit: String,
+) -> Result<SpellFit, String> {
+    let (spell, unit) = (fourcc(&spell)?, fourcc(&unit)?);
+    state.with(|session| {
+        let before = fit(session, spell, unit)?;
+        if !before.has {
+            let (mut normal, mut learned) = hotkeys::ability_lists(&view(session), unit);
+            if before.learned {
+                learned.push(spell);
+                set_list(session, unit, HERO_ABILITY_LIST, &learned)?;
+            } else {
+                normal.push(spell);
+                set_list(session, unit, ABILITY_LIST, &normal)?;
+            }
+        }
+
+        fit(session, spell, unit)
+    })
+}
+
+#[tauri::command]
+pub fn take_spell(
+    state: State<'_, AppState>,
+    spell: String,
+    unit: String,
+) -> Result<SpellFit, String> {
+    let (spell, unit) = (fourcc(&spell)?, fourcc(&unit)?);
+    state.with(|session| {
+        take(session, spell, unit)?;
+        fit(session, spell, unit)
+    })
+}
+
 /// Removes a custom ability the wizard created, when the wizard is cancelled
-/// or goes back to pick another base. Game abilities are never removed.
+/// or goes back to pick another base, and takes it from the units it was
+/// given to. Game abilities are never removed.
 #[tauri::command]
 pub fn discard_spell(state: State<'_, AppState>, id: String) -> Result<(), String> {
     let id = fourcc(&id)?;
     state.with(|session| {
+        for unit in holders(session, id) {
+            take(session, id, unit)?;
+        }
+
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         if map.abilities.remove(map.units.strings_mut(), id) {
             Ok(())

@@ -149,6 +149,14 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     [fail],
   );
 
+  /** Another tab changed units (gave them an ability): the list and the open page reload. */
+  const refreshUnits = useCallback(() => {
+    refreshList();
+    if (selected) {
+      refreshDetail(selected);
+    }
+  }, [refreshList, refreshDetail, selected]);
+
   useEffect(() => {
     refreshList();
   }, [refreshList]);
@@ -409,6 +417,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
             selected={selectedAbility}
             onSelect={setSelectedAbility}
             onMapChanged={refreshMap}
+            onUnitsChanged={refreshUnits}
             onError={setError}
           />
         )}

@@ -437,7 +437,7 @@ impl PlaceholderSource for NoPlaceholders {
 }
 
 /// A button slot such as `0,2` → (column 0, row 2).
-fn parse_button(value: &str) -> Option<(u32, u32)> {
+pub(crate) fn parse_button(value: &str) -> Option<(u32, u32)> {
     let (x, y) = value.split_once(',')?;
     Some((x.trim().parse().ok()?, y.trim().parse().ok()?))
 }

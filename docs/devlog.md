@@ -4,6 +4,29 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Spell wizard, part 4: give the spell to units (AGE-50)
+
+- `SpellUnits` lists units, heroes and buildings (those with the spell first, then the map's,
+  search for the rest) and previews the picked one's command card and learn menu with the spell
+  placed. It is the wizard's last step and a dialog from "Give to units" on the ability page.
+- `hotkeys.rs` now builds the menus once (`menus`, with an optional extra ability) for both
+  the existing clash check and the new `spell_fit`: where every button sits, plus warnings for
+  a shared hotkey, a shared spot, or a menu with all 12 spots taken. Standard commands got
+  their slots from `CommandFunc.txt` (`UnitDatabase::command_button`); the learn menu has its
+  Cancel button (no hotkey, so the clash check is unchanged and melee units still have none).
+- Hero spells go in a hero's `uhab`; everything else, hero spells on non-heroes included, in
+  `uabi` (with a note that it stays at level 1). Commands `spell_units`, `spell_fit`,
+  `give_spell`, `take_spell`. `MapUnits::set` drops a change equal to the base, so taking a
+  spell from a game unit leaves it unchanged.
+- `discard_spell` takes the draft from every unit first, so cancelling the wizard leaves no
+  reference to a removed ability.
+- The Units tab reloads its list and open page when another tab changes units.
+- Checked in the app on a copy of the test map: Fire Bolt given to `test_hero` (Paladin-based)
+  from the ability page went into `uhab` and read back from the saved map; in the wizard, a
+  Rejuvenation copy given to a Footman and `test_hero`, then cancelled, left both unchanged
+  and the 5 object and string files round-trip identically. Seeing the hero learn it in the
+  World Editor and in game is still to be checked.
+
 ## 2026-10-26 · Spell wizard, part 3: icon, hotkey and button (AGE-49)
 
 - A button step after the buff: icon picker, hotkey and a 4×3 command card for `abpx`/`abpy`;

@@ -6,7 +6,7 @@
 
 use std::collections::HashMap;
 
-use crate::abilities::merge_optional;
+use crate::abilities::{merge_optional, parse_button};
 use crate::game::{ArtMode, GameFiles, decode_text};
 use crate::meta::{FieldMeta, ObjectKind, parse_metadata};
 use crate::profile::{Profile, split_list, unquote};
@@ -17,6 +17,8 @@ const METADATA: &str = "units\\unitmetadata.slk";
 const EDITOR_DATA: &str = "ui\\uniteditordata.txt";
 /// Standard commands (Move, Attack, ...) with their hotkeys.
 const COMMAND_STRINGS: &str = "units\\commandstrings.txt";
+/// Where standard commands sit on the command card (`Buttonpos=0,0`).
+const COMMAND_FUNC: &str = "units\\commandfunc.txt";
 const EDITOR_STRINGS: &[&str] = &["ui\\worldeditstrings.txt", "ui\\worldeditgamestrings.txt"];
 
 /// Game data tables and the metadata source name that refers to each one.
@@ -154,6 +156,7 @@ pub struct UnitDatabase {
     editor_strings: Profile,
     enums: HashMap<String, Vec<EnumValue>>,
     commands: Profile,
+    command_buttons: Profile,
     ids: Vec<String>,
 }
 
@@ -181,6 +184,7 @@ impl UnitDatabase {
         let editor_data = load_profile(files, &[EDITOR_DATA], GameFiles::read_base)?;
         let enums = editor_enums(files, &editor_data, &editor_strings)?;
         let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
+        let command_buttons = load_profile(files, &[COMMAND_FUNC], GameFiles::read_base)?;
 
         Ok(Self {
             catalog: Catalog::Units,
@@ -191,6 +195,7 @@ impl UnitDatabase {
             editor_strings,
             enums,
             commands,
+            command_buttons,
             ids,
         })
     }
@@ -312,6 +317,7 @@ impl UnitDatabase {
         let editor_data = load_profile(files, &[EDITOR_DATA], GameFiles::read_base)?;
         let enums = editor_enums(files, &editor_data, &editor_strings)?;
         let commands = load_profile(files, &[COMMAND_STRINGS], GameFiles::read_localized)?;
+        let command_buttons = load_profile(files, &[COMMAND_FUNC], GameFiles::read_base)?;
 
         Ok(Self {
             catalog: spec.catalog,
@@ -322,6 +328,7 @@ impl UnitDatabase {
             editor_strings,
             enums,
             commands,
+            command_buttons,
             ids,
         })
     }
@@ -503,6 +510,13 @@ impl UnitDatabase {
             .map_or(section, unquote)
             .to_owned();
         Some((name, key))
+    }
+
+    /// A standard command's slot (column, row) on the command card.
+    pub fn command_button(&self, section: &str) -> Option<(u32, u32)> {
+        self.command_buttons
+            .get(section, "Buttonpos")
+            .and_then(parse_button)
     }
 
     /// The unit's icon path as stored in the data, e.g. `ReplaceableTextures\...\BTNHeroPaladin.blp`.

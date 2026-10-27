@@ -114,7 +114,7 @@ export function SpellButtonStep({ detail, icons, onSet, onIcon, onHotkey }: Spel
         )}
       </div>
       <p className="text-xs text-faint">
-        Clashes with a unit's other abilities are checked once the spell is given to units.
+        The next step checks the button against the abilities of each unit you give the spell to.
       </p>
     </>
   );
