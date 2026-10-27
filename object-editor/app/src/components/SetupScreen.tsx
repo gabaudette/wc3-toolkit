@@ -1,6 +1,7 @@
-import { open } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { choosePath } from "../dialogs";
+import { whenOk } from "../result";
 import type { GameSummary, MapSummary } from "../types";
 import { GAME_DIR_KEY, HD_KEY, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
 import { AppVersion } from "./AppVersion";
@@ -23,67 +24,73 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
       return;
     }
 
-    api
-      .detectGameDir()
-      .then((found) => {
-        if (found) {
-          setDir(found);
-        }
-      })
-      .catch(() => {
-        // Detection is only a convenience; the user can browse instead.
-      });
+    void whenOk(api.detectGameDir(), (found) => {
+      if (found) {
+        setDir(found);
+      }
+    });
   }, [dir]);
 
   async function browseGame() {
-    const picked = await open({ directory: true, title: "Warcraft III folder" });
+    const picked = await choosePath({ directory: true, title: "Warcraft III folder" });
 
-    if (typeof picked === "string") {
-      setDir(picked);
+    if (!picked.ok) {
+      setError(picked.error);
+      return;
+    }
+
+    if (picked.value) {
+      setDir(picked.value);
     }
   }
 
   async function openGame() {
     setBusy(true);
     setError(null);
-    try {
-      const summary = await api.openGame(dir, hd);
+    const summary = await api.openGame(dir, hd);
 
-      remembered.set(GAME_DIR_KEY, dir);
-      remembered.set(HD_KEY, String(hd));
-      setGame(summary);
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
+    setBusy(false);
+    if (!summary.ok) {
+      setError(summary.error);
+      return;
     }
+
+    remembered.set(GAME_DIR_KEY, dir);
+    remembered.set(HD_KEY, String(hd));
+    setGame(summary.value);
   }
 
   async function openMap(path: string, summary: GameSummary) {
     setBusy(true);
     setError(null);
-    try {
-      const map = await api.openMap(path);
+    const map = await api.openMap(path);
 
-      remembered.set(MAP_PATH_KEY, path);
-      onReady(summary, map);
-    } catch (e) {
-      setError(errorMessage(e));
+    if (!map.ok) {
+      setError(map.error);
       setBusy(false);
+      return;
     }
+
+    remembered.set(MAP_PATH_KEY, path);
+    onReady(summary, map.value);
   }
 
   async function browseMap(summary: GameSummary) {
     const lastMap = remembered.get(MAP_PATH_KEY);
-    const picked = await open({
+    const picked = await choosePath({
       title: "Open a map",
       filters: MAP_FILTERS,
       ...(lastMap && { defaultPath: lastMap }),
       ...(!lastMap && summary.mapsDir && { defaultPath: summary.mapsDir }),
     });
 
-    if (typeof picked === "string") {
-      await openMap(picked, summary);
+    if (!picked.ok) {
+      setError(picked.error);
+      return;
+    }
+
+    if (picked.value) {
+      await openMap(picked.value, summary);
     }
   }
 

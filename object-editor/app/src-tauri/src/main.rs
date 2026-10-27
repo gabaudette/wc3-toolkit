@@ -2,8 +2,6 @@
 
 // Release builds on Windows run without a console window.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-// Startup failures are reported on stderr (AGE-QUAL-003: documented, file-scoped).
-#![allow(clippy::print_stderr)]
 
 mod abilities;
 mod commands;
@@ -11,6 +9,7 @@ mod hotkeys;
 mod icons;
 mod interface;
 mod leveled;
+mod log;
 mod plain;
 mod platform;
 mod spells;
@@ -22,6 +21,9 @@ use std::process::ExitCode;
 
 fn main() -> ExitCode {
     platform::keep_threads_at_normal_priority();
+    let context = tauri::generate_context!();
+    log::start(&context.config().identifier);
+
     let result = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(state::AppState::default())
@@ -89,13 +91,18 @@ fn main() -> ExitCode {
             transfer::map_custom_units,
             transfer::preview_import,
             transfer::import_objects,
+            log::log_failure,
         ])
-        .run(tauri::generate_context!());
+        .run(context);
 
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
-            eprintln!("WC3 Object Editor could not start: {e}");
+            log::record(
+                log::Level::Error,
+                "startup",
+                &format!("Tinkerbench could not start: {e}"),
+            );
             ExitCode::FAILURE
         }
     }

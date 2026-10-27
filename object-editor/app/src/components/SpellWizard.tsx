@@ -1,6 +1,7 @@
 import { ArrowLeft } from "@untitledui/icons";
 import { useEffect, useRef, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { ok, type Result, settle } from "../result";
 import type {
   AbilityDetail,
   Field,
@@ -131,9 +132,13 @@ function spellType(hero: boolean): string {
  * their ability in placeholders (`<AHtb,DataA1>`), so a copy would keep
  * showing the original's numbers, in the editor and in game.
  */
-async function ownValues(id: string, base: string, detail: AbilityDetail): Promise<AbilityDetail> {
+async function ownValues(
+  id: string,
+  base: string,
+  detail: AbilityDetail,
+): Promise<Result<AbilityDetail>> {
   const reference = new RegExp(`<${base},`, "gi");
-  let updated = detail;
+  let updated = ok(detail);
 
   for (const fieldId of PLACEHOLDER_TEXTS) {
     for (const { raw, level } of namedTexts(detail, fieldId)) {
@@ -141,6 +146,9 @@ async function ownValues(id: string, base: string, detail: AbilityDetail): Promi
 
       if (own !== raw) {
         updated = await api.setAbilityField(id, fieldId, level, own);
+        if (!updated.ok) {
+          return updated;
+        }
       }
     }
   }
@@ -255,14 +263,8 @@ export function SpellWizard({
     setBuffChoice(BASE_BUFF);
     setTemplate(null);
     setError(null);
-    api
-      .spellKinds()
-      .then(setKinds)
-      .catch((e: unknown) => setError(errorMessage(e)));
-    api
-      .spellTemplates()
-      .then(setTemplates)
-      .catch((e: unknown) => setError(errorMessage(e)));
+    void settle(api.spellKinds(), setKinds, setError);
+    void settle(api.spellTemplates(), setTemplates, setError);
   }, [open]);
 
   const draft = detail?.card.summary.id ?? null;
@@ -274,30 +276,36 @@ export function SpellWizard({
       return;
     }
 
-    api
-      .plainDetail("buffs", shownBuffId)
-      .then(setShownBuff)
-      .catch((e: unknown) => setError(errorMessage(e)));
+    void settle(api.plainDetail("buffs", shownBuffId), setShownBuff, setError);
   }, [shownBuffId]);
 
   /** Removes the spell and its own buff, as if the wizard had never run. */
-  async function discard() {
+  async function discard(): Promise<Result<null>> {
     if (!draft) {
-      return;
+      return ok(null);
     }
 
     await queue.current;
     if (buffChoice.kind === "own") {
-      await api.discardPlain("buffs", buffChoice.id);
+      const dropped = await api.discardPlain("buffs", buffChoice.id);
+
+      if (!dropped.ok) {
+        return dropped;
+      }
     }
 
-    // Also takes the spell from any unit it was given to.
-    await api.discardSpell(draft);
+    const discarded = await api.discardSpell(draft);
+
+    if (!discarded.ok) {
+      return discarded;
+    }
+
     setDetail(null);
     setBuffChoice(BASE_BUFF);
     setTemplate(null);
     onMapChanged();
     onUnitsChanged();
+    return ok(null);
   }
 
   async function close() {
@@ -307,10 +315,10 @@ export function SpellWizard({
       return;
     }
 
-    try {
-      await discard();
-    } catch (e) {
-      setError(errorMessage(e));
+    const discarded = await discard();
+
+    if (!discarded.ok) {
+      setError(discarded.error);
     }
 
     onClose();
@@ -318,86 +326,111 @@ export function SpellWizard({
 
   async function back() {
     setError(null);
-    try {
-      if (step === "code") {
-        setStep("units");
+    if (step === "code") {
+      setStep("units");
+      return;
+    }
+
+    if (step === "units") {
+      setStep("button");
+      return;
+    }
+
+    if (step === "button" && template) {
+      setStep("effect");
+      return;
+    }
+
+    if (step === "button") {
+      setStep("buff");
+      return;
+    }
+
+    if (step === "buff") {
+      setStep("values");
+      return;
+    }
+
+    if (step === "effect" || step === "values") {
+      const discarded = await discard();
+
+      if (!discarded.ok) {
+        setError(discarded.error);
         return;
       }
 
-      if (step === "units") {
-        setStep("button");
-        return;
-      }
-
-      if (step === "button" && template) {
-        setStep("effect");
-        return;
-      }
-
-      if (step === "button") {
-        setStep("buff");
-        return;
-      }
+      let previous: Step = "base";
 
       if (step === "effect") {
-        await discard();
-        setStep("kind");
-        return;
+        previous = "kind";
       }
 
-      if (step === "buff") {
-        setStep("values");
-        return;
-      }
-
-      if (step === "values") {
-        await discard();
-        setStep("base");
-        return;
-      }
-
-      setStep("kind");
-    } catch (e) {
-      setError(errorMessage(e));
+      setStep(previous);
+      return;
     }
+
+    setStep("kind");
   }
 
   async function start(base: string) {
     setBusy(true);
     setError(null);
-    try {
-      const created = await api.createAbility(base);
+    const made = await copyBase(base);
 
-      // A new copy still has the base ability's name.
-      setBaseName(created.name);
-      onMapChanged();
-      setDetail(await ownValues(created.id, base, await api.abilityDetail(created.id)));
-      setStep("values");
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
+    setBusy(false);
+    if (!made.ok) {
+      setError(made.error);
+      return;
     }
+
+    setDetail(made.value);
+    setStep("values");
+  }
+
+  async function copyBase(base: string): Promise<Result<AbilityDetail>> {
+    const created = await api.createAbility(base);
+
+    if (!created.ok) {
+      return created;
+    }
+
+    setBaseName(created.value.name);
+    onMapChanged();
+    const copied = await api.abilityDetail(created.value.id);
+
+    if (!copied.ok) {
+      return copied;
+    }
+
+    return ownValues(created.value.id, base, copied.value);
   }
 
   /** Makes a triggered spell from a template: a copy of Channel, set up for it. */
   async function startTriggered(picked: SpellTemplate) {
     setBusy(true);
     setError(null);
-    try {
-      const created = await api.createTriggeredSpell(picked.id);
+    const created = await api.createTriggeredSpell(picked.id);
 
-      onMapChanged();
-      setBaseName("Channel");
-      setTemplate(picked);
-      setValues(defaultValues(picked));
-      setDetail(await api.abilityDetail(created.id));
-      setStep("effect");
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
+    if (!created.ok) {
+      setError(created.error);
       setBusy(false);
+      return;
     }
+
+    onMapChanged();
+    setBaseName("Channel");
+    setTemplate(picked);
+    setValues(defaultValues(picked));
+    const made = await api.abilityDetail(created.value.id);
+
+    setBusy(false);
+    if (!made.ok) {
+      setError(made.error);
+      return;
+    }
+
+    setDetail(made.value);
+    setStep("effect");
   }
 
   /** Changes one of the module's values; the tooltips follow. */
@@ -420,19 +453,25 @@ export function SpellWizard({
 
     setBusy(true);
     setError(null);
-    try {
-      await queue.current;
-      if (!folder) {
-        setFolder((await api.defaultLuaFolder()) ?? "");
-      }
+    await queue.current;
+    if (!folder) {
+      const found = await api.defaultLuaFolder();
 
-      setSource(await api.triggeredSpellLua(draft, template.id, values));
-      setStep("code");
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
+      if (found.ok) {
+        setFolder(found.value ?? "");
+      }
     }
+
+    const module = await api.triggeredSpellLua(draft, template.id, values);
+
+    setBusy(false);
+    if (!module.ok) {
+      setError(module.error);
+      return;
+    }
+
+    setSource(module.value);
+    setStep("code");
   }
 
   /** Writes the module; the spell is made, and the last step shows how to try it. */
@@ -448,35 +487,38 @@ export function SpellWizard({
 
     setBusy(true);
     setError(null);
-    try {
-      await queue.current;
-      setModulePath(await api.writeTriggeredSpellLua(draft, template.id, values, folder.trim()));
-      setStep("test");
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
+    await queue.current;
+    const written = await api.writeTriggeredSpellLua(draft, template.id, values, folder.trim());
+
+    setBusy(false);
+    if (!written.ok) {
+      setError(written.error);
+      return;
     }
+
+    setModulePath(written.value);
+    setStep("test");
   }
 
-  function edit(change: (id: string) => Promise<AbilityDetail | null>) {
+  function edit(change: (id: string) => Promise<Result<AbilityDetail> | null>) {
     if (!draft) {
       return;
     }
 
     queue.current = queue.current.then(async () => {
-      try {
-        const updated = await change(draft);
+      const updated = await change(draft);
 
-        if (updated) {
-          setDetail(updated);
-        }
-
-        setError(null);
-        onMapChanged();
-      } catch (e) {
-        setError(errorMessage(e));
+      if (updated && !updated.ok) {
+        setError(updated.error);
+        return;
       }
+
+      if (updated) {
+        setDetail(updated.value);
+      }
+
+      setError(null);
+      onMapChanged();
     });
   }
 
@@ -489,7 +531,7 @@ export function SpellWizard({
       const before = detail;
       let updated = await api.setAbilityField(id, NAME, NO_LEVEL, name);
       const old = before && plainField(before, NAME)?.raw;
-      if (!before || !old || old === name) {
+      if (!updated.ok || !before || !old || old === name) {
         return updated;
       }
 
@@ -497,6 +539,9 @@ export function SpellWizard({
         for (const { raw, level } of namedTexts(before, fieldId)) {
           if (raw.includes(old)) {
             updated = await api.setAbilityField(id, fieldId, level, raw.replaceAll(old, name));
+            if (!updated.ok) {
+              return updated;
+            }
           }
         }
       }
@@ -510,8 +555,9 @@ export function SpellWizard({
     edit((id) => api.resetAbilityField(id, field, level));
   const fill = (field: string, fromLevel: number, value: string) =>
     edit(async (id) => {
-      let updated: AbilityDetail | null = null;
-      for (let level = fromLevel; level <= (detail?.levels ?? fromLevel); level++) {
+      const levels = detail?.levels ?? fromLevel;
+      let updated = await api.setAbilityField(id, field, fromLevel, value);
+      for (let level = fromLevel + 1; level <= levels && updated.ok; level++) {
         updated = await api.setAbilityField(id, field, level, value);
       }
 
@@ -526,24 +572,33 @@ export function SpellWizard({
 
     setBusy(true);
     setError(null);
-    try {
-      await queue.current;
-      const base = await api.abilityDetail(detail.card.summary.base);
-      const first = levelField(base, BUFFS)?.cells[0]?.raw ?? "";
+    await queue.current;
+    const base = await api.abilityDetail(detail.card.summary.base);
 
-      setBaseBuffs(idList(first));
-      setAllBuffs(await api.listPlain("buffs"));
-      setStep("buff");
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
+    if (!base.ok) {
+      setError(base.error);
       setBusy(false);
+      return;
     }
+
+    const buffs = await api.listPlain("buffs");
+
+    setBusy(false);
+    if (!buffs.ok) {
+      setError(buffs.error);
+      return;
+    }
+
+    const first = levelField(base.value, BUFFS)?.cells[0]?.raw ?? "";
+
+    setBaseBuffs(idList(first));
+    setAllBuffs(buffs.value);
+    setStep("buff");
   }
 
   /** The spell's buffs at every level, or the base ability's again for `null`. */
-  async function setBuffs(id: string, buffs: string | null): Promise<AbilityDetail | null> {
-    let updated: AbilityDetail | null = null;
+  async function setBuffs(id: string, buffs: string | null): Promise<Result<AbilityDetail> | null> {
+    let updated: Result<AbilityDetail> | null = null;
 
     for (let level = 1; level <= (detail?.levels ?? 1); level++) {
       if (buffs === null) {
@@ -551,28 +606,42 @@ export function SpellWizard({
       } else {
         updated = await api.setAbilityField(id, BUFFS, level, buffs);
       }
+
+      if (!updated.ok) {
+        return updated;
+      }
     }
 
     return updated;
   }
 
   /** Drops the spell's own buff when another choice replaces it. */
-  async function dropOwnBuff() {
+  async function dropOwnBuff(): Promise<Result<void>> {
     if (buffChoice.kind === "own") {
-      await api.discardPlain("buffs", buffChoice.id);
+      return api.discardPlain("buffs", buffChoice.id);
     }
+
+    return ok(undefined);
   }
 
   const pickBaseBuff = () =>
     edit(async (id) => {
-      await dropOwnBuff();
+      const dropped = await dropOwnBuff();
+      if (!dropped.ok) {
+        return dropped;
+      }
+
       setBuffChoice(BASE_BUFF);
       return setBuffs(id, null);
     });
 
   const pickOtherBuff = (buff: string) =>
     edit(async (id) => {
-      await dropOwnBuff();
+      const dropped = await dropOwnBuff();
+      if (!dropped.ok) {
+        return dropped;
+      }
+
       const other: BuffChoice = { kind: "other", id: buff };
       setBuffChoice(other);
       return setBuffs(id, chosenBuffs(other, baseBuffs));
@@ -587,12 +656,19 @@ export function SpellWizard({
       }
 
       const created = await api.createPlain("buffs", first);
-      const name = plainField(detail, NAME)?.raw ?? created.name;
-      for (const field of BUFF_NAMES) {
-        await api.setPlainField("buffs", created.id, field, name);
+      if (!created.ok) {
+        return created;
       }
 
-      const own: BuffChoice = { kind: "own", id: created.id };
+      const name = plainField(detail, NAME)?.raw ?? created.value.name;
+      for (const field of BUFF_NAMES) {
+        const named = await api.setPlainField("buffs", created.value.id, field, name);
+        if (!named.ok) {
+          return named;
+        }
+      }
+
+      const own: BuffChoice = { kind: "own", id: created.value.id };
       setBuffChoice(own);
       return setBuffs(id, chosenBuffs(own, baseBuffs));
     });
@@ -603,8 +679,17 @@ export function SpellWizard({
         return null;
       }
 
-      await api.setPlainField("buffs", buffChoice.id, field, value);
-      setShownBuff(await api.plainDetail("buffs", buffChoice.id));
+      const changed = await api.setPlainField("buffs", buffChoice.id, field, value);
+      if (!changed.ok) {
+        return changed;
+      }
+
+      const shown = await api.plainDetail("buffs", buffChoice.id);
+      if (!shown.ok) {
+        return shown;
+      }
+
+      setShownBuff(shown.value);
       return null;
     });
 
@@ -612,25 +697,28 @@ export function SpellWizard({
   async function toButton() {
     setBusy(true);
     setError(null);
-    try {
-      await queue.current;
-      if (icons.length === 0) {
-        setIcons(await api.spellIcons());
+    await queue.current;
+    if (icons.length === 0) {
+      const loaded = await api.spellIcons();
+
+      if (!loaded.ok) {
+        setError(loaded.error);
+        setBusy(false);
+        return;
       }
 
-      setStep("button");
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
+      setIcons(loaded.value);
     }
+
+    setBusy(false);
+    setStep("button");
   }
 
   /** Sets the button's icon, and a hero spell's learn icon with it. */
   const setIcon = (path: string) =>
     edit(async (id) => {
       let updated = await api.setAbilityField(id, ICON, NO_LEVEL, path);
-      if (detail?.card.summary.hero) {
+      if (updated.ok && detail?.card.summary.hero) {
         updated = await api.setAbilityField(id, LEARN_ICON, NO_LEVEL, path);
       }
 
@@ -647,13 +735,16 @@ export function SpellWizard({
       const before = detail;
       let updated = await api.setAbilityField(id, field, NO_LEVEL, key);
       const old = before && plainField(before, field)?.raw;
-      if (!before || !old || old === key) {
+      if (!updated.ok || !before || !old || old === key) {
         return updated;
       }
 
       const learn = plainField(before, LEARN_HOTKEY)?.raw;
       if (field === HOTKEY && before.card.summary.hero && learn === old) {
         updated = await api.setAbilityField(id, LEARN_HOTKEY, NO_LEVEL, key);
+        if (!updated.ok) {
+          return updated;
+        }
       }
 
       const highlight = `(|cffffcc00${old}|r)`;
@@ -662,6 +753,9 @@ export function SpellWizard({
           if (raw.includes(highlight)) {
             const moved = raw.replaceAll(highlight, `(|cffffcc00${key}|r)`);
             updated = await api.setAbilityField(id, fieldId, level, moved);
+            if (!updated.ok) {
+              return updated;
+            }
           }
         }
       }
@@ -685,7 +779,12 @@ export function SpellWizard({
     const buffs = chosenBuffs(buffChoice, baseBuffs);
 
     if (buffs !== null) {
-      await setBuffs(draft, buffs);
+      const updated = await setBuffs(draft, buffs);
+
+      if (updated && !updated.ok) {
+        setError(updated.error);
+        return;
+      }
     }
 
     done();

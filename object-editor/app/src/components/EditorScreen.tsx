@@ -1,8 +1,9 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { ask, open } from "@tauri-apps/plugin-dialog";
 import { SearchLg } from "@untitledui/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api, report } from "../api";
+import { choosePath, confirm } from "../dialogs";
+import { attempt, type Result, settle } from "../result";
 import type {
   Catalog,
   Field,
@@ -80,13 +81,15 @@ type EditorScreenProps = {
 };
 
 /** Asks before throwing away unsaved changes. Resolves to `true` to discard them. */
-function confirmDiscard(map: MapSummary): Promise<boolean> {
-  return ask(`${map.name} has unsaved changes. Discard them?`, {
+async function confirmDiscard(map: MapSummary): Promise<boolean> {
+  const answer = await confirm(`${map.name} has unsaved changes. Discard them?`, {
     title: "Unsaved changes",
     kind: "warning",
     okLabel: "Discard changes",
     cancelLabel: "Keep editing",
   });
+
+  return answer.ok && answer.value;
 }
 
 export function EditorScreen({ game, initialMap }: EditorScreenProps) {
@@ -119,11 +122,9 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
 
   mapRef.current = map;
 
-  const fail = useCallback((e: unknown) => setError(errorMessage(e)), []);
-
   const refreshMap = useCallback(() => {
-    api.mapStatus().then(setMap).catch(fail);
-  }, [fail]);
+    void settle(api.mapStatus(), setMap, setError);
+  }, []);
 
   const openAbility = useCallback((id: string) => {
     setSelectedAbility(id);
@@ -141,16 +142,13 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   }, []);
 
   const refreshList = useCallback(() => {
-    api.listUnits().then(setUnits).catch(fail);
-  }, [fail]);
+    void settle(api.listUnits(), setUnits, setError);
+  }, []);
 
-  const refreshDetail = useCallback(
-    (id: string) => {
-      api.unitDetail(id).then(setDetail).catch(fail);
-      api.hotkeyClashes(id).then(setClashes).catch(fail);
-    },
-    [fail],
-  );
+  const refreshDetail = useCallback((id: string) => {
+    void settle(api.unitDetail(id), setDetail, setError);
+    void settle(api.hotkeyClashes(id), setClashes, setError);
+  }, []);
 
   /** Another tab changed units (gave them an ability): the list and the open page reload. */
   const refreshUnits = useCallback(() => {
@@ -170,19 +168,20 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     }
   }, [selected, refreshDetail]);
 
-  async function applyField(edit: Promise<Field>) {
-    try {
-      const updated = await edit;
+  async function applyField(edit: Promise<Result<Field>>) {
+    const updated = await edit;
 
-      setDetail((current) => current && replaceField(current, updated));
-      setMap(await api.mapStatus());
-      setError(null);
-      refreshList();
-      if (selected) {
-        refreshDetail(selected);
-      }
-    } catch (e) {
-      fail(e);
+    if (!updated.ok) {
+      setError(updated.error);
+      return;
+    }
+
+    setDetail((current) => current && replaceField(current, updated.value));
+    setError(null);
+    refreshMap();
+    refreshList();
+    if (selected) {
+      refreshDetail(selected);
     }
   }
 
@@ -191,73 +190,81 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       return;
     }
 
-    try {
-      const created = await api.createUnit(detail.item.base);
+    const created = await api.createUnit(detail.item.base);
 
-      setMap(await api.mapStatus());
-      refreshList();
-      setSelected(created.id);
-    } catch (e) {
-      fail(e);
+    if (!created.ok) {
+      setError(created.error);
+      return;
     }
+
+    refreshMap();
+    refreshList();
+    setSelected(created.value.id);
   }
 
   async function imported(objects: TransferObject[]) {
     setDialog(null);
     setRevision((r) => r + 1);
-    try {
-      setMap(await api.mapStatus());
-      refreshList();
-      const firstUnit = objects.find((o) => o.kind === "unit" && !o.dependency);
+    refreshMap();
+    refreshList();
+    const firstUnit = objects.find((o) => o.kind === "unit" && !o.dependency);
 
-      if (firstUnit) {
-        setSelected(firstUnit.newId ?? firstUnit.id);
-      }
-    } catch (e) {
-      fail(e);
+    if (firstUnit) {
+      setSelected(firstUnit.newId ?? firstUnit.id);
     }
   }
 
   const save = useCallback(async () => {
     setSaving(true);
-    try {
-      setMap(await api.saveMap());
-      setError(null);
-    } catch (e) {
-      fail(e);
-    } finally {
-      setSaving(false);
+    const saved = await api.saveMap();
+    setSaving(false);
+    if (!saved.ok) {
+      setError(saved.error);
+      return;
     }
-  }, [fail]);
+
+    setMap(saved.value);
+    setError(null);
+  }, []);
 
   async function openOtherMap() {
     if (map?.unsaved && !(await confirmDiscard(map))) {
       return;
     }
 
-    const picked = await open({
+    const picked = await choosePath({
       title: "Open a map",
       filters: MAP_FILTERS,
       ...(game.mapsDir && { defaultPath: game.mapsDir }),
     });
 
-    if (typeof picked !== "string") {
+    if (!picked.ok) {
+      setError(picked.error);
       return;
     }
 
-    try {
-      setMap(await api.openMap(picked));
-      remembered.set(MAP_PATH_KEY, picked);
-      setSelected(null);
-      setDetail(null);
-      setSelectedAbility(null);
-      setSelectedPlain(NO_PLAIN_SELECTION);
-      setSelectedLeveled(NO_LEVELED_SELECTION);
-      setRevision((r) => r + 1);
-      refreshList();
-    } catch (e) {
-      fail(e);
+    const path = picked.value;
+
+    if (!path) {
+      return;
     }
+
+    const opened = await api.openMap(path);
+
+    if (!opened.ok) {
+      setError(opened.error);
+      return;
+    }
+
+    setMap(opened.value);
+    remembered.set(MAP_PATH_KEY, path);
+    setSelected(null);
+    setDetail(null);
+    setSelectedAbility(null);
+    setSelectedPlain(NO_PLAIN_SELECTION);
+    setSelectedLeveled(NO_LEVELED_SELECTION);
+    setRevision((r) => r + 1);
+    refreshList();
   }
 
   const commands: PaletteCommand[] = [];
@@ -293,15 +300,28 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
       }
 
       event.preventDefault();
-      if (await confirmDiscard(current)) {
-        await appWindow.destroy();
+      if (!(await confirmDiscard(current))) {
+        return;
+      }
+
+      const closed = await attempt(() => appWindow.destroy());
+      if (!closed.ok) {
+        report("error", "closing the window", closed.error);
+        setError(closed.error);
       }
     });
 
     return () => {
-      unlisten.then((stop) => stop()).catch(fail);
+      void attempt(() => unlisten).then((listening) => {
+        if (listening.ok) {
+          listening.value();
+          return;
+        }
+
+        report("error", "close prompt", listening.error);
+      });
     };
-  }, [fail]);
+  }, []);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {

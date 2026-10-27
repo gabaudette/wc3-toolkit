@@ -9,7 +9,8 @@ import {
   type WheelEvent,
 } from "react";
 import { ModelRenderer, parseMDX } from "war3-model";
-import { errorMessage } from "../api";
+import { report } from "../api";
+import { attempt, attemptSync } from "../result";
 import { Checkbox } from "./Checkbox";
 import { Select } from "./Select";
 
@@ -99,32 +100,40 @@ async function loadTextures(
 
   await Promise.all(
     images.map(async (image) => {
-      try {
-        const response = await fetch(convertFileSrc(image, TEXTURE_SCHEME), { signal });
+      const uploaded = await attempt(() => uploadTexture(renderer, image, signal));
 
-        if (!response.ok) {
-          missing += 1;
-          return;
-        }
-
-        const buffer = await response.arrayBuffer();
-        const header = new DataView(buffer, 0, TEXTURE_HEADER_BYTES);
-        const width = header.getUint32(0, true);
-        const height = header.getUint32(BYTES_PER_PIXEL, true);
-        const pixels = new Uint8ClampedArray(
-          buffer,
-          TEXTURE_HEADER_BYTES,
-          width * height * BYTES_PER_PIXEL,
-        );
-
-        renderer.setTextureImageData(image, [new ImageData(pixels, width, height)]);
-      } catch {
+      if (!uploaded.ok || !uploaded.value) {
         missing += 1;
       }
     }),
   );
 
   return missing;
+}
+
+async function uploadTexture(
+  renderer: ModelRenderer,
+  image: string,
+  signal: AbortSignal,
+): Promise<boolean> {
+  const response = await fetch(convertFileSrc(image, TEXTURE_SCHEME), { signal });
+
+  if (!response.ok) {
+    return false;
+  }
+
+  const buffer = await response.arrayBuffer();
+  const header = new DataView(buffer, 0, TEXTURE_HEADER_BYTES);
+  const width = header.getUint32(0, true);
+  const height = header.getUint32(BYTES_PER_PIXEL, true);
+  const pixels = new Uint8ClampedArray(
+    buffer,
+    TEXTURE_HEADER_BYTES,
+    width * height * BYTES_PER_PIXEL,
+  );
+
+  renderer.setTextureImageData(image, [new ImageData(pixels, width, height)]);
+  return true;
 }
 
 const MEDIUM_PRECISION = /precision mediump float/g;
@@ -225,11 +234,7 @@ function allowMissingUniforms(
  * HD models; everything this renderer did create is freed by then.
  */
 function destroyRenderer(renderer: ModelRenderer) {
-  try {
-    renderer.destroy();
-  } catch {
-    // Only the reflection shaders that were never created are left.
-  }
+  attemptSync(() => renderer.destroy());
 }
 
 type Bounds = { center: vec3; radius: number };
@@ -452,10 +457,13 @@ function ModelPreview({ path, onRestored }: ModelViewerProps & { onRestored: () 
       frame = window.requestAnimationFrame(draw);
     }
 
-    load(gl, path).catch((e: unknown) => {
-      if (!cancelled) {
-        setStatus({ kind: "error", message: `Could not show this model: ${errorMessage(e)}` });
+    void attempt(() => load(gl, path)).then((loaded) => {
+      if (loaded.ok || cancelled) {
+        return;
       }
+
+      report("warn", "model preview", `${path}: ${loaded.error}`);
+      setStatus({ kind: "error", message: `Could not show this model: ${loaded.error}` });
     });
 
     return () => {

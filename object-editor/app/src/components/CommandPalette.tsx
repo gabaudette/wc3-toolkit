@@ -13,6 +13,7 @@ import {
   SearchField,
 } from "react-aria-components";
 import { api } from "../api";
+import { settle } from "../result";
 import type { AbilitySummary, Catalog, LeveledCatalog, UnitItem } from "../types";
 import { GameText, plainGameText } from "./GameText";
 import { UnitIcon } from "./UnitIcon";
@@ -122,23 +123,21 @@ export function CommandPalette({
     }
 
     setQuery("");
-    // Only needed while searching; a failure leaves the group empty.
-    api
-      .listAbilities()
-      .then(setAbilities)
-      .catch(() => setAbilities([]));
+    void settle(api.listAbilities(), setAbilities, () => setAbilities([]));
     for (const { catalog } of PLAIN_GROUPS) {
-      api
-        .listPlain(catalog)
-        .then((list) => setPlain((current) => ({ ...current, [catalog]: list })))
-        .catch(() => setPlain((current) => ({ ...current, [catalog]: [] })));
+      void settle(
+        api.listPlain(catalog),
+        (list) => setPlain((current) => ({ ...current, [catalog]: list })),
+        () => setPlain((current) => ({ ...current, [catalog]: [] })),
+      );
     }
 
     for (const { catalog } of LEVELED_GROUPS) {
-      api
-        .listLeveled(catalog)
-        .then((list) => setLeveled((current) => ({ ...current, [catalog]: list })))
-        .catch(() => setLeveled((current) => ({ ...current, [catalog]: [] })));
+      void settle(
+        api.listLeveled(catalog),
+        (list) => setLeveled((current) => ({ ...current, [catalog]: list })),
+        () => setLeveled((current) => ({ ...current, [catalog]: [] })),
+      );
     }
   }, [open]);
 

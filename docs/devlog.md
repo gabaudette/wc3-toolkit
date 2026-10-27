@@ -4,6 +4,44 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Standards, part 3: errors as values in the frontend, and a log (AGE-60)
+
+- AGE-ERR-001/002: the frontend let Tauri's `invoke` rejections act as exceptions, caught in
+  35 `try` blocks and 33 `.catch` calls across 21 files. Now `src/result.ts` has
+  `Result<T>` (`{ ok: true, value } | { ok: false, error }`) and `attempt`/`attemptSync`,
+  the only `try`/`catch` left. `api.ts` runs every command through `call`, so all 61 API
+  functions return `Promise<Result<T>>`; the type checker then listed the 112 places that
+  used a value without checking it, which drove the conversion.
+- Components check `result.ok` and show `result.error`, or use `settle(pending, onValue,
+  onError)` and `whenOk(pending, onValue)` for one-call effects. Chains (the spell wizard's
+  steps, the Interface tab's "Save and build test copy") stop at the first failed step and
+  return it. Repeated edits (filling later levels, renaming tooltip titles) stop at the
+  first failure instead of carrying on.
+- Other exception sources are converted where they are called: `dialogs.ts` wraps the
+  file dialogs and the confirm prompt (they had no handling at all before: a failure was an
+  unhandled rejection), and `attempt` wraps the clipboard, `war3-model` and `fetch` in the
+  model preview, `getVersion`, the window close listener and browser storage.
+- AGE-ERR-004: `log.rs` appends `<RFC 3339 UTC> <LEVEL> <source>: <message>` lines to
+  `tinkerbench.log` in Tauri's log folder for Linux and Windows
+  (`dirs::data_local_dir()/<identifier>/logs`, computed before Tauri starts so a failed start
+  is logged too; `dirs` and `time` were already in the dependency tree). Over 1 MB it is
+  renamed `tinkerbench.previous.log` at the next start. A panic hook logs panics before the
+  default hook runs. The `log_failure` command takes reports from the frontend.
+- Reported once: a failed command is logged by `call` at WARN with the command's name
+  (usually a user mistake, like a folder that is not a Warcraft III install); a failed
+  dialog by `dialogs.ts` at ERROR; a model that does not load by the model preview with its
+  path; anything uncaught by the window's `error`/`unhandledrejection` handlers. The
+  swallowed `.catch(() => {})` for the default Lua folder now goes through `whenOk`, its
+  failure logged by `call`; `main.rs` logs a failed start instead of `eprintln!` (and drops
+  that file-wide Clippy exception).
+- Checked in the app: a Warcraft III folder that does not exist showed the error on screen
+  and wrote one WARN line for `open_game`; loading the real folder, opening a map, a unit's
+  page, its hotkey checks and 3D preview (with textures) and the Interface tab's default
+  Lua folder all worked, with nothing more in the log.
+- The blank-line check (AGE-58) listed only tracked files, so a run by hand missed new
+  files until they were staged; it now lists untracked ones too (`--others
+  --exclude-standard`).
+
 ## 2026-10-27 · Standards, part 2: stable IDs instead of lint suppressions (AGE-59)
 
 - Thirteen `biome-ignore` comments, one left (AGE-QUAL-003: fix the cause).
