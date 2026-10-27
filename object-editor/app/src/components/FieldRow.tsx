@@ -1,6 +1,7 @@
 import { FlipBackward, InfoCircle } from "@untitledui/icons";
 import { type KeyboardEvent, useEffect, useState } from "react";
 import { Switch } from "react-aria-components";
+import { hasBit, inList } from "../flags";
 import type { Field } from "../types";
 import { classes, FIELD_ROW_GRID } from "../ui";
 import { AbilityField } from "./AbilityField";
@@ -29,7 +30,7 @@ const ICON_TYPE = "icon";
 const LONG_TEXT_ROWS = 3;
 
 const inputClass =
-  "w-full rounded border border-field bg-well px-2 py-1 outline-none focus:border-glow read-only:opacity-70";
+  "w-full rounded border border-field bg-well px-2 py-1 outline-none focus:border-focus read-only:opacity-70";
 
 function numberStep(field: Field): number {
   if (field.integer) {
@@ -60,6 +61,18 @@ function useDraft(field: Field, onChange: (value: string) => void) {
   return { draft, setDraft, commit, commitText };
 }
 
+/** "3 of 22 on": how many options a long multi-checkbox field has turned on. */
+function flagCount(field: Field): string {
+  const on = field.options.filter((choice) => {
+    if (field.control === "flags") {
+      return hasBit(field.raw, choice);
+    }
+
+    return inList(field.raw, choice);
+  }).length;
+  return `${on} of ${field.options.length} on`;
+}
+
 function abilityCount(raw: string): string {
   const count = raw.split(",").filter((code) => code.trim()).length;
   if (count === 1) {
@@ -69,11 +82,27 @@ function abilityCount(raw: string): string {
   return `${count} abilities`;
 }
 
+/** Multi-checkbox fields with more options than this get the row's full width, under it. */
+const INLINE_FLAGS = 4;
+
+function isFlags(field: Field): boolean {
+  return field.control === "flags" || field.control === "flagList";
+}
+
+/** Long lists of options lay out under the row, where they fit in a few lines. */
+function wideFlags(field: Field): boolean {
+  return isFlags(field) && field.options.length > INLINE_FLAGS;
+}
+
 function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
   const { draft, setDraft, commit, commitText } = useDraft(field, onChange);
 
   if (field.control === "abilities") {
     return <p className="pt-1 text-sm text-faint">{abilityCount(field.raw)}</p>;
+  }
+
+  if (wideFlags(field)) {
+    return <p className="pt-1 text-sm text-faint">{flagCount(field)}</p>;
   }
   const commitOnEnter = (e: KeyboardEvent) => {
     if (e.key === "Enter") {
@@ -103,8 +132,16 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
     );
   }
 
-  if (field.control === "flags" || field.control === "flagList") {
-    return <FlagsInput field={field} raw={field.raw} editable={editable} onChange={onChange} />;
+  if (isFlags(field)) {
+    return (
+      <FlagsInput
+        field={field}
+        raw={field.raw}
+        baseRaw={field.baseRaw}
+        editable={editable}
+        onChange={onChange}
+      />
+    );
   }
 
   if (field.control === "select") {
@@ -317,6 +354,17 @@ export function FieldRow({ field, editable, onChange, onReset, onInspect }: Fiel
       {showInfo && field.description && <Description field={field} />}
       {field.control === "abilities" && (
         <AbilityField field={field} editable={editable} onChange={onChange} />
+      )}
+      {wideFlags(field) && (
+        <div className="col-span-4 mb-1.5">
+          <FlagsInput
+            field={field}
+            raw={field.raw}
+            baseRaw={field.baseRaw}
+            editable={editable}
+            onChange={onChange}
+          />
+        </div>
       )}
     </fieldset>
   );

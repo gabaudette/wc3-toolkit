@@ -100,7 +100,7 @@ export function AbilityPicker({ open, heroOnly, exclude, onPick, onClose }: Abil
               placeholder="Search abilities: Holy Light, AHhb…"
               aria-label="Search abilities"
               autoFocus
-              className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
+              className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-focus"
             />
             {!heroOnly && (
               <div className="flex gap-1">

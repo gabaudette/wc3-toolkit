@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import type { Field, HotkeyClash, Section, UnitDetail } from "../types";
 import { variationModel } from "../ui";
 import { Button } from "./Button";
+import { Checkbox } from "./Checkbox";
 import { GameText } from "./GameText";
 import { Inspector } from "./Inspector";
 import { AdvancedGroup, FieldHeader, FieldRows, matches, SectionToggle, toggled } from "./Sections";
@@ -167,16 +168,11 @@ export function UnitPage({
                   onChange={(e) => setFilter(e.target.value)}
                   placeholder="Filter fields: armor, speed, model…"
                   aria-label="Filter fields"
-                  className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
+                  className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-focus"
                 />
-                <label className="flex items-center gap-2 text-muted">
-                  <input
-                    type="checkbox"
-                    checked={changedOnly}
-                    onChange={(e) => setChangedOnly(e.target.checked)}
-                  />
+                <Checkbox isSelected={changedOnly} onChange={setChangedOnly}>
                   Changed only ({changedCount})
-                </label>
+                </Checkbox>
               </div>
 
               {!editable && (

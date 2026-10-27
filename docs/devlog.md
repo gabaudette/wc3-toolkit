@@ -4,6 +4,29 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Checkboxes and multi-option fields (AGE-39)
+
+- `Checkbox` and `CheckChip` (react-aria `Checkbox`, in `Checkbox.tsx`) replace every native
+  checkbox: Changed only, Use HD art, Turn, the share dialog's units. The box has a `field` edge
+  in a `well`; on, it fills gold with a dark check, so the state reads by shape too, and
+  Windows high contrast keeps the mark. Focus is the `glow` ring.
+- `FlagsInput` is a `CheckboxGroup` of chips that wrap, sized to their labels. A field with
+  more than four options lays them out across the full row under it (the value column shows
+  "2 of 31 on"), as ability lists already did: Targeted As went from about 20 rows to 4. The
+  level table's option popover is 32 rem wide for the same reason.
+- Checked chips are gold at the user's request; the design doc's "gold means changed" now
+  excepts checked boxes. An option that differs from the base gets a gold dot (and
+  "(changed)" for screen readers): fields carry `baseRaw`, the base object's stored value, to
+  compare option by option.
+- Read-only groups (browsing game data) use `isReadOnly`, so they stay focusable and are
+  announced as read-only instead of being greyed out.
+- Focus moved off teal at the user's request: a new `focus` token (`#e8ecf5`, the `ink`
+  color) for the `:focus-visible` outline, focus rings and the edge of a focused input (30
+  uses). Teal (`glow`) stays for the selected list item and palette result. On checkboxes the
+  ring goes around the whole option, not the small box.
+- Tailwind 4's `outline-none` sets `outline-style: none`, so `outline-2` alone draws nothing;
+  the checkbox focus classes add `outline-solid`.
+
 ## 2026-10-27 · Lists hold at most what the game allows
 
 - The metadata's `maxVal` on lists of IDs is how many they hold, as the World Editor enforces:

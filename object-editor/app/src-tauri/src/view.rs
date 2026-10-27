@@ -113,6 +113,8 @@ pub struct Field {
     /// The base object's value, formatted like `display`: the game object a
     /// custom one copies, or the game's own value for a changed original.
     pub base: String,
+    /// The base object's stored value, as `raw` is: which flags differ from it.
+    pub base_raw: String,
     pub value_type: String,
     /// `bool`, `number`, `text`, `longText`, `select`, `flags` (bit flags),
     /// `flagList` (a list of choices, like targets), `codes` or `abilities`.
@@ -392,6 +394,7 @@ impl<M: PlainChanges> View<'_, M> {
                 display: self.db.format_value(field, raw.clone()),
                 raw: raw.unwrap_or_default(),
                 modified: self.modified(id, field),
+                base_raw: base.clone().unwrap_or_default(),
                 base: base_text(self.db, field, base),
             },
         )
@@ -573,6 +576,8 @@ pub struct FieldValue {
     pub raw: String,
     pub modified: bool,
     pub base: String,
+    /// The base object's stored value, to compare with `raw` piece by piece.
+    pub base_raw: String,
 }
 
 /// How the base column shows a value: numbers as stored (`0.25`, not the
@@ -616,6 +621,7 @@ pub fn build_field(
         raw: value.raw,
         modified: value.modified,
         base: value.base,
+        base_raw: value.base_raw,
         value_type: field.value_type.clone(),
         control,
         options: options

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { UnitItem } from "../types";
+import { Checkbox } from "./Checkbox";
 import { GameText, plainGameText } from "./GameText";
 import { UnitIcon } from "./UnitIcon";
 
@@ -40,7 +41,7 @@ export function UnitChecklist({ units, chosen, onChange }: UnitChecklistProps) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Filter units"
           aria-label="Filter units"
-          className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1 text-sm outline-none focus:border-glow"
+          className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1 text-sm outline-none focus:border-focus"
         />
         <button
           type="button"
@@ -60,18 +61,17 @@ export function UnitChecklist({ units, chosen, onChange }: UnitChecklistProps) {
       <ul className="max-h-60 overflow-y-auto rounded-[3px] border border-line" aria-label="Units">
         {shown.map((unit) => (
           <li key={unit.id}>
-            <label className="flex cursor-pointer items-center gap-3 px-3 py-1 hover:bg-surface-2">
-              <input
-                type="checkbox"
-                checked={chosen.includes(unit.id)}
-                onChange={() => toggle(unit.id)}
-              />
+            <Checkbox
+              isSelected={chosen.includes(unit.id)}
+              onChange={() => toggle(unit.id)}
+              className="gap-3 px-3 py-1 text-ink hover:bg-surface-2"
+            >
               <UnitIcon path={unit.icon} size="small" />
               <span className="min-w-0 flex-1 truncate">
                 <GameText text={unit.name} singleLine />
               </span>
               <span className="font-mono text-xs text-faint">{unit.id}</span>
-            </label>
+            </Checkbox>
           </li>
         ))}
         {shown.length === 0 && <li className="p-3 text-sm text-muted">No custom units.</li>}

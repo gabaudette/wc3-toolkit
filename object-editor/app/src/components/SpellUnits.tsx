@@ -131,7 +131,7 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search units: footman, Hpal, archmage…"
             aria-label="Search units"
-            className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
+            className="rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-focus"
           />
           {listed.length === 0 && (
             <p className="text-sm text-faint">
@@ -179,7 +179,7 @@ function UnitRow({ unit, has, picked, onPick }: UnitRowProps) {
       onClick={onPick}
       aria-pressed={picked}
       className={classes(
-        "flex w-full items-center gap-2 rounded-[3px] border px-2 py-1 text-left outline-none hover:bg-well focus-visible:border-glow",
+        "flex w-full items-center gap-2 rounded-[3px] border px-2 py-1 text-left outline-none hover:bg-well focus-visible:border-focus",
         picked && "border-gold bg-well",
         !picked && "border-transparent",
       )}

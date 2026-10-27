@@ -13,7 +13,7 @@ type CommitInputProps = {
 
 const TEXT_ROWS = 3;
 const boxClass =
-  "rounded-[3px] border border-field bg-well px-3 py-1.5 text-ink outline-none focus:border-glow";
+  "rounded-[3px] border border-field bg-well px-3 py-1.5 text-ink outline-none focus:border-focus";
 
 /**
  * A text box that saves when it loses focus, or on Enter in a single line.

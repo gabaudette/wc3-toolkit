@@ -58,6 +58,8 @@ export type Field = {
   modified: boolean;
   /** The base object's value, formatted like `display`. */
   base: string;
+  /** The base object's stored value, as `raw` is. */
+  baseRaw: string;
   valueType: string;
   control: FieldControl;
   options: Choice[];

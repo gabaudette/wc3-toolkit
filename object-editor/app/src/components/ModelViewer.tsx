@@ -3,6 +3,7 @@ import { mat4, quat, vec3 } from "gl-matrix";
 import { type PointerEvent, useEffect, useRef, useState, type WheelEvent } from "react";
 import { ModelRenderer, parseMDX } from "war3-model";
 import { errorMessage } from "../api";
+import { Checkbox } from "./Checkbox";
 
 type Model = ReturnType<typeof parseMDX>;
 
@@ -505,7 +506,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
             value={sequence}
             onChange={(e) => pickSequence(Number(e.target.value))}
             aria-label="Animation"
-            className="min-w-0 flex-1 rounded border border-field bg-well px-1.5 py-1 outline-none focus:border-glow"
+            className="min-w-0 flex-1 rounded border border-field bg-well px-1.5 py-1 outline-none focus:border-focus"
           >
             {sequences.map((animation) => (
               <option key={animation.index} value={animation.index}>
@@ -513,14 +514,9 @@ export function ModelViewer({ path }: ModelViewerProps) {
               </option>
             ))}
           </select>
-          <label className="flex items-center gap-1 text-muted">
-            <input
-              type="checkbox"
-              checked={turning}
-              onChange={(e) => setTurning(e.target.checked)}
-            />
+          <Checkbox isSelected={turning} onChange={setTurning} className="gap-1.5">
             Turn
-          </label>
+          </Checkbox>
         </div>
       )}
       {missingTextures > 0 && (

@@ -187,6 +187,7 @@ impl LeveledView<'_> {
             display: self.units.format_value(field, raw.clone()),
             raw: raw.unwrap_or_default(),
             modified: self.map.is_modified(id, field, level),
+            base_raw: base.clone().unwrap_or_default(),
             base: base_text(self.units, field, base),
         }
     }

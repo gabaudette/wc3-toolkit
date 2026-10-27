@@ -55,7 +55,7 @@ export function TemplateChoices({ templates, busy, onPick }: TemplateChoicesProp
               type="button"
               disabled={busy}
               onClick={() => onPick(template)}
-              className="flex h-full w-full items-start gap-3 rounded-[3px] border border-line bg-well px-3 py-2 text-left outline-none hover:border-gold focus-visible:border-glow disabled:opacity-40"
+              className="flex h-full w-full items-start gap-3 rounded-[3px] border border-line bg-well px-3 py-2 text-left outline-none hover:border-gold focus-visible:border-focus disabled:opacity-40"
             >
               <UnitIcon path={template.icon} size="small" />
               <span className="min-w-0 flex-1">
@@ -172,7 +172,7 @@ function ChoiceInput({ param, values, onValue }: ChoiceInputProps) {
       <select
         value={values[param.id]?.[0] ?? 0}
         onChange={(e) => onValue(param.id, [Number(e.target.value)])}
-        className="rounded-[3px] border border-field bg-well px-2 py-1 text-ink outline-none focus:border-glow"
+        className="rounded-[3px] border border-field bg-well px-2 py-1 text-ink outline-none focus:border-focus"
       >
         {param.choices.map((choice, i) => (
           <option key={choice.label} value={i}>
@@ -226,7 +226,7 @@ function NumberCell({ param, level, values, onValue }: NumberCellProps) {
           commit();
         }
       }}
-      className="w-20 rounded-[3px] border border-field bg-well px-2 py-1 text-right font-mono text-ink outline-none focus:border-glow"
+      className="w-20 rounded-[3px] border border-field bg-well px-2 py-1 text-right font-mono text-ink outline-none focus:border-focus"
     />
   );
 }
@@ -257,7 +257,7 @@ export function CodeStep({ folder, source, onFolder }: CodeStepProps) {
           value={folder}
           onChange={(e) => onFolder(e.target.value)}
           aria-label="Folder for Lua modules"
-          className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 font-mono text-sm text-ink outline-none focus:border-glow"
+          className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 font-mono text-sm text-ink outline-none focus:border-focus"
         />
         <Button onPress={browse}>Browse…</Button>
       </div>

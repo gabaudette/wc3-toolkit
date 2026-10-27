@@ -152,7 +152,7 @@ function FlagsPopover({ anchor, label, onKey, onCommit, children }: FlagsPopover
         }
       }}
       style={placement ?? undefined}
-      className="fixed z-30 w-72 rounded-[3px] border border-line bg-surface-1 p-2 text-left shadow-lg"
+      className="fixed z-30 w-[32rem] max-w-[calc(100vw-2rem)] rounded-[3px] border border-line bg-surface-1 p-2 text-left shadow-lg"
     >
       {children}
       <p className="mt-1.5 text-xs text-faint">Enter applies, Esc cancels.</p>

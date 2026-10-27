@@ -5,6 +5,7 @@ import type { GameSummary, MapSummary } from "../types";
 import { GAME_DIR_KEY, HD_KEY, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
 import { AppVersion } from "./AppVersion";
 import { Button } from "./Button";
+import { Checkbox } from "./Checkbox";
 
 type SetupScreenProps = {
   onReady: (game: GameSummary, map: MapSummary | null) => void;
@@ -106,14 +107,13 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
               onChange={(e) => setDir(e.target.value)}
               placeholder="C:\Program Files (x86)\Warcraft III"
               aria-label="Warcraft III folder"
-              className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 font-mono text-xs outline-none focus:border-glow"
+              className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 font-mono text-xs outline-none focus:border-focus"
             />
             <Button onPress={browseGame}>Browse…</Button>
           </div>
-          <label className="flex items-center gap-2 text-muted">
-            <input type="checkbox" checked={hd} onChange={(e) => setHd(e.target.checked)} />
+          <Checkbox isSelected={hd} onChange={setHd}>
             Use HD (Reforged) art values and icons
-          </label>
+          </Checkbox>
           {!game && (
             <div>
               <Button primary disabled={busy || !dir} onPress={openGame}>

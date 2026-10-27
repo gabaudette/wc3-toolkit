@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import type { AbilityDetail, AbilitySection, Field, LevelField } from "../types";
 import { capitalized, levelCount, variationModel } from "../ui";
 import { Button } from "./Button";
+import { Checkbox } from "./Checkbox";
 import { GameText } from "./GameText";
 import { Inspector } from "./Inspector";
 import { LevelTable } from "./LevelTable";
@@ -278,16 +279,11 @@ export function AbilityPage({
                 onChange={(e) => setFilter(e.target.value)}
                 placeholder={FILTER_EXAMPLES[noun]}
                 aria-label="Filter fields"
-                className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
+                className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-focus"
               />
-              <label className="flex items-center gap-2 text-muted">
-                <input
-                  type="checkbox"
-                  checked={changedOnly}
-                  onChange={(e) => setChangedOnly(e.target.checked)}
-                />
+              <Checkbox isSelected={changedOnly} onChange={setChangedOnly}>
                 Changed only ({changedCount})
-              </label>
+              </Checkbox>
             </div>
 
             {!editable && (

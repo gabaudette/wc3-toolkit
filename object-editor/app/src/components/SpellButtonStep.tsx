@@ -153,7 +153,7 @@ function CardEditor({ title, spot, icon, commands, hotkey, onMove, onHotkey }: C
               aria-label={cellLabel(cell, here, command)}
               onClick={() => onMove(cell)}
               className={classes(
-                "flex size-12 items-center justify-center rounded-[3px] border text-[10px] leading-tight text-faint outline-none focus-visible:border-glow",
+                "flex size-12 items-center justify-center rounded-[3px] border text-[10px] leading-tight text-faint outline-none focus-visible:border-focus",
                 here && "border-gold",
                 !here && "border-line bg-well hover:border-gold",
               )}
@@ -176,7 +176,7 @@ function CardEditor({ title, spot, icon, commands, hotkey, onMove, onHotkey }: C
             }
           }}
           aria-label={`${title} hotkey`}
-          className="w-10 rounded-[3px] border border-field bg-well px-2 py-1 text-center font-mono text-ink outline-none focus:border-glow"
+          className="w-10 rounded-[3px] border border-field bg-well px-2 py-1 text-center font-mono text-ink outline-none focus:border-focus"
         />
       </label>
       {warnings.map((warning) => (
@@ -229,7 +229,7 @@ function IconPicker({ current, icons, onPick }: IconPickerProps) {
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search icons: fire, bolt, BTNStorm…"
           aria-label="Search icons"
-          className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-glow"
+          className="min-w-0 flex-1 rounded-[3px] border border-field bg-well px-3 py-1.5 outline-none focus:border-focus"
         />
       </div>
       <ul
@@ -244,7 +244,7 @@ function IconPicker({ current, icons, onPick }: IconPickerProps) {
               aria-pressed={icon.path === current}
               title={describe(icon)}
               aria-label={describe(icon)}
-              className="rounded-[3px] outline-none hover:ring-2 hover:ring-gold focus-visible:ring-2 focus-visible:ring-glow aria-pressed:ring-2 aria-pressed:ring-gold"
+              className="rounded-[3px] outline-none hover:ring-2 hover:ring-gold focus-visible:ring-2 focus-visible:ring-focus aria-pressed:ring-2 aria-pressed:ring-gold"
             >
               <UnitIcon
                 path={icon.path}
