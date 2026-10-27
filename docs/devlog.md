@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-27 · Downloadable hero and item starters (AGE-27)
+## 2026-10-27 · Downloadable hero and item starters (PR #56, AGE-27)
 
 - Added two project-authored `.w3obj` starters with equivalent text share codes. The hero
   pack contains Sunwell Warden (`H000` based on `Hpal`), matching the illustrated guide's
@@ -34,7 +34,16 @@ single line. Every pull request adds an entry here and to the changelog.
   dropping/reacquisition, three healing uses through final consumption and merchant sale.
   It leaves the real healing cooldown in place and waits 65 game seconds between uses.
   [Gameplay evidence](verification/age27-gameplay.png) records the results and hero HUD.
-- Validation: pending final website build and commit hooks.
+- Required Rust format/lint hooks pass; workspace tests report 93 passed and 46
+  installation-dependent tests ignored, including two new shipped-artifact checks.
+  Website validation passes: 119 tests, no Astro diagnostics, a 6,611-page build, local
+  link/asset checks and Vercel packaging. A focused audit checks both screenshot dimensions,
+  alt texts, full-size links/notices, guide backlinks and 84 internal fragments.
+- Browser checks pass at 1440 × 1000 and 320 × 740 in both themes, without horizontal
+  overflow. Actual downloads match the final committed bytes; both text alternatives
+  return valid code prefixes. Keyboard image links and centered muted notices work. The
+  Guides filter finds this page first for starter/Wayfarer Supplies and second for
+  download hero (after the linked hero guide). No browser errors.
 
 ## 2026-10-27 · Illustrated hero and item tutorials (PR #55, AGE-25)
 
