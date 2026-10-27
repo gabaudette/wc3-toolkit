@@ -39,6 +39,8 @@ pub struct LeaderboardDesign {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct LeaderboardLabel {
+    #[serde(default)]
+    pub id: String,
     /// Shown, and how the Lua names the row: `SetValue("Alliance", 3)`.
     pub name: String,
     /// `RRGGBB`; white when `None`.
@@ -264,6 +266,7 @@ mod tests {
 
     fn label(name: &str, value: i32) -> LeaderboardLabel {
         LeaderboardLabel {
+            id: name.to_owned(),
             name: name.to_owned(),
             color: Some("FF0303".to_owned()),
             value,

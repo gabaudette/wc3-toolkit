@@ -338,6 +338,7 @@ export type ButtonAction =
   | { kind: "runFunction"; function: string };
 
 export type DialogButton = {
+  id: string;
   text: string;
   /** One letter or digit, or empty for none. */
   hotkey: string;
@@ -372,6 +373,7 @@ export type BoardCell = {
 };
 
 export type BoardColumn = {
+  id: string;
   /** How Lua names it: `SetValue(row, "Kills", 5)`. */
   name: string;
   /** Width in percent of the screen's width. */
@@ -379,6 +381,7 @@ export type BoardColumn = {
 };
 
 export type BoardRow = {
+  id: string;
   /** How Lua names a fixed row; rows per player are named by the player. */
   name: string;
   /** One row for every playing player, in player order, instead of one. */
@@ -404,6 +407,7 @@ export type MultiboardDesign = {
 
 /** A leaderboard row of the map's own, such as a team. */
 export type LeaderboardLabel = {
+  id: string;
   /** Shown, and how Lua names the row: `SetValue("Alliance", 3)`. */
   name: string;
   /** `RRGGBB`, or null for white. */

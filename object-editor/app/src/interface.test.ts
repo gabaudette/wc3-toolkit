@@ -30,6 +30,7 @@ test("Lua names come from names and stay unique", () => {
 // The same cases as `hotkey_letters_turn_gold_when_highlighted` in interface.rs.
 test("hotkey letters turn gold when highlighted", () => {
   const hard = {
+    id: "hard",
     text: "Hard",
     hotkey: "h",
     highlightHotkey: true,

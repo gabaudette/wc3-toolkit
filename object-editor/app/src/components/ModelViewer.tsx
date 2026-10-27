@@ -1,6 +1,13 @@
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { mat4, quat, vec3 } from "gl-matrix";
-import { type PointerEvent, useEffect, useRef, useState, type WheelEvent } from "react";
+import {
+  type PointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type WheelEvent,
+} from "react";
 import { ModelRenderer, parseMDX } from "war3-model";
 import { errorMessage } from "../api";
 import { Checkbox } from "./Checkbox";
@@ -270,6 +277,13 @@ function bounds(model: Model): Bounds {
  * rotate, scroll to zoom, pick an animation below.
  */
 export function ModelViewer({ path }: ModelViewerProps) {
+  const [restored, setRestored] = useState(0);
+  const restore = useCallback(() => setRestored((n) => n + 1), []);
+
+  return <ModelPreview key={restored} path={path} onRestored={restore} />;
+}
+
+function ModelPreview({ path, onRestored }: ModelViewerProps & { onRestored: () => void }) {
   const holderRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<ModelRenderer | null>(null);
   const view = useRef({
@@ -288,8 +302,6 @@ export function ModelViewer({ path }: ModelViewerProps) {
     () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const [missingTextures, setMissingTextures] = useState(0);
-  /** Bumped when the GL context comes back after being lost, to load the model again. */
-  const [restored, setRestored] = useState(0);
   const turningRef = useRef(turning);
 
   turningRef.current = turning;
@@ -308,18 +320,16 @@ export function ModelViewer({ path }: ModelViewerProps) {
       e.preventDefault();
       setStatus({ kind: "error", message: "The 3D preview stopped. It restarts on its own." });
     };
-    const back = () => setRestored((n) => n + 1);
 
     canvas.addEventListener("webglcontextlost", lost);
-    canvas.addEventListener("webglcontextrestored", back);
+    canvas.addEventListener("webglcontextrestored", onRestored);
     return () => {
       canvas.removeEventListener("webglcontextlost", lost);
-      canvas.removeEventListener("webglcontextrestored", back);
+      canvas.removeEventListener("webglcontextrestored", onRestored);
       canvas.remove();
     };
-  }, []);
+  }, [onRestored]);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `restored` reloads the model after a lost context.
   useEffect(() => {
     setStatus(resetStatus(path));
     setSequences([]);
@@ -458,7 +468,7 @@ export function ModelViewer({ path }: ModelViewerProps) {
 
       rendererRef.current = null;
     };
-  }, [path, restored]);
+  }, [path]);
 
   function pickSequence(index: number) {
     setSequence(index);

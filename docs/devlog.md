@@ -4,6 +4,36 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Standards, part 2: stable IDs instead of lint suppressions (AGE-59)
+
+- Thirteen `biome-ignore` comments, one left (AGE-QUAL-003: fix the cause).
+- Eight were `noArrayIndexKey` in the Interface tab editors. Dialog buttons, multiboard
+  columns and rows, and leaderboard rows now carry an `id` in `<map> UI.json`: a UUID when
+  made in the editor. Files saved before have none: `fill_missing_ids` gives each a
+  `button-1`-style ID unique within its design, on load and when a design file is
+  imported, so older files open unchanged and the map does not show as unsaved. Multiboard
+  cells are keyed by their column's ID and preview rows by row and sample player, so moving
+  a button or a column now moves its inputs with it instead of reusing the ones at that
+  place.
+- Two were `useExhaustiveDependencies` on effects re-run by a value they never read. The
+  model preview is now `ModelPreview` inside `ModelViewer`, which remounts it with a new
+  `key` when the WebGL context comes back. Text previews remount when the placeholder
+  values change, keyed by a revision per values object (a `WeakMap`), instead of listing
+  `values` as an unused dependency.
+- In the level table, the choice list no longer needs a wrapper `<div>` stopping Enter:
+  the popover ignores an Enter that comes from inside a `listbox`, since the list applies
+  its own choice. The cell itself is a `<button>` instead of a `<div role="button">`;
+  `block w-full` keeps the whole cell clickable (a block button shrinks to its text
+  otherwise, which the first run in the app caught). Enter and Space were already
+  cancelled by the cell's key handler, so they still only start editing.
+- Kept: `autoFocus` on the cell editor, which appears only because the user just started
+  editing that cell. `CONTRIBUTING.md` now says when a suppression is acceptable.
+- Checked in the app on a copy of the test map: the older `UI.json` opened with IDs and
+  stayed saved; dialog buttons and multiboard columns moved with their inputs and icons;
+  level cells opened by click anywhere in the cell and by Enter; a per-level choice applied
+  with Enter; a tooltip refilled `<A000,DataA1>` after the damage changed. The lost-context
+  path of the model preview was not triggered.
+
 ## 2026-10-27 · Standards, part 1: blank lines after blocks, checked (AGE-58)
 
 - AGE-WS-001 and AGE-WS-002 were followed by hand and had drifted: neither rustfmt nor Biome

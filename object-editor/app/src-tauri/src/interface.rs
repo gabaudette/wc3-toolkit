@@ -120,6 +120,8 @@ pub struct DialogDesign {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct DialogButton {
+    #[serde(default)]
+    pub id: String,
     pub text: String,
     /// One letter or digit, or empty for none.
     pub hotkey: String,
@@ -223,7 +225,47 @@ pub fn load(map: &Path) -> Result<Vec<Design>, String> {
         ));
     }
 
-    Ok(file.designs)
+    let mut designs = file.designs;
+
+    fill_missing_ids(&mut designs);
+    Ok(designs)
+}
+
+pub fn fill_missing_ids(designs: &mut [Design]) {
+    for design in designs {
+        match design {
+            Design::Dialog(dialog) => {
+                fill_ids(dialog.buttons.iter_mut().map(|b| &mut b.id), "button");
+            }
+            Design::Multiboard(board) => {
+                fill_ids(board.columns.iter_mut().map(|c| &mut c.id), "column");
+                fill_ids(board.rows.iter_mut().map(|r| &mut r.id), "row");
+            }
+            Design::Leaderboard(board) => {
+                fill_ids(board.labels.iter_mut().map(|l| &mut l.id), "row");
+            }
+            Design::TimerWindow(_) => {}
+        }
+    }
+}
+
+fn fill_ids<'a>(ids: impl Iterator<Item = &'a mut String>, prefix: &str) {
+    let ids: Vec<&mut String> = ids.collect();
+    let mut taken: HashSet<String> = ids.iter().map(|id| (**id).clone()).collect();
+    let mut n = 1;
+
+    for id in ids {
+        if !id.is_empty() {
+            continue;
+        }
+
+        while taken.contains(&format!("{prefix}-{n}")) {
+            n += 1;
+        }
+
+        *id = format!("{prefix}-{n}");
+        taken.insert(id.clone());
+    }
 }
 
 pub fn save(map: &Path, designs: &[Design]) -> Result<(), String> {
@@ -712,6 +754,7 @@ mod tests {
 
     fn button(text: &str, hotkey: &str, action: ButtonAction) -> DialogButton {
         DialogButton {
+            id: text.to_owned(),
             text: text.to_owned(),
             hotkey: hotkey.to_owned(),
             highlight_hotkey: true,
@@ -870,5 +913,30 @@ mod tests {
 
         std::fs::write(file_for(&map), "{\"version\": 99, \"designs\": []}").unwrap();
         assert!(load(&map).unwrap_err().contains("newer"));
+    }
+
+    #[test]
+    fn older_files_get_ids_for_buttons() {
+        let dir = tempfile::tempdir().unwrap();
+        let map = dir.path().join("test.w3m");
+        let go = serde_json::json!({ "text": "Go", "hotkey": "", "action": { "kind": "close" } });
+        let mut known = go.clone();
+
+        known["id"] = "button-1".into();
+        let old = serde_json::json!({
+            "version": 1,
+            "designs": [{
+                "kind": "dialog", "id": "a", "name": "A", "title": "", "showAtStart": false,
+                "buttons": [go, known, go],
+            }],
+        });
+
+        std::fs::write(file_for(&map), old.to_string()).unwrap();
+        let Design::Dialog(dialog) = &load(&map).unwrap()[0] else {
+            panic!("not a dialog");
+        };
+        let ids: Vec<&str> = dialog.buttons.iter().map(|b| b.id.as_str()).collect();
+
+        assert_eq!(ids, ["button-2", "button-1", "button-3"]);
     }
 }

@@ -115,6 +115,7 @@ const POPOVER_GAP = 4;
 type Placement = { right: number } & ({ top: number } | { bottom: number });
 
 const HALF = 2;
+const CHOICE_LIST = '[role="listbox"]';
 
 /**
  * Checkboxes under a cell; leaving them applies the choice. Placed on the
@@ -150,7 +151,13 @@ function FlagsPopover({ anchor, label, onKey, onCommit, children }: FlagsPopover
       ref={panel}
       role="dialog"
       aria-label={label}
-      onKeyDown={onKey}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target instanceof Element && e.target.closest(CHOICE_LIST)) {
+          return;
+        }
+
+        onKey(e);
+      }}
       onBlur={(e: FocusEvent) => {
         if (!(e.relatedTarget instanceof Node && e.currentTarget.contains(e.relatedTarget))) {
           onCommit();
@@ -196,35 +203,25 @@ function CellEditor({
       // A list under the cell, like the flags: picking applies; Escape,
       // Tab or a click away leave the cell as it was.
       <FlagsPopover anchor={anchor} label={label} onKey={onKey} onCommit={onCommit}>
-        {/* Enter picks the focused choice here, before the panel's Enter applies the draft. */}
-        {/* biome-ignore lint/a11y/noStaticElementInteractions: only stops a key from bubbling; the list handles it. */}
-        <div
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.stopPropagation();
+        <ListBox
+          aria-label={label}
+          selectionMode="single"
+          disallowEmptySelection
+          selectedKeys={[optionKey(choices.value)]}
+          onSelectionChange={(keys) => {
+            const [key] = [...keys];
+
+            if (key !== undefined) {
+              onChoice(optionValue(key));
             }
           }}
+          autoFocus
+          className="max-h-72 overflow-y-auto outline-none"
         >
-          <ListBox
-            aria-label={label}
-            selectionMode="single"
-            disallowEmptySelection
-            selectedKeys={[optionKey(choices.value)]}
-            onSelectionChange={(keys) => {
-              const [key] = [...keys];
-
-              if (key !== undefined) {
-                onChoice(optionValue(key));
-              }
-            }}
-            autoFocus
-            className="max-h-72 overflow-y-auto outline-none"
-          >
-            {choices.options.map((option) => (
-              <Option key={option.value} option={option} />
-            ))}
-          </ListBox>
-        </div>
+          {choices.options.map((option) => (
+            <Option key={option.value} option={option} />
+          ))}
+        </ListBox>
       </FlagsPopover>
     );
   }
@@ -239,7 +236,7 @@ function CellEditor({
 
   return (
     <input
-      // biome-ignore lint/a11y/noAutofocus: editing starts from the keyboard on this cell.
+      // biome-ignore lint/a11y/noAutofocus: focus moves only because the user just started editing this cell.
       autoFocus
       value={editing.draft}
       inputMode={inputMode(meta.control)}
@@ -275,7 +272,7 @@ export function LevelTable({
   const [active, setActive] = useState<Cell>({ row: 0, column: 0 });
   const [editing, setEditing] = useState<Editing | null>(null);
   const [info, setInfo] = useState<string[]>([]);
-  const cells = useRef(new Map<string, HTMLDivElement>());
+  const cells = useRef(new Map<string, HTMLElement>());
   /** Set while the active cell should take focus after a move or an edit. */
   const focusActive = useRef(false);
   // The commit handlers run from events and must see the latest edit.
@@ -534,8 +531,8 @@ export function LevelTable({
                         )}
                         {
                           // The cell stays while its choices are open: their panel sits under it.
-                          // biome-ignore lint/a11y/useSemanticElements: a grid cell with roving focus, not a form control.
-                          <div
+                          <button
+                            type="button"
                             ref={(element) => {
                               if (element) {
                                 cells.current.set(cellKey(position), element);
@@ -543,7 +540,6 @@ export function LevelTable({
                                 cells.current.delete(cellKey(position));
                               }
                             }}
-                            role="button"
                             tabIndex={rovingIndex(isActive)}
                             hidden={isEditing && isTyped(field)}
                             onFocus={() => {
@@ -555,7 +551,7 @@ export function LevelTable({
                             aria-label={`${meta.name}, level ${column + 1}: ${cell.display}`}
                             title={cell.display}
                             className={classes(
-                              "max-w-36 cursor-default truncate rounded px-1.5 py-0.5 font-mono outline-none",
+                              "block w-full max-w-36 cursor-default truncate rounded px-1.5 py-0.5 text-left font-mono outline-none",
                               "focus:ring-2 focus:ring-gold/70",
                               cell.modified && "bg-changed-soft text-changed",
                               !cell.raw && !cell.modified && "text-faint",
@@ -563,7 +559,7 @@ export function LevelTable({
                           >
                             {meta.control === "bool" && boolMark(cell)}
                             {meta.control !== "bool" && (shown || "–")}
-                          </div>
+                          </button>
                         }
                         {isEditing && (meta.control === "flags" || meta.control === "flagList") && (
                           <CellEditor

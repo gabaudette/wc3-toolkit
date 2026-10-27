@@ -11,7 +11,7 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use serde::{Deserialize, Serialize};
 use wc3_map::imports::{ImportedFile, files_used};
 
-use super::{ButtonAction, Design, pascal_case};
+use super::{ButtonAction, Design, fill_missing_ids, pascal_case};
 
 /// What `format` says in every design file, so other JSON files are refused.
 pub const FILE_FORMAT: &str = "tinkerbench-ui";
@@ -45,7 +45,7 @@ impl DesignFile {
 
     pub fn parse(text: &str) -> Result<Self, String> {
         let invalid = |reason: String| format!("Not a design file Tinkerbench can read: {reason}.");
-        let file: Self = serde_json::from_str(text).map_err(|e| invalid(e.to_string()))?;
+        let mut file: Self = serde_json::from_str(text).map_err(|e| invalid(e.to_string()))?;
 
         if file.format != FILE_FORMAT {
             return Err(invalid("it is not a .w3ui file".to_owned()));
@@ -58,6 +58,7 @@ impl DesignFile {
             ));
         }
 
+        fill_missing_ids(&mut file.designs);
         Ok(file)
     }
 
@@ -309,6 +310,7 @@ mod tests {
             title: "Pick".to_owned(),
             title_color: None,
             buttons: vec![DialogButton {
+                id: "go".to_owned(),
                 text: "Go".to_owned(),
                 hotkey: String::new(),
                 highlight_hotkey: true,
@@ -325,10 +327,12 @@ mod tests {
             title: "Scores".to_owned(),
             title_color: None,
             columns: vec![BoardColumn {
+                id: "player".to_owned(),
                 name: "Player".to_owned(),
                 width: 10.0,
             }],
             rows: vec![BoardRow {
+                id: "players".to_owned(),
                 name: "Players".to_owned(),
                 per_player: true,
                 cells: vec![BoardCell {

@@ -57,17 +57,23 @@ function newMultiboard(count: number): MultiboardDesign {
     title: "Scoreboard",
     titleColor: null,
     columns: [
-      { name: "Player", width: 12 },
-      { name: "Kills", width: 5 },
-      { name: "Deaths", width: 5 },
+      { id: crypto.randomUUID(), name: "Player", width: 12 },
+      { id: crypto.randomUUID(), name: "Kills", width: 5 },
+      { id: crypto.randomUUID(), name: "Deaths", width: 5 },
     ],
     rows: [
       {
+        id: crypto.randomUUID(),
         name: "Header",
         perPlayer: false,
         cells: [cell("Player", "ffcc00"), cell("Kills", "ffcc00"), cell("Deaths", "ffcc00")],
       },
-      { name: "Players", perPlayer: true, cells: [cell("{player}"), cell("0"), cell("0")] },
+      {
+        id: crypto.randomUUID(),
+        name: "Players",
+        perPlayer: true,
+        cells: [cell("{player}"), cell("0"), cell("0")],
+      },
     ],
     showAtStart: true,
     minimized: false,
@@ -141,8 +147,20 @@ function newDialog(count: number): DialogDesign {
     title: "Choose a difficulty",
     titleColor: null,
     buttons: [
-      { text: "Normal", hotkey: "N", highlightHotkey: true, action: { kind: "close" } },
-      { text: "Hard", hotkey: "H", highlightHotkey: true, action: { kind: "close" } },
+      {
+        id: crypto.randomUUID(),
+        text: "Normal",
+        hotkey: "N",
+        highlightHotkey: true,
+        action: { kind: "close" },
+      },
+      {
+        id: crypto.randomUUID(),
+        text: "Hard",
+        hotkey: "H",
+        highlightHotkey: true,
+        action: { kind: "close" },
+      },
     ],
     showAtStart: true,
   };
