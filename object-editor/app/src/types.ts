@@ -342,4 +342,44 @@ export type DialogDesign = {
   showAtStart: boolean;
 };
 
-export type Design = DialogDesign;
+/** A cell of a multiboard. */
+export type BoardCell = {
+  /** On a player's row, `{player}` is that player's name in their color. */
+  text: string;
+  /** `RRGGBB`, or null for white. */
+  color: string | null;
+  icon: string | null;
+};
+
+export type BoardColumn = {
+  /** How Lua names it: `SetValue(row, "Kills", 5)`. */
+  name: string;
+  /** Width in percent of the screen's width. */
+  width: number;
+};
+
+export type BoardRow = {
+  /** How Lua names a fixed row; rows per player are named by the player. */
+  name: string;
+  /** One row for every playing player, in player order, instead of one. */
+  perPlayer: boolean;
+  /** One per column. */
+  cells: BoardCell[];
+};
+
+/** A multiboard: a titled board of rows and columns in the top right corner. */
+export type MultiboardDesign = {
+  kind: "multiboard";
+  id: string;
+  name: string;
+  title: string;
+  /** `RRGGBB`, or null for the game's own color. */
+  titleColor: string | null;
+  columns: BoardColumn[];
+  rows: BoardRow[];
+  showAtStart: boolean;
+  /** Shown folded to its title bar. */
+  minimized: boolean;
+};
+
+export type Design = DialogDesign | MultiboardDesign;

@@ -1,4 +1,5 @@
-//! The Interface tab: in-game UI designed visually (dialogs so far), kept in
+//! The Interface tab: in-game UI designed visually (dialogs and
+//! multiboards so far), kept in
 //! `<map> UI.json` next to the map, and the Lua that builds it in game. The
 //! modules go in the map's Lua folder with the triggered spells, for the
 //! harness's `[DEV]` copy.
@@ -11,6 +12,11 @@ use tauri::State;
 use wc3_map::lua::check_syntax;
 
 use crate::state::{AppState, NO_MAP};
+
+mod multiboard;
+
+pub use multiboard::MultiboardDesign;
+use multiboard::multiboard_lua;
 
 /// Bumped when the file changes in a way older versions cannot read.
 pub const FORMAT_VERSION: u32 = 1;
@@ -36,18 +42,21 @@ pub struct UiFile {
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum Design {
     Dialog(DialogDesign),
+    Multiboard(MultiboardDesign),
 }
 
 impl Design {
     fn id(&self) -> &str {
         match self {
             Design::Dialog(d) => &d.id,
+            Design::Multiboard(m) => &m.id,
         }
     }
 
     fn name(&self) -> &str {
         match self {
             Design::Dialog(d) => &d.name,
+            Design::Multiboard(m) => &m.name,
         }
     }
 }
@@ -397,6 +406,10 @@ fn modules(designs: &[Design], source: &str) -> Result<Vec<(String, String)>, St
                 let code = dialog_lua(dialog, &names, source)?;
                 Ok((module_file(&names[&dialog.id]), code))
             }
+            Design::Multiboard(board) => {
+                let code = multiboard_lua(board, &names, source)?;
+                Ok((module_file(&names[&board.id]), code))
+            }
         })
         .collect()
 }
@@ -464,6 +477,7 @@ pub fn ui_lua(state: State<'_, AppState>, id: String) -> Result<String, String> 
         let source = source_name(&map.path);
         match map.ui.iter().find(|d| d.id() == id) {
             Some(Design::Dialog(dialog)) => dialog_lua(dialog, &names, &source),
+            Some(Design::Multiboard(board)) => multiboard_lua(board, &names, &source),
             None => Err(format!("No design {id}.")),
         }
     })

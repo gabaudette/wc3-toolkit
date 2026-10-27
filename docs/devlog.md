@@ -4,6 +4,28 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · UI tool, part 2: multiboards (AGE-53)
+
+- `Design` gained `Multiboard` (`interface/multiboard.rs`): a title and its color, columns
+  (name, width in percent of the screen), rows (named, or `perPlayer`: once for every playing
+  player, computers included, in player order), cells (text, color, icon; `{player}` is the
+  player's name in their color), show at start and start folded.
+- Its module builds the board from tables (columns, row templates, the 24 player colors by
+  `GetHandleId(GetPlayerColor(p))`), keeps what each cell shows, and offers
+  `UI.<Name>.SetValue(row, column, value)`, `.SetColor`, `.SetIcon`, `.Show`, `.Hide` and
+  `.Minimize`, where a row is a row's name or a player and a column its name. Each change
+  redraws one cell (`MultiboardGetItem` and release). Checks refuse boards without columns,
+  unnamed or twin columns, widths outside 0-100%, twin fixed rows and bad colors.
+- The editor: name, title and swatches, start options and a preview in the top right corner
+  of a 16:9 screen (two sample players in their colors); a grid of cells with column names
+  and widths on top and row names with "Each player" on the left, all movable; a style panel
+  for the selected cell, or a whole row or column (its "Style" button): color swatches and
+  the spell wizard's icon picker, exported for this. `ColorSwatches` is now shared with the
+  dialog editor.
+- Checked on a copy of the test map: a "Scoreboard" with a footman icon by each player's name
+  and a green Kills column, the module written and the `[DEV]` copy built and read back, plus
+  a test-only module counting kills and deaths with `SetValue`. **Not yet played in game.**
+
 ## 2026-10-27 · Downloadable hero and item starters (PR #56, AGE-27)
 
 - Added two project-authored `.w3obj` starters with equivalent text share codes. The hero

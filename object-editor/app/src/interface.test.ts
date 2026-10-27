@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { buttonText, luaNames, titleText } from "./interface";
-import type { Design } from "./types";
+import type { DialogDesign } from "./types";
 
-const dialog = (id: string, name: string): Design => ({
+const dialog = (id: string, name: string): DialogDesign => ({
   kind: "dialog",
   id,
   name,

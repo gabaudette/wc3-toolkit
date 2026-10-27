@@ -1,9 +1,9 @@
 import { ArrowDown, ArrowUp, Plus, Trash01, XClose } from "@untitledui/icons";
 import { buttonText, titleText } from "../interface";
 import type { ButtonAction, Design, DialogButton, DialogDesign } from "../types";
-import { classes } from "../ui";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
+import { ColorSwatches } from "./ColorSwatches";
 import { GameText } from "./GameText";
 import { Select } from "./Select";
 
@@ -27,21 +27,6 @@ const NEW_BUTTON: DialogButton = {
   highlightHotkey: true,
   action: { kind: "close" },
 };
-
-/** Colors for the message: the game's default gold first, then the player colors. */
-const TITLE_COLORS: { label: string; value: string | null; swatch: string }[] = [
-  { label: "Game gold", value: null, swatch: "#ffcc00" },
-  { label: "White", value: "ffffff", swatch: "#ffffff" },
-  { label: "Red", value: "ff0303", swatch: "#ff0303" },
-  { label: "Blue", value: "0042ff", swatch: "#0042ff" },
-  { label: "Teal", value: "1ce6b9", swatch: "#1ce6b9" },
-  { label: "Yellow", value: "fffc00", swatch: "#fffc00" },
-  { label: "Orange", value: "fe8a0e", swatch: "#fe8a0e" },
-  { label: "Green", value: "20c000", swatch: "#20c000" },
-  { label: "Pink", value: "e55bb0", swatch: "#e55bb0" },
-  { label: "Light blue", value: "7ebff1", swatch: "#7ebff1" },
-  { label: "Gray", value: "959697", swatch: "#959697" },
-];
 
 const ACTION_LABELS: Record<ButtonAction["kind"], string> = {
   close: "Close the dialog",
@@ -126,34 +111,15 @@ export function DialogEditor({
             className={inputClass}
           />
         </label>
-        <fieldset className="-mt-2 flex flex-wrap items-center gap-1.5">
-          <legend className="sr-only">Message color</legend>
-          <span className="mr-1 text-xs text-faint">Color</span>
-          {TITLE_COLORS.map((color) => {
-            const picked = (dialog.titleColor ?? null) === color.value;
-            return (
-              <button
-                key={color.label}
-                type="button"
-                disabled={!editable}
-                onClick={() => set({ titleColor: color.value })}
-                aria-pressed={picked}
-                aria-label={color.label}
-                title={color.label}
-                className={classes(
-                  "size-6 rounded-full border-2 disabled:opacity-50",
-                  picked && "border-ink",
-                  !picked && "border-transparent",
-                )}
-              >
-                <span
-                  className="block size-full rounded-full border border-black/40"
-                  style={{ background: color.swatch }}
-                />
-              </button>
-            );
-          })}
-        </fieldset>
+        <div className="-mt-2">
+          <ColorSwatches
+            value={dialog.titleColor}
+            onChange={(titleColor) => set({ titleColor })}
+            label="Message color"
+            none={{ label: "Game gold", swatch: "#ffcc00" }}
+            disabled={!editable}
+          />
+        </div>
 
         <Checkbox
           isSelected={dialog.showAtStart}
