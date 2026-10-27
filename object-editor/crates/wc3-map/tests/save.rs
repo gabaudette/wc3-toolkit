@@ -1,5 +1,3 @@
-//! Saving into maps, using archives built on the fly (no game files needed).
-
 use std::path::Path;
 
 use wc3_map::{Map, save_files};

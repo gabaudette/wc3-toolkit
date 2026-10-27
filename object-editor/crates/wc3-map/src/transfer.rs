@@ -1,18 +1,3 @@
-//! Moving custom objects between maps: share codes and imports.
-//!
-//! A [`Bundle`] holds custom units, abilities and buffs exactly as map files
-//! store them, plus the strings they use. [`export`] follows each object's
-//! references (a unit's abilities, an ability's buffs and summoned units, the
-//! units a building trains) and brings along the custom objects they point at.
-//! [`plan`] gives every object a free ID in the target map, and [`apply`]
-//! adds them with every reference rewritten to the new IDs.
-//!
-//! A share code is the bundle's object files, compressed and base64-encoded
-//! behind a `W3OBJ1:` prefix, so it can be pasted anywhere text goes. A bundle
-//! file (`.w3obj`) also carries the files the objects use that were imported
-//! into the source map (models, their textures, icons): those are too large
-//! for text.
-
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::io::{Read, Write};
 
@@ -38,15 +23,11 @@ use crate::{
 };
 
 const CODE_PREFIX: &str = "W3OBJ1:";
-/// Start of a bundle file, before the compressed payload.
 const FILE_MAGIC: &[u8; 7] = b"W3OBJ1\0";
 const PAYLOAD_MAGIC: &[u8; 4] = b"W3OB";
 const PAYLOAD_VERSION: u8 = 1;
-/// Largest payload a share code may unpack to; real codes are a few kilobytes.
 const MAX_CODE_PAYLOAD: u64 = 16 * 1024 * 1024;
-/// Largest payload a bundle file may unpack to: imported models add megabytes.
 const MAX_FILE_PAYLOAD: u64 = 512 * 1024 * 1024;
-/// Payload section holding the imported files.
 const IMPORTS_SECTION: &str = "imports";
 const LIST_SEPARATOR: char = ',';
 /// Characters the World Editor uses for the last three letters of new IDs.
@@ -57,7 +38,6 @@ const BUFF_PREFIX: u8 = b'B';
 const ITEM_PREFIX: u8 = b'I';
 const UPGRADE_PREFIX: u8 = b'R';
 
-/// Share codes may be wrapped or padded by whatever carried them.
 const BASE64: GeneralPurpose = GeneralPurpose::new(
     &alphabet::URL_SAFE,
     GeneralPurposeConfig::new()
@@ -65,7 +45,6 @@ const BASE64: GeneralPurpose = GeneralPurpose::new(
         .with_decode_padding_mode(DecodePaddingMode::Indifferent),
 );
 
-/// The kinds of objects that move between maps.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ObjectType {
     Unit,
@@ -84,7 +63,6 @@ impl ObjectType {
         Self::Upgrade,
     ];
 
-    /// The gameplay file and the Reforged skin file holding this kind.
     fn files(self) -> (&'static str, &'static str) {
         match self {
             Self::Unit => (UNITS_FILE, UNIT_SKINS_FILE),
@@ -126,7 +104,6 @@ impl ObjectType {
     }
 }
 
-/// One kind's two tables: gameplay fields and skin (names, art) fields.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Tables {
     pub data: ObjectData,
@@ -151,7 +128,6 @@ impl Tables {
             .any(|t| t.custom.iter().any(|e| e.effective_id() == id))
     }
 
-    /// Whether the map changes an original game object with this ID.
     fn is_changed(&self, id: FourCC) -> bool {
         self.both()
             .iter()
@@ -164,7 +140,6 @@ impl Tables {
             .all(|t| t.custom.is_empty() && t.original.is_empty())
     }
 
-    /// Custom object IDs in file order, each once.
     fn custom_ids(&self) -> Vec<(FourCC, FourCC)> {
         let mut ids: Vec<(FourCC, FourCC)> = Vec::new();
 
@@ -180,7 +155,6 @@ impl Tables {
     }
 }
 
-/// A map's movable objects, borrowed from where the editor keeps them.
 #[derive(Clone, Copy)]
 pub struct MapObjects<'a> {
     pub units: &'a MapUnits,
@@ -206,7 +180,6 @@ impl MapObjects<'_> {
     }
 }
 
-/// A map's movable objects, borrowed to add imported objects to.
 pub struct MapObjectsMut<'a> {
     pub units: &'a mut MapUnits,
     pub abilities: &'a mut MapAbilities,
@@ -229,7 +202,6 @@ fn targets_for(value_type: &str) -> Option<&'static [ObjectType]> {
     })
 }
 
-/// Which fields of units, abilities, items and upgrades hold IDs of other objects.
 pub struct References {
     fields: HashMap<(ObjectType, FourCC), &'static [ObjectType]>,
 }
@@ -276,7 +248,6 @@ fn list_ids(value: &Value) -> Vec<FourCC> {
     }
 }
 
-/// Custom objects ready to move to another map.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Bundle {
     units: Tables,
@@ -285,11 +256,9 @@ pub struct Bundle {
     items: Tables,
     upgrades: Tables,
     strings: MapStrings,
-    /// Files imported into the source map that the objects use.
     files: Vec<ImportedFile>,
 }
 
-/// An object in a bundle.
 #[derive(Debug, Clone, PartialEq)]
 pub struct BundledObject {
     pub ty: ObjectType,
@@ -297,10 +266,8 @@ pub struct BundledObject {
     pub base: FourCC,
 }
 
-/// A bundle and what it could not bring along.
 pub struct Export {
     pub bundle: Bundle,
-    /// The selected objects first, then the ones they depend on.
     pub objects: Vec<BundledObject>,
     pub warnings: Vec<String>,
 }
@@ -318,7 +285,6 @@ impl Bundle {
         }
     }
 
-    /// Imported files the objects use; empty for bundles read from a share code.
     pub fn files(&self) -> &[ImportedFile] {
         &self.files
     }
@@ -343,7 +309,6 @@ impl Bundle {
         }
     }
 
-    /// Every object in the bundle, units first.
     pub fn objects(&self) -> Vec<BundledObject> {
         ObjectType::ALL
             .into_iter()
@@ -356,7 +321,6 @@ impl Bundle {
             .collect()
     }
 
-    /// A field's value for an object, with string references resolved.
     pub fn text(&self, ty: ObjectType, id: FourCC, field: &str) -> Option<String> {
         let field = FourCC::parse(field)?;
 
@@ -371,7 +335,6 @@ impl Bundle {
             .map(|m| self.strings.resolve(&m.value.to_string()).to_owned())
     }
 
-    /// The object files and strings, and the imported files when asked.
     fn payload(&self, with_files: bool) -> Vec<u8> {
         let mut payload = PAYLOAD_MAGIC.to_vec();
 
@@ -421,13 +384,10 @@ impl Bundle {
         compress(&payload)
     }
 
-    /// The share code: `W3OBJ1:` and the compressed object files,
-    /// base64-encoded. Imported files only travel in a bundle file.
     pub fn to_code(&self) -> String {
         format!("{CODE_PREFIX}{}", BASE64.encode(self.payload(false)))
     }
 
-    /// The bundle file (`.w3obj`): the objects and the imported files they use.
     pub fn to_file(&self) -> Vec<u8> {
         let mut out = FILE_MAGIC.to_vec();
 
@@ -435,7 +395,6 @@ impl Bundle {
         out
     }
 
-    /// Reads a share code. Spaces and line breaks inside it are ignored.
     pub fn from_code(code: &str) -> Result<Self> {
         let invalid = |reason: &str| Error::Invalid(format!("Not a valid share code: {reason}."));
         let code: String = code.chars().filter(|c| !c.is_whitespace()).collect();
@@ -450,7 +409,6 @@ impl Bundle {
         Self::from_payload(&payload, &invalid)
     }
 
-    /// Reads a bundle file (`.w3obj`).
     pub fn from_file(bytes: &[u8]) -> Result<Self> {
         let invalid = |reason: &str| Error::Invalid(format!("Not a valid bundle file: {reason}."));
         let compressed = bytes
@@ -502,7 +460,6 @@ impl Bundle {
                 .ok_or_else(|| invalid("it holds an unknown file"))?;
             let mut data = ObjectData::parse(bytes, ty.layout())?;
 
-            // Only custom objects move between maps.
             data.original.clear();
             let tables = bundle.tables_mut(ty);
 
@@ -523,8 +480,6 @@ impl Bundle {
         Ok(bundle)
     }
 
-    /// Every text value of the bundled objects, as stored (string references
-    /// unresolved): art fields among them name the files objects use.
     fn values(&self) -> impl Iterator<Item = &str> {
         ObjectType::ALL
             .into_iter()
@@ -548,7 +503,6 @@ fn compress(bytes: &[u8]) -> Vec<u8> {
         .unwrap_or_default()
 }
 
-/// Inflates at most `limit` bytes; `None` when the data is damaged.
 fn decompress(bytes: &[u8], limit: u64) -> Option<Vec<u8>> {
     let mut out = Vec::new();
     DeflateDecoder::new(bytes)
@@ -558,7 +512,6 @@ fn decompress(bytes: &[u8], limit: u64) -> Option<Vec<u8>> {
     Some(out)
 }
 
-/// The imported files section: path length (u16), path, size (u32), bytes.
 fn read_files(data: &[u8]) -> Option<Vec<ImportedFile>> {
     let mut files = Vec::new();
     let mut pos = 0;
@@ -589,7 +542,6 @@ fn put_section(out: &mut Vec<u8>, name: &str, bytes: &[u8]) {
     out.extend_from_slice(bytes);
 }
 
-/// The section at `pos`: its name, its bytes and where the next one starts.
 fn read_section(data: &[u8], pos: usize) -> Option<(&str, &[u8], usize)> {
     let name_len = usize::from(*data.get(pos)?);
     let name_end = pos + 1 + name_len;
@@ -603,9 +555,6 @@ fn read_section(data: &[u8], pos: usize) -> Option<(&str, &[u8], usize)> {
     Some((name, data.get(start..end)?, end))
 }
 
-/// Bundles the given custom units with every custom unit, ability, buff,
-/// item and upgrade they depend on, and the files imported into the source map that they use
-/// (`read` reads a file from it by path). Warnings name what could not come along.
 pub fn export(
     source: MapObjects<'_>,
     refs: &References,
@@ -708,14 +657,11 @@ pub fn export(
     })
 }
 
-/// A game object the source map changes that a shared object refers to: it
-/// does not come along, so the target map gets the game's version.
 struct LeftBehind {
     code: FourCC,
     users: Vec<FourCC>,
 }
 
-/// Users named in a warning before the rest are counted.
 const NAMED_USERS: usize = 3;
 
 impl LeftBehind {
@@ -739,20 +685,14 @@ impl LeftBehind {
     }
 }
 
-/// Where a bundled object goes in the target map.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PlannedObject {
     pub ty: ObjectType,
-    /// Its ID in the bundle.
     pub id: FourCC,
-    /// Its ID in the target map: the same unless that one is taken.
     pub new_id: FourCC,
     pub base: FourCC,
 }
 
-/// Picks an ID for every bundled object: its own when the target map and the
-/// game do not use it, otherwise the next free one with the same first letter
-/// (`A000`, `A001`, ... for abilities).
 pub fn plan(
     bundle: &Bundle,
     target: MapObjects<'_>,
@@ -800,8 +740,6 @@ pub(crate) fn next_free_id(prefix: u8, free: impl Fn(FourCC) -> bool) -> Option<
         .find(|id| free(*id))
 }
 
-/// Adds the planned objects to the target map, with references between them
-/// and their text rewritten for the target.
 pub fn apply(
     bundle: &Bundle,
     plan: &[PlannedObject],
@@ -909,7 +847,6 @@ mod tests {
     const ABILITY_NAME: &str = "anam";
     const MODEL: &str = "umdl";
 
-    /// A source map with no imported files.
     fn no_files(_: &str) -> Option<Vec<u8>> {
         None
     }
@@ -964,7 +901,6 @@ mod tests {
         References { fields }
     }
 
-    /// A map's movable objects, owned, for tests to borrow as [`MapObjects`].
     struct Objects {
         units: MapUnits,
         abilities: MapAbilities,
@@ -981,7 +917,6 @@ mod tests {
             items: Vec<ObjectEntry>,
             mut upgrades: Vec<ObjectEntry>,
         ) -> Self {
-            // Leveled files store a level and data column with every value.
             for m in abilities
                 .iter_mut()
                 .chain(upgrades.iter_mut())
@@ -1109,7 +1044,6 @@ mod tests {
         )
     }
 
-    /// A map with nothing in it but one custom ability and one custom item.
     fn target_with(ability: &str, item: &str, units: MapUnits) -> Objects {
         Objects::new(
             units,

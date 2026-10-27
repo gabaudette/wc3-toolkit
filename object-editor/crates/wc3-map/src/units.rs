@@ -24,12 +24,9 @@ pub struct MapUnits {
     data: ObjectData,
     skins: ObjectData,
     strings: MapStrings,
-    /// Strings this editor added since loading. Only these are removed again
-    /// when nothing refers to them; strings already in the map are never touched.
     added_strings: Vec<u32>,
 }
 
-/// A unit the map adds or changes.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MapUnit {
     pub id: FourCC,
@@ -50,8 +47,6 @@ impl MapUnits {
         })
     }
 
-    /// The map's string table. Units keep it; abilities borrow it to store
-    /// their text.
     pub fn strings(&self) -> &MapStrings {
         &self.strings
     }
@@ -60,8 +55,6 @@ impl MapUnits {
         &mut self.strings
     }
 
-    /// The unit tables (gameplay, skin) and the string table, for moving
-    /// objects between maps.
     pub(crate) fn parts(&self) -> (&ObjectData, &ObjectData, &MapStrings) {
         (&self.data, &self.skins, &self.strings)
     }
@@ -80,7 +73,6 @@ impl MapUnits {
         (&mut self.data, &mut self.skins, &mut self.strings)
     }
 
-    /// Custom units first, then changed original units, each listed once.
     pub fn units(&self) -> Vec<MapUnit> {
         let mut units: Vec<MapUnit> = Vec::new();
         let mut index: HashMap<FourCC, usize> = HashMap::new();
@@ -114,8 +106,6 @@ impl MapUnits {
         units
     }
 
-    /// The game unit a map unit is based on: the base of a custom unit, or the
-    /// unit itself. `None` when neither the map nor the game has the ID.
     pub fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC> {
         if let Some(entry) = self.data.find(id).or_else(|| self.skins.find(id)) {
             return Some(entry.base);
@@ -130,7 +120,6 @@ impl MapUnits {
         Some(db.kind(&base.to_string()))
     }
 
-    /// Fields the Object Editor shows for this unit (those of its base unit).
     pub fn fields<'a>(&self, db: &'a UnitDatabase, id: FourCC) -> Vec<&'a FieldMeta> {
         self.base_of(db, id)
             .map(|base| db.fields_for(&base.to_string()).collect())
@@ -161,8 +150,6 @@ impl MapUnits {
         self.modification(id, field).is_some()
     }
 
-    /// The field's raw value: the map's change if there is one (with string
-    /// references resolved), otherwise the base unit's game data.
     pub fn raw_value(
         &self,
         db: &UnitDatabase,
@@ -202,9 +189,6 @@ impl MapUnits {
             .unwrap_or_else(|| id.to_string())
     }
 
-    /// Sets a field from text as typed in an editor: numbers for numeric
-    /// fields, `true`/`false` or `1`/`0` for booleans, raw codes for lists and
-    /// choices. Text fields are stored in the map's string table.
     pub fn set(
         &mut self,
         db: &UnitDatabase,
@@ -218,8 +202,6 @@ impl MapUnits {
             return Err(Error::Invalid(format!("unknown unit {id}")));
         };
 
-        // Setting the base unit's own value is no change at all: drop the
-        // modification instead of storing a copy.
         let parsed = parse_value(field, text)?;
 
         if same_as_base(db, base, field, &parsed) {
@@ -266,8 +248,6 @@ impl MapUnits {
         Ok(())
     }
 
-    /// Removes the map's change to a field so the base unit's value applies
-    /// again. Returns `false` when the field was not changed.
     pub fn reset(&mut self, id: FourCC, field: &FieldMeta) -> bool {
         let Some(field_id) = FourCC::parse(&field.id) else {
             return false;
@@ -287,7 +267,6 @@ impl MapUnits {
                 }
             }
 
-            // A changed original unit with no changes left is dropped entirely.
             data.original.retain(|e| e.mods().next().is_some());
         }
 
@@ -295,7 +274,6 @@ impl MapUnits {
         removed
     }
 
-    /// Removes strings this editor added that no field refers to anymore.
     fn drop_unused_strings(&mut self) {
         let referenced: Vec<u32> = [&self.data, &self.skins]
             .iter()
@@ -398,7 +376,6 @@ impl MapUnits {
         reference
     }
 
-    /// The files to write into the map for the current state.
     pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
         vec![
             (UNITS_FILE, self.data.to_bytes()),
@@ -428,7 +405,6 @@ fn entry_mut(data: &mut ObjectData, id: FourCC) -> &mut ObjectEntry {
     match index {
         Some(i) => &mut data.original[i],
         None => {
-            // A change to an original unit, or a custom unit missing from this file.
             data.original.push(ObjectEntry {
                 base: id,
                 id: FourCC::ZERO,
@@ -462,7 +438,6 @@ mod tests {
         FourCC::parse(code).unwrap_or(FourCC([0; 4]))
     }
 
-    /// An entry with one modification per given field.
     fn entry(base: &str, own_id: &str, fields: &[&str]) -> ObjectEntry {
         let mods = fields
             .iter()

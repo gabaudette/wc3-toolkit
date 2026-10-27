@@ -1,6 +1,3 @@
-//! Command-line tool for a map's unit data, mainly for checking reads and
-//! writes against the World Editor.
-
 // Errors and usage go to stderr directly (AGE-QUAL-003: documented, file-scoped).
 // Regular output goes through `say!`, which handles a closed pipe.
 #![allow(clippy::print_stderr)]
@@ -38,11 +35,8 @@ OUT may be the input map itself; it is replaced only after a complete save.";
 
 const GAME_DIR_VAR: &str = "WC3_GAME_DIR";
 
-/// Marks output that stopped because the reader went away (e.g. `| head`).
 const OUTPUT_CLOSED: &str = "\0output closed";
 
-/// Writes a line to stdout. A closed pipe ends the program quietly instead of
-/// panicking like `println!` does.
 fn emit(line: std::fmt::Arguments<'_>) -> Result<(), String> {
     let mut stdout = std::io::stdout().lock();
 

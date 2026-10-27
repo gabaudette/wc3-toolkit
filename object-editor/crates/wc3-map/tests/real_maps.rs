@@ -33,7 +33,6 @@ const MAPS_DIR_VAR: &str = "WC3_MAPS_DIR";
 const GAME_DIR_VAR: &str = "WC3_GAME_DIR";
 const MAP_EXTENSIONS: &[&str] = &["w3m", "w3x"];
 const MAX_FILES: u32 = 8;
-/// Unit, ability and buff files with their skins, and the string table.
 const MOVED_MAX_FILES: u32 = 16;
 
 fn env_dir(var: &str) -> Result<PathBuf, String> {
@@ -60,7 +59,6 @@ fn find_maps(dir: &Path, found: &mut Vec<PathBuf>) -> std::io::Result<()> {
     Ok(())
 }
 
-/// Every object data file and string table in every map rewrites byte for byte.
 #[test]
 #[ignore = "needs maps (WC3_MAPS_DIR)"]
 fn every_map_round_trips() -> TestResult {
@@ -110,8 +108,6 @@ fn field_ids(map: &Map, file: &str, id: FourCC) -> Result<Vec<String>, Box<dyn s
     Ok(entry.mods().map(|m| m.field.to_string()).collect())
 }
 
-/// Gameplay fields go to war3map.w3u, cosmetic ones to war3mapSkin.w3u with
-/// their text in the string table, and everything reads back.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn edited_units_save_and_read_back() -> TestResult {
@@ -124,7 +120,6 @@ fn edited_units_save_and_read_back() -> TestResult {
     let mut units = MapUnits::load(&Map::open(&path)?)?;
     let paladin = FourCC::parse("Hpal").ok_or("bad id")?;
 
-    // A text change that is reset again leaves no string behind.
     let untouched = units.files();
     let tooltip = db.field("utub").ok_or("no utub")?;
 
@@ -193,7 +188,6 @@ fn edited_items_save_and_read_back() -> TestResult {
     let field = |id: &str| db.field(id).ok_or(format!("no {id}"));
     let (gold, name, tooltip) = (field("igol")?, field("unam")?, field("utub")?);
 
-    // A text change that is reset again leaves no string behind.
     let untouched = (units.files(), items.files());
 
     items.set(&db, units.strings_mut(), claws, tooltip, "|cffffcc00New|r")?;
@@ -243,20 +237,16 @@ fn edited_items_save_and_read_back() -> TestResult {
     Ok(())
 }
 
-/// One kind of object without levels, for the save and read-back test.
 struct PlainCase {
     kind: PlainKind,
     database: fn(&GameFiles) -> wc3_data::Result<UnitDatabase>,
     base: &'static str,
-    /// A gameplay field, its new value, and the name field.
     number: (&'static str, &'static str),
     name: &'static str,
     files: (&'static str, &'static str),
     first_id: &'static str,
 }
 
-/// Buffs and destructables, like items: a custom object's gameplay change goes
-/// in the gameplay file, its name in the skin file, and both read back.
 #[test]
 #[ignore = "needs WC3_GAME_DIR"]
 fn edited_buffs_and_destructables_save_and_read_back() -> TestResult {
@@ -343,8 +333,6 @@ fn level_and_column(
         .collect())
 }
 
-/// Ability changes go to war3map.w3a with their level and data column, text
-/// to war3mapSkin.w3a and the string table, and everything reads back.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn edited_abilities_save_and_read_back() -> TestResult {
@@ -370,7 +358,6 @@ fn edited_abilities_save_and_read_back() -> TestResult {
         field("atp1")?,
     );
 
-    // A text change that is reset again leaves no string behind.
     let untouched = (units.files(), abilities.files());
 
     abilities.set(
@@ -433,7 +420,6 @@ fn edited_abilities_save_and_read_back() -> TestResult {
     );
     assert_eq!(map.strings()?.resolve("TRIGSTR_001"), "Holier Light");
 
-    // Tooltips naming the ability show the map's values.
     let placeholders = MapPlaceholders {
         abilities: &reloaded,
         db: &db,
@@ -447,7 +433,6 @@ fn edited_abilities_save_and_read_back() -> TestResult {
         "500 and 2.5"
     );
 
-    // Typing the base ability's value again is no change.
     let mut strings = units.strings().clone();
 
     reloaded.set(&db, &mut strings, custom, amount, 2, "400")?;
@@ -457,9 +442,6 @@ fn edited_abilities_save_and_read_back() -> TestResult {
     Ok(())
 }
 
-/// Every map's custom units, with what they use, survive a share code and an
-/// import into a copy of the same map, where every ID is taken: all objects get
-/// new IDs, references follow them, and the saved map reads back.
 #[test]
 #[ignore = "needs maps and an install (WC3_MAPS_DIR, WC3_GAME_DIR)"]
 fn custom_units_move_between_maps() -> TestResult {
@@ -524,7 +506,6 @@ fn custom_units_move_between_maps() -> TestResult {
             "{}: the bundle file changes the bundle",
             path.display()
         );
-        // Share codes carry the objects; imported files only travel in bundle files.
         let from_code = Bundle::from_code(&export.bundle.to_code())?;
 
         assert_eq!(
@@ -658,7 +639,6 @@ fn custom_units_move_between_maps() -> TestResult {
                 path.display(),
                 planned.new_id
             );
-            // Lists of units an imported unit trains or builds name only new IDs.
             for field in ["utra", "ubui", "uupt"].iter().filter_map(|f| db.field(f)) {
                 let value = reread
                     .raw_value(&db, planned.new_id, field, ArtMode::Sd)
@@ -693,9 +673,6 @@ fn field<'a>(db: &'a UnitDatabase, id: &str) -> Result<&'a FieldMeta, String> {
     db.field(id).ok_or(format!("no {id}"))
 }
 
-/// A custom shop selling a custom item and researching a custom upgrade
-/// brings both along when shared, into a map that already has an item and an
-/// upgrade with the same IDs.
 #[test]
 #[ignore = "needs WC3_GAME_DIR"]
 fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
@@ -865,8 +842,6 @@ fn custom_items_and_upgrades_move_with_the_units_that_use_them() -> TestResult {
     Ok(())
 }
 
-/// A doodad's per-variation tint saves at its variation (the first being 1)
-/// and reads back; plain fields save at level 0.
 #[test]
 #[ignore = "needs WC3_GAME_DIR"]
 fn edited_doodads_save_and_read_back() -> TestResult {
@@ -916,8 +891,6 @@ fn edited_doodads_save_and_read_back() -> TestResult {
     Ok(())
 }
 
-/// An upgrade's per-level fields save at their level and read back; plain
-/// fields save at level 0.
 #[test]
 #[ignore = "needs WC3_GAME_DIR"]
 fn edited_upgrades_save_and_read_back() -> TestResult {
@@ -941,7 +914,6 @@ fn edited_upgrades_save_and_read_back() -> TestResult {
         field("greq")?,
     );
 
-    // A text change that is reset again leaves no string behind.
     let untouched = (units.files(), upgrades.files());
 
     upgrades.set(&db, units.strings_mut(), swords, name, 2, "|cffffcc00New|r")?;
@@ -1005,8 +977,6 @@ fn edited_upgrades_save_and_read_back() -> TestResult {
     Ok(())
 }
 
-/// Every model and texture the maps' custom units import decodes for the
-/// editor's previews.
 #[test]
 #[ignore = "needs maps and an install (WC3_MAPS_DIR, WC3_GAME_DIR)"]
 fn imported_art_decodes() -> TestResult {

@@ -4,6 +4,23 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Standards, part 4c: comments only where code can't speak, wc3-map (AGE-61)
+
+- `wc3-map` goes from 456 comment lines to 157, after reading all 260 blocks. Kept: what
+  the map formats hold (Reforged's gameplay and skin files per object kind, `war3map.imp`
+  and its entry flags, protected maps without a file list, models stored as `.mdx` with
+  their portrait and `DIS` icons, older editors keeping every field in the gameplay file);
+  the World Editor's conventions (custom IDs `A000`/`H000`/`R000` and the ID alphabet,
+  units keeping their first letter to tell heroes apart, string comments like
+  `Units: H000 (name), Name (Name)`, list maxima, values stored as integers); Lua facts
+  (Lua 5.3, `war3map.lua` regenerated on every save, `SetMapName("TRIGSTR_…")`); the
+  reasons behind ignored errors and saturating casts; and the descriptions of the transfer
+  tests' object graphs.
+- Removed: the API docs repeated across `abilities.rs`, `leveled.rs`, `plain.rs` and
+  `units.rs` (`has`, `base_of`, `raw_value`, `set`, `reset`, `files`...), the share code
+  module doc (a project format the code itself defines), and test docs repeating the test
+  name. No code changed.
+
 ## 2026-10-27 · Standards, part 4b: comments only where code can't speak, wc3-data (AGE-61)
 
 - `wc3-data` goes from 508 comment lines to 311, after reading all 308 blocks against the

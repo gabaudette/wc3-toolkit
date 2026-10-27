@@ -39,7 +39,6 @@ const DISABLED_ICONS_DIR: &str = "ReplaceableTextures\\CommandButtonsDisabled\\D
 /// root under this prefix; imports in `war3mapImported\` are in a folder.
 const MAP_FILE_PREFIX: &str = "war3map";
 
-/// A file from a map, at its path inside the archive.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportedFile {
     pub path: String,
@@ -50,7 +49,6 @@ pub struct ImportedFile {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ImportList {
     version: u32,
-    /// Flags and path of each entry, as stored.
     entries: Vec<(u8, String)>,
 }
 
@@ -125,9 +123,7 @@ fn normalized(path: &str) -> String {
     path.replace('/', "\\").to_ascii_lowercase()
 }
 
-/// A map's import list and the files waiting to be written into it.
 pub struct MapImports {
-    /// `None` when the map has no import list yet.
     list: Option<ImportList>,
     pending: Vec<ImportedFile>,
 }
@@ -145,7 +141,6 @@ impl MapImports {
         })
     }
 
-    /// A file waiting to be written, by its path.
     pub fn pending(&self, path: &str) -> Option<&[u8]> {
         self.pending
             .iter()
@@ -181,14 +176,11 @@ impl MapImports {
         !self.pending.is_empty()
     }
 
-    /// Queues a file for the next save, replacing a queued one at the same path.
     pub fn add(&mut self, file: ImportedFile) {
         self.pending.retain(|f| !same_path(&f.path, &file.path));
         self.pending.push(file);
     }
 
-    /// The files to write on save: the queued files and the import list with
-    /// their entries. Nothing when no file is queued.
     pub fn files(&self) -> Vec<(String, Vec<u8>)> {
         if self.pending.is_empty() {
             return Vec::new();
@@ -206,7 +198,6 @@ impl MapImports {
         files
     }
 
-    /// After a save: the queued files are now in the map and its list.
     pub fn saved(&mut self) {
         let mut list = self.list.take().unwrap_or_else(ImportList::new);
 
@@ -218,7 +209,6 @@ impl MapImports {
     }
 }
 
-/// File name and extension of a path, the extension lowercased.
 fn split_extension(path: &str) -> (&str, Option<String>) {
     let name_start = path.rfind(PATH_SEPARATOR).map_or(0, |i| i + 1);
 
@@ -291,8 +281,6 @@ fn companions(file: &ImportedFile) -> Vec<String> {
     }
 }
 
-/// The files a map holds for the given field values (each may be a
-/// comma-separated list), with the textures of the models among them.
 pub fn files_used<'a>(
     values: impl IntoIterator<Item = &'a str>,
     read: &dyn Fn(&str) -> Option<Vec<u8>>,
@@ -325,18 +313,13 @@ pub fn files_used<'a>(
     found
 }
 
-/// What importing a bundled file does to the target map.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileStatus {
-    /// The map does not have it: it is added.
     New,
-    /// The map already has the same file.
     Same,
-    /// The map has a different file at that path; the map's own stays.
     Different,
 }
 
-/// Compares bundled files with the target map's files at the same paths.
 pub fn file_statuses(
     files: &[ImportedFile],
     target: &dyn Fn(&str) -> Option<Vec<u8>>,

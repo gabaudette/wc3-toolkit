@@ -27,8 +27,6 @@ use crate::{
     ITEM_SKINS_FILE, ITEMS_FILE, Map, Result,
 };
 
-/// One kind of object without levels: its files, how custom IDs start and
-/// how the World Editor names it in string comments.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct PlainKind {
     data_file: &'static str,
@@ -37,9 +35,7 @@ pub struct PlainKind {
     id_prefix: u8,
     /// "Items", as string comments read: `Items: I000 (name), Name (Name)`.
     label: &'static str,
-    /// "item", for messages.
     singular: &'static str,
-    /// The field holding the object's name.
     name_field: &'static str,
 }
 
@@ -73,15 +69,10 @@ pub const DESTRUCTABLES: PlainKind = PlainKind {
 pub struct PlainObjects {
     kind: PlainKind,
     tables: Tables,
-    /// Files the map had when loaded; others are only written once they
-    /// hold something, so untouched maps keep their files as they are.
     loaded: Vec<&'static str>,
-    /// Strings this editor added since loading. Only these are removed again
-    /// when nothing refers to them; strings already in the map are never touched.
     added_strings: Vec<u32>,
 }
 
-/// An object the map adds or changes.
 #[derive(Debug, Clone, PartialEq)]
 pub struct PlainObject {
     pub id: FourCC,
@@ -116,7 +107,6 @@ impl PlainObjects {
         })
     }
 
-    /// No changes: the game's objects as they are.
     pub fn empty(kind: PlainKind) -> Self {
         Self {
             kind,
@@ -129,7 +119,6 @@ impl PlainObjects {
         }
     }
 
-    /// The tables (gameplay, skin), for moving objects between maps.
     pub(crate) fn tables(&self) -> &Tables {
         &self.tables
     }
@@ -148,7 +137,6 @@ impl PlainObjects {
         }
     }
 
-    /// Custom objects first, then changed game objects, each listed once.
     pub fn objects(&self) -> Vec<PlainObject> {
         let mut objects: Vec<PlainObject> = Vec::new();
         let mut index: HashMap<FourCC, usize> = HashMap::new();
@@ -183,13 +171,10 @@ impl PlainObjects {
         objects
     }
 
-    /// Whether the map adds or changes this object.
     pub fn has(&self, id: FourCC) -> bool {
         self.tables.data.find(id).is_some() || self.tables.skin.find(id).is_some()
     }
 
-    /// The game object a map object is based on: the base of a custom one, or
-    /// the object itself. `None` when neither the map nor the game has the ID.
     pub fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC> {
         match self
             .tables
@@ -202,7 +187,6 @@ impl PlainObjects {
         }
     }
 
-    /// Fields the Object Editor shows for this object.
     pub fn fields<'a>(&self, db: &'a UnitDatabase, id: FourCC) -> Vec<&'a FieldMeta> {
         self.base_of(db, id)
             .map(|base| db.fields_for(&base.to_string()).collect())
@@ -232,8 +216,6 @@ impl PlainObjects {
         self.modification(id, field).is_some()
     }
 
-    /// The field's raw value: the map's change if there is one (with string
-    /// references resolved), otherwise the base object's game data.
     pub fn raw_value(
         &self,
         db: &UnitDatabase,
@@ -263,9 +245,6 @@ impl PlainObjects {
             .unwrap_or_else(|| id.to_string())
     }
 
-    /// Sets a field from text as typed in an editor. Text fields are stored in
-    /// the map's string table. Setting the base object's own value removes the
-    /// change instead.
     pub fn set(
         &mut self,
         db: &UnitDatabase,
@@ -322,8 +301,6 @@ impl PlainObjects {
         Ok(())
     }
 
-    /// Removes the map's change to a field so the base object's value applies
-    /// again. Returns `false` when the field was not changed.
     pub fn reset(&mut self, strings: &mut MapStrings, id: FourCC, field: &FieldMeta) -> bool {
         let Some(field_id) = FourCC::parse(&field.id) else {
             return false;
@@ -343,7 +320,6 @@ impl PlainObjects {
                 }
             }
 
-            // A changed game object with no changes left is dropped entirely.
             data.original.retain(|e| e.mods().next().is_some());
         }
 
@@ -351,7 +327,6 @@ impl PlainObjects {
         removed
     }
 
-    /// Removes strings this editor added that no field refers to anymore.
     fn drop_unused_strings(&mut self, strings: &mut MapStrings) {
         let referenced: Vec<u32> = self
             .tables
@@ -375,9 +350,6 @@ impl PlainObjects {
         });
     }
 
-    /// Removes a custom object and the strings this editor added for it, as
-    /// if it had never been created. Returns `false` for game objects (their
-    /// changes are reset field by field) and unknown IDs.
     pub fn remove(&mut self, strings: &mut MapStrings, id: FourCC) -> bool {
         let mut removed = false;
 
@@ -392,8 +364,6 @@ impl PlainObjects {
         removed
     }
 
-    /// Creates a custom object copying `base` and returns its new ID, the
-    /// next free one of `I000`, `I001`, ... (by the kind's first letter).
     pub fn create(&mut self, db: &UnitDatabase, base: FourCC) -> Result<FourCC> {
         if !db.contains(&base.to_string()) {
             return Err(Error::Invalid(format!(
@@ -456,7 +426,6 @@ impl PlainObjects {
         reference
     }
 
-    /// The files to write: those the map had, and new ones that now hold something.
     pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
         [
             (self.kind.data_file, &self.tables.data),
@@ -471,8 +440,6 @@ impl PlainObjects {
     }
 }
 
-/// The object's entry in the gameplay or skin table, created when missing. A
-/// custom object missing from this table gets a custom entry with its base.
 fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry {
     let custom_base = tables
         .both()
@@ -520,7 +487,6 @@ fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry
     }
 }
 
-/// Whether `value` equals the base object's game value in both art modes.
 fn same_as_base(db: &UnitDatabase, base: FourCC, field: &FieldMeta, value: &Value) -> bool {
     let base = base.to_string();
 
