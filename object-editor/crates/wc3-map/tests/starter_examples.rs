@@ -1,5 +1,3 @@
-//! Validate the actual downloadable artifacts without a Warcraft installation.
-
 use wc3_map::FourCC;
 use wc3_map::transfer::{Bundle, ObjectType};
 

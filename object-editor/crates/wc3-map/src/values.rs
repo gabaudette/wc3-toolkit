@@ -1,5 +1,3 @@
-//! Field values as typed in an editor, converted to what map files store.
-
 use wc3_data::meta::FieldMeta;
 use wc3_data::objects::Value;
 
@@ -23,10 +21,6 @@ pub(crate) fn is_translatable(field: &FieldMeta) -> bool {
     field.category == TEXT_CATEGORY && field.value_type == "string"
 }
 
-/// Parses text as typed in an editor: numbers for numeric fields (bit flags
-/// and numbered choices included), `true`/`false` or `1`/`0` for booleans,
-/// raw codes for lists and choices. Lists of IDs hold at most the
-/// metadata's maximum.
 pub(crate) fn parse_value(field: &FieldMeta, text: &str) -> Result<Value> {
     let text = text.trim();
 
@@ -72,7 +66,6 @@ pub(crate) fn parse_value(field: &FieldMeta, text: &str) -> Result<Value> {
     })
 }
 
-/// How many IDs a list field holds, when the game limits it.
 fn list_limit(field: &FieldMeta) -> Option<usize> {
     if !ID_LIST_TYPES.contains(&field.value_type.as_str()) {
         return None;

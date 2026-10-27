@@ -1,6 +1,3 @@
-//! Warcraft III maps: reading and writing their object data and strings, and
-//! viewing the game's units and abilities with a map's changes applied.
-
 use std::path::{Path, PathBuf};
 
 pub use wc3_data::objects::{FourCC, Layout, ObjectData, Value};
@@ -86,8 +83,6 @@ fn io_error(path: &Path) -> impl FnOnce(std::io::Error) -> Error + '_ {
     }
 }
 
-/// A map opened for reading. Writing goes through [`save_files`], which never
-/// modifies a map in place.
 pub struct Map {
     path: PathBuf,
     archive: mpq::Archive,
@@ -113,7 +108,6 @@ impl Map {
         Ok(self.archive.read_optional(name)?)
     }
 
-    /// Reads an object data file such as `war3map.w3u`; `None` when the map has none.
     pub fn object_data(&self, name: &str) -> Result<Option<ObjectData>> {
         let layout = Layout::for_file(name).ok_or_else(|| Error::NotObjectFile(name.to_owned()))?;
         let Some(bytes) = self.read_file(name)? else {
@@ -125,7 +119,6 @@ impl Map {
         Ok(Some(data))
     }
 
-    /// Reads `war3map.wts`; an empty table when the map has none.
     pub fn strings(&self) -> Result<MapStrings> {
         let Some(bytes) = self.read_file(STRINGS_FILE)? else {
             return Ok(MapStrings::default());
@@ -142,9 +135,6 @@ impl Map {
     }
 }
 
-/// Writes files into a map and saves the result as `dest`, which may be the
-/// source itself. The source is never modified directly: the changes go into a
-/// temporary copy next to `dest`, which replaces `dest` only once fully saved.
 pub fn save_files(source: &Path, dest: &Path, files: &[(&str, Vec<u8>)]) -> Result<()> {
     let mut temp_name = dest.file_name().unwrap_or_default().to_os_string();
 

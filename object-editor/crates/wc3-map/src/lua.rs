@@ -20,7 +20,6 @@ pub const DEV_NAME_PREFIX: &str = "[DEV] ";
 const MODULE_EXTENSION: &str = "lua";
 const BYTE_ORDER_MARK: char = '\u{feff}';
 
-/// Defines `Dev.OnStart` before any module runs.
 const PRELUDE: &str = "
 -- ===== wc3-toolkit: module loader =====
 Dev = { starters = {} }
@@ -30,7 +29,6 @@ function Dev.OnStart(fn)
 end
 ";
 
-/// Runs the registered start functions after the editor's `main()`.
 const HOOK: &str = "
 -- ===== wc3-toolkit: run modules after the editor's main() =====
 do
@@ -44,23 +42,18 @@ end
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Module {
-    /// File name, e.g. `welcome.lua`.
     pub name: String,
     pub source: String,
 }
 
-/// What [`build_dev_map`] produced.
 #[derive(Debug, Clone)]
 pub struct BuildReport {
     pub output: PathBuf,
     pub modules: Vec<String>,
-    /// The final script, for reading or debugging.
     pub script: String,
-    /// `false` when the map name is not a string reference and was left unchanged.
     pub renamed: bool,
 }
 
-/// The default output path: `test.w3m` → `test_dev.w3m` in the same folder.
 pub fn default_output(map: &Path) -> PathBuf {
     let stem = map.file_stem().unwrap_or_default().to_string_lossy();
     let name = match map.extension() {
@@ -71,7 +64,6 @@ pub fn default_output(map: &Path) -> PathBuf {
     map.with_file_name(name)
 }
 
-/// Reads every `.lua` file in `dir`, in alphabetical order.
 pub fn load_modules(dir: &Path) -> Result<Vec<Module>> {
     let io_error = |path: &Path| {
         let path = path.to_owned();
@@ -129,7 +121,6 @@ pub fn check_syntax(file: &str, source: &str) -> Result<()> {
     })
 }
 
-/// The editor's script followed by the loader, every module and the hook.
 pub fn build_script(editor_script: &str, modules: &[Module]) -> String {
     let mut script = String::from(editor_script);
 
@@ -147,8 +138,6 @@ pub fn build_script(editor_script: &str, modules: &[Module]) -> String {
     script
 }
 
-/// Prefixes the map name with `[DEV]` in the string table. Returns `false`
-/// when the script sets the name directly instead of through a string reference.
 pub fn mark_dev_name(editor_script: &str, strings: &mut MapStrings) -> bool {
     let Some(id) = map_name_reference(editor_script) else {
         return false;
@@ -179,9 +168,6 @@ fn strip_bom(text: &str) -> &str {
     text.strip_prefix(BYTE_ORDER_MARK).unwrap_or(text)
 }
 
-/// Builds `output` from `map` with the modules in `modules_dir`. Every module,
-/// the editor's script and the final script are syntax-checked first; nothing
-/// is written when any check fails. `map` itself is never modified.
 pub fn build_dev_map(map: &Path, modules_dir: &Path, output: &Path) -> Result<BuildReport> {
     let source_map = Map::open(map)?;
     let editor_bytes = source_map.read_file(SCRIPT_FILE)?.ok_or_else(|| {

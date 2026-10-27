@@ -1,5 +1,3 @@
-//! The Lua harness end to end, on maps built on the fly (no game files needed).
-
 use std::path::Path;
 
 use wc3_map::lua::{SCRIPT_FILE, build_dev_map};

@@ -1,6 +1,3 @@
-//! Project-authored starter definitions, exported through the editor's sharing code.
-//! See website/README.md for refresh and gameplay verification instructions.
-
 use std::path::PathBuf;
 
 use wc3_data::abilities::AbilityDatabase;
@@ -68,7 +65,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         upgrade_db.fields(),
     );
 
-    // This empty temporary archive supplies containers, never a distributable game map.
     let temp = tempfile::tempdir()?;
     let path = temp.path().join("starters.w3m");
     mpq::Archive::create(&path, MAP_CAPACITY)?.save()?;
@@ -102,7 +98,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     units.set(&db, shop, field(&db, "unam")?, SHOP_NAME)?;
     units.set(&db, shop, field(&db, "usei")?, &item.to_string())?;
 
-    // Fixed source IDs make download changes deliberate and reviewable.
     if hero != id("H000")? || item != id("I000")? || shop != id("n000")? {
         return Err("starter IDs changed; review the sources and documentation".into());
     }

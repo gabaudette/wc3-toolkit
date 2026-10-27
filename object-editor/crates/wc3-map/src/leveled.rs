@@ -28,8 +28,6 @@ use crate::{
     DOODAD_SKINS_FILE, DOODADS_FILE, Error, Map, Result, UPGRADE_SKINS_FILE, UPGRADES_FILE,
 };
 
-/// One kind of object with levels: its files, how custom IDs start, how the
-/// World Editor names it in string comments, and the fields that describe it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct LeveledKind {
     data_file: &'static str,
@@ -38,13 +36,10 @@ pub struct LeveledKind {
     id_prefix: u8,
     /// "Upgrades", as string comments read.
     label: &'static str,
-    /// "upgrade", for messages.
     singular: &'static str,
     name_field: &'static str,
     icon_field: Option<&'static str>,
-    /// The field list rows are filtered by: race, category.
     filter_field: &'static str,
-    /// The field holding the number of levels or variations.
     levels_field: &'static str,
 }
 
@@ -75,15 +70,10 @@ pub const DOODADS: LeveledKind = LeveledKind {
 pub struct LeveledObjects {
     kind: LeveledKind,
     tables: Tables,
-    /// Files the map had when loaded; others are only written once
-    /// they hold something, so untouched maps keep their files as they are.
     loaded: Vec<&'static str>,
-    /// Strings this editor added since loading. Only these are removed again
-    /// when nothing refers to them; strings already in the map are never touched.
     added_strings: Vec<u32>,
 }
 
-/// An object the map adds or changes.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LeveledObject {
     pub id: FourCC,
@@ -92,12 +82,10 @@ pub struct LeveledObject {
     pub modified_fields: usize,
 }
 
-/// What a list entry shows, with the map's changes applied.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LeveledInfo {
     pub name: String,
     pub icon: Option<String>,
-    /// The raw value list rows are filtered by (race, category).
     pub filter: String,
     pub levels: u32,
 }
@@ -128,7 +116,6 @@ impl LeveledObjects {
         })
     }
 
-    /// No changes: the game's objects as they are.
     pub fn empty(kind: LeveledKind) -> Self {
         Self {
             kind,
@@ -141,7 +128,6 @@ impl LeveledObjects {
         }
     }
 
-    /// The tables (gameplay, skin), for moving objects between maps.
     pub(crate) fn tables(&self) -> &Tables {
         &self.tables
     }
@@ -160,7 +146,6 @@ impl LeveledObjects {
         }
     }
 
-    /// Custom objects first, then changed game objects, each listed once.
     pub fn objects(&self) -> Vec<LeveledObject> {
         let mut objects: Vec<LeveledObject> = Vec::new();
         let mut index: HashMap<FourCC, usize> = HashMap::new();
@@ -195,7 +180,6 @@ impl LeveledObjects {
         objects
     }
 
-    /// The object's entries in both tables, found once for several lookups.
     fn find(&self, id: FourCC) -> Found<'_> {
         Found {
             id,
@@ -204,24 +188,18 @@ impl LeveledObjects {
         }
     }
 
-    /// Whether the map adds or changes this object.
     pub fn has(&self, id: FourCC) -> bool {
         self.find(id).in_map()
     }
 
-    /// The game object a map object is based on: the base of a custom one, or
-    /// the object itself. `None` when neither the map nor the
-    /// game has the ID.
     pub fn base_of(&self, db: &dyn LeveledData, id: FourCC) -> Option<FourCC> {
         self.find(id).base(db)
     }
 
-    /// The number of levels, at least 1.
     pub fn levels(&self, db: &dyn LeveledData, id: FourCC) -> u32 {
         self.find(id).levels(db, self.kind.levels_field)
     }
 
-    /// The map's change to a field at `level` (ignored for fields without levels).
     pub fn modification(&self, id: FourCC, field: &FieldMeta, level: u32) -> Option<&Value> {
         self.find(id).modification(field, level)
     }
@@ -230,8 +208,6 @@ impl LeveledObjects {
         self.modification(id, field, level).is_some()
     }
 
-    /// The field's raw value at `level`: the map's change if there is one
-    /// (with string references resolved), otherwise the base object's game data.
     pub fn raw_value(
         &self,
         db: &dyn LeveledData,
@@ -244,7 +220,6 @@ impl LeveledObjects {
         self.find(id).raw_value(db, strings, field, level, mode)
     }
 
-    /// The name (the level 1 name where names have levels).
     pub fn name(&self, db: &dyn LeveledData, strings: &MapStrings, id: FourCC) -> String {
         db.field(self.kind.name_field)
             .and_then(|field| {
@@ -254,8 +229,6 @@ impl LeveledObjects {
             .unwrap_or_else(|| id.to_string())
     }
 
-    /// What the list shows, with the map's changes applied. `None` when
-    /// neither the map nor the game has the ID.
     pub fn info(
         &self,
         db: &dyn LeveledData,
@@ -280,9 +253,6 @@ impl LeveledObjects {
         })
     }
 
-    /// Sets a field at `level` (ignored for fields without levels) from text
-    /// as typed in an editor. Text fields are stored in the map's string table.
-    /// Setting the base object's own value removes the change instead.
     pub fn set(
         &mut self,
         db: &dyn LeveledData,
@@ -349,9 +319,6 @@ impl LeveledObjects {
         Ok(())
     }
 
-    /// Removes the map's change to a field at `level` (every change, for
-    /// fields without levels) so the base object's value applies again.
-    /// Returns `false` when the field was not changed.
     pub fn reset(
         &mut self,
         strings: &mut MapStrings,
@@ -378,7 +345,6 @@ impl LeveledObjects {
                 }
             }
 
-            // A changed game object with no changes left is dropped entirely.
             data.original.retain(|e| e.mods().next().is_some());
         }
 
@@ -386,7 +352,6 @@ impl LeveledObjects {
         removed
     }
 
-    /// Removes strings this editor added that no field refers to anymore.
     fn drop_unused_strings(&mut self, strings: &mut MapStrings) {
         let referenced: Vec<u32> = self
             .tables
@@ -410,8 +375,6 @@ impl LeveledObjects {
         });
     }
 
-    /// Creates a custom object copying `base` and returns its new ID, the
-    /// next free one of `R000`, `R001`, ... (by the kind's first letter).
     pub fn create(&mut self, db: &dyn LeveledData, base: FourCC) -> Result<FourCC> {
         if !db.contains(&base.to_string()) {
             return Err(Error::Invalid(format!(
@@ -480,8 +443,6 @@ impl LeveledObjects {
         reference
     }
 
-    /// The files to write: those the map had, and new ones that now
-    /// hold something.
     pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
         [
             (self.kind.data_file, &self.tables.data),
@@ -496,7 +457,6 @@ impl LeveledObjects {
     }
 }
 
-/// An object's entries in the gameplay and skin tables.
 struct Found<'a> {
     id: FourCC,
     data: Option<&'a ObjectEntry>,
@@ -568,7 +528,6 @@ impl<'a> Found<'a> {
     }
 }
 
-/// The level a field is read at to describe an object: 1 where it has levels.
 fn first_level(field: &FieldMeta) -> u32 {
     u32::from(field.per_level)
 }
@@ -579,8 +538,6 @@ fn at_level(field: &FieldMeta, m: &Modification, level: u32) -> bool {
     !field.per_level || m.level == Some(level)
 }
 
-/// The object's entry in the gameplay or skin table, created when missing.
-/// A custom object missing from this table gets a custom entry with its base.
 fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry {
     let custom_base = tables
         .both()

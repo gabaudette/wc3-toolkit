@@ -26,7 +26,6 @@ use crate::{ABILITIES_FILE, ABILITY_SKINS_FILE, Error, Map, Result};
 const ID_PREFIX: u8 = b'A';
 const TRUE: &str = "1";
 
-/// Fields the editor reads to describe an ability.
 const NAME: &str = "anam";
 const SUFFIX: &str = "ansf";
 const ICON: &str = "aart";
@@ -42,15 +41,10 @@ const LEARN_BUTTON: (&str, &str) = ("arpx", "arpy");
 
 pub struct MapAbilities {
     tables: Tables,
-    /// Ability files the map had when loaded; others are only written once
-    /// they hold something, so untouched maps keep their files as they are.
     loaded: Vec<&'static str>,
-    /// Strings this editor added since loading. Only these are removed again
-    /// when nothing refers to them; strings already in the map are never touched.
     added_strings: Vec<u32>,
 }
 
-/// An ability the map adds or changes.
 #[derive(Debug, Clone, PartialEq)]
 pub struct MapAbility {
     pub id: FourCC,
@@ -84,7 +78,6 @@ impl MapAbilities {
         })
     }
 
-    /// No changes: the game's abilities as they are.
     pub fn empty() -> Self {
         Self {
             tables: Tables {
@@ -96,7 +89,6 @@ impl MapAbilities {
         }
     }
 
-    /// The ability tables (gameplay, skin), for moving objects between maps.
     pub(crate) fn tables(&self) -> &Tables {
         &self.tables
     }
@@ -114,7 +106,6 @@ impl MapAbilities {
         }
     }
 
-    /// Custom abilities first, then changed game abilities, each listed once.
     pub fn abilities(&self) -> Vec<MapAbility> {
         let mut abilities: Vec<MapAbility> = Vec::new();
         let mut index: HashMap<FourCC, usize> = HashMap::new();
@@ -149,7 +140,6 @@ impl MapAbilities {
         abilities
     }
 
-    /// The ability's entries in both tables, found once for several lookups.
     fn find(&self, id: FourCC) -> Found<'_> {
         Found {
             id,
@@ -158,14 +148,10 @@ impl MapAbilities {
         }
     }
 
-    /// Whether the map adds or changes this ability.
     pub fn has(&self, id: FourCC) -> bool {
         self.find(id).in_map()
     }
 
-    /// The game ability a map ability is based on: the base of a custom
-    /// ability, or the ability itself. `None` when neither the map nor the
-    /// game has the ID.
     pub fn base_of(&self, db: &AbilityDatabase, id: FourCC) -> Option<FourCC> {
         self.find(id).base(db)
     }
@@ -188,12 +174,10 @@ impl MapAbilities {
         db.fields_for(&code, flag(HERO), flag(ITEM))
     }
 
-    /// The number of levels, at least 1.
     pub fn levels(&self, db: &AbilityDatabase, id: FourCC) -> u32 {
         self.find(id).levels(db)
     }
 
-    /// The map's change to a field at `level` (ignored for fields without levels).
     pub fn modification(&self, id: FourCC, field: &FieldMeta, level: u32) -> Option<&Value> {
         self.find(id).modification(field, level)
     }
@@ -202,8 +186,6 @@ impl MapAbilities {
         self.modification(id, field, level).is_some()
     }
 
-    /// The field's raw value at `level`: the map's change if there is one
-    /// (with string references resolved), otherwise the base ability's game data.
     pub fn raw_value(
         &self,
         db: &AbilityDatabase,
@@ -222,8 +204,6 @@ impl MapAbilities {
             .unwrap_or_else(|| id.to_string())
     }
 
-    /// What an ability card shows, with the map's changes applied. `None`
-    /// when neither the map nor the game has the ID.
     pub fn info(
         &self,
         db: &AbilityDatabase,
@@ -268,9 +248,6 @@ impl MapAbilities {
         })
     }
 
-    /// Sets a field at `level` (ignored for fields without levels) from text
-    /// as typed in an editor. Text fields are stored in the map's string table.
-    /// Setting the base ability's own value removes the change instead.
     pub fn set(
         &mut self,
         db: &AbilityDatabase,
@@ -334,9 +311,6 @@ impl MapAbilities {
         Ok(())
     }
 
-    /// Removes the map's change to a field at `level` (every change, for
-    /// fields without levels) so the base ability's value applies again.
-    /// Returns `false` when the field was not changed.
     pub fn reset(
         &mut self,
         strings: &mut MapStrings,
@@ -363,7 +337,6 @@ impl MapAbilities {
                 }
             }
 
-            // A changed game ability with no changes left is dropped entirely.
             data.original.retain(|e| e.mods().next().is_some());
         }
 
@@ -371,7 +344,6 @@ impl MapAbilities {
         removed
     }
 
-    /// Removes strings this editor added that no ability field refers to anymore.
     fn drop_unused_strings(&mut self, strings: &mut MapStrings) {
         let referenced: Vec<u32> = self
             .tables
@@ -395,8 +367,6 @@ impl MapAbilities {
         });
     }
 
-    /// Creates a custom ability copying `base` and returns its new ID, the
-    /// next free one of `A000`, `A001`, ...
     pub fn create(&mut self, db: &AbilityDatabase, base: FourCC) -> Result<FourCC> {
         if !db.contains(&base.to_string()) {
             return Err(Error::Invalid(format!("unknown base ability {base}")));
@@ -421,9 +391,6 @@ impl MapAbilities {
         Ok(id)
     }
 
-    /// Removes a custom ability and the strings this editor added for it, as
-    /// if it had never been created. Returns `false` for game abilities (their
-    /// changes are reset field by field) and unknown IDs.
     pub fn remove(&mut self, strings: &mut MapStrings, id: FourCC) -> bool {
         let mut removed = false;
 
@@ -478,8 +445,6 @@ impl MapAbilities {
         reference
     }
 
-    /// The ability files to write: those the map had, and new ones that now
-    /// hold something.
     pub fn files(&self) -> Vec<(&'static str, Vec<u8>)> {
         [
             (ABILITIES_FILE, &self.tables.data),
@@ -494,8 +459,6 @@ impl MapAbilities {
     }
 }
 
-/// An ability's entries in the gameplay and skin tables. Finding them once
-/// keeps listing every ability fast on maps that change hundreds of them.
 struct Found<'a> {
     id: FourCC,
     data: Option<&'a ObjectEntry>,
@@ -553,8 +516,6 @@ impl<'a> Found<'a> {
         db.raw_value(&base.to_string(), field, level, mode)
     }
 
-    /// A value that is never text and has no levels, by field ID: no string
-    /// table needed.
     fn plain_value(&self, db: &AbilityDatabase, field_id: &str) -> Option<String> {
         let field = db.field(field_id)?;
 
@@ -581,7 +542,6 @@ fn at_level(field: &FieldMeta, m: &Modification, level: u32) -> bool {
     !field.per_level || m.level == Some(level)
 }
 
-/// The level and data column a change is stored with.
 fn stored_position(field: &FieldMeta, level: u32) -> (u32, u32) {
     if field.per_level {
         (level, field.data_column.unwrap_or_default())
@@ -590,8 +550,6 @@ fn stored_position(field: &FieldMeta, level: u32) -> (u32, u32) {
     }
 }
 
-/// The ability's entry in the gameplay or skin table, created when missing.
-/// A custom ability missing from this table gets a custom entry with its base.
 fn entry_mut(tables: &mut Tables, in_skin: bool, id: FourCC) -> &mut ObjectEntry {
     let custom_base = tables
         .both()
@@ -657,8 +615,6 @@ fn same_as_base(
     })
 }
 
-/// Tooltip placeholders (`<A000,DataA1>`) filled from the map's abilities
-/// where the map adds or changes them, then from `others`.
 pub struct MapPlaceholders<'a> {
     pub abilities: &'a MapAbilities,
     pub db: &'a AbilityDatabase,
