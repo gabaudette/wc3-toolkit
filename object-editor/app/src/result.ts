@@ -20,7 +20,6 @@ export function errorMessage(error: unknown): string {
   return "Something went wrong.";
 }
 
-/** The one place exceptions from libraries and the browser become values (AGE-ERR-002). */
 export async function attempt<T>(work: () => Promise<T>): Promise<Result<T>> {
   try {
     return ok(await work());
@@ -44,7 +43,6 @@ export async function settle<T>(
   onError(result.error);
 }
 
-/** For calls whose failure needs no more than the log entry `api.ts` already wrote. */
 export async function whenOk<T>(
   pending: Promise<Result<T>>,
   onValue: (value: T) => void,

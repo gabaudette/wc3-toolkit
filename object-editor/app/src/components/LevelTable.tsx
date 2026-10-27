@@ -20,21 +20,13 @@ import { fieldChoices, Option, optionKey, optionValue } from "./Select";
 type LevelTableProps = {
   fields: LevelField[];
   editable: boolean;
-  /** `level` is 1-based. */
   onChange: (field: string, level: number, value: string) => void;
-  /** Sets `level` and every later level to `value`. */
   onFill: (field: string, level: number, value: string) => void;
   onReset: (field: string, level: number) => void;
-  /** What a column is called: "Level", or "Variation" for doodads. */
   levelName?: string;
-  /** Shows a row's field in the page's inspector, when the page has one. */
   onInspect?: (field: Field) => void;
 };
 
-/**
- * A cell being edited and the text typed so far. `typed` when editing began
- * by typing a character, which then stays instead of being selected.
- */
 type Editing = Cell & { draft: string; typed: boolean };
 
 const TRUE = "1";
@@ -43,7 +35,6 @@ const FALSE = "0";
 const inputClass =
   "w-full min-w-16 rounded border border-gold bg-surface-0 px-1.5 py-0.5 font-mono text-sm outline-none";
 
-/** Only the active cell is in the tab order; arrows move between the others. */
 function rovingIndex(active: boolean): number {
   if (active) {
     return 0;
@@ -64,7 +55,6 @@ function cellKey(cell: Cell): string {
   return `${cell.row}:${cell.column}`;
 }
 
-/** Choices and flags pick from a list; everything else is typed. */
 function isTyped(field: LevelField): boolean {
   return !["bool", "select", "flags", "flagList"].includes(field.field.control);
 }
@@ -100,7 +90,6 @@ function toggledBool(cell: LevelCell): string {
 }
 
 type FlagsPopoverProps = {
-  /** The cell it opens under. */
   anchor: HTMLElement | undefined;
   label: string;
   onKey: (e: KeyboardEvent) => void;
@@ -108,19 +97,13 @@ type FlagsPopoverProps = {
   children: ReactNode;
 };
 
-/** Pixels between a cell and the checkboxes under it. */
 const POPOVER_GAP = 4;
 
-/** Above or below the cell, whichever side has more room. */
 type Placement = { right: number } & ({ top: number } | { bottom: number });
 
 const HALF = 2;
 const CHOICE_LIST = '[role="listbox"]';
 
-/**
- * Checkboxes under a cell; leaving them applies the choice. Placed on the
- * window, so the table's scrolling area does not cut them off.
- */
 function FlagsPopover({ anchor, label, onKey, onCommit, children }: FlagsPopoverProps) {
   const panel = useRef<HTMLDivElement>(null);
   const [placement, setPlacement] = useState<Placement | null>(null);
@@ -200,8 +183,6 @@ function CellEditor({
     const choices = fieldChoices(meta.options, editing.draft, editing.draft);
 
     return (
-      // A list under the cell, like the flags: picking applies; Escape,
-      // Tab or a click away leave the cell as it was.
       <FlagsPopover anchor={anchor} label={label} onKey={onKey} onCommit={onCommit}>
         <ListBox
           aria-label={label}
@@ -254,12 +235,6 @@ function CellEditor({
   );
 }
 
-/**
- * Per-level fields as a table: one row per field, one column per level.
- * Arrow keys move between cells; typing or Enter edits a cell; Enter or Tab
- * applies and moves to the next level; Ctrl+Enter applies to every later
- * level too; Escape cancels; Delete resets the cell to the base value.
- */
 export function LevelTable({
   fields,
   editable,
@@ -273,9 +248,7 @@ export function LevelTable({
   const [editing, setEditing] = useState<Editing | null>(null);
   const [info, setInfo] = useState<string[]>([]);
   const cells = useRef(new Map<string, HTMLElement>());
-  /** Set while the active cell should take focus after a move or an edit. */
   const focusActive = useRef(false);
-  // The commit handlers run from events and must see the latest edit.
   const editingRef = useRef(editing);
 
   editingRef.current = editing;
@@ -283,8 +256,6 @@ export function LevelTable({
   const levels = Math.max(0, ...fields.map((f) => f.cells.length));
   const levelNumbers = Array.from({ length: levels }, (_, i) => i + 1);
 
-  // Keeps the active cell inside the table, also when it has no rows (an
-  // ability's text section), which used to re-render forever.
   useEffect(() => {
     const kept = inside(active, fields.length, levels);
 
@@ -322,7 +293,6 @@ export function LevelTable({
     }
   }
 
-  /** Applies the edit in progress, once. */
   function commit(fill = false) {
     const edit = editingRef.current;
 
@@ -530,7 +500,6 @@ export function LevelTable({
                           />
                         )}
                         {
-                          // The cell stays while its choices are open: their panel sits under it.
                           <button
                             type="button"
                             ref={(element) => {

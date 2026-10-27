@@ -1,6 +1,3 @@
-// Pieces shared by the unit and ability pages: field filtering, folding
-// sections, and field rows with related fields merged into one control.
-
 import { ChevronDown, ChevronRight } from "@untitledui/icons";
 import type { ReactNode } from "react";
 import { FIELD_GROUPS } from "../fieldGroups";
@@ -9,7 +6,6 @@ import { classes, FIELD_ROW_GRID } from "../ui";
 import { FieldGroupRow } from "./FieldGroupRow";
 import { FieldRow } from "./FieldRow";
 
-/** Column labels above the field rows; the base column names the object copied. */
 export function FieldHeader({ base }: { base: string }) {
   return (
     <div
@@ -26,7 +22,6 @@ export function FieldHeader({ base }: { base: string }) {
   );
 }
 
-/** Matches names, codes, values and descriptions, so "armor" also finds Defense Type. */
 export function matches(field: Field, filter: string): boolean {
   const needle = filter.toLowerCase();
 
@@ -51,7 +46,6 @@ type SectionToggleProps = {
   onToggle: () => void;
 };
 
-/** A section's sticky header, which folds it. */
 export function SectionToggle({ label, count, changed, expanded, onToggle }: SectionToggleProps) {
   return (
     <button
@@ -77,7 +71,6 @@ type AdvancedGroupProps = {
   children: ReactNode;
 };
 
-/** Rarely needed fields, folded at the end of their section. */
 export function AdvancedGroup({ count, changed, open, onToggle, children }: AdvancedGroupProps) {
   if (count === 0) {
     return null;
@@ -111,7 +104,6 @@ type FieldRowsProps = {
   onInspect?: (field: Field) => void;
 };
 
-/** Field rows, with related fields merged into one row where all of them are shown. */
 export function FieldRows({
   fields,
   editable,

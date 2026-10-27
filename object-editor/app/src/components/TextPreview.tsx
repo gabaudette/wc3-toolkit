@@ -3,15 +3,9 @@ import { api } from "../api";
 import { whenOk } from "../result";
 import { GameText } from "./GameText";
 
-/** Delay before asking the backend to fill placeholders while typing. */
 const FILL_DELAY_MS = 150;
 const PLACEHOLDER_START = "<";
 
-/**
- * Changes whenever the values placeholders can show change, such as the page's
- * object after an edit, so previews fill their placeholders again: a tooltip's
- * `<A000,DataA1>` must follow the damage typed a moment ago.
- */
 export const PlaceholderValues = createContext<object | null>(null);
 
 const revisions = new WeakMap<object, number>();
@@ -33,10 +27,6 @@ function revisionOf(values: object | null): number {
   return revision;
 }
 
-/**
- * Shows text the way the game draws it: colors, line breaks and filled-in
- * `<ID,Column>` placeholders. Updates as the user types.
- */
 export function TextPreview({ text }: { text: string }) {
   const values = useContext(PlaceholderValues);
 

@@ -14,9 +14,7 @@ type AbilitiesPaneProps = {
   editable: boolean;
   selected: string | null;
   onSelect: (id: string) => void;
-  /** Called after every change, so the window can show the map as unsaved. */
   onMapChanged: () => void;
-  /** An ability was given to units or taken from them, so the units reload. */
   onUnitsChanged: () => void;
   onError: (message: string | null) => void;
 };
@@ -33,7 +31,6 @@ export function AbilitiesPane({
   const [detail, setDetail] = useState<AbilityDetail | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [givingOpen, setGivingOpen] = useState(false);
-  /** Edits run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
 
   const listError = useCallback((message: string) => onError(message), [onError]);

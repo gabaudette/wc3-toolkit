@@ -26,14 +26,12 @@ function bitsOf(raw: string): number {
   return 0;
 }
 
-/** Whether a choice is on in a bit flags value like "5" (bits 0 and 2). */
 export function hasBit(raw: string, choice: Choice): boolean {
   const bit = bitOf(choice);
 
   return bit !== null && Math.floor(bitsOf(raw) / BINARY ** bit) % BINARY === 1;
 }
 
-/** The bit flags value with one choice switched on or off. */
 export function withBit(raw: string, choice: Choice, on: boolean): string {
   const bit = bitOf(choice);
 
@@ -57,22 +55,16 @@ function items(raw: string): string[] {
     .filter(Boolean);
 }
 
-/** The choice's value and its other spellings, lowercase. */
 function spellings(choice: Choice): string[] {
   return [choice.value, ...choice.aliases].map((s) => s.toLowerCase());
 }
 
-/** Whether a choice is in a list value like "air,ground" (case does not matter). */
 export function inList(raw: string, choice: Choice): boolean {
   const wanted = spellings(choice);
 
   return items(raw).some((item) => wanted.includes(item.toLowerCase()));
 }
 
-/**
- * The list value with one choice added or removed. Other items stay as they
- * are, including spellings the editor does not know.
- */
 export function withListItem(raw: string, choice: Choice, on: boolean): string {
   if (on && inList(raw, choice)) {
     return items(raw).join(LIST_SEPARATOR);

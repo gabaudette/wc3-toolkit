@@ -23,10 +23,6 @@ const KIND_LABELS: Record<TransferKind, string> = {
   upgrade: "Upgrade",
 };
 
-/**
- * The objects a share code, bundle or import holds, with new IDs, the
- * imported files that go with them, and what stays behind.
- */
 export function TransferList({ objects, files, warnings }: TransferListProps) {
   const dependencies = objects.filter((o) => o.dependency).length;
 
@@ -75,7 +71,6 @@ export function TransferList({ objects, files, warnings }: TransferListProps) {
   );
 }
 
-/** Files imported into the source map (models, textures, icons) that travel along. */
 export function TransferFiles({ files }: { files: TransferFile[] }) {
   if (files.length === 0) {
     return null;

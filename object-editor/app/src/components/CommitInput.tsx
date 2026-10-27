@@ -6,7 +6,6 @@ type CommitInputProps = {
   label: string;
   field: Field;
   numeric?: boolean;
-  /** A text area with the in-game preview below, for tooltips. */
   multiline?: boolean;
   onCommit: (value: string) => void;
 };
@@ -15,10 +14,6 @@ const TEXT_ROWS = 3;
 const boxClass =
   "rounded-[3px] border border-field bg-well px-3 py-1.5 text-ink outline-none focus:border-focus";
 
-/**
- * A text box that saves when it loses focus, or on Enter in a single line.
- * The spell wizard's fields, which save into the spell as they are left.
- */
 export function CommitInput({ label, field, numeric, multiline, onCommit }: CommitInputProps) {
   const [value, setValue] = useState(field.raw);
 

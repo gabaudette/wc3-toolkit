@@ -35,7 +35,6 @@ type Status =
 
 const MODEL_SCHEME = "wc3model";
 const TEXTURE_SCHEME = "wc3tex";
-/** Raw textures start with width and height as little-endian u32s. */
 const TEXTURE_HEADER_BYTES = 8;
 const BYTES_PER_PIXEL = 4;
 
@@ -44,7 +43,6 @@ const DEGREES_PER_HALF_TURN = 180;
 const FIELD_OF_VIEW = (FIELD_OF_VIEW_DEGREES * Math.PI) / DEGREES_PER_HALF_TURN;
 const NEAR_PLANE = 1;
 const FAR_PLANE = 100_000;
-/** Distance from the model, in model radiuses. */
 const START_DISTANCE = 2.6;
 const MIN_DISTANCE = 0.8;
 const MAX_DISTANCE = 8;
@@ -52,13 +50,11 @@ const ZOOM_STEP = 0.0015;
 const START_PITCH = 0.35;
 const PITCH_LIMIT = 1.45;
 const DRAG_SPEED = 0.01;
-/** Radians per second when turning on its own. */
 const AUTO_TURN_SPEED = 0.35;
 const MS_PER_SECOND = 1000;
 /** Warcraft III models are Z-up. */
 const UP = vec3.fromValues(0, 0, 1);
 const PLAYER_RED = vec3.fromValues(1, 0, 0);
-/** The light sits this many model radiuses above the camera, so the side in view is lit. */
 const LIGHT_HEIGHT = 1.5;
 /**
  * The HD shader divides the base color by pi and, without reflection maps,
@@ -67,7 +63,6 @@ const LIGHT_HEIGHT = 1.5;
  */
 const LIGHT_INTENSITY = 15;
 const LIGHT_COLOR = vec3.fromValues(LIGHT_INTENSITY, LIGHT_INTENSITY, LIGHT_INTENSITY);
-/** The page's darkest surface color (#090d1a) as GL color channels. */
 const BACKGROUND_RED = 0.035;
 const BACKGROUND_GREEN = 0.05;
 const BACKGROUND_BLUE = 0.1;
@@ -87,7 +82,6 @@ function resetStatus(path: string | null): Status {
  */
 const ENVIRONMENT_MAP = /environmentmap/i;
 
-/** Uploads every texture the model names; a missing one only leaves that part untextured. */
 async function loadTextures(
   renderer: ModelRenderer,
   model: Model,
@@ -152,7 +146,6 @@ function forceFullPrecision(gl: WebGL2RenderingContext) {
     shaderSource(shader, source.replace(MEDIUM_PRECISION, HIGH_PRECISION));
 }
 
-/** Drawing size of the preview canvas: twice its 288 px box, for sharp edges. */
 const CANVAS_SIZE = 576;
 
 type Preview = { canvas: HTMLCanvasElement; gl: WebGL2RenderingContext | null };
@@ -173,7 +166,6 @@ function previewCanvas(): Preview {
     canvas.height = CANVAS_SIZE;
     canvas.setAttribute("aria-label", "3D model preview. Drag to rotate, scroll to zoom.");
     canvas.className = "size-full cursor-grab touch-none active:cursor-grabbing";
-    // WebGL2 for the newer HD shader.
     const gl = canvas.getContext("webgl2");
 
     if (gl) {
@@ -192,7 +184,6 @@ type ShaderProgram = {
 };
 
 type ShaderNames = Record<string, string>;
-/** The part of war3-model's renderer `allowMissingUniforms` replaces (private in its types). */
 type ShaderBuilder = {
   initShaderProgram: (
     vertex: string,
@@ -277,10 +268,6 @@ function bounds(model: Model): Bounds {
   return { center, radius: Math.max(vec3.distance(min, max) * HALFWAY, 1) };
 }
 
-/**
- * A turntable view of a unit's model, drawn with war3-model (WebGL). Drag to
- * rotate, scroll to zoom, pick an animation below.
- */
 export function ModelViewer({ path }: ModelViewerProps) {
   const [restored, setRestored] = useState(0);
   const restore = useCallback(() => setRestored((n) => n + 1), []);
@@ -302,7 +289,6 @@ function ModelPreview({ path, onRestored }: ModelViewerProps & { onRestored: () 
   const [status, setStatus] = useState<Status>(resetStatus(path));
   const [sequences, setSequences] = useState<Animation[]>([]);
   const [sequence, setSequence] = useState(0);
-  // Turning is motion the viewer did not ask for: off when the system asks for less.
   const [turning, setTurning] = useState(
     () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
@@ -343,8 +329,6 @@ function ModelPreview({ path, onRestored }: ModelViewerProps & { onRestored: () 
       return;
     }
 
-    // Reflection maps are never loaded (see `ENVIRONMENT_MAP`), so the
-    // renderer's reflection pre-processing never runs.
     const { gl } = previewCanvas();
 
     if (!gl || gl.isContextLost()) {
@@ -352,8 +336,6 @@ function ModelPreview({ path, onRestored }: ModelViewerProps & { onRestored: () 
       return;
     }
 
-    // Selecting another object (or React's development double mount) stops a
-    // load at its next step and drops the requests still in flight.
     const abort = new AbortController();
     let cancelled = false;
     let frame = 0;
@@ -517,7 +499,6 @@ function ModelPreview({ path, onRestored }: ModelViewerProps & { onRestored: () 
 
   return (
     <div className="flex w-72 shrink-0 flex-col gap-1.5">
-      {/* The shared preview canvas is placed first in this box (see `previewCanvas`). */}
       <div
         ref={holderRef}
         onPointerDown={pointerDown}

@@ -23,13 +23,11 @@ const SORTS: { value: LeaderboardDesign["sort"]; label: string }[] = [
   { value: "lowFirst", label: "Lowest first" },
   { value: "none", label: "As listed" },
 ];
-/** Players the preview fills the players' rows with. */
 const SAMPLE_PLAYERS = [
   { name: "Player 1", color: "ff0303", value: 3 },
   { name: "Player 2", color: "0042ff", value: 7 },
 ];
 
-/** A leaderboard's title, rows (players and the map's own), order and start option. */
 export function LeaderboardEditor({
   board,
   luaName,
@@ -191,10 +189,8 @@ export function LeaderboardEditor({
   );
 }
 
-/** `key` follows the row when sorting moves it. */
 type PreviewRow = { key: string; text: string; value: number };
 
-/** The rows as the game lists them: sample players, then the map's own, in the chosen order. */
 function previewRows(board: LeaderboardDesign): PreviewRow[] {
   const rows: PreviewRow[] = [];
 
@@ -227,7 +223,6 @@ function previewRows(board: LeaderboardDesign): PreviewRow[] {
   return rows;
 }
 
-/** The leaderboard in the top right corner, with two sample players, in its order. */
 function LeaderboardPreview({ board }: { board: LeaderboardDesign }) {
   const rows = previewRows(board);
   let title = board.title;

@@ -1,14 +1,10 @@
-// Small UI helpers shared by components.
-
 import { attemptSync } from "./result";
 import type { Field, UnitDetail } from "./types";
 
-/** Joins class names, skipping falsy entries (instead of ternaries in JSX). */
 export function classes(...parts: (string | false | null | undefined)[]): string {
   return parts.filter(Boolean).join(" ");
 }
 
-/** "1 level", "3 levels". */
 export function levelCount(levels: number): string {
   if (levels === 1) {
     return "1 level";
@@ -17,10 +13,6 @@ export function levelCount(levels: number): string {
   return `${levels} levels`;
 }
 
-/**
- * Columns of every field row and the header above them: name, value, the
- * base object's value, and the reset button.
- */
 export const FIELD_ROW_GRID =
   "grid grid-cols-[minmax(12rem,1fr)_minmax(9rem,16rem)_minmax(3.5rem,7rem)_1.75rem] items-start gap-x-3";
 
@@ -45,8 +37,6 @@ export function variationModel(raw: string, variations: number): string {
   return `${file}.mdl`;
 }
 
-/** "1 object", "3 objects". */
-/** `C:\Maps\test.w3m` → `C:\Maps\file.w3ui`: a file name in the same folder. */
 export function besides(path: string, name: string): string {
   const at = Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\"));
 
@@ -57,7 +47,6 @@ export function besides(path: string, name: string): string {
   return `${path.slice(0, at + 1)}${name}`;
 }
 
-/** "1 button", "3 buttons". */
 export function counted(count: number, word: string): string {
   if (count === 1) {
     return `1 ${word}`;
@@ -74,12 +63,10 @@ export function objectCount(count: number): string {
   return `${count} objects`;
 }
 
-/** "human" → "Human". */
 export function capitalized(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Remembered paths. Browser storage can be unavailable; then nothing is remembered. */
 export const remembered = {
   get(key: string): string | null {
     const stored = attemptSync(() => window.localStorage.getItem(key));
@@ -94,17 +81,14 @@ export const remembered = {
   },
 };
 
-/** File types the map pickers offer. */
 export const MAP_FILTERS = [{ name: "Warcraft III maps", extensions: ["w3m", "w3x"] }];
 
-/** File types the bundle file pickers offer. */
 export const BUNDLE_FILTERS = [{ name: "Object bundles", extensions: ["w3obj"] }];
 export const DESIGN_FILTERS = [{ name: "Interface designs", extensions: ["w3ui"] }];
 
 const KILOBYTE = 1024;
 const MEGABYTE = KILOBYTE * KILOBYTE;
 
-/** "820 bytes", "35 KB", "1.5 MB". */
 export function fileSize(bytes: number): string {
   if (bytes >= MEGABYTE) {
     return `${(bytes / MEGABYTE).toFixed(1)} MB`;
@@ -121,7 +105,6 @@ export const GAME_DIR_KEY = "wc3-object-editor.gameDir";
 export const MAP_PATH_KEY = "wc3-object-editor.mapPath";
 export const HD_KEY = "wc3-object-editor.hd";
 
-/** The page with one field replaced by its new state after an edit. */
 export function replaceField(detail: UnitDetail, updated: Field): UnitDetail {
   return {
     ...detail,

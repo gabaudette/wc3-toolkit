@@ -13,10 +13,8 @@ type TimerWindowEditorProps = {
 };
 
 const SECONDS_PER_MINUTE = 60;
-/** The longest countdown the Lua accepts: a day. */
 const MAX_SECONDS = 86_400;
 
-/** `90` → `1:30`, as the game's timer window counts. */
 export function clock(seconds: number): string {
   const whole = Math.max(0, Math.ceil(seconds));
   const minutes = Math.floor(whole / SECONDS_PER_MINUTE);
@@ -25,7 +23,6 @@ export function clock(seconds: number): string {
   return `${minutes}:${String(rest).padStart(2, "0")}`;
 }
 
-/** A timer window's title, length, start, repeat and what happens when it runs out. */
 export function TimerWindowEditor({
   timer,
   luaName,

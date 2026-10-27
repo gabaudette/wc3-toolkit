@@ -1,13 +1,9 @@
-// Fields the World Editor lists separately but that belong together.
-
 export type GroupKind = "dice" | "color" | "button" | "pair";
 
 export type FieldGroup = {
   kind: GroupKind;
   label: string;
-  /** Field IDs in display order. */
   ids: string[];
-  /** Short labels for each part, in the same order. */
   parts: string[];
   /** Dice groups for attacks also add a hero's primary attribute. */
   attack?: boolean;
@@ -86,7 +82,6 @@ function clampChannel(value: number): number {
   return Math.min(CHANNEL_MAX, Math.max(0, Math.round(value)));
 }
 
-/** [255, 204, 0] → "#ffcc00". */
 export function rgbToHex(channels: number[]): string {
   const hex = channels
     .map((c) => clampChannel(c).toString(HEX_RADIX).padStart(HEX_DIGITS, "0"))
@@ -95,7 +90,6 @@ export function rgbToHex(channels: number[]): string {
   return `#${hex}`;
 }
 
-/** "#ffcc00" → [255, 204, 0]; `null` for anything that is not a 6-digit hex color. */
 export function hexToRgb(hex: string): number[] | null {
   const match = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex.trim());
 

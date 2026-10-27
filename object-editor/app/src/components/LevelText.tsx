@@ -11,14 +11,11 @@ type LevelTextProps = {
   editable: boolean;
   onChange: (level: number, value: string) => void;
   onReset: (level: number) => void;
-  /** What a level is called: "Level", or "Variation" for doodads. */
   levelName?: string;
-  /** Shows the field in the page's inspector, when the page has one. */
   onInspect?: (field: Field) => void;
 };
 
 const LONG_TEXT_ROWS = 3;
-/** Game text with color codes or placeholders gets a preview even on one line. */
 const FORMATTED = /[|<]/;
 
 const inputClass =
@@ -98,7 +95,6 @@ function LevelInput({
   );
 }
 
-/** A text field with one value per level (tooltips), each level under the field's name. */
 export function LevelText({
   field,
   editable,

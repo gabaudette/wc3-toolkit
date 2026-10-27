@@ -19,7 +19,6 @@ import { Select } from "./Select";
 import { PlaceholderValues } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
-/** Each parameter's default: its values, or the first choice. */
 export function defaultValues(template: SpellTemplate): TemplateValues {
   return Object.fromEntries(
     template.params.map((p) => {
@@ -38,7 +37,6 @@ type TemplateChoicesProps = {
   onPick: (template: SpellTemplate) => void;
 };
 
-/** The wizard's triggered spells, under the kinds of spell. */
 export function TemplateChoices({ templates, busy, onPick }: TemplateChoicesProps) {
   return (
     <section aria-labelledby="triggered-spells" className="flex flex-col gap-2">
@@ -76,7 +74,6 @@ type EffectStepProps = {
   template: SpellTemplate;
   values: TemplateValues;
   name: Field | undefined;
-  /** The spell's own values that matter for this template (cooldown, mana, ...). */
   fields: LevelField[];
   tooltip: LevelField | undefined;
   onRename: (name: string) => void;
@@ -86,7 +83,6 @@ type EffectStepProps = {
   onReset: (field: string, level: number) => void;
 };
 
-/** A triggered spell's values: the module's, then the spell's own, and the tooltip they make. */
 export function EffectStep({
   detail,
   template,
@@ -187,12 +183,10 @@ function ChoiceInput({ param, values, onValue }: ChoiceInputProps) {
 type NumberCellProps = {
   param: TemplateParam;
   level: number;
-  /** The parameter's values for every level. */
   values: number[];
   onValue: (param: string, values: number[]) => void;
 };
 
-/** One level's value; saved on leaving the box or Enter, ignored when not a number. */
 function NumberCell({ param, level, values, onValue }: NumberCellProps) {
   const value = values[level - 1] ?? values[values.length - 1] ?? 0;
   const [text, setText] = useState(String(value));
@@ -240,7 +234,6 @@ type CodeStepProps = {
   onFolder: (folder: string) => void;
 };
 
-/** Where the spell's Lua module goes, and the module itself. */
 export function CodeStep({ folder, source, onFolder }: CodeStepProps) {
   const [error, setError] = useState<string | null>(null);
 
@@ -294,11 +287,9 @@ type TestStepProps = {
   name: string;
   modulePath: string;
   folder: string;
-  /** The map was saved: the window shows it as saved again. */
   onSaved: () => void;
 };
 
-/** How to try the new spell: save, build the `[DEV]` copy, play it. */
 export function TestStep({ name, modulePath, folder, onSaved }: TestStepProps) {
   const [busy, setBusy] = useState(false);
   const [copy, setCopy] = useState<TestCopy | null>(null);

@@ -1,9 +1,5 @@
 import type { Design, DialogButton, DialogDesign } from "./types";
 
-/**
- * `Choose your path!` → `ChooseYourPath`, as the Lua module names it
- * (`interface.rs`, `pascal_case`); `Design` when nothing is left.
- */
 function pascalCase(name: string): string {
   let out = name
     .split(/[^A-Za-z0-9]/)
@@ -18,7 +14,6 @@ function pascalCase(name: string): string {
   return out;
 }
 
-/** Each design's Lua name by ID, numbered when two match, like `lua_names` in Rust. */
 export function luaNames(designs: Design[]): Map<string, string> {
   const taken = new Set<string>();
   const names = new Map<string, string>();
@@ -43,7 +38,6 @@ export function luaNames(designs: Design[]): Map<string, string> {
 /** The gold the game highlights hotkeys with. */
 const HOTKEY_COLOR = "ffcc00";
 
-/** The message as the game gets it, like `title_text` in Rust. */
 export function titleText(dialog: DialogDesign): string {
   if (!dialog.titleColor) {
     return dialog.title;
@@ -52,7 +46,6 @@ export function titleText(dialog: DialogDesign): string {
   return `|cff${dialog.titleColor.toLowerCase()}${dialog.title}|r`;
 }
 
-/** A button's text as the game gets it, like `button_text` in Rust. */
 export function buttonText(button: DialogButton): string {
   const key = button.hotkey.trim();
 

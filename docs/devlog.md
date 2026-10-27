@@ -4,6 +4,28 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Standards, part 4e: comments only where code can't speak, the frontend (AGE-61)
+
+- The frontend (`app/src`, `app/scripts`) loses 600 of its comment lines, after reading all
+  498 blocks (`//` runs, `/** */` docs and `{/* */}` in JSX). Kept: the blank-line
+  checker's explanation of its method, the one remaining `biome-ignore` reason, the game's
+  text and color codes (`|cAARRGGBB`, `|r`, `|n`, the World Editor's opaque alpha, the
+  player and tooltip colors, the hotkey gold), what cryptic field IDs hold (`atp1`,
+  `aub1`, `abuf`, `arhk`...), the command card (4×3 spots, every unit's commands, the
+  hero's Learn and Cancel buttons), how damage dice roll, bit flags and list values,
+  leaderboard rows tied to players, tooltip placeholders naming their ability, older
+  tooltips' hotkey highlight, model files (Z-up, paths without extensions, numbered
+  variations, extents that do not fit the mesh), the WebGL and driver workarounds of the
+  model preview (full-precision shaders, one shared canvas against the NVIDIA crash,
+  missing uniforms, reflection maps, `destroy` throwing, context restore, light intensity)
+  and the grid's empty-table edge case.
+- Removed: prop and type docs (most of `types.ts`, which mirrors the Rust types), helper
+  docs restating names, UI layout notes and the "edits run one after another" notes
+  repeated in every pane. No code changed.
+- With this part every crate and the frontend follow the comment rule: 508 + 456 + 465 +
+  100 Rust comment lines are now 311 + 157 + 90 + 51, and the frontend keeps about a
+  sixth of its comments.
+
 ## 2026-10-27 · Standards, part 4d: comments only where code can't speak, the app's Rust side (AGE-61)
 
 - `app/src-tauri` goes from 465 comment lines to 90, after reading all 327 blocks. Kept:

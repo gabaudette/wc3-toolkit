@@ -10,7 +10,6 @@ type Run = {
   color: string | null;
 };
 
-/** Splits text into runs of one color, with "\n" for line breaks. */
 export function parseGameText(text: string): Run[] {
   const runs: Run[] = [];
   let color: string | null = null;
@@ -50,7 +49,6 @@ export function parseGameText(text: string): Run[] {
   return runs;
 }
 
-/** The text without codes; line breaks become spaces. For search, labels and file names. */
 export function plainGameText(text: string): string {
   return parseGameText(text)
     .map((run) => run.text)
@@ -58,9 +56,7 @@ export function plainGameText(text: string): string {
     .replace(/\n/g, " ");
 }
 
-/** WCAG AA for normal text. */
 const MIN_CONTRAST = 4.5;
-/** Each step mixes this much white into a color that is too dark. */
 const LIGHTEN_STEP = 0.1;
 const MAX_STEPS = 10;
 const CHANNEL_MAX = 255;
@@ -99,7 +95,6 @@ function luminance(hex: string): number {
   return RED_WEIGHT * linear(r) + GREEN_WEIGHT * linear(g) + BLUE_WEIGHT * linear(b);
 }
 
-/** The darkest background colored text sits on (selected rows, `surface-2`). */
 const BACKGROUND_LUMINANCE = luminance("#142039");
 
 function contrast(hex: string): number {
@@ -110,10 +105,6 @@ function toHex(rgb: number[]): string {
   return `#${rgb.map((c) => Math.round(c).toString(HEX_RADIX).padStart(HEX_PAIR, "0")).join("")}`;
 }
 
-/**
- * The color, lightened just enough to read on the editor's dark panels. Maps
- * sometimes color names nearly black; the hue stays, only the lightness rises.
- */
 export function readableColor(hex: string): string {
   let rgb: number[] = channels(hex);
   let color = hex;
@@ -128,11 +119,9 @@ export function readableColor(hex: string): string {
 
 type GameTextProps = {
   text: string;
-  /** One line: line breaks become spaces, for names in lists and headers. */
   singleLine?: boolean;
 };
 
-/** Renders game text with its colors and line breaks, like in-game tooltips. */
 export function GameText({ text, singleLine = false }: GameTextProps): ReactNode {
   let className = "whitespace-pre-line";
 

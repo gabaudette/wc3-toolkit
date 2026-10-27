@@ -13,7 +13,6 @@ import { UnitIcon } from "./UnitIcon";
 
 type MultiboardEditorProps = {
   board: MultiboardDesign;
-  /** Icons to pick for cells: the game's and the map's. */
   icons: IconChoice[];
   luaName: string;
   editable: boolean;
@@ -22,7 +21,6 @@ type MultiboardEditorProps = {
   onDelete: () => void;
 };
 
-/** What the style panel changes: one cell, a whole row or a whole column. */
 type Selection =
   | { kind: "cell"; row: number; column: number }
   | { kind: "row"; row: number }
@@ -31,25 +29,20 @@ type Selection =
 const inputClass =
   "rounded-[3px] border border-field bg-well px-2 py-1 text-ink outline-none focus:border-focus disabled:opacity-60";
 const EMPTY_CELL: BoardCell = { text: "", color: null, icon: null };
-/** The text that becomes a player's name, in their color, on rows per player. */
 const PLAYER_NAME = "{player}";
 
 type SamplePlayer = { name: string; color: string };
 
-/** Players the preview fills rows per player with. */
 const SAMPLE_PLAYERS: SamplePlayer[] = [
   { name: "Player 1", color: "ff0303" },
   { name: "Player 2", color: "0042ff" },
 ];
-/** A board column's width (percent of the screen) in preview units. */
 const PREVIEW_WIDTH_SCALE = 0.94;
 
-/** The row's cell for a column; rows shorter than the board read as empty. */
 function cellAt(row: BoardRow, column: number): BoardCell {
   return row.cells[column] ?? EMPTY_CELL;
 }
 
-/** The cells a selection covers, as [row, column] pairs. */
 function covered(board: MultiboardDesign, selection: Selection): [number, number][] {
   if (selection.kind === "cell") {
     return [[selection.row, selection.column]];
@@ -62,7 +55,6 @@ function covered(board: MultiboardDesign, selection: Selection): [number, number
   return board.rows.map((_, row) => [row, selection.column]);
 }
 
-/** The board with every covered cell changed. */
 function restyled(
   board: MultiboardDesign,
   selection: Selection,
@@ -87,7 +79,6 @@ function restyled(
   };
 }
 
-/** The value all covered cells share, or null when they differ. */
 function shared<K extends keyof BoardCell>(
   board: MultiboardDesign,
   selection: Selection,
@@ -125,7 +116,6 @@ function selectionLabel(board: MultiboardDesign, selection: Selection): string {
   return `The cell in row "${row}", column "${column}"`;
 }
 
-/** Moves an item of a list by one place, or leaves the list when it cannot. */
 function moved<T>(list: T[], index: number, by: number): T[] {
   const target = index + by;
 
@@ -143,11 +133,6 @@ function moved<T>(list: T[], index: number, by: number): T[] {
   return next;
 }
 
-/**
- * A multiboard's title and start options beside its preview, then its cells
- * as a grid (column and row names on the edges), then the style of the
- * selected cell, row or column: its color and icon.
- */
 export function MultiboardEditor({
   board,
   icons,
@@ -557,7 +542,6 @@ function IconButton({ label, disabled, onPress, children }: IconButtonProps) {
   );
 }
 
-/** A cell's text as the game shows it, with a player's name filled in. */
 function previewText(cell: BoardCell, player: SamplePlayer | null): string {
   let text = cell.text;
 
@@ -572,11 +556,6 @@ function previewText(cell: BoardCell, player: SamplePlayer | null): string {
   return text;
 }
 
-/**
- * The board in the top right corner of a 16:9 game screen, as the game
- * draws it: the title bar, then each row, rows per player filled with two
- * sample players. Sizes follow the preview's width (container units).
- */
 function BoardPreview({ board }: { board: MultiboardDesign }) {
   const shownRows = board.rows.flatMap<{ row: BoardRow; player: SamplePlayer | null }>((row) => {
     if (row.perPlayer) {

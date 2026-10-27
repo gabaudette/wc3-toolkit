@@ -12,7 +12,6 @@ import { AdvancedGroup, FieldHeader, FieldRows, matches, SectionToggle, toggled 
 import { PlaceholderValues } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
-/** The object types this page shows: abilities, and upgrades and doodads shaped like them. */
 type Noun = "ability" | "upgrade" | "doodad";
 
 const PLURALS: Record<Noun, string> = {
@@ -20,7 +19,6 @@ const PLURALS: Record<Noun, string> = {
   upgrade: "upgrades",
   doodad: "doodads",
 };
-/** What a column of the level tables is called. */
 const LEVEL_NAMES: Record<Noun, string> = {
   ability: "Level",
   upgrade: "Level",
@@ -35,25 +33,19 @@ const FILTER_EXAMPLES: Record<Noun, string> = {
 
 type AbilityPageProps = {
   detail: AbilityDetail;
-  /** Defaults to "ability". */
   noun?: Noun;
   editable: boolean;
-  /** `level` is 0 for fields without levels. */
   onChange: (field: string, level: number, value: string) => void;
   onFill: (field: string, fromLevel: number, value: string) => void;
   onReset: (field: string, level: number) => void;
   onCreateCopy: () => void;
-  /** Opens the list of units to give the ability to; abilities only. */
   onGiveToUnits?: () => void;
 };
 
-/** Sections open by default; the rest start folded to keep the page short. */
 const OPEN_BY_DEFAULT = ["stats", "data", "text"];
-/** Doodads have no stats or data: their art is what people change. */
 const DOODAD_OPEN_BY_DEFAULT = ["text", "art"];
 const NO_LEVEL = 0;
 
-/** Keys of the level tables, shown under the page header ("level" or "variation"). */
 function levelKeys(level: string): [string, string][] {
   return [
     ["Arrows", "move"],
@@ -97,7 +89,6 @@ function changedIn(fields: Field[], levelFields: LevelField[]): number {
   return fields.filter((f) => f.modified).length + cells;
 }
 
-/** Header of the base column: the ability a custom one copies, else the game's value. */
 function baseLabel(detail: AbilityDetail): string {
   const { summary } = detail.card;
 
@@ -108,7 +99,6 @@ function baseLabel(detail: AbilityDetail): string {
   return "Game value";
 }
 
-/** "s" for counts other than 1. */
 function plural(count: number): string {
   if (count === 1) {
     return "";
@@ -174,7 +164,6 @@ export function AbilityPage({
     single.find((f) => f.id === inspected) ?? perLevel.find((f) => f.id === inspected) ?? null;
   const inspect = (field: Field) => setInspected(field.id);
   const searching = Boolean(filter) || changedOnly;
-  // Doodads show their model; abilities and upgrades have none to show.
   const doodadModel = single.find((f) => f.id === DOODAD_MODEL)?.raw;
   let modelPath: string | null = null;
 
@@ -195,7 +184,6 @@ export function AbilityPage({
     [detail, filter, changedOnly],
   );
 
-  /** Single fields, then the per-level table, then per-level text, for one group of fields. */
   function body(fields: Field[], levelFields: LevelField[]) {
     return (
       <>
@@ -254,7 +242,6 @@ export function AbilityPage({
                 <p className="text-sm text-muted">{facts(detail, noun)}</p>
               </div>
               {editable && (
-                // Stacked, so the facts beside the name keep their width.
                 <div className="flex flex-col items-stretch gap-2">
                   <Button onPress={onCreateCopy}>
                     <span className="flex items-center gap-1.5">

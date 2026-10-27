@@ -12,23 +12,15 @@ import { UnitChecklist } from "./UnitChecklist";
 
 type ShareDialogProps = {
   open: boolean;
-  /** The open map's custom units. */
   units: UnitItem[];
-  /** Ticked when the dialog opens: the unit on screen, if it is custom. */
   initial: string[];
   onClose: () => void;
 };
 
-/** How long the "Copied" confirmation stays, in milliseconds. */
 const COPIED_MS = 2000;
 
 const BUNDLE_EXTENSION = ".w3obj";
 
-/**
- * Turns chosen custom units, and every custom object they use, into a text
- * code that any map can import, or into a bundle file that also carries the
- * models, textures and icons imported into this map that they use.
- */
 export function ShareDialog({ open, units, initial, onClose }: ShareDialogProps) {
   const [chosen, setChosen] = useState(initial);
   const [preview, setPreview] = useState<SharePreview | null>(null);

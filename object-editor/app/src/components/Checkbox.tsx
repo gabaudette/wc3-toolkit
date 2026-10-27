@@ -11,11 +11,6 @@ type CheckboxProps = Omit<AriaCheckboxProps, "children" | "className"> & {
   className?: string;
 };
 
-/**
- * The box: a `field` edge in a `well`; on, it fills with `gold` and shows a
- * dark check, so the state reads by shape as well as color. Lives inside a
- * react-aria checkbox, whose `group` data attributes it follows.
- */
 function Box({ small }: { small?: boolean }) {
   return (
     <span
@@ -23,7 +18,6 @@ function Box({ small }: { small?: boolean }) {
       className={classes(
         "flex shrink-0 items-center justify-center rounded-[3px] border border-field bg-well text-well",
         "group-data-[selected]:border-gold group-data-[selected]:bg-gold",
-        // Windows high contrast: the check takes the text color on the system background.
         "forced-colors:group-data-[selected]:bg-[Canvas] forced-colors:text-[CanvasText]",
         small && "size-3.5",
         !small && "size-4",
@@ -34,7 +28,6 @@ function Box({ small }: { small?: boolean }) {
   );
 }
 
-/** A checkbox with its label: "Changed only", "Use HD art", a unit to share. */
 export function Checkbox({ children, className, ...props }: CheckboxProps) {
   return (
     <AriaCheckbox
@@ -54,18 +47,10 @@ export function Checkbox({ children, className, ...props }: CheckboxProps) {
 type CheckChipProps = {
   value: string;
   children: ReactNode;
-  /** Shown on hover, such as the code the game stores. */
   title?: string;
-  /** On where the base object is off, or off where it is on. */
   changed?: boolean;
 };
 
-/**
- * One option of a multi-checkbox field, as a chip sized to its label: off
- * is quiet text on a `field` edge; on is gold (`gold-soft` fill, `gold` edge,
- * `gold-bright` semibold text) with a checked box. A gold dot after the label
- * marks an option that differs from the base. Goes in a `CheckboxGroup`.
- */
 export function CheckChip({ value, children, title, changed }: CheckChipProps) {
   return (
     <AriaCheckbox

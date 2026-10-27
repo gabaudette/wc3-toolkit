@@ -10,9 +10,7 @@ import { UnitIcon } from "./UnitIcon";
 
 type Filter = { id: string; label: string };
 
-/** What differs between the lists of object types that share this list. */
 export type ListConfig = {
-  /** Nouns, lowercase: "unit", "units", and the article before the singular ("a", "an"). */
   singular: string;
   article: string;
   noun: string;
@@ -20,7 +18,6 @@ export type ListConfig = {
   search: (query: string) => Promise<Result<SearchHit[]>>;
   groups: { id: UnitGroup; label: string }[];
   defaultGroups: UnitGroup[];
-  /** Chips that filter by `filterOf`; `null` makes one per value the list holds. */
   filters: Filter[] | null;
   filterOf: (unit: UnitItem) => string;
 };
@@ -132,7 +129,6 @@ type UnitListProps = {
 
 const SEARCH_DELAY_MS = 200;
 
-/** One chip per distinct value, in the order the list first shows them. */
 function filtersFrom(units: UnitItem[], filterOf: (unit: UnitItem) => string): Filter[] {
   const values = [...new Set(units.map(filterOf))].filter(Boolean);
 
@@ -143,7 +139,6 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[] | null>(null);
   const [groups, setGroups] = useState<UnitGroup[]>(config.defaultGroups);
-  /** Filters turned off, so values that appear later start on. */
   const [hidden, setHidden] = useState<string[]>([]);
   const [folded, toggleFolded] = useFolded(`wc3-object-editor.fold.${config.noun}`);
   const { search, filterOf } = config;
@@ -182,8 +177,6 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
     return units.filter(filtered).map((unit) => ({ unit, reason: "" }));
   }, [units, hits, groups, hidden, filterOf]);
 
-  // While searching every match shows; otherwise the map's own objects come
-  // first and the game's fold away under their header.
   const own = shown.filter((r) => Boolean(hits) || r.unit.group === "map");
   const game = shown.filter((r) => !hits && r.unit.group !== "map");
   const mapHasNone = !units.some((u) => u.group === "map");

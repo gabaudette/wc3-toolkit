@@ -10,7 +10,6 @@ import { TransferFiles } from "./TransferList";
 
 const DESIGN_EXTENSION = ".w3ui";
 
-/** The designs a file holds or would hold, the files with them and what they need. */
 function DesignTransferList({ transfer }: { transfer: DesignTransfer }) {
   return (
     <div className="flex flex-col gap-2">
@@ -54,20 +53,12 @@ function DesignTransferList({ transfer }: { transfer: DesignTransfer }) {
 type ExportDesignsDialogProps = {
   open: boolean;
   designs: Design[];
-  /** The open map's file: the design file is saved beside it. */
   mapPath: string | null;
-  /** Ticked when the window opens. */
   initial: string[];
-  /** Waits for changes still on their way to the map. */
   flush: () => Promise<void>;
   onClose: () => void;
 };
 
-/**
- * Saves chosen designs as a design file for another map's Interface tab,
- * with the dialogs their buttons show and the icons imported into this map
- * that they use.
- */
 export function ExportDesignsDialog({
   open,
   designs,
@@ -208,14 +199,12 @@ export function ExportDesignsDialog({
 }
 
 type ImportDesignsDialogProps = {
-  /** The design file to import; the window is open while set. */
   path: string | null;
   flush: () => Promise<void>;
   onImported: (designs: Design[]) => void;
   onClose: () => void;
 };
 
-/** Shows what a design file adds to this map, renamed where names clash, then adds it. */
 export function ImportDesignsDialog({
   path,
   flush,

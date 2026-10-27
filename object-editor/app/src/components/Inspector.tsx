@@ -6,19 +6,14 @@ import { GameText, plainGameText } from "./GameText";
 import { ModelViewer } from "./ModelViewer";
 
 type InspectorProps = {
-  /** The model to preview: `null` shows "No model"; leave it out for objects without models. */
   modelPath?: string | null;
-  /** The field last focused on the page. */
   field: Field | null;
-  /** The field has a value per level: its base is level 1's, and it resets in its table. */
   perLevel?: boolean;
   editable: boolean;
-  /** Hotkey clashes; leave out for objects the check does not cover. */
   clashes?: HotkeyClash[];
   onReset: (field: string) => void;
 };
 
-/** What the selected field does, its limits, and its base value. */
 function FieldHelp({
   field,
   perLevel,
@@ -72,7 +67,6 @@ function FieldHelp({
   );
 }
 
-/** Problems the editor can see in the object as the map has it. */
 function Checks({ clashes }: { clashes: HotkeyClash[] }) {
   if (clashes.length === 0) {
     return <p className="text-muted">No hotkey clashes.</p>;
@@ -94,10 +88,6 @@ function Checks({ clashes }: { clashes: HotkeyClash[] }) {
   );
 }
 
-/**
- * The page's right column: the model, help for the field being edited, and
- * checks such as hotkey clashes.
- */
 export function Inspector({
   modelPath,
   field,

@@ -4,10 +4,6 @@ import { Button as AriaButton } from "react-aria-components";
 import { attempt } from "../result";
 import { WhatsNewDialog } from "./WhatsNewDialog";
 
-/**
- * The editor's version ("v0.1.0"), from the app itself. Pressing it opens
- * "What's new". Nothing shows until the version is known.
- */
 export function AppVersion() {
   const [version, setVersion] = useState<string | null>(null);
   const [open, setOpen] = useState(false);

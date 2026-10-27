@@ -18,7 +18,6 @@ type AbilityPickerProps = {
   onClose: () => void;
 };
 
-/** Results shown at once; typing narrows the list further. */
 const MAX_RESULTS = 200;
 
 function kindOf(ability: AbilitySummary): Kind {
@@ -50,7 +49,6 @@ export function AbilityPicker({ open, heroOnly, exclude, onPick, onClose }: Abil
       return;
     }
 
-    // Loaded each time: the map's own abilities change while editing.
     void settle(api.listAbilities(), setAbilities, setError);
   }, [open]);
 

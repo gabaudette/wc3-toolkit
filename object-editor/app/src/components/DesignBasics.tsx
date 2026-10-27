@@ -7,7 +7,6 @@ export const designInputClass =
 
 type DesignHeaderProps = {
   name: string;
-  /** The Lua call to show under the name, such as `UI.Kills.AddValue(player, 1)`. */
   lua: string;
   editable: boolean;
   onRename: (name: string) => void;
@@ -15,7 +14,6 @@ type DesignHeaderProps = {
   onDelete: () => void;
 };
 
-/** What every design has on top: its name, Duplicate and Delete, and its Lua call. */
 export function DesignHeader({
   name,
   lua,
@@ -60,7 +58,6 @@ type DesignBasicsProps = {
   name: string;
   title: string;
   titleColor: string | null;
-  /** The Lua call to show under the name, such as `UI.Kills.AddValue(player, 1)`. */
   lua: string;
   editable: boolean;
   onChange: (change: { name?: string; title?: string; titleColor?: string | null }) => void;
@@ -68,7 +65,6 @@ type DesignBasicsProps = {
   onDelete: () => void;
 };
 
-/** The header, then a colored title: what leaderboards and timers start with. */
 export function DesignBasics({
   name,
   title,
@@ -112,7 +108,6 @@ export function DesignBasics({
   );
 }
 
-/** A 16:9 game screen for previews; children are placed on it. */
 export function GameScreen({ children }: { children: React.ReactNode }) {
   return (
     <figure className="flex min-w-0 flex-col gap-1.5">

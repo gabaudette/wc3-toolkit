@@ -9,24 +9,15 @@ import { UnitIcon } from "./UnitIcon";
 
 type SpellUnitsProps = {
   spell: string;
-  /** Called after the spell is given or taken, so the map shows as unsaved and units reload. */
   onChanged: () => void;
 };
 
-/** Kinds that can have abilities. */
 const HOLDER_KINDS = ["hero", "unit", "building"];
 const KIND_LABELS: Record<string, string> = { hero: "Hero", unit: "Unit", building: "Building" };
-/** Rows drawn at once; typing narrows the list further. */
 const MAX_ROWS = 80;
 const COLUMNS = 4;
 const ROWS = 3;
 
-/**
- * Gives a spell to units, heroes and buildings, or takes it away: a list of
- * them (those with the spell first, then the map's own) and, for the one
- * picked, its command card and learn menu with the spell placed, plus
- * hotkey, spot and full-card warnings.
- */
 export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
   const [units, setUnits] = useState<UnitItem[]>([]);
   const [holders, setHolders] = useState<ReadonlySet<string>>(new Set());
@@ -59,7 +50,6 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
       return;
     }
 
-    // A slower answer for a unit picked earlier must not replace this one.
     let current = true;
 
     void api.spellFit(spell, selected).then((answer) => {
@@ -286,7 +276,6 @@ function UnitFit({ unit, fit, busy, onToggle }: UnitFitProps) {
   );
 }
 
-/** A 4×3 menu with each button on its spot, the spell outlined in gold. */
 function CardPreview({ title, buttons }: { title: string; buttons: CardButton[] }) {
   const cells = Array.from({ length: COLUMNS * ROWS }, (_, i) => ({
     x: i % COLUMNS,
