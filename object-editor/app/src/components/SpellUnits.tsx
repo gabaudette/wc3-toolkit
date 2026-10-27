@@ -1,6 +1,6 @@
 import { Check } from "@untitledui/icons";
 import { useEffect, useMemo, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
 import type { CardButton, SpellFit, UnitItem } from "../types";
 import { classes } from "../ui";
 import { Button } from "./Button";
@@ -37,12 +37,20 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([api.listUnits(), api.spellUnits(spell)])
-      .then(([all, has]) => {
-        setUnits(all.filter((u) => HOLDER_KINDS.includes(u.kind)));
-        setHolders(new Set(has));
-      })
-      .catch((e: unknown) => setError(errorMessage(e)));
+    void Promise.all([api.listUnits(), api.spellUnits(spell)]).then(([all, has]) => {
+      if (!all.ok) {
+        setError(all.error);
+        return;
+      }
+
+      if (!has.ok) {
+        setError(has.error);
+        return;
+      }
+
+      setUnits(all.value.filter((u) => HOLDER_KINDS.includes(u.kind)));
+      setHolders(new Set(has.value));
+    });
   }, [spell]);
 
   useEffect(() => {
@@ -53,14 +61,20 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
 
     // A slower answer for a unit picked earlier must not replace this one.
     let current = true;
-    api
-      .spellFit(spell, selected)
-      .then((answer) => {
-        if (current) {
-          setFit(answer);
-        }
-      })
-      .catch((e: unknown) => setError(errorMessage(e)));
+
+    void api.spellFit(spell, selected).then((answer) => {
+      if (!current) {
+        return;
+      }
+
+      if (!answer.ok) {
+        setError(answer.error);
+        return;
+      }
+
+      setFit(answer.value);
+    });
+
     return () => {
       current = false;
     };
@@ -89,34 +103,36 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
 
     setBusy(true);
     setError(null);
-    try {
-      let updated: SpellFit;
+    let change = api.giveSpell;
 
-      if (fit.has) {
-        updated = await api.takeSpell(spell, selected);
+    if (fit.has) {
+      change = api.takeSpell;
+    }
+
+    const changed = await change(spell, selected);
+
+    setBusy(false);
+    if (!changed.ok) {
+      setError(changed.error);
+      return;
+    }
+
+    const updated = changed.value;
+
+    setFit(updated);
+    setHolders((current) => {
+      const next = new Set(current);
+
+      if (updated.has) {
+        next.add(selected);
       } else {
-        updated = await api.giveSpell(spell, selected);
+        next.delete(selected);
       }
 
-      setFit(updated);
-      setHolders((current) => {
-        const next = new Set(current);
+      return next;
+    });
 
-        if (updated.has) {
-          next.add(selected);
-        } else {
-          next.delete(selected);
-        }
-
-        return next;
-      });
-
-      onChanged();
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setBusy(false);
-    }
+    onChanged();
   }
 
   return (

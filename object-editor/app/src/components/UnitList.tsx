@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { type Result, settle } from "../result";
 import type { SearchHit, UnitGroup, UnitItem } from "../types";
 import { capitalized, classes } from "../ui";
 import { Chip, toggle } from "./Chip";
@@ -16,7 +17,7 @@ export type ListConfig = {
   article: string;
   noun: string;
   placeholder: string;
-  search: (query: string) => Promise<SearchHit[]>;
+  search: (query: string) => Promise<Result<SearchHit[]>>;
   groups: { id: UnitGroup; label: string }[];
   defaultGroups: UnitGroup[];
   /** Chips that filter by `filterOf`; `null` makes one per value the list holds. */
@@ -160,9 +161,7 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
     }
 
     const timer = window.setTimeout(() => {
-      search(trimmed)
-        .then(setHits)
-        .catch((e) => onError(errorMessage(e)));
+      void settle(search(trimmed), setHits, onError);
     }, SEARCH_DELAY_MS);
 
     return () => window.clearTimeout(timer);

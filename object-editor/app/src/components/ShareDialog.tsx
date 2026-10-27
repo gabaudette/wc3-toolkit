@@ -1,6 +1,7 @@
-import { save } from "@tauri-apps/plugin-dialog";
 import { useEffect, useRef, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { chooseSavePath } from "../dialogs";
+import { attempt } from "../result";
 import type { SharePreview, UnitItem } from "../types";
 import { BUNDLE_FILTERS } from "../ui";
 import { Button } from "./Button";
@@ -52,33 +53,45 @@ export function ShareDialog({ open, units, initial, onClose }: ShareDialogProps)
   }
 
   async function create() {
-    try {
-      setPreview(await api.shareCode(chosen));
-      setError(null);
-    } catch (e) {
-      setError(errorMessage(e));
+    const created = await api.shareCode(chosen);
+
+    if (!created.ok) {
+      setError(created.error);
+      return;
     }
+
+    setPreview(created.value);
+    setError(null);
   }
 
   async function saveBundle() {
     const first = units.find((u) => u.id === chosen[0]);
-    const path = await save({
+    const picked = await chooseSavePath({
       title: "Save bundle file",
       filters: BUNDLE_FILTERS,
       defaultPath: `${plainGameText(first?.name ?? "units")}${BUNDLE_EXTENSION}`,
     });
 
+    if (!picked.ok) {
+      setError(picked.error);
+      return;
+    }
+
+    const path = picked.value;
+
     if (!path) {
       return;
     }
 
-    try {
-      await api.saveBundle(chosen, path);
-      setSaved(path);
-      setError(null);
-    } catch (e) {
-      setError(errorMessage(e));
+    const written = await api.saveBundle(chosen, path);
+
+    if (!written.ok) {
+      setError(written.error);
+      return;
     }
+
+    setSaved(path);
+    setError(null);
   }
 
   async function copy() {
@@ -86,14 +99,15 @@ export function ShareDialog({ open, units, initial, onClose }: ShareDialogProps)
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(preview.code);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), COPIED_MS);
-    } catch {
-      // No clipboard access: select the code so Ctrl+C works.
+    const copiedCode = await attempt(() => navigator.clipboard.writeText(preview.code));
+
+    if (!copiedCode.ok) {
       codeRef.current?.select();
+      return;
     }
+
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), COPIED_MS);
   }
 
   return (

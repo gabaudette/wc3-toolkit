@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { type Result, settle } from "../result";
 import type { Catalog, Field, UnitDetail, UnitItem } from "../types";
 import { replaceField } from "../ui";
 import { type ListConfig, UnitList } from "./UnitList";
@@ -32,12 +33,11 @@ export function PlainPane({
   /** Edits run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
 
-  const fail = useCallback((e: unknown) => onError(errorMessage(e)), [onError]);
   const listError = useCallback((message: string) => onError(message), [onError]);
 
   const refreshList = useCallback(() => {
-    api.listPlain(catalog).then(setObjects).catch(fail);
-  }, [catalog, fail]);
+    void settle(api.listPlain(catalog), setObjects, onError);
+  }, [catalog, onError]);
 
   useEffect(() => {
     refreshList();
@@ -49,23 +49,23 @@ export function PlainPane({
       return;
     }
 
-    api.plainDetail(catalog, selected).then(setDetail).catch(fail);
-  }, [catalog, selected, fail]);
+    void settle(api.plainDetail(catalog, selected), setDetail, onError);
+  }, [catalog, selected, onError]);
 
-  function run(id: string, edit: () => Promise<Field>) {
+  function run(id: string, edit: () => Promise<Result<Field>>) {
     queue.current = queue.current.then(async () => {
-      try {
-        const updated = await edit();
+      const updated = await edit();
 
-        setDetail((current) => current && replaceField(current, updated));
-        onError(null);
-        onMapChanged();
-        refreshList();
-        // The summary and header can depend on the field, so fetch the page too.
-        setDetail(await api.plainDetail(catalog, id));
-      } catch (e) {
-        fail(e);
+      if (!updated.ok) {
+        onError(updated.error);
+        return;
       }
+
+      setDetail((current) => current && replaceField(current, updated.value));
+      onError(null);
+      onMapChanged();
+      refreshList();
+      await settle(api.plainDetail(catalog, id), setDetail, onError);
     });
   }
 
@@ -74,15 +74,16 @@ export function PlainPane({
       return;
     }
 
-    try {
-      const created = await api.createPlain(catalog, detail.item.base);
+    const created = await api.createPlain(catalog, detail.item.base);
 
-      onMapChanged();
-      refreshList();
-      onSelect(created.id);
-    } catch (e) {
-      fail(e);
+    if (!created.ok) {
+      onError(created.error);
+      return;
     }
+
+    onMapChanged();
+    refreshList();
+    onSelect(created.value.id);
   }
 
   return (

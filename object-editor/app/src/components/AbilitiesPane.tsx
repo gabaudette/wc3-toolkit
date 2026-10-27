@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { type Result, settle } from "../result";
 import type { AbilityDetail, AbilitySummary } from "../types";
 import { AbilityList } from "./AbilityList";
 import { AbilityPage } from "./AbilityPage";
@@ -35,12 +36,11 @@ export function AbilitiesPane({
   /** Edits run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
 
-  const fail = useCallback((e: unknown) => onError(errorMessage(e)), [onError]);
   const listError = useCallback((message: string) => onError(message), [onError]);
 
   const refreshList = useCallback(() => {
-    api.listAbilities().then(setAbilities).catch(fail);
-  }, [fail]);
+    void settle(api.listAbilities(), setAbilities, onError);
+  }, [onError]);
 
   useEffect(() => {
     refreshList();
@@ -52,24 +52,22 @@ export function AbilitiesPane({
       return;
     }
 
-    api.abilityDetail(selected).then(setDetail).catch(fail);
-  }, [selected, fail]);
+    void settle(api.abilityDetail(selected), setDetail, onError);
+  }, [selected, onError]);
 
-  function run(edit: () => Promise<AbilityDetail | null>) {
+  function run(edit: () => Promise<Result<AbilityDetail>>) {
     queue.current = queue.current.then(async () => {
-      try {
-        const updated = await edit();
+      const updated = await edit();
 
-        if (updated) {
-          setDetail(updated);
-        }
-
-        onError(null);
-        onMapChanged();
-        refreshList();
-      } catch (e) {
-        fail(e);
+      if (!updated.ok) {
+        onError(updated.error);
+        return;
       }
+
+      setDetail(updated.value);
+      onError(null);
+      onMapChanged();
+      refreshList();
     });
   }
 
@@ -79,10 +77,10 @@ export function AbilitiesPane({
 
   function fill(id: string, field: string, fromLevel: number, value: string) {
     run(async () => {
-      let updated: AbilityDetail | null = null;
       const levels = detail?.levels ?? fromLevel;
+      let updated = await api.setAbilityField(id, field, fromLevel, value);
 
-      for (let level = fromLevel; level <= levels; level++) {
+      for (let level = fromLevel + 1; level <= levels && updated.ok; level++) {
         updated = await api.setAbilityField(id, field, level, value);
       }
 
@@ -99,15 +97,16 @@ export function AbilitiesPane({
       return;
     }
 
-    try {
-      const created = await api.createAbility(detail.card.summary.base);
+    const created = await api.createAbility(detail.card.summary.base);
 
-      onMapChanged();
-      refreshList();
-      onSelect(created.id);
-    } catch (e) {
-      fail(e);
+    if (!created.ok) {
+      onError(created.error);
+      return;
     }
+
+    onMapChanged();
+    refreshList();
+    onSelect(created.value.id);
   }
 
   return (

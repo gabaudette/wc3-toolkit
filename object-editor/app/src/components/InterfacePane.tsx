@@ -1,8 +1,9 @@
-import { open } from "@tauri-apps/plugin-dialog";
 import { Plus } from "@untitledui/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { choosePath } from "../dialogs";
 import { luaNames } from "../interface";
+import { settle, whenOk } from "../result";
 import type {
   Design,
   DialogDesign,
@@ -179,7 +180,6 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
   const [exporting, setExporting] = useState(false);
   /** The design file being imported. */
   const [importing, setImporting] = useState<string | null>(null);
-  const fail = useCallback((e: unknown) => onError(errorMessage(e)), [onError]);
   /** Updates run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
   const statusTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -190,14 +190,15 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
       return;
     }
 
-    api
-      .uiDesigns()
-      .then((loaded) => {
+    void settle(
+      api.uiDesigns(),
+      (loaded) => {
         setDesigns(loaded);
         setSelected(loaded[0]?.id ?? null);
-      })
-      .catch(fail);
-  }, [editable, fail]);
+      },
+      onError,
+    );
+  }, [editable, onError]);
 
   const names = useMemo(() => luaNames(designs), [designs]);
   /** Every design, ticked when the export window opens; kept stable so it does not reset the window. */
@@ -212,7 +213,7 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
   function update(next: Design[]) {
     setDesigns(next);
     queue.current = queue.current.then(() =>
-      api.setUiDesigns(next).then(() => onError(null), fail),
+      settle(api.setUiDesigns(next), () => onError(null), onError),
     );
     clearTimeout(statusTimer.current);
     statusTimer.current = setTimeout(() => {
@@ -226,8 +227,8 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
       return;
     }
 
-    api.spellIcons().then(setIcons).catch(fail);
-  }, [design?.kind, icons.length, fail]);
+    void settle(api.spellIcons(), setIcons, onError);
+  }, [design?.kind, icons.length, onError]);
 
   function add(created: Design) {
     update([...designs, created]);
@@ -251,14 +252,19 @@ export function InterfacePane({ editable, mapPath, onMapChanged, onError }: Inte
   }
 
   async function pickDesignFile() {
-    const picked = await open({
+    const picked = await choosePath({
       title: "Import designs",
       filters: DESIGN_FILTERS,
       ...(mapPath && { defaultPath: besides(mapPath, "") }),
     });
 
-    if (typeof picked === "string") {
-      setImporting(picked);
+    if (!picked.ok) {
+      onError(picked.error);
+      return;
+    }
+
+    if (picked.value) {
+      setImporting(picked.value);
     }
   }
 
@@ -484,10 +490,7 @@ function LuaBar({ selected, designs, flush, onSaved }: LuaBarProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api
-      .defaultLuaFolder()
-      .then((dir) => setFolder((current) => current || dir || ""))
-      .catch(() => {});
+    void whenOk(api.defaultLuaFolder(), (dir) => setFolder((current) => current || dir || ""));
   }, []);
 
   useEffect(() => {
@@ -496,17 +499,28 @@ function LuaBar({ selected, designs, flush, onSaved }: LuaBarProps) {
       return;
     }
 
-    flush()
+    void flush()
       .then(() => api.uiLua(selected))
-      .then((text) => setCode({ text, error: false }))
-      .catch((e: unknown) => setCode({ text: errorMessage(e), error: true }));
+      .then((module) => {
+        if (module.ok) {
+          setCode({ text: module.value, error: false });
+          return;
+        }
+
+        setCode({ text: module.error, error: true });
+      });
   }, [showCode, selected, designs, flush]);
 
   async function browse() {
-    const picked = await open({ directory: true, ...(folder && { defaultPath: folder }) });
+    const picked = await choosePath({ directory: true, ...(folder && { defaultPath: folder }) });
 
-    if (typeof picked === "string") {
-      setFolder(picked);
+    if (!picked.ok) {
+      setError(picked.error);
+      return;
+    }
+
+    if (picked.value) {
+      setFolder(picked.value);
     }
   }
 
@@ -514,24 +528,39 @@ function LuaBar({ selected, designs, flush, onSaved }: LuaBarProps) {
     setBusy(true);
     setError(null);
     setStatus(null);
-    try {
-      const dir = folder.trim();
-
-      await flush();
-      const written = await api.writeUiLua(dir);
-
-      await api.saveMap();
-      onSaved();
-      const copy = await api.buildTestCopy(dir);
-
-      setStatus(
-        `Wrote ${written.join(", ")} and built ${copy.path} with ${copy.modules.length} module(s).`,
-      );
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
+    const stop = (message: string) => {
+      setError(message);
       setBusy(false);
+    };
+    const dir = folder.trim();
+
+    await flush();
+    const written = await api.writeUiLua(dir);
+
+    if (!written.ok) {
+      stop(written.error);
+      return;
     }
+
+    const saved = await api.saveMap();
+
+    if (!saved.ok) {
+      stop(saved.error);
+      return;
+    }
+
+    onSaved();
+    const copy = await api.buildTestCopy(dir);
+
+    if (!copy.ok) {
+      stop(copy.error);
+      return;
+    }
+
+    setBusy(false);
+    setStatus(
+      `Wrote ${written.value.join(", ")} and built ${copy.value.path} with ${copy.value.modules.length} module(s).`,
+    );
   }
 
   return (

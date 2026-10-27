@@ -1,6 +1,7 @@
-import { open as openFile } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { choosePath } from "../dialogs";
+import type { Result } from "../result";
 import type { ImportPreview, ImportSource, TransferObject, UnitItem } from "../types";
 import { BUNDLE_FILTERS, classes, MAP_FILTERS, objectCount } from "../ui";
 import { Button } from "./Button";
@@ -64,29 +65,30 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
     (tab === "bundle" && bundlePath !== null) ||
     (tab === "map" && otherMap !== null && chosen.length > 0);
 
-  async function run<T>(work: () => Promise<T>): Promise<T | null> {
+  async function run<T>(work: () => Promise<Result<T>>): Promise<T | null> {
     setBusy(true);
-    try {
-      const result = await work();
+    const result = await work();
 
-      setError(null);
-      return result;
-    } catch (e) {
-      setError(errorMessage(e));
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error);
       return null;
-    } finally {
-      setBusy(false);
     }
+
+    setError(null);
+    return result.value;
   }
 
   async function pickMap() {
-    const picked = await openFile({
-      title: "Import from a map",
-      filters: MAP_FILTERS,
-      ...(mapsDir && { defaultPath: mapsDir }),
-    });
+    const picked = await run(() =>
+      choosePath({
+        title: "Import from a map",
+        filters: MAP_FILTERS,
+        ...(mapsDir && { defaultPath: mapsDir }),
+      }),
+    );
 
-    if (typeof picked !== "string") {
+    if (!picked) {
       return;
     }
 
@@ -101,9 +103,11 @@ export function ImportDialog({ open, mapsDir, onImported, onClose }: ImportDialo
   }
 
   async function pickBundle() {
-    const picked = await openFile({ title: "Import a bundle file", filters: BUNDLE_FILTERS });
+    const picked = await run(() =>
+      choosePath({ title: "Import a bundle file", filters: BUNDLE_FILTERS }),
+    );
 
-    if (typeof picked === "string") {
+    if (picked) {
       setBundlePath(picked);
       setPreview(null);
     }

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "../api";
+import { whenOk } from "../result";
 import { GameText } from "./GameText";
 
 /** Delay before asking the backend to fill placeholders while typing. */
@@ -52,12 +53,7 @@ function FilledText({ text }: { text: string }) {
     }
 
     const timer = window.setTimeout(() => {
-      api
-        .fillPlaceholders(text)
-        .then(setFilled)
-        .catch(() => {
-          // The raw text is still shown; a failed lookup only leaves placeholders unfilled.
-        });
+      void whenOk(api.fillPlaceholders(text), setFilled);
     }, FILL_DELAY_MS);
 
     return () => window.clearTimeout(timer);

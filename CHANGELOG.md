@@ -100,6 +100,10 @@ under "What's new".
 
 ### Changed
 
+- Tinkerbench now keeps a log of what went wrong, to attach to a bug report:
+  `tinkerbench.log` in `~/.local/share/io.github.gabaudette.wc3toolkit/logs` on Linux and
+  `%LOCALAPPDATA%\io.github.gabaudette.wc3toolkit\logs` on Windows. Opening a file or
+  folder now says so when the dialog itself fails, instead of doing nothing.
 - Drop-down menus are drawn in the app's own style, closed and open, instead of the system's
   grey buttons and menus.
 - New checkboxes everywhere: a gold box with a check mark when on. Fields with many options,

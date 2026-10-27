@@ -1,5 +1,6 @@
 // Small UI helpers shared by components.
 
+import { attemptSync } from "./result";
 import type { Field, UnitDetail } from "./types";
 
 /** Joins class names, skipping falsy entries (instead of ternaries in JSX). */
@@ -78,21 +79,18 @@ export function capitalized(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Remembered paths; browser storage can be unavailable, so failures are ignored. */
+/** Remembered paths. Browser storage can be unavailable; then nothing is remembered. */
 export const remembered = {
   get(key: string): string | null {
-    try {
-      return window.localStorage.getItem(key);
-    } catch {
-      return null;
+    const stored = attemptSync(() => window.localStorage.getItem(key));
+    if (stored.ok) {
+      return stored.value;
     }
+
+    return null;
   },
   set(key: string, value: string): void {
-    try {
-      window.localStorage.setItem(key, value);
-    } catch {
-      // Not remembering a path is harmless; the user picks it again next time.
-    }
+    attemptSync(() => window.localStorage.setItem(key, value));
   },
 };
 

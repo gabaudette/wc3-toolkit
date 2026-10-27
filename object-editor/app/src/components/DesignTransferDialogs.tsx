@@ -1,6 +1,6 @@
-import { save } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { chooseSavePath } from "../dialogs";
 import type { Design, DesignTransfer } from "../types";
 import { besides, counted, DESIGN_FILTERS } from "../ui";
 import { Button } from "./Button";
@@ -96,14 +96,20 @@ export function ExportDesignsDialog({
 
     let current = true;
 
-    flush()
+    void flush()
       .then(() => api.uiExportPreview(chosen))
       .then((next) => {
-        if (current) {
-          setPreview(next);
+        if (!current) {
+          return;
         }
-      })
-      .catch((e: unknown) => setError(errorMessage(e)));
+
+        if (!next.ok) {
+          setError(next.error);
+          return;
+        }
+
+        setPreview(next.value);
+      });
     return () => {
       current = false;
     };
@@ -133,20 +139,33 @@ export function ExportDesignsDialog({
       defaultPath = besides(mapPath, defaultPath);
     }
 
-    const path = await save({ title: "Save design file", filters: DESIGN_FILTERS, defaultPath });
+    const picked = await chooseSavePath({
+      title: "Save design file",
+      filters: DESIGN_FILTERS,
+      defaultPath,
+    });
+
+    if (!picked.ok) {
+      setError(picked.error);
+      return;
+    }
+
+    const path = picked.value;
 
     if (!path) {
       return;
     }
 
-    try {
-      await flush();
-      await api.saveUiFile(chosen, path);
-      setSaved(path);
-      setError(null);
-    } catch (e) {
-      setError(errorMessage(e));
+    await flush();
+    const written = await api.saveUiFile(chosen, path);
+
+    if (!written.ok) {
+      setError(written.error);
+      return;
     }
+
+    setSaved(path);
+    setError(null);
   }
 
   return (
@@ -215,14 +234,20 @@ export function ImportDesignsDialog({
 
     let current = true;
 
-    flush()
+    void flush()
       .then(() => api.uiImportPreview(path))
       .then((next) => {
-        if (current) {
-          setPreview(next);
+        if (!current) {
+          return;
         }
-      })
-      .catch((e: unknown) => setError(errorMessage(e)));
+
+        if (!next.ok) {
+          setError(next.error);
+          return;
+        }
+
+        setPreview(next.value);
+      });
     return () => {
       current = false;
     };
@@ -233,13 +258,16 @@ export function ImportDesignsDialog({
       return;
     }
 
-    try {
-      await flush();
-      onImported(await api.importUiFile(path));
-      onClose();
-    } catch (e) {
-      setError(errorMessage(e));
+    await flush();
+    const imported = await api.importUiFile(path);
+
+    if (!imported.ok) {
+      setError(imported.error);
+      return;
     }
+
+    onImported(imported.value);
+    onClose();
   }
 
   let count = "";

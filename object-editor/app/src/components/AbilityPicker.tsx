@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Dialog, Heading, Modal, ModalOverlay } from "react-aria-components";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { settle } from "../result";
 import type { AbilitySummary } from "../types";
 import { capitalized, classes, levelCount } from "../ui";
 import { Button } from "./Button";
@@ -50,10 +51,7 @@ export function AbilityPicker({ open, heroOnly, exclude, onPick, onClose }: Abil
     }
 
     // Loaded each time: the map's own abilities change while editing.
-    api
-      .listAbilities()
-      .then(setAbilities)
-      .catch((e) => setError(errorMessage(e)));
+    void settle(api.listAbilities(), setAbilities, setError);
   }, [open]);
 
   useEffect(() => {

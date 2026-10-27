@@ -76,6 +76,17 @@ in them must rewrite byte for byte. Building also needs CMake (for the bundled S
 - **AGE-QUAL-006** — `rustfmt` owns Rust formatting (default settings, 100 columns).
 - **AGE-ERR-001/003** — Fallible code returns `Result`. Parsers report malformed data with
   line or row context instead of skipping it. No `unwrap`, `expect` or `panic!` outside tests.
+- **AGE-ERR-002** — In the frontend, every fallible call returns a `Result` (`src/result.ts`).
+  `attempt`/`attemptSync` there are the only `try`/`catch`: `api.ts` runs every Tauri command
+  through them, `dialogs.ts` the file dialogs, and components the few other throwing
+  sources (the clipboard, `war3-model`, browser storage). Components check `result.ok`, or
+  use `settle`/`whenOk`, instead of catching.
+- **AGE-ERR-004** — Failures go to a log file, once, from the layer that knows what failed:
+  `api.ts` for a failed command (with its name), `dialogs.ts` for a dialog, the window's
+  `error`/`unhandledrejection` handlers for the rest, and `log.rs` for panics and a failed
+  start. The log is `tinkerbench.log` in `<local data folder>/io.github.gabaudette.wc3toolkit/logs`
+  (`~/.local/share/...` on Linux, `%LOCALAPPDATA%\...` on Windows); a log over 1 MB is set
+  aside as `tinkerbench.previous.log` at the next start.
 - **AGE-WS-001/002** — One blank line after a completed block and after the last of a group
   of declarations, before the next statement, where `rustfmt` and Biome do not decide
   otherwise. Neither formatter checks this, so `scripts/check-blank-lines.ts` does, in the

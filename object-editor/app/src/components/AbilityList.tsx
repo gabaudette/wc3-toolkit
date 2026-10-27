@@ -1,6 +1,7 @@
 import { Stars02 } from "@untitledui/icons";
 import { useEffect, useMemo, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { settle } from "../result";
 import type { AbilitySummary, SearchHit } from "../types";
 import { classes } from "../ui";
 import { Button } from "./Button";
@@ -77,10 +78,7 @@ export function AbilityList({
     }
 
     const timer = window.setTimeout(() => {
-      api
-        .searchAbilities(trimmed)
-        .then(setHits)
-        .catch((e) => onError(errorMessage(e)));
+      void settle(api.searchAbilities(trimmed), setHits, onError);
     }, SEARCH_DELAY_MS);
 
     return () => window.clearTimeout(timer);

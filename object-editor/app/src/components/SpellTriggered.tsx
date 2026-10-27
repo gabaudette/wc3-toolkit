@@ -1,6 +1,6 @@
-import { open } from "@tauri-apps/plugin-dialog";
 import { useEffect, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { choosePath } from "../dialogs";
 import type {
   AbilityDetail,
   Field,
@@ -242,11 +242,19 @@ type CodeStepProps = {
 
 /** Where the spell's Lua module goes, and the module itself. */
 export function CodeStep({ folder, source, onFolder }: CodeStepProps) {
-  async function browse() {
-    const picked = await open({ directory: true, ...(folder && { defaultPath: folder }) });
+  const [error, setError] = useState<string | null>(null);
 
-    if (typeof picked === "string") {
-      onFolder(picked);
+  async function browse() {
+    const picked = await choosePath({ directory: true, ...(folder && { defaultPath: folder }) });
+
+    if (!picked.ok) {
+      setError(picked.error);
+      return;
+    }
+
+    setError(null);
+    if (picked.value) {
+      onFolder(picked.value);
     }
   }
 
@@ -265,6 +273,11 @@ export function CodeStep({ folder, source, onFolder }: CodeStepProps) {
         />
         <Button onPress={browse}>Browse…</Button>
       </div>
+      {error && (
+        <p role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
       <figure className="flex flex-col gap-1">
         <figcaption className="text-xs text-faint">
           The module, checked as Lua 5.3 like the game runs it
@@ -294,15 +307,24 @@ export function TestStep({ name, modulePath, folder, onSaved }: TestStepProps) {
   async function build() {
     setBusy(true);
     setError(null);
-    try {
-      await api.saveMap();
-      onSaved();
-      setCopy(await api.buildTestCopy(folder));
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
+    const saved = await api.saveMap();
+
+    if (!saved.ok) {
+      setError(saved.error);
       setBusy(false);
+      return;
     }
+
+    onSaved();
+    const built = await api.buildTestCopy(folder);
+
+    setBusy(false);
+    if (!built.ok) {
+      setError(built.error);
+      return;
+    }
+
+    setCopy(built.value);
   }
 
   return (

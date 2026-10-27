@@ -1,6 +1,7 @@
 import { Plus, XClose } from "@untitledui/icons";
 import { use, useEffect, useState } from "react";
-import { api, errorMessage } from "../api";
+import { api } from "../api";
+import { settle } from "../result";
 import type { AbilityCard, Field } from "../types";
 import { levelCount } from "../ui";
 import { AbilityPicker } from "./AbilityPicker";
@@ -146,10 +147,7 @@ export function AbilityField({ field, editable, onChange }: AbilityFieldProps) {
       return;
     }
 
-    api
-      .abilityCards(ids)
-      .then(setCards)
-      .catch((e) => setError(errorMessage(e)));
+    void settle(api.abilityCards(ids), setCards, setError);
   }, [field.raw]);
 
   function remove(id: string) {

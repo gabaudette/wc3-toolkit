@@ -4078,6 +4078,7 @@ name = "wc3-object-editor"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
+ "dirs",
  "mpq",
  "serde",
  "serde_json",
@@ -4085,6 +4086,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-dialog",
  "tempfile",
+ "time",
  "wc3-data",
  "wc3-map",
 ]

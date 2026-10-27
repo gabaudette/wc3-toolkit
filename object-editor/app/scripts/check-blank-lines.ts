@@ -7,9 +7,12 @@ const SKIPPED = /(^|\/)vendor\//;
 const FAILURE = 1;
 
 function sourceFiles(): string[] {
-  const listed = Bun.spawnSync(["git", "ls-files", "--full-name", ...SOURCES], {
-    cwd: REPOSITORY,
-  });
+  const listed = Bun.spawnSync(
+    ["git", "ls-files", "--full-name", "--cached", "--others", "--exclude-standard", ...SOURCES],
+    {
+      cwd: REPOSITORY,
+    },
+  );
 
   return listed.stdout
     .toString()

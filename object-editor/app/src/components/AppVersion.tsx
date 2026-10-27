@@ -1,6 +1,7 @@
 import { getVersion } from "@tauri-apps/api/app";
 import { useEffect, useState } from "react";
 import { Button as AriaButton } from "react-aria-components";
+import { attempt } from "../result";
 import { WhatsNewDialog } from "./WhatsNewDialog";
 
 /**
@@ -12,10 +13,11 @@ export function AppVersion() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    // Showing the version is a courtesy; without it the editor works the same.
-    getVersion()
-      .then(setVersion)
-      .catch(() => setVersion(null));
+    void attempt(getVersion).then((known) => {
+      if (known.ok) {
+        setVersion(known.value);
+      }
+    });
   }, []);
 
   if (!version) {
