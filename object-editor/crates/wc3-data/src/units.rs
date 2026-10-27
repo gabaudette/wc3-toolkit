@@ -21,7 +21,6 @@ const COMMAND_STRINGS: &str = "units\\commandstrings.txt";
 const COMMAND_FUNC: &str = "units\\commandfunc.txt";
 const EDITOR_STRINGS: &[&str] = &["ui\\worldeditstrings.txt", "ui\\worldeditgamestrings.txt"];
 
-/// Game data tables and the metadata source name that refers to each one.
 const TABLES: &[(&str, &str)] = &[
     ("UnitData", "units\\unitdata.slk"),
     ("UnitBalance", "units\\unitbalance.slk"),
@@ -62,13 +61,10 @@ const CATEGORY_SECTIONS: &[(&str, &str)] = &[
     ("DoodadCategories", "doodadCategory"),
 ];
 
-/// Where a catalog's data comes from.
 struct CatalogSpec {
     catalog: Catalog,
     metadata: &'static str,
-    /// Which of the metadata's fields the catalog shows.
     keep: fn(&FieldMeta) -> bool,
-    /// The main table's metadata source name (`ItemData`), and its file.
     source: &'static str,
     table: &'static str,
 }
@@ -84,7 +80,6 @@ const NAME_SOURCES: &[&str] = &[
     "units\\itemstrings.txt",
 ];
 
-/// Metadata category → `WorldEditStrings` key of its display name.
 pub(crate) const CATEGORY_NAMES: &[(&str, &str)] = &[
     ("abil", "WESTRING_OE_CAT_ABILITIES"),
     ("art", "WESTRING_OE_CAT_ART"),
@@ -116,7 +111,6 @@ const LIST_SUFFIX: &str = "List";
 const EMPTY_MARKERS: &[&str] = &["", "-", "_"];
 const REAL_DECIMALS: usize = 3;
 
-/// One choice of an enumerated field type such as `armorType`.
 #[derive(Debug, Clone)]
 pub struct EnumValue {
     /// Value stored in data and maps, e.g. `Metal`.
@@ -131,7 +125,6 @@ pub struct EnumValue {
 }
 
 impl EnumValue {
-    /// Whether `text` is this choice's value or one of its other spellings.
     pub fn matches(&self, text: &str) -> bool {
         self.value.eq_ignore_ascii_case(text)
             || self.aliases.iter().any(|a| a.eq_ignore_ascii_case(text))
@@ -203,7 +196,6 @@ impl UnitDatabase {
         })
     }
 
-    /// Every unit ID in the game data, in table order.
     pub fn ids(&self) -> &[String] {
         &self.ids
     }
@@ -219,7 +211,6 @@ impl UnitDatabase {
         self.tables.get(main).is_some_and(|t| t.has_row(id))
     }
 
-    /// All unit, hero and building fields.
     pub fn fields(&self) -> &[FieldMeta] {
         &self.fields
     }
@@ -228,7 +219,6 @@ impl UnitDatabase {
         self.fields.iter().find(|f| f.id == field_id)
     }
 
-    /// Fields the Object Editor shows for this unit.
     pub fn fields_for(&self, id: &str) -> impl Iterator<Item = &FieldMeta> {
         let kind = self.kind(id);
 
@@ -307,8 +297,6 @@ impl UnitDatabase {
         Self::load_catalog(files, &spec, profile)
     }
 
-    /// A catalog other than units: its metadata's kept fields over one table
-    /// whose rows are the objects, with the shared editor strings and choices.
     fn load_catalog(files: &GameFiles, spec: &CatalogSpec, profile: Profile) -> Result<Self> {
         let metadata = load_slk(files.read_base(spec.metadata)?, spec.metadata)?;
         let fields: Vec<FieldMeta> = parse_metadata(&metadata)
@@ -403,7 +391,6 @@ impl UnitDatabase {
         }
     }
 
-    /// The editor's label for a field, e.g. `Art - Model File`.
     pub fn field_label(&self, field: &FieldMeta) -> String {
         format!(
             "{} - {}",
@@ -412,7 +399,6 @@ impl UnitDatabase {
         )
     }
 
-    /// The editor's name for a metadata category, e.g. `art` → `Art`.
     pub fn category_label(&self, category: &str) -> String {
         CATEGORY_NAMES
             .iter()
@@ -421,13 +407,11 @@ impl UnitDatabase {
             .unwrap_or_else(|| category.to_owned())
     }
 
-    /// A field's display name without its category, e.g. `Model File`.
     pub fn field_name(&self, field: &FieldMeta) -> String {
         self.editor_string(&field.display_key)
             .unwrap_or_else(|| field.field.clone())
     }
 
-    /// The raw stored value of a field, or `None` when the unit leaves it empty.
     pub fn raw_value(&self, id: &str, field: &FieldMeta, mode: ArtMode) -> Option<String> {
         let whole = if field.source == PROFILE_SOURCE {
             self.profile_value(id, &field.field, mode)
@@ -457,12 +441,10 @@ impl UnitDatabase {
         }
     }
 
-    /// A field's value formatted like the Object Editor shows it.
     pub fn display_value(&self, id: &str, field: &FieldMeta, mode: ArtMode) -> String {
         self.format_value(field, self.raw_value(id, field, mode))
     }
 
-    /// Formats a raw value (as stored in game data or a map) like the Object Editor.
     pub fn format_value(&self, field: &FieldMeta, raw: Option<String>) -> String {
         let Some(raw) = raw else {
             return self.empty_display(field);
@@ -490,12 +472,10 @@ impl UnitDatabase {
         }
     }
 
-    /// Choices of an enumerated field type such as `armorType`, if it is one.
     pub fn enum_values(&self, value_type: &str) -> Option<&[EnumValue]> {
         self.enums.get(value_type).map(Vec::as_slice)
     }
 
-    /// The editor's icon for a choice, such as a destructable or doodad category's.
     pub fn choice_icon(&self, value_type: &str, value: &str) -> Option<&str> {
         self.enum_values(value_type)?
             .iter()
@@ -504,7 +484,6 @@ impl UnitDatabase {
             .as_deref()
     }
 
-    /// Hotkey of a unit or upgrade from the game's text files, e.g. `F` for the Footman.
     pub fn hotkey(&self, id: &str) -> Option<char> {
         [&self.profile, &self.names]
             .iter()
@@ -512,7 +491,6 @@ impl UnitDatabase {
             .and_then(parse_hotkey)
     }
 
-    /// A standard command's name and hotkey, e.g. `CmdMove` → ("Move", `M`).
     pub fn command(&self, section: &str) -> Option<(String, char)> {
         let key = self
             .commands
@@ -527,14 +505,12 @@ impl UnitDatabase {
         Some((name, key))
     }
 
-    /// A standard command's slot (column, row) on the command card.
     pub fn command_button(&self, section: &str) -> Option<(u32, u32)> {
         self.command_buttons
             .get(section, "Buttonpos")
             .and_then(parse_button)
     }
 
-    /// The unit's icon path as stored in the data, e.g. `ReplaceableTextures\...\BTNHeroPaladin.blp`.
     pub fn icon_path(&self, id: &str, mode: ArtMode) -> Option<String> {
         let key = match self.catalog {
             Catalog::Units | Catalog::Items => "Art",
@@ -559,7 +535,6 @@ impl UnitDatabase {
         resolve_string(&self.editor_strings, key)
     }
 
-    /// What the editor shows for a field the unit leaves empty.
     fn empty_display(&self, field: &FieldMeta) -> String {
         match field.value_type.as_str() {
             "int" => "0".to_owned(),
@@ -633,8 +608,6 @@ fn is_empty(value: &str) -> bool {
     EMPTY_MARKERS.contains(&value.trim())
 }
 
-/// Looks up an editor string, following redirects to other strings and keeping
-/// only the display part of flag labels.
 pub(crate) fn resolve_string(strings: &Profile, key: &str) -> Option<String> {
     let mut value = strings.section_names().find_map(|s| strings.get(s, key))?;
 
@@ -681,8 +654,6 @@ fn enum_labels(values: &[EnumValue], raw: &str) -> String {
         .join(", ")
 }
 
-/// Every choice list: `UnitEditorData.txt` and the categories in `WorldEditData.txt`.
-/// The units database formats values for the leveled tabs too (doodad categories).
 fn editor_enums(
     files: &GameFiles,
     editor_data: &Profile,

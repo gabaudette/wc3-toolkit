@@ -18,21 +18,18 @@ use std::fmt;
 
 use crate::{Error, Result};
 
-/// The format version that groups modifications into sets.
 const SETS_VERSION: u32 = 3;
 const TYPE_INT: u32 = 0;
 const TYPE_REAL: u32 = 1;
 const TYPE_UNREAL: u32 = 2;
 const TYPE_STRING: u32 = 3;
 
-/// A four-character code such as `Hpal`, `H000` or `uhpm`.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct FourCC(pub [u8; 4]);
 
 impl FourCC {
     pub const ZERO: Self = Self([0; 4]);
 
-    /// Parses a four-character ASCII code.
     pub fn parse(code: &str) -> Option<Self> {
         let bytes: [u8; 4] = code.as_bytes().try_into().ok()?;
 
@@ -65,7 +62,6 @@ pub enum Layout {
 }
 
 impl Layout {
-    /// Layout of a map file by extension, e.g. `war3map.w3a` → `Leveled`.
     pub fn for_file(name: &str) -> Option<Self> {
         let ext = name.rsplit_once('.')?.1.to_ascii_lowercase();
 
@@ -136,7 +132,6 @@ pub struct ObjectEntry {
 }
 
 impl ObjectEntry {
-    /// The ID the game uses for this object.
     pub fn effective_id(&self) -> FourCC {
         if self.id.is_zero() {
             self.base
@@ -154,9 +149,7 @@ impl ObjectEntry {
 pub struct ObjectData {
     pub version: u32,
     pub layout: Layout,
-    /// Changed original objects.
     pub original: Vec<ObjectEntry>,
-    /// Custom objects.
     pub custom: Vec<ObjectEntry>,
 }
 
@@ -245,7 +238,6 @@ impl ObjectData {
         }
     }
 
-    /// Finds an object by the ID the game uses (custom ID, or original ID).
     pub fn find(&self, id: FourCC) -> Option<&ObjectEntry> {
         self.custom
             .iter()

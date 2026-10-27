@@ -24,12 +24,9 @@ const CHANNELS: usize = 4;
 const OPAQUE: u8 = 255;
 const BITS_PER_BYTE: usize = 8;
 const NIBBLE_MASK: u8 = 0x0F;
-/// Scales a 4-bit alpha to 8 bits: 15 × 17 = 255.
 const NIBBLE_SCALE: u8 = 17;
-/// Larger than any texture the game loads; guards against bad headers.
 const MAX_SIDE: u32 = 8192;
 
-/// Decodes the top mip level of a BLP1 texture.
 pub fn decode_blp(data: &[u8]) -> Result<Image> {
     if data.len() < HEADER_SIZE || &data[..MAGIC.len()] != MAGIC {
         return Err(invalid("not a BLP1 file"));
@@ -193,7 +190,6 @@ fn alpha_at(alphas: &[u8], i: usize, alpha_bits: u32) -> u8 {
 mod tests {
     use super::*;
 
-    /// A paletted BLP1 header, palette and top mip level.
     fn paletted(
         width: u32,
         height: u32,
@@ -278,7 +274,6 @@ mod tests {
     /// No color transform, as in BLP files.
     const TEST_JPEG: &[u8] = include_bytes!("../testdata/bgra.jpg");
     const START_OF_SCAN: [u8; 2] = [0xFF, 0xDA];
-    /// JPEG quantization moves a flat color by a step or two.
     const JPEG_TOLERANCE: u8 = 3;
 
     /// A JPEG BLP1 as the game's tools write one: the JPEG is split into the

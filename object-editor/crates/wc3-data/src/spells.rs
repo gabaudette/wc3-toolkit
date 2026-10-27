@@ -1,11 +1,3 @@
-//! Spell kinds for the spell wizard: what a spell does, and the game abilities
-//! that make the best base for it, with the reason for each. The list is
-//! `data/spell-recipes.toml`, written for this project.
-//!
-//! Also the triggered spells, for effects no game ability provides: a copy of
-//! Channel plus a Lua module made from a template in `data/spell-templates/`
-//! (listed in `data/spell-templates.toml`).
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -16,7 +8,6 @@ const RECIPES: &str = include_str!("../data/spell-recipes.toml");
 const RECIPES_FILE: &str = "spell-recipes.toml";
 const TEMPLATES: &str = include_str!("../data/spell-templates.toml");
 const TEMPLATES_FILE: &str = "spell-templates.toml";
-/// The Lua templates by file name, as `spell-templates.toml` names them.
 const TEMPLATE_SOURCES: &[(&str, &str)] = &[
     (
         "attribute_damage.lua",
@@ -32,14 +23,12 @@ const TEMPLATE_SOURCES: &[(&str, &str)] = &[
     ),
 ];
 
-/// One choice on the wizard's first step, such as "Damage one target".
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SpellKind {
     pub id: String,
     pub label: String,
     pub description: String,
-    /// Suggested base abilities, best first.
     #[serde(rename = "base")]
     pub bases: Vec<SuggestedBase>,
 }
@@ -47,9 +36,7 @@ pub struct SpellKind {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct SuggestedBase {
-    /// The game ability's ID, e.g. `AHtb`.
     pub code: String,
-    /// What it brings, and when to pick it over the others.
     pub why: String,
 }
 
@@ -59,7 +46,6 @@ struct RecipeFile {
     kind: Vec<SpellKind>,
 }
 
-/// The spell kinds, in the order the wizard shows them.
 pub fn spell_kinds() -> Result<Vec<SpellKind>> {
     parse(RECIPES).map_err(|e| e.in_file(RECIPES_FILE))
 }
@@ -73,8 +59,6 @@ fn parse(text: &str) -> Result<Vec<SpellKind>> {
     Ok(file.kind)
 }
 
-/// A triggered spell: Channel set up for a target type, and a Lua module that
-/// runs the effect when it is cast.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct SpellTemplate {
@@ -82,7 +66,6 @@ pub struct SpellTemplate {
     pub label: String,
     pub description: String,
     pub file: String,
-    /// Channel's target type: `none`, `unit` or `point`.
     pub target: String,
     /// Targets allowed, as the editor stores them; empty for none.
     pub targets: String,
@@ -92,26 +75,20 @@ pub struct SpellTemplate {
     pub area: f64,
     pub cooldown: f64,
     pub mana: f64,
-    /// Per-level tooltip text: `{param}` is that level's value, `{area}` the area of effect.
     pub tooltip: String,
     #[serde(rename(deserialize = "param"))]
     pub params: Vec<TemplateParam>,
 }
 
-/// A value the module uses, edited in the wizard.
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct TemplateParam {
-    /// Its name in the Lua template, written `{{id}}` there.
     pub id: String,
     pub label: String,
-    /// The default for each level; empty for a choice.
     #[serde(default)]
     pub values: Vec<f64>,
-    /// Only whole numbers make sense (counts).
     #[serde(default)]
     pub whole: bool,
-    /// One setting for every level instead of values; the first is the default.
     #[serde(default)]
     pub choices: Vec<TemplateChoice>,
 }
@@ -120,7 +97,6 @@ pub struct TemplateParam {
 #[serde(deny_unknown_fields)]
 pub struct TemplateChoice {
     pub label: String,
-    /// What the module gets, as a Lua expression.
     pub lua: String,
 }
 
@@ -130,7 +106,6 @@ struct TemplateFile {
     template: Vec<SpellTemplate>,
 }
 
-/// The triggered spell templates, in the order the wizard shows them.
 pub fn spell_templates() -> Result<Vec<SpellTemplate>> {
     let file: TemplateFile = toml::from_str(TEMPLATES).map_err(|e| {
         Error::Parse {
@@ -143,7 +118,6 @@ pub fn spell_templates() -> Result<Vec<SpellTemplate>> {
     Ok(file.template)
 }
 
-/// `50`, `0.5`: numbers as Lua source.
 fn lua_number(value: f64) -> String {
     if value.fract() == 0.0 && value.abs() < 1e15 {
         format!("{}", value as i64)
@@ -152,9 +126,6 @@ fn lua_number(value: f64) -> String {
     }
 }
 
-/// The template's tooltip for one level, with that level's values and the
-/// area of effect as a placeholder for the spell's own field, so it follows
-/// edits to it.
 pub fn fill_tooltip(
     template: &SpellTemplate,
     spell_id: &str,
@@ -189,9 +160,6 @@ pub fn fill_tooltip(
     text
 }
 
-/// Fills a template in for one spell. `values` holds each parameter's value
-/// per level, or for a choice the chosen index as its only value; missing
-/// parameters keep their defaults.
 pub fn render_template(
     template: &SpellTemplate,
     spell_id: &str,
@@ -209,7 +177,6 @@ pub fn render_template(
         .find(|(name, _)| *name == template.file)
         .map(|(_, source)| *source)
         .ok_or_else(|| invalid("no such template file".to_owned()))?;
-    // The name only goes in comments: one line, no Lua comment ends.
     let name: String = spell_name
         .chars()
         .map(|c| if c.is_control() { ' ' } else { c })

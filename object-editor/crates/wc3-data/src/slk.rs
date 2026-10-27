@@ -97,7 +97,6 @@ impl Slk {
         &self.columns
     }
 
-    /// Row keys (first column) in file order.
     pub fn keys(&self) -> impl Iterator<Item = &str> {
         self.rows.iter().filter_map(|r| r.first()?.as_deref())
     }
@@ -114,7 +113,6 @@ impl Slk {
         row.get(col)?.as_deref()
     }
 
-    /// All rows as column-name → value maps, for tables read whole (like metadata).
     pub fn records(&self) -> impl Iterator<Item = HashMap<&str, &str>> {
         self.rows.iter().map(|row| {
             self.columns

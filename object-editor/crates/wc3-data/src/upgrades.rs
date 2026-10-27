@@ -33,7 +33,6 @@ const EFFECT_PARTS: &[(&str, &str)] = &[("base", "Base"), ("mod", "Increment"), 
 
 pub struct UpgradeDatabase {
     fields: Vec<FieldMeta>,
-    /// Field ID → position in `fields`.
     field_index: HashMap<String, usize>,
     table: Slk,
     profile: Profile,
@@ -83,7 +82,6 @@ impl UpgradeDatabase {
         })
     }
 
-    /// Every upgrade field the metadata defines; all apply to every upgrade.
     pub fn fields(&self) -> &[FieldMeta] {
         &self.fields
     }
@@ -105,7 +103,6 @@ impl UpgradeDatabase {
         name.replace("%s", part)
     }
 
-    /// The editor's name for a metadata category, e.g. `data` → `Data`.
     pub fn category_label(&self, category: &str) -> String {
         CATEGORY_NAMES
             .iter()
@@ -114,7 +111,6 @@ impl UpgradeDatabase {
             .unwrap_or_else(|| category.to_owned())
     }
 
-    /// Every upgrade ID in the game data, in table order.
     pub fn ids(&self) -> &[String] {
         &self.ids
     }
@@ -123,7 +119,6 @@ impl UpgradeDatabase {
         self.table.has_row(id)
     }
 
-    /// The game's number of levels, at least 1.
     pub fn levels(&self, id: &str) -> u32 {
         self.table
             .get(id, LEVELS_COLUMN)
@@ -132,13 +127,11 @@ impl UpgradeDatabase {
             .max(1)
     }
 
-    /// The level 1 name, or the ID when the game has none.
     pub fn name(&self, id: &str) -> String {
         self.level_text(id, NAME_KEY, 1)
             .unwrap_or_else(|| id.to_owned())
     }
 
-    /// The level 1 icon.
     pub fn icon_path(&self, id: &str, mode: ArtMode) -> Option<String> {
         let variant = format!("{ICON_KEY}:{}", mode.key_suffix());
         let whole = self
@@ -155,8 +148,6 @@ impl UpgradeDatabase {
         list_item(whole, usize::try_from(level.checked_sub(1)?).ok()?)
     }
 
-    /// The game's raw value of a field at `level` (1-based; ignored for fields
-    /// without levels), or `None` when the upgrade leaves it empty.
     pub fn raw_value(
         &self,
         id: &str,
@@ -200,7 +191,6 @@ impl UpgradeDatabase {
     }
 }
 
-/// Item `index` of a profile list, or `None` when it is missing or empty.
 fn list_item(whole: &str, index: usize) -> Option<String> {
     split_list(whole)
         .into_iter()

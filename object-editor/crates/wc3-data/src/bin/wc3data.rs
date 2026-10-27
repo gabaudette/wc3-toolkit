@@ -1,6 +1,3 @@
-//! Command-line inspector for the game data, mainly for checking the loader
-//! against the World Editor.
-
 // Errors and usage go to stderr directly (AGE-QUAL-003: documented, file-scoped).
 // Regular output goes through `say!`, which handles a closed pipe.
 #![allow(clippy::print_stderr)]
@@ -30,11 +27,8 @@ commands:
 
 const GAME_DIR_VAR: &str = "WC3_GAME_DIR";
 
-/// Marks output that stopped because the reader went away (e.g. `| head`).
 const OUTPUT_CLOSED: &str = "\0output closed";
 
-/// Writes a line to stdout. A closed pipe ends the program quietly instead of
-/// panicking like `println!` does.
 fn emit(line: std::fmt::Arguments<'_>) -> Result<(), String> {
     let mut stdout = std::io::stdout().lock();
 

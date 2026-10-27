@@ -18,7 +18,6 @@ const MODEL_EXTENSION: &str = ".mdx";
 const TAG_SIZE: usize = 4;
 const U32_SIZE: usize = 4;
 const CHUNK_HEADER: usize = TAG_SIZE + U32_SIZE;
-/// Portrait cameras and lights: not needed to show a model.
 const PREVIEW_SKIPPED_CHUNKS: &[&[u8; 4]] = &[b"CAMS", b"LITE"];
 const VERSION_CHUNK: &[u8; 4] = b"VERS";
 const GEOSETS_CHUNK: &[u8; 4] = b"GEOS";
@@ -68,7 +67,6 @@ pub fn model_file(path: &str) -> String {
     format!("{stem}{MODEL_EXTENSION}")
 }
 
-/// Reads a model for previewing, in the layout model readers understand.
 pub fn load_model(files: &GameFiles, path: &str, mode: ArtMode) -> Result<Vec<u8>> {
     let file = model_file(path);
     let data = files.read_art(&file, mode)?;
@@ -94,7 +92,6 @@ fn read_len(data: &[u8], pos: usize) -> Result<usize> {
     read_u32(data, pos).map(|n| n as usize)
 }
 
-/// Copies an MDX file without the chunks previews skip, with skin weights narrowed.
 pub fn preview_copy(data: &[u8]) -> Result<Vec<u8>> {
     if data.get(..MAGIC.len()) != Some(MAGIC.as_slice()) {
         return Err(invalid("not an MDX model".to_owned()));
@@ -122,12 +119,16 @@ pub fn preview_copy(data: &[u8]) -> Result<Vec<u8>> {
             version = Some(read_u32(body, 0)?);
         }
 
-        if PREVIEW_SKIPPED_CHUNKS
+        let skipped = PREVIEW_SKIPPED_CHUNKS
             .iter()
-            .any(|skipped| tag == skipped.as_slice())
-        {
-            // Left out.
-        } else if tag == GEOSETS_CHUNK {
+            .any(|skipped| tag == skipped.as_slice());
+
+        if skipped {
+            pos = end;
+            continue;
+        }
+
+        if tag == GEOSETS_CHUNK {
             let version =
                 version.ok_or_else(|| invalid("geosets come before the version".to_owned()))?;
             let geosets = narrow_skins(body, version)?;
@@ -332,7 +333,6 @@ mod tests {
         out
     }
 
-    /// A one-vertex geoset whose skin chunk holds `skin` (`count` values).
     fn geoset(skin: &[u8], count: u32) -> Vec<u8> {
         let mut body = Vec::new();
 

@@ -26,7 +26,6 @@ const SOURCES: &[&str] = &[
     "campaign", "common", "human", "item", "neutral", "nightelf", "orc", "undead",
 ];
 
-/// Generic per-level columns, in the order a card lists them.
 const GENERIC_ORDER: &[&str] = &["Cost", "Cool", "Rng", "Area", "Dur", "HeroDur", "Cast"];
 const NUMERIC_TYPES: &[&str] = &["int", "real", "unreal"];
 const DATA_SOURCE: &str = "AbilityData";
@@ -50,14 +49,12 @@ pub struct AbilityInfo {
     pub levels: u32,
     pub required_level: u32,
     pub hotkey: Option<String>,
-    /// Key that learns the ability in the hero's learn menu.
     pub learn_hotkey: Option<String>,
     /// Button slot (column, row) on the command card and in the learn menu.
     pub button: Option<(u32, u32)>,
     pub learn_button: Option<(u32, u32)>,
 }
 
-/// One row of a card's table: a value for each level.
 #[derive(Debug, Clone, PartialEq)]
 pub struct LevelValues {
     pub label: String,
@@ -72,7 +69,6 @@ pub trait PlaceholderSource {
 
 pub struct AbilityDatabase {
     fields: Vec<FieldMeta>,
-    /// Field ID → position in `fields`.
     field_index: HashMap<String, usize>,
     table: Slk,
     upgrades: Slk,
@@ -132,7 +128,6 @@ impl AbilityDatabase {
         })
     }
 
-    /// Every ability field the metadata defines.
     pub fn fields(&self) -> &[FieldMeta] {
         &self.fields
     }
@@ -155,13 +150,11 @@ impl AbilityDatabase {
             .collect()
     }
 
-    /// A field's display name, e.g. `Amount Healed/Damaged`.
     pub fn field_name(&self, field: &FieldMeta) -> String {
         resolve_string(&self.editor_strings, &field.display_key)
             .unwrap_or_else(|| field.field.clone())
     }
 
-    /// The editor's name for a metadata category, e.g. `data` → `Data`.
     pub fn category_label(&self, category: &str) -> String {
         CATEGORY_NAMES
             .iter()
@@ -170,7 +163,6 @@ impl AbilityDatabase {
             .unwrap_or_else(|| category.to_owned())
     }
 
-    /// Every ability ID in the game data, in table order.
     pub fn ids(&self) -> &[String] {
         &self.ids
     }
@@ -282,12 +274,10 @@ impl AbilityDatabase {
         (!text.is_empty()).then(|| self.fill_placeholders(&text, others))
     }
 
-    /// The one-line tooltip at `level` (1-based), e.g. "Holy Light - [Level 1]".
     pub fn tooltip(&self, id: &str, level: u32, others: &dyn PlaceholderSource) -> Option<String> {
         self.per_level_text(id, "Tip", level, others)
     }
 
-    /// The extended tooltip at `level`, with placeholders filled in.
     pub fn description(
         &self,
         id: &str,
@@ -297,15 +287,11 @@ impl AbilityDatabase {
         self.per_level_text(id, "Ubertip", level, others)
     }
 
-    /// For hero abilities: the "learn" tooltip, which describes every level.
     pub fn learn_description(&self, id: &str, others: &dyn PlaceholderSource) -> Option<String> {
         self.text(id, "Researchubertip")
             .map(|t| self.fill_placeholders(&t, others))
     }
 
-    /// Numeric values per level that apply to this ability: generic ones
-    /// (mana, cooldown, range, ...) first, then its own data fields. Rows that
-    /// are empty or zero on every level are left out.
     pub fn level_values(&self, id: &str) -> Vec<LevelValues> {
         let Some(info) = self.info(id) else {
             return Vec::new();
@@ -316,8 +302,6 @@ impl AbilityDatabase {
         })
     }
 
-    /// [`Self::level_values`] for an ability with base code `code` and `levels`
-    /// levels whose values come from `value` (a map's changes, for example).
     pub fn level_values_with(
         &self,
         code: &str,
@@ -441,7 +425,6 @@ impl AbilityDatabase {
     }
 }
 
-/// No other tables, for callers without unit data.
 pub struct NoPlaceholders;
 
 impl PlaceholderSource for NoPlaceholders {
@@ -457,7 +440,6 @@ pub(crate) fn parse_button(value: &str) -> Option<(u32, u32)> {
     Some((x.trim().parse().ok()?, y.trim().parse().ok()?))
 }
 
-/// `200.00` → `200`, `5.50` → `5.5`; anything that is not a number stays as it is.
 fn format_number(raw: &str) -> String {
     const MAX_DECIMALS: usize = 2;
 

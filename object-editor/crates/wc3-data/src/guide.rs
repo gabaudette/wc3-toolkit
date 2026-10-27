@@ -1,8 +1,3 @@
-//! The field guide: a description for every Object Editor field, which fields
-//! come first in each category, and which are rarely needed ("advanced").
-//!
-//! The guide is written for this project and lives in `data/*.toml`.
-
 use std::collections::HashMap;
 
 use serde::Deserialize;
@@ -27,16 +22,13 @@ const DOODAD_GUIDE_FILE: &str = "data/doodad-fields.toml";
 #[derive(Debug, Clone, PartialEq)]
 pub struct GuideEntry {
     pub description: String,
-    /// Rarely needed; shown in a folded "Advanced" group.
     pub advanced: bool,
-    /// Not confirmed in game; the editor marks it.
     pub unverified: bool,
 }
 
 #[derive(Debug, Clone)]
 pub struct FieldGuide {
     entries: HashMap<String, GuideEntry>,
-    /// Field ID → (category it is listed under, position in that list).
     ranks: HashMap<String, (String, usize)>,
 }
 
@@ -65,37 +57,30 @@ fn invalid(reason: String) -> Error {
 }
 
 impl FieldGuide {
-    /// The guide for units, heroes and buildings.
     pub fn units() -> Result<Self> {
         Self::parse(UNIT_GUIDE).map_err(|e| e.in_file(UNIT_GUIDE_FILE))
     }
 
-    /// The guide for abilities' generic fields.
     pub fn abilities() -> Result<Self> {
         Self::parse(ABILITY_GUIDE).map_err(|e| e.in_file(ABILITY_GUIDE_FILE))
     }
 
-    /// The guide for items.
     pub fn items() -> Result<Self> {
         Self::parse(ITEM_GUIDE).map_err(|e| e.in_file(ITEM_GUIDE_FILE))
     }
 
-    /// The guide for upgrades.
     pub fn upgrades() -> Result<Self> {
         Self::parse(UPGRADE_GUIDE).map_err(|e| e.in_file(UPGRADE_GUIDE_FILE))
     }
 
-    /// The guide for buffs and effects.
     pub fn buffs() -> Result<Self> {
         Self::parse(BUFF_GUIDE).map_err(|e| e.in_file(BUFF_GUIDE_FILE))
     }
 
-    /// The guide for destructables.
     pub fn destructables() -> Result<Self> {
         Self::parse(DESTRUCTABLE_GUIDE).map_err(|e| e.in_file(DESTRUCTABLE_GUIDE_FILE))
     }
 
-    /// The guide for doodads.
     pub fn doodads() -> Result<Self> {
         Self::parse(DOODAD_GUIDE).map_err(|e| e.in_file(DOODAD_GUIDE_FILE))
     }
@@ -145,17 +130,14 @@ impl FieldGuide {
         self.entries.get(field_id)
     }
 
-    /// Position among the fields shown first in its category, if it is one of them.
     pub fn rank(&self, field_id: &str) -> Option<usize> {
         self.ranks.get(field_id).map(|(_, rank)| *rank)
     }
 
-    /// Every described field ID.
     pub fn field_ids(&self) -> impl Iterator<Item = &str> {
         self.entries.keys().map(String::as_str)
     }
 
-    /// Every field shown first, with the category it is listed under.
     pub fn ordered(&self) -> impl Iterator<Item = (&str, &str)> {
         self.ranks
             .iter()

@@ -149,8 +149,6 @@ const MISSING_IN_GAME: &[&str] = &[
     "Abilities/Spells/Other/Tornado/TornadoBound_Diffuse.tif",
 ];
 
-/// Every unit's model loads for the preview, with its textures, in SD and HD.
-/// Reflection maps are left out because the preview never draws them.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn every_unit_model_loads_for_the_preview() -> TestResult {
@@ -207,8 +205,6 @@ fn every_unit_model_loads_for_the_preview() -> TestResult {
     Ok(())
 }
 
-/// The app reads art for several requests at once from one storage; every
-/// thread must get the same bytes as reading the files one by one.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn game_files_read_the_same_from_several_threads() -> TestResult {
@@ -265,8 +261,6 @@ fn every_field_of_every_unit_displays() -> TestResult {
     Ok(())
 }
 
-/// The field guide describes every unit field and nothing else, and lists
-/// each ordered field under its real category.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn the_field_guide_covers_every_unit_field() -> TestResult {
@@ -298,8 +292,6 @@ fn the_field_guide_covers_every_unit_field() -> TestResult {
     Ok(())
 }
 
-/// The item guide describes every item field and nothing else, and lists each
-/// ordered field under its real category.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn the_item_guide_covers_every_item_field() -> TestResult {
@@ -499,7 +491,6 @@ fn the_doodad_guide_covers_every_doodad_field() -> TestResult {
     Ok(())
 }
 
-/// Items load with their names, values and icons.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn items_load_with_values() -> TestResult {
@@ -646,7 +637,6 @@ fn upgrades_load_with_values_per_level() -> TestResult {
     Ok(())
 }
 
-/// The spell wizard's suggested bases are real game abilities.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn every_suggested_spell_base_exists() -> TestResult {
@@ -706,7 +696,6 @@ fn holy_light_card_data() -> TestResult {
     Ok(())
 }
 
-/// Every placeholder in every ability tooltip resolves to a value.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn ability_tooltip_placeholders_resolve() -> TestResult {
@@ -752,8 +741,6 @@ fn ability_tooltip_placeholders_resolve() -> TestResult {
     Ok(())
 }
 
-/// The ability guide describes every generic ability field (those not tied to
-/// specific abilities) and nothing else, each under its real category.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn the_ability_guide_covers_every_generic_field() -> TestResult {
@@ -794,7 +781,6 @@ fn the_ability_guide_covers_every_generic_field() -> TestResult {
     Ok(())
 }
 
-/// Base values per level, from the data table and from per-level profile lists.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn ability_values_per_level() -> TestResult {
@@ -834,7 +820,6 @@ fn ability_values_per_level() -> TestResult {
     Ok(())
 }
 
-/// Choices keep the other spellings the game accepts, like `invu` for targets.
 #[test]
 #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
 fn choices_know_other_spellings() -> TestResult {

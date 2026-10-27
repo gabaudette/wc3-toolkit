@@ -27,7 +27,6 @@ pub enum ArtMode {
 }
 
 impl ArtMode {
-    /// Suffix of art-specific profile keys, e.g. `sd` in `walk:sd`.
     pub fn key_suffix(self) -> &'static str {
         match self {
             Self::Sd => "sd",
@@ -36,13 +35,11 @@ impl ArtMode {
     }
 }
 
-/// Options for [`GameFiles::open`].
 #[derive(Debug, Clone)]
 pub struct GameOptions {
     /// Balance data set such as `custom_v1` or `melee_v0`, or `None` for the base data.
     /// Maps choose this in their `war3map.w3i`.
     pub balance: Option<String>,
-    /// Locale such as `enus`.
     pub locale: String,
 }
 
@@ -61,7 +58,6 @@ pub struct GameFiles {
 }
 
 impl GameFiles {
-    /// Opens the game install at `game_dir` (the folder containing `Data/`).
     pub fn open(game_dir: &Path, options: GameOptions) -> Result<Self> {
         let storage = casc::Storage::open(game_dir)?;
 
@@ -76,12 +72,10 @@ impl GameFiles {
         &self.storage
     }
 
-    /// Reads a base-layer file, e.g. `units\unitmetadata.slk`.
     pub fn read_base(&self, path: &str) -> Result<Vec<u8>> {
         Ok(self.storage.read(&format!("{ROOT}{path}"))?)
     }
 
-    /// Reads game data from the balance layer when it has the file, else from the base.
     pub fn read_balanced(&self, path: &str) -> Result<Vec<u8>> {
         if let Some(set) = &self.options.balance {
             let layered = format!("{ROOT}_balance\\{set}.w3mod:{path}");
@@ -94,7 +88,6 @@ impl GameFiles {
         self.read_base(path)
     }
 
-    /// Reads text from the locale layer when it has the file, else from the base.
     pub fn read_localized(&self, path: &str) -> Result<Vec<u8>> {
         let layered = format!("{ROOT}_locales\\{}.w3mod:{path}", self.options.locale);
 
@@ -128,7 +121,6 @@ impl GameFiles {
     }
 }
 
-/// Decodes a game text file, dropping a leading byte order mark.
 pub fn decode_text(data: Vec<u8>, path: &str) -> Result<String> {
     let text = String::from_utf8(data).map_err(|e| {
         Error::Parse {

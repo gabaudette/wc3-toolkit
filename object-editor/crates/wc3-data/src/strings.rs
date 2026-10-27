@@ -64,7 +64,6 @@ impl MapStrings {
         let mut entries: Vec<StringEntry> = Vec::new();
         let mut i = 0;
 
-        // The text after the final line ending splits into one empty element.
         let last = lines.len().saturating_sub(1);
 
         while i < last {
@@ -151,14 +150,12 @@ impl MapStrings {
             .map(|e| e.text.as_str())
     }
 
-    /// Resolves a `TRIGSTR_007` reference; other text is returned unchanged.
     pub fn resolve<'a>(&'a self, value: &'a str) -> &'a str {
         reference_id(value)
             .and_then(|id| self.get(id))
             .unwrap_or(value)
     }
 
-    /// Replaces the text of an existing string. Returns `false` if there is none with that ID.
     pub fn set(&mut self, id: u32, text: &str) -> bool {
         let normalized = self.normalize(text);
 
@@ -171,7 +168,6 @@ impl MapStrings {
         }
     }
 
-    /// Removes a string. Returns `false` if there is none with that ID.
     pub fn remove(&mut self, id: u32) -> bool {
         let before = self.entries.len();
 
@@ -179,7 +175,6 @@ impl MapStrings {
         self.entries.len() != before
     }
 
-    /// Adds a string with the next free ID and returns its `TRIGSTR_` reference.
     pub fn add(&mut self, text: &str, comment: Option<&str>) -> String {
         let id = self.entries.iter().map(|e| e.id).max().map_or(1, |m| m + 1);
 
@@ -193,18 +188,15 @@ impl MapStrings {
         reference(id)
     }
 
-    /// Converts any line endings in new text to the file's own.
     fn normalize(&self, text: &str) -> String {
         text.replace(CRLF, LF).replace(LF, self.newline)
     }
 }
 
-/// The ID in a `TRIGSTR_007` reference.
 pub fn reference_id(value: &str) -> Option<u32> {
     value.strip_prefix(REFERENCE_PREFIX)?.parse().ok()
 }
 
-/// The `TRIGSTR_007` reference the World Editor writes for a string ID.
 pub fn reference(id: u32) -> String {
     format!("{REFERENCE_PREFIX}{id:03}")
 }
