@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-27 · Spell wizard walkthrough (AGE-56)
+## 2026-10-27 · Spell wizard walkthrough (PR #54, AGE-56)
 
 - Replaced the manual-copy custom-spell introduction with the finished New spell workflow:
   Storm Bolt → Sunwell Bolt, three levels, its own buff, distinct cast/learn buttons and
