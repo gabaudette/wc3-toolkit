@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-10-27 · Illustrated hero and item tutorials (AGE-25)
+## 2026-10-27 · Illustrated hero and item tutorials (PR #55, AGE-25)
 
 - Expanded the existing hero/item URLs into short walkthroughs with seven real Tinkerbench
   screenshots, full-size links, alt text, descriptive captions and the shared centered,
