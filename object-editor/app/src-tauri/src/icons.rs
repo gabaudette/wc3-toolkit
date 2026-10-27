@@ -1,12 +1,3 @@
-//! Serves art to the window through custom URL schemes. The path after the
-//! host is the file's path as game data or a model names it, URL-encoded. The
-//! open map's file comes first (imported models, textures and icons, which may
-//! also replace game files), then the game's.
-//!
-//! - `wc3icon:` icons as PNG (cached; small and shown in lists)
-//! - `wc3tex:` textures as raw RGBA with a size header (large, for the 3D view)
-//! - `wc3model:` models as MDX bytes, without the chunks previews do not use
-
 use std::sync::Arc;
 use tauri::http::{Request, Response, StatusCode, header};
 use tauri::{Manager, Runtime, UriSchemeContext, UriSchemeResponder};
@@ -27,7 +18,6 @@ const HEX_RADIX: u32 = 16;
 
 type Loader<R> = fn(&tauri::AppHandle<R>, &str) -> Result<Vec<u8>, String>;
 
-/// Loads on a worker thread so decoding never blocks the window.
 fn serve<R: Runtime>(
     ctx: &UriSchemeContext<'_, R>,
     request: &Request<Vec<u8>>,
@@ -71,16 +61,11 @@ pub fn handle_model<R: Runtime>(
     serve(&ctx, &request, responder, BINARY, model_bytes);
 }
 
-/// Where an art request's bytes come from, decided while holding the session
-/// lock; the reading and decoding happen after it is released.
 enum Art {
-    /// The open map's file, and the path it was found at.
     Map(String, Vec<u8>),
-    /// The game's files, read without the session lock.
     Game(Arc<GameFiles>, ArtMode),
 }
 
-/// The open map's file for `path`, or else the game's files to read it from.
 fn art_source(session: &Session, path: &str) -> Art {
     match session.map.as_ref().and_then(|map| map.art(path)) {
         Some((file, data)) => Art::Map(file, data),
@@ -186,7 +171,6 @@ fn response(status: StatusCode, content_type: &str, body: Vec<u8>) -> Response<V
     response
 }
 
-/// Decodes `%XX` escapes; invalid escapes are kept as they are.
 fn percent_decode(text: &str) -> String {
     let bytes = text.as_bytes();
     let mut out = Vec::with_capacity(bytes.len());

@@ -1,5 +1,3 @@
-//! Commands the window calls. Errors come back as messages the UI shows.
-
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -53,7 +51,6 @@ pub(crate) fn view(session: &Session) -> View<'_> {
     }
 }
 
-/// Runs `f` with the abilities as the open map has them, or the game's alone.
 pub(crate) fn with_abilities<T>(session: &Session, f: impl FnOnce(&AbilityView<'_>) -> T) -> T {
     let unchanged;
     let (map, strings) = match &session.map {
@@ -143,7 +140,6 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
 
 #[tauri::command]
 pub fn open_map(state: State<'_, AppState>, path: String) -> Result<MapSummary, String> {
-    // Read before taking the session lock, so a large map does not block it.
     let open = OpenMap::load(PathBuf::from(path)).map_err(|e| e.to_string())?;
 
     state.with(|session| {
@@ -186,7 +182,6 @@ pub fn unit_detail(state: State<'_, AppState>, id: String) -> Result<UnitDetail,
     })
 }
 
-/// The map's abilities first, then the game's.
 #[tauri::command]
 pub fn list_abilities(state: State<'_, AppState>) -> Result<Vec<AbilitySummary>, String> {
     state.with(|session| Ok(with_abilities(session, |abilities| abilities.list())))
@@ -237,7 +232,6 @@ pub fn hotkey_clashes(state: State<'_, AppState>, id: String) -> Result<Vec<Clas
     })
 }
 
-/// Fills `<ID,Column>` placeholders in text being typed, for the live preview.
 #[tauri::command]
 pub fn fill_placeholders(state: State<'_, AppState>, text: String) -> Result<String, String> {
     state.with(|session| {
@@ -252,7 +246,6 @@ pub fn search_units(state: State<'_, AppState>, query: String) -> Result<Vec<Sea
     state.with(|session| Ok(view(session).search(&query)))
 }
 
-/// Applies `change` to the open map and returns the field's new state.
 fn edit_field(
     state: &AppState,
     id: &str,
@@ -315,7 +308,6 @@ pub fn create_unit(state: State<'_, AppState>, base: String) -> Result<UnitItem,
     })
 }
 
-/// Applies `change` to an ability in the open map and returns its new page.
 fn edit_ability(
     state: &AppState,
     id: &str,
@@ -349,7 +341,6 @@ fn edit_ability(
     })
 }
 
-/// Sets an ability field at `level` (0 for fields without levels).
 #[tauri::command]
 pub fn set_ability_field(
     state: State<'_, AppState>,
@@ -394,7 +385,6 @@ pub fn create_ability(state: State<'_, AppState>, base: String) -> Result<Abilit
     })
 }
 
-/// Saves into the open map file through a temporary copy.
 #[tauri::command]
 pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
     state.with(|session| {

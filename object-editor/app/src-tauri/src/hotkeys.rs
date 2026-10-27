@@ -33,7 +33,6 @@ pub const HERO_ABILITY_LIST: &str = "uhab";
 #[derive(Serialize, Debug, Clone, PartialEq)]
 pub struct Clash {
     pub key: char,
-    /// `Command card`, `Learn menu` or `Build menu`.
     pub menu: &'static str,
     pub names: Vec<String>,
 }
@@ -43,13 +42,11 @@ type Slot = Option<(u32, u32)>;
 struct Button {
     key: Option<char>,
     name: String,
-    /// `None` when the slot is not known; such buttons always count as separate.
     slot: Slot,
     /// Trained units and buildings on one slot replace each other (an upgraded
     /// version takes the original's place).
     replaces_on_slot: bool,
     icon: Option<String>,
-    /// The ability behind the button, for abilities.
     ability: Option<FourCC>,
 }
 
@@ -148,12 +145,10 @@ fn codes(raw: Option<String>) -> Vec<FourCC> {
         .collect()
 }
 
-/// A unit's own hotkey: the map's value for map units, else the game's.
 fn unit_hotkey(view: &View<'_>, id: FourCC) -> Option<char> {
     view.raw_by_id(id, "uhot").as_deref().and_then(parse_hotkey)
 }
 
-/// The unit's button slot on its producer's command card.
 fn unit_slot(view: &View<'_>, id: FourCC) -> Slot {
     let coordinate = |field: &str| view.raw_by_id(id, field)?.trim().parse::<u32>().ok();
 
@@ -164,14 +159,12 @@ fn unit_icon(view: &View<'_>, id: FourCC) -> Option<String> {
     view.raw_by_id(id, "uico")
 }
 
-/// Looks up an ability by ID, with the map's changes applied.
 pub type AbilityLookup<'a> = &'a dyn Fn(FourCC) -> Option<AbilityInfo>;
 
 fn ability_name(info: Option<&AbilityInfo>, id: FourCC) -> String {
     info.map_or_else(|| id.to_string(), |a| a.name.clone())
 }
 
-/// The unit's ability lists as the map has them.
 pub fn ability_lists(view: &View<'_>, id: FourCC) -> (Vec<FourCC>, Vec<FourCC>) {
     (
         codes(view.raw_by_id(id, ABILITY_LIST)),
@@ -179,9 +172,6 @@ pub fn ability_lists(view: &View<'_>, id: FourCC) -> (Vec<FourCC>, Vec<FourCC>) 
     )
 }
 
-/// The unit's command card, learn menu and build menu, with `extra` added to
-/// its abilities (to the hero abilities when `extra_learned`) if it is not
-/// there yet.
 fn menus(
     view: &View<'_>,
     abilities: AbilityLookup<'_>,
@@ -285,7 +275,6 @@ pub fn clashes(view: &View<'_>, abilities: AbilityLookup<'_>, id: FourCC) -> Vec
         .collect()
 }
 
-/// A button on a menu preview.
 #[derive(Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct CardButton {
@@ -294,24 +283,17 @@ pub struct CardButton {
     pub hotkey: Option<char>,
     pub x: u32,
     pub y: u32,
-    /// The spell being placed.
     pub spell: bool,
 }
 
-/// How a spell sits on a unit's menus once given: what each menu would show,
-/// and what the player would notice.
 #[derive(Serialize, Debug, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct SpellFit {
-    /// The unit already has the spell.
     pub has: bool,
-    /// The spell goes in the hero's learnable abilities rather than the normal ones.
     pub learned: bool,
     pub card: Vec<CardButton>,
-    /// Empty unless the spell is learned.
     pub learn: Vec<CardButton>,
     pub warnings: Vec<String>,
-    /// Why the spell cannot be given, when it cannot.
     pub blocked: Option<String>,
 }
 
@@ -333,7 +315,6 @@ fn preview(menu: &Menu, spell: FourCC) -> Vec<CardButton> {
         .collect()
 }
 
-/// `A and B`, `A, B and C`.
 fn and_list(names: &[String]) -> String {
     match names {
         [] => String::new(),
@@ -342,7 +323,6 @@ fn and_list(names: &[String]) -> String {
     }
 }
 
-/// "on" a card, "in" a menu.
 fn menu_preposition(menu: &str) -> &'static str {
     if menu.ends_with("menu") { "in" } else { "on" }
 }
@@ -355,7 +335,6 @@ fn capitalized(text: &str) -> String {
     })
 }
 
-/// What the player would notice about the spell's button on one menu.
 fn menu_warnings(menu: &Menu, spell: FourCC, warnings: &mut Vec<String>) {
     let Some(button) = menu.buttons.iter().find(|b| b.ability == Some(spell)) else {
         return;
@@ -515,7 +494,6 @@ mod tests {
         ))
     }
 
-    /// Blizzard's melee units are the reference: their menus have no clashes.
     #[test]
     #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
     fn melee_units_have_no_clashes() -> TestResult {

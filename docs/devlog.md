@@ -4,6 +4,22 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Standards, part 4d: comments only where code can't speak, the app's Rust side (AGE-61)
+
+- `app/src-tauri` goes from 465 comment lines to 90, after reading all 327 blocks. Kept:
+  the `SAFETY` note and the WebKitGTK real-time workaround in `platform.rs` (with its
+  AGE-TECH-005 justification), the reason the art URL schemes allow any origin, the install
+  layout (`.build.info`, Proton prefixes, the user's Maps folder), command-card and
+  learn-menu facts (4×3 spots, five hero spells, Cancel on Esc, trained units replacing
+  each other on a slot, Blizzard creeps sharing slots), Channel's behavior (it does
+  nothing alone, two spells with one order cast each other, its button spots), dialogs
+  shown during map init never appearing, the gold hotkey format, leaderboard rows tied to
+  players, the World Editor's number formatting, buff ID letters, and the real-install
+  test notes.
+- Removed: docs on Tauri commands and serialized fields (the TypeScript types mirror
+  them), the Interface tab's design-file docs, borrow-splitting notes, category-order
+  rationales and the session-state field docs. No code changed.
+
 ## 2026-10-27 · Standards, part 4c: comments only where code can't speak, wc3-map (AGE-61)
 
 - `wc3-map` goes from 456 comment lines to 157, after reading all 260 blocks. Kept: what

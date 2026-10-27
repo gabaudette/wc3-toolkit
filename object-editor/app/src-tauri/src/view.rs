@@ -1,5 +1,3 @@
-//! The game's units with the open map's changes applied, shaped for the UI.
-
 use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
@@ -12,24 +10,18 @@ use wc3_map::FourCC;
 use wc3_map::plain::PlainObjects;
 use wc3_map::units::{MapUnit, MapUnits};
 
-/// Category order on a unit page: what people edit most comes first.
 const CATEGORY_ORDER: &[&str] = &[
     "stats", "combat", "abil", "text", "art", "move", "path", "sound", "tech", "editor", "data",
 ];
 const ENUM_LIST_SUFFIX: &str = "List";
 const TEXT_CATEGORY: &str = "text";
-/// Primary attribute codes and the fields holding each attribute.
 const ATTRIBUTES: [(&str, &str); 3] = [("STR", "ustr"), ("AGI", "uagi"), ("INT", "uint")];
-/// Text fields shown as multi-line boxes: unit and ability tooltips.
 const LONG_TEXT_FIELDS: &[&str] = &["utub", "upro", "ides", "aub1", "auu1", "arut"];
 const TRUE: &str = "1";
-/// The field each list row's filter chips read: race for units and buffs,
-/// class for items, category for destructables. The first one the database has wins.
 const FILTER_FIELDS: &[&str] = &["urac", "icla", "frac", "bcat"];
 /// The icon field: units, items, buffs. Destructables have none and show their category's.
 const ICON_FIELDS: &[&str] = &["uico", "iico", "fart"];
 const CATEGORY_FIELD: &str = "bcat";
-/// The stats a page shows at the top, by object kind (units have their own).
 const SUMMARIES: &[(&str, &[(&str, &str)])] = &[
     (
         "item",
@@ -62,7 +54,6 @@ pub struct UnitItem {
     pub name: String,
     pub kind: &'static str,
     pub race: String,
-    /// `map` (custom or changed by the map), `melee`, `campaign`, `special` or `hidden`.
     pub group: &'static str,
     pub custom: bool,
     pub changed_fields: usize,
@@ -82,7 +73,6 @@ pub struct UnitDetail {
 #[derive(Serialize)]
 pub struct DamageBonus {
     pub amount: f64,
-    /// The primary attribute's name, e.g. `Strength`.
     pub attribute: String,
 }
 
@@ -105,32 +95,20 @@ pub struct Field {
     pub id: String,
     pub name: String,
     pub label: String,
-    /// Formatted like the World Editor shows it.
     pub display: String,
-    /// The stored value, as typed into an editor.
     pub raw: String,
     pub modified: bool,
-    /// The base object's value, formatted like `display`: the game object a
-    /// custom one copies, or the game's own value for a changed original.
     pub base: String,
-    /// The base object's stored value, as `raw` is: which flags differ from it.
     pub base_raw: String,
     pub value_type: String,
-    /// `bool`, `number`, `text`, `longText`, `select`, `flags` (bit flags),
-    /// `flagList` (a list of choices, like targets), `codes` or `abilities`.
     pub control: &'static str,
     pub options: Vec<Choice>,
     pub min: Option<f64>,
     pub max: Option<f64>,
     pub integer: bool,
-    /// What the field does, from the field guide.
     pub description: Option<String>,
-    /// Rarely needed; the page folds these into an "Advanced" group.
     pub advanced: bool,
-    /// The description is not confirmed in game.
     pub unverified: bool,
-    /// Text the game shows to players (names, tooltips): the editor previews
-    /// it with colors, line breaks and placeholders filled in.
     pub preview: bool,
 }
 
@@ -138,20 +116,16 @@ pub struct Field {
 pub struct Choice {
     pub value: String,
     pub label: String,
-    /// Other spellings the game accepts, e.g. `invu` for `invulnerable`.
     pub aliases: Vec<String>,
 }
 
 #[derive(Serialize)]
 pub struct SearchHit {
     pub id: String,
-    /// Why it matched, e.g. `Hit Points Maximum (Base) = 1000`; empty for name or code matches.
     pub reason: String,
 }
 
-/// A map's changes to one kind of plain object (no levels): units, or items.
 pub trait PlainChanges {
-    /// The objects the map adds or changes.
     fn changed(&self) -> Vec<MapUnit>;
     fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC>;
     fn raw_value(
@@ -193,7 +167,6 @@ impl PlainChanges for MapUnits {
     }
 }
 
-/// A map's items with the string table their text lives in.
 pub struct PlainObjectChanges<'a> {
     pub objects: &'a PlainObjects,
     pub strings: &'a MapStrings,
@@ -236,8 +209,6 @@ impl PlainChanges for PlainObjectChanges<'_> {
     }
 }
 
-/// Read-only view of the game data with an optional map on top. Units by
-/// default; items, buffs and destructables with [`PlainObjectChanges`] and their database.
 pub struct View<'a, M = MapUnits> {
     pub db: &'a UnitDatabase,
     pub guide: &'a FieldGuide,
@@ -246,18 +217,14 @@ pub struct View<'a, M = MapUnits> {
 }
 
 impl<M: PlainChanges> View<'_, M> {
-    /// The map's units first, then every game unit, each once.
     pub fn ids(&self) -> Vec<FourCC> {
         self.ids_after(&self.map_units())
     }
 
-    /// The units the map adds or changes. Rebuilt on every call, so callers
-    /// going through many units compute it once.
     fn map_units(&self) -> Vec<MapUnit> {
         self.map.map(M::changed).unwrap_or_default()
     }
 
-    /// The given map units first, then every game unit, each once.
     fn ids_after(&self, map_units: &[MapUnit]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_units.iter().map(|u| u.id).collect();
         let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
@@ -316,7 +283,6 @@ impl<M: PlainChanges> View<'_, M> {
         self.item_with(id, map_unit.as_ref())
     }
 
-    /// The list row for a unit, given its entry in the map's units if it has one.
     fn item_with(&self, id: FourCC, map_unit: Option<&MapUnit>) -> Option<UnitItem> {
         let base = self.base(id)?;
         let race = FILTER_FIELDS
@@ -341,7 +307,6 @@ impl<M: PlainChanges> View<'_, M> {
         })
     }
 
-    /// The editor's icon for the object's category (destructables).
     fn category_icon(&self, id: FourCC) -> Option<String> {
         let field = self.db.field(CATEGORY_FIELD)?;
         let category = self.raw_by_id(id, CATEGORY_FIELD)?;
@@ -413,7 +378,6 @@ impl<M: PlainChanges> View<'_, M> {
                 .iter()
                 .position(|c| *c == f.category)
                 .unwrap_or(CATEGORY_ORDER.len());
-            // The guide's important fields first, then alphabetical.
             let rank = self.guide.rank(&f.id);
 
             (order, rank.is_none(), rank, self.db.field_name(f))
@@ -459,8 +423,6 @@ impl<M: PlainChanges> View<'_, M> {
             .unwrap_or_default()
     }
 
-    /// The numbers people check first. Heroes add their primary attribute to damage.
-    /// A hero's primary attribute value, which every attack adds as damage.
     fn damage_bonus(&self, id: FourCC) -> Option<DamageBonus> {
         let primary = self.raw_by_id(id, "upra")?;
         let field = ATTRIBUTES
@@ -531,8 +493,6 @@ impl<M: PlainChanges> View<'_, M> {
         stats
     }
 
-    /// Units whose name or raw code contains the query, then units with a field
-    /// whose shown value equals it (e.g. `1000`, `Metal`).
     pub fn search(&self, query: &str) -> Vec<SearchHit> {
         let query = query.trim().to_lowercase();
 
@@ -581,7 +541,6 @@ impl<M: PlainChanges> View<'_, M> {
     }
 }
 
-/// A field's names and value, as the page shows them.
 pub struct FieldValue {
     pub name: String,
     pub label: String,
@@ -589,7 +548,6 @@ pub struct FieldValue {
     pub raw: String,
     pub modified: bool,
     pub base: String,
-    /// The base object's stored value, to compare with `raw` piece by piece.
     pub base_raw: String,
 }
 
@@ -603,8 +561,6 @@ pub fn base_text(db: &UnitDatabase, field: &FieldMeta, raw: Option<String>) -> S
     }
 }
 
-/// A field row for any object kind. Choices come from the unit database,
-/// which holds every enumerated type the editor knows.
 pub fn build_field(
     db: &UnitDatabase,
     field: &FieldMeta,
@@ -843,7 +799,6 @@ mod tests {
             map: Some(&units),
             mode: ArtMode::Sd,
         };
-        // A refresh used to take seconds here: every row rebuilt the map's unit list.
         let items = view.items();
 
         let ids: Vec<String> = view.ids().iter().map(ToString::to_string).collect();

@@ -1,8 +1,3 @@
-//! The spell wizard: spell kinds with their suggested base abilities, the
-//! icons to pick from, giving the spell to units, and removing a spell the
-//! wizard created when it is cancelled. The spell itself is an ordinary custom
-//! ability, created and edited with the ability commands.
-
 use serde::Serialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -69,31 +64,23 @@ pub struct SpellKind {
 #[serde(rename_all = "camelCase")]
 pub struct SpellBase {
     pub card: AbilityCard,
-    /// What it brings, and when to pick it over the others.
     pub why: String,
 }
 
-/// An icon the spell wizard offers for a spell's button.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IconChoice {
-    /// As data files name it, e.g. `ReplaceableTextures\CommandButtons\BTNStormBolt.blp`.
     pub path: String,
-    /// Its file name without folders or extension, e.g. `BTNStormBolt`, for searching.
     pub name: String,
-    /// Imported into the open map rather than from the game.
     pub from_map: bool,
 }
 
-/// The file name of a path without its folders and extension.
 fn file_stem(path: &str) -> &str {
     let name = path.rsplit(['\\', '/']).next().unwrap_or(path);
 
     name.rsplit_once('.').map_or(name, |(stem, _)| stem)
 }
 
-/// Every icon the game's units, abilities, items and buffs use, and every
-/// image the open map imports (first), each once.
 fn icon_choices(session: &Session) -> Vec<IconChoice> {
     let mut seen = std::collections::HashSet::new();
     let mut choices = Vec::new();
@@ -144,13 +131,11 @@ fn icon_choices(session: &Session) -> Vec<IconChoice> {
     choices
 }
 
-/// Icons for the spell wizard's button step.
 #[tauri::command]
 pub fn spell_icons(state: State<'_, AppState>) -> Result<Vec<IconChoice>, String> {
     state.with(|session| Ok(icon_choices(session)))
 }
 
-/// The wizard's first step: what a spell can do, each with its suggested bases.
 #[tauri::command]
 pub fn spell_kinds(state: State<'_, AppState>) -> Result<Vec<SpellKind>, String> {
     let kinds = kinds().map_err(|e| e.to_string())?;
@@ -177,7 +162,6 @@ pub fn spell_kinds(state: State<'_, AppState>) -> Result<Vec<SpellKind>, String>
     })
 }
 
-/// How `spell` sits, or would sit, on `unit`'s command card and learn menu.
 fn fit(session: &Session, spell: FourCC, unit: FourCC) -> Result<SpellFit, String> {
     let view = view(session);
     let item = view.item(unit).ok_or(format!("Unknown unit {unit}."))?;
@@ -193,7 +177,6 @@ fn fit(session: &Session, spell: FourCC, unit: FourCC) -> Result<SpellFit, Strin
     }))
 }
 
-/// Replaces one of a unit's ability lists in the open map.
 fn set_list(
     session: &mut Session,
     unit: FourCC,
@@ -212,7 +195,6 @@ fn set_list(
         .map_err(|e| e.to_string())
 }
 
-/// Takes `spell` out of both of the unit's ability lists.
 fn take(session: &mut Session, spell: FourCC, unit: FourCC) -> Result<(), String> {
     let (normal, learned) = hotkeys::ability_lists(&view(session), unit);
 
@@ -227,7 +209,6 @@ fn take(session: &mut Session, spell: FourCC, unit: FourCC) -> Result<(), String
     Ok(())
 }
 
-/// The units, heroes and buildings that have `spell`, the map's first.
 fn holders(session: &Session, spell: FourCC) -> Vec<FourCC> {
     let view = view(session);
 
@@ -264,8 +245,6 @@ pub fn spell_fit(
     state.with(|session| fit(session, spell, unit))
 }
 
-/// Adds the spell to the unit's learnable hero abilities or its normal ones,
-/// as `spell_fit` says.
 #[tauri::command]
 pub fn give_spell(
     state: State<'_, AppState>,
@@ -319,7 +298,6 @@ fn template(id: &str) -> Result<SpellTemplate, String> {
         .ok_or(format!("No spell template {id}."))
 }
 
-/// Sets an ability field at every level of the spell, or once when it has none.
 fn set_ability(
     session: &mut Session,
     id: FourCC,
@@ -350,7 +328,6 @@ fn set_ability(
     Ok(())
 }
 
-/// The first base order no other Channel copy in the map uses.
 fn free_order(session: &Session, spell: FourCC) -> String {
     let Some(map) = &session.map else {
         return CHANNEL_ORDERS[0].to_owned();
@@ -379,14 +356,11 @@ fn free_order(session: &Session, spell: FourCC) -> String {
         .to_string()
 }
 
-/// The triggered spells the wizard offers.
 #[tauri::command]
 pub fn spell_templates() -> Result<Vec<SpellTemplate>, String> {
     templates().map_err(|e| e.to_string())
 }
 
-/// Creates a triggered spell: a copy of Channel set up as a hero spell for the
-/// template's target type, with its name, button, costs and tooltips.
 #[tauri::command]
 pub fn create_triggered_spell(
     state: State<'_, AppState>,
@@ -465,7 +439,6 @@ pub fn create_triggered_spell(
     })
 }
 
-/// Writes the template's tooltip at every level with these values.
 fn set_tooltips(
     session: &mut Session,
     spell: FourCC,
@@ -497,7 +470,6 @@ fn set_tooltips(
     Ok(())
 }
 
-/// Updates the spell's tooltips for new values; the module gets them when written.
 #[tauri::command]
 pub fn set_triggered_values(
     state: State<'_, AppState>,
@@ -515,7 +487,6 @@ pub fn set_triggered_values(
     })
 }
 
-/// The spell's Lua module, checked as Lua 5.3.
 fn module_source(
     session: &Session,
     spell: FourCC,
@@ -532,7 +503,6 @@ fn module_source(
     Ok(source)
 }
 
-/// Game text without its color codes: `|cffff0000Fire|r` → `Fire`.
 fn without_color_codes(text: &str) -> String {
     const COLOR_LENGTH: usize = 10;
 
@@ -562,7 +532,6 @@ fn without_color_codes(text: &str) -> String {
     plain
 }
 
-/// `Knockback Wave` (A001) → `knockback_wave_a001.lua`.
 fn module_file_name(name: &str, spell: FourCC) -> String {
     let mut slug = String::new();
 
@@ -584,7 +553,6 @@ fn module_file_name(name: &str, spell: FourCC) -> String {
     }
 }
 
-/// The module as it would be written, for the wizard to show.
 #[tauri::command]
 pub fn triggered_spell_lua(
     state: State<'_, AppState>,
@@ -598,7 +566,6 @@ pub fn triggered_spell_lua(
     state.with(|session| module_source(session, spell, &template, &values))
 }
 
-/// Writes the spell's module into `dir` (created if needed) and returns its path.
 #[tauri::command]
 pub fn write_triggered_spell_lua(
     state: State<'_, AppState>,
@@ -625,7 +592,6 @@ pub fn write_triggered_spell_lua(
     })
 }
 
-/// Where the wizard suggests putting Lua modules: a folder next to the map.
 #[tauri::command]
 pub fn default_lua_folder(state: State<'_, AppState>) -> Result<Option<String>, String> {
     state.with(|session| {
@@ -647,8 +613,6 @@ pub struct TestCopy {
     pub modules: Vec<String>,
 }
 
-/// Builds the `[DEV]` copy of the saved map with the modules in `dir`, next
-/// to the map, as `wc3map <map> lua <dir>` does.
 #[tauri::command]
 pub fn build_test_copy(state: State<'_, AppState>, dir: String) -> Result<TestCopy, String> {
     state.with(|session| {
@@ -671,9 +635,6 @@ pub fn build_test_copy(state: State<'_, AppState>, dir: String) -> Result<TestCo
     })
 }
 
-/// Removes a custom ability the wizard created, when the wizard is cancelled
-/// or goes back to pick another base, and takes it from the units it was
-/// given to. Game abilities are never removed.
 #[tauri::command]
 pub fn discard_spell(state: State<'_, AppState>, id: String) -> Result<(), String> {
     let id = fourcc(&id)?;

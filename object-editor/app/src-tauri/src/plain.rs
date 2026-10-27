@@ -1,8 +1,3 @@
-//! Commands for the tabs of objects without levels other than units: items,
-//! buffs and destructables. They take the unit page's shapes: list rows are
-//! `UnitItem`s and pages `UnitDetail`s, built by the same [`View`] over the
-//! catalog's database and the map's objects.
-
 use serde::Deserialize;
 use tauri::State;
 use wc3_data::guide::FieldGuide;
@@ -16,7 +11,6 @@ use crate::commands::fourcc;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
 use crate::view::{Field, PlainObjectChanges, SearchHit, UnitDetail, UnitItem, View};
 
-/// Which tab a command is for.
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Catalog {
@@ -42,8 +36,6 @@ impl Catalog {
         }
     }
 
-    /// The catalog's database, from the session's fields one by one, so it can
-    /// be used while the open map is borrowed mutably.
     fn database<'a>(
         self,
         items: &'a UnitDatabase,
@@ -66,7 +58,6 @@ impl Catalog {
     }
 }
 
-/// Runs `f` with a view of the catalog, with the open map's changes if there is one.
 fn with_view<T>(
     session: &Session,
     catalog: Catalog,
@@ -87,7 +78,6 @@ fn with_view<T>(
     f(&view)
 }
 
-/// The map's objects first, then the game's.
 #[tauri::command]
 pub fn list_plain(state: State<'_, AppState>, catalog: Catalog) -> Result<Vec<UnitItem>, String> {
     state.with(|session| Ok(with_view(session, catalog, |view| view.items())))
@@ -107,8 +97,6 @@ pub fn plain_detail(
     })
 }
 
-/// Objects whose name or code contains the query, then objects with a field
-/// whose shown value equals it.
 #[tauri::command]
 pub fn search_plain(
     state: State<'_, AppState>,
@@ -118,7 +106,6 @@ pub fn search_plain(
     state.with(|session| Ok(with_view(session, catalog, |view| view.search(&query))))
 }
 
-/// Applies `change` to the open map's objects and returns the field's new state.
 fn edit_field(
     state: &AppState,
     catalog: Catalog,
@@ -140,8 +127,6 @@ fn edit_field(
             .field(field_id)
             .ok_or(format!("Unknown {} field {field_id}.", catalog.singular()))?;
         let map = session.map.as_mut().ok_or(NO_MAP)?;
-        // The catalog's objects and the units' string table are separate
-        // fields of the map, so both can be borrowed mutably at once.
         let OpenMap {
             units,
             items,
@@ -200,7 +185,6 @@ pub fn reset_plain_field(
     )
 }
 
-/// A new custom object copying `base`, numbered like the World Editor (`I000`, `B000`, ...).
 #[tauri::command]
 pub fn create_plain(
     state: State<'_, AppState>,
@@ -230,8 +214,6 @@ pub fn create_plain(
     })
 }
 
-/// Removes a custom object, such as a buff the spell wizard created when the
-/// wizard is cancelled. Game objects are never removed.
 #[tauri::command]
 pub fn discard_plain(
     state: State<'_, AppState>,

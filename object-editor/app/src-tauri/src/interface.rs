@@ -1,9 +1,3 @@
-//! The Interface tab: in-game UI designed visually (dialogs, multiboards,
-//! leaderboards and timer windows), kept in
-//! `<map> UI.json` next to the map, and the Lua that builds it in game. The
-//! modules go in the map's Lua folder with the triggered spells, for the
-//! harness's `[DEV]` copy.
-
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
@@ -28,10 +22,7 @@ use multiboard::multiboard_lua;
 pub use timer::TimerWindowDesign;
 use timer::timer_lua;
 
-/// Bumped when the file changes in a way older versions cannot read.
 pub const FORMAT_VERSION: u32 = 1;
-/// The first line of every module this tab writes: how it finds its own
-/// files again, to replace them, and to remove those of deleted designs.
 const MODULE_MARKER: &str = "-- Made in Tinkerbench's Interface tab";
 const MODULE_PREFIX: &str = "ui_";
 /// Seconds after the game starts before dialogs shown at start appear: shown
@@ -88,7 +79,6 @@ impl Design {
         *old_name = name;
     }
 
-    /// What the tab calls this kind of design.
     fn kind_label(&self) -> &'static str {
         match self {
             Design::Dialog(_) => "Dialog",
@@ -99,21 +89,15 @@ impl Design {
     }
 }
 
-/// A dialog: a message and a column of buttons, shown to chosen players.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct DialogDesign {
-    /// Stable, for references between designs; never shown.
     pub id: String,
-    /// The name in the tab; the Lua name (`UI.ChoosePath`) comes from it.
     pub name: String,
-    /// The message at the top, as plain text (color codes still work).
     pub title: String,
-    /// The message's color as `RRGGBB`; the game's own gold when `None`.
     #[serde(default)]
     pub title_color: Option<String>,
     pub buttons: Vec<DialogButton>,
-    /// Shown to every player shortly after the game starts.
     pub show_at_start: bool,
 }
 
@@ -123,9 +107,7 @@ pub struct DialogButton {
     #[serde(default)]
     pub id: String,
     pub text: String,
-    /// One letter or digit, or empty for none.
     pub hotkey: String,
-    /// The hotkey's letter in the text turns gold, as in the game's own dialogs.
     #[serde(default = "yes")]
     pub highlight_hotkey: bool,
     pub action: ButtonAction,
@@ -148,7 +130,6 @@ fn color_code(color: &str) -> Result<String, String> {
     }
 }
 
-/// The message as the game gets it: in its color, when it has one.
 pub fn title_text(dialog: &DialogDesign) -> Result<String, String> {
     match &dialog.title_color {
         Some(color) => Ok(format!("{}{}|r", color_code(color)?, dialog.title)),
@@ -186,23 +167,17 @@ pub fn button_text(button: &DialogButton) -> String {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ButtonAction {
-    /// Nothing more: the dialog is already hidden.
     Close,
-    /// Shows another dialog to the player who clicked.
     ShowDialog { dialog: String },
-    /// Calls a global Lua function with the player who clicked, if the map
-    /// defines one: `function OnHardMode(player) ... end`.
     RunFunction { function: String },
 }
 
-/// `test.w3m` → `test UI.json`, beside it.
 pub fn file_for(map: &Path) -> PathBuf {
     let stem = map.file_stem().unwrap_or_default().to_string_lossy();
 
     map.with_file_name(format!("{stem} UI.json"))
 }
 
-/// The map's designs; none when it has no file yet.
 pub fn load(map: &Path) -> Result<Vec<Design>, String> {
     let path = file_for(map);
     let text = match std::fs::read_to_string(&path) {
@@ -288,7 +263,6 @@ fn is_identifier(name: &str) -> bool {
         && !LUA_KEYWORDS.contains(&name)
 }
 
-/// `Choose your path!` → `ChooseYourPath`; `Design` when nothing is left.
 fn pascal_case(name: &str) -> String {
     let mut out = String::new();
 
@@ -308,7 +282,6 @@ fn pascal_case(name: &str) -> String {
     out
 }
 
-/// Each design's Lua name, by ID: from its name, numbered when two match.
 pub fn lua_names(designs: &[Design]) -> HashMap<String, String> {
     let mut taken = HashSet::new();
 
@@ -329,7 +302,6 @@ pub fn lua_names(designs: &[Design]) -> HashMap<String, String> {
         .collect()
 }
 
-/// A Lua string literal for any text.
 fn lua_string(text: &str) -> String {
     let mut out = String::from("\"");
 
@@ -359,7 +331,6 @@ fn hotkey_code(hotkey: &str) -> Result<u32, String> {
     }
 }
 
-/// The Lua module for one dialog, checked as Lua 5.3.
 pub fn dialog_lua(
     dialog: &DialogDesign,
     names: &HashMap<String, String>,
@@ -479,7 +450,6 @@ end
     Ok(code)
 }
 
-/// Text safe inside a `--` comment: one line.
 fn comment_text(text: &str) -> String {
     format!(
         "\"{}\"",
@@ -493,7 +463,6 @@ fn module_file(lua_name: &str) -> String {
     format!("{MODULE_PREFIX}{}.lua", lua_name.to_ascii_lowercase())
 }
 
-/// Every design's module by file name.
 fn modules(designs: &[Design], source: &str) -> Result<Vec<(String, String)>, String> {
     let names = lua_names(designs);
 
@@ -524,8 +493,6 @@ fn modules(designs: &[Design], source: &str) -> Result<Vec<(String, String)>, St
         .collect()
 }
 
-/// Writes every design's module into `dir` and removes modules this tab
-/// wrote for designs that are gone. Returns the files written.
 pub fn write_modules(dir: &Path, designs: &[Design], source: &str) -> Result<Vec<String>, String> {
     let modules = modules(designs, source)?;
     std::fs::create_dir_all(dir).map_err(|e| format!("Cannot create {}: {e}", dir.display()))?;
@@ -571,7 +538,6 @@ pub fn ui_designs(state: State<'_, AppState>) -> Result<Vec<Design>, String> {
     state.with(|session| Ok(session.map.as_ref().ok_or(NO_MAP)?.ui.clone()))
 }
 
-/// Replaces the map's designs; they are written with the map on Save.
 #[tauri::command]
 pub fn set_ui_designs(state: State<'_, AppState>, designs: Vec<Design>) -> Result<(), String> {
     state.with(|session| {
@@ -580,7 +546,6 @@ pub fn set_ui_designs(state: State<'_, AppState>, designs: Vec<Design>) -> Resul
     })
 }
 
-/// One design's module, for the tab to show.
 #[tauri::command]
 pub fn ui_lua(state: State<'_, AppState>, id: String) -> Result<String, String> {
     state.with(|session| {
@@ -598,7 +563,6 @@ pub fn ui_lua(state: State<'_, AppState>, id: String) -> Result<String, String> 
     })
 }
 
-/// Writes every design's module into the Lua folder; see [`write_modules`].
 #[tauri::command]
 pub fn write_ui_lua(state: State<'_, AppState>, dir: String) -> Result<Vec<String>, String> {
     state.with(|session| {
@@ -608,17 +572,13 @@ pub fn write_ui_lua(state: State<'_, AppState>, dir: String) -> Result<Vec<Strin
     })
 }
 
-/// A design moving between maps, as the export and import windows list it.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListedDesign {
     pub name: String,
     pub kind: &'static str,
-    /// Its name in Lua once in the map: `Scoreboard2` for `UI.Scoreboard2`.
     pub lua_name: String,
-    /// Brought along because this dialog's button shows it.
     pub shown_by: Option<String>,
-    /// Its name in the file, when the map already had a design by that name.
     pub renamed_from: Option<String>,
 }
 
@@ -626,13 +586,10 @@ pub struct ListedDesign {
 #[serde(rename_all = "camelCase")]
 pub struct DesignTransfer {
     pub designs: Vec<ListedDesign>,
-    /// Files imported into the source map that the designs use.
     pub files: Vec<TransferFile>,
-    /// Lua functions the designs call, which the map's own code defines.
     pub needs: Vec<String>,
 }
 
-/// `names` holds the Lua names of the map the designs end up in.
 fn listed_designs(listed: &[Listed], names: &HashMap<String, String>) -> Vec<ListedDesign> {
     listed
         .iter()
@@ -646,7 +603,6 @@ fn listed_designs(listed: &[Listed], names: &HashMap<String, String>) -> Vec<Lis
         .collect()
 }
 
-/// What exporting the chosen designs would put in a design file.
 #[tauri::command]
 pub fn ui_export_preview(
     state: State<'_, AppState>,
@@ -664,8 +620,6 @@ pub fn ui_export_preview(
     })
 }
 
-/// Saves the chosen designs, the dialogs they show and the map's files they
-/// use as a design file (`.w3ui`).
 #[tauri::command]
 pub fn save_ui_file(
     state: State<'_, AppState>,
@@ -687,7 +641,6 @@ fn read_design_file(path: &str) -> Result<(DesignFile, Vec<ImportedFile>), Strin
     Ok((file, files))
 }
 
-/// What importing a design file would add to the open map, without changing it.
 #[tauri::command]
 pub fn ui_import_preview(
     state: State<'_, AppState>,
@@ -714,9 +667,6 @@ pub fn ui_import_preview(
     })
 }
 
-/// Adds a design file's designs, and the files the map does not have yet, to
-/// the open map. Nothing is written until the map is saved. Returns the
-/// map's designs.
 #[tauri::command]
 pub fn import_ui_file(state: State<'_, AppState>, path: String) -> Result<Vec<Design>, String> {
     let (file, files) = read_design_file(&path)?;

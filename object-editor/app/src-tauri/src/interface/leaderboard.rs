@@ -1,8 +1,3 @@
-//! Leaderboards: a titled list of names and numbers in the top right corner,
-//! one row per playing player and up to four rows of the map's own, kept
-//! sorted by value if asked. The Lua changes a row's value by player or name
-//! (`UI.Kills.AddValue(player, 1)`).
-
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
@@ -20,19 +15,14 @@ pub struct LeaderboardDesign {
     pub id: String,
     pub name: String,
     pub title: String,
-    /// The title's color as `RRGGBB`; the game's own when `None`.
     #[serde(default)]
     pub title_color: Option<String>,
-    /// A row for every playing player, with their name in their color.
     pub players: bool,
-    /// What the players' rows start at.
     #[serde(default)]
     pub player_value: i32,
-    /// Rows of the map's own, such as teams.
     #[serde(default)]
     pub labels: Vec<LeaderboardLabel>,
     pub sort: LeaderboardSort,
-    /// Shown shortly after the game starts.
     pub show_at_start: bool,
 }
 
@@ -41,9 +31,7 @@ pub struct LeaderboardDesign {
 pub struct LeaderboardLabel {
     #[serde(default)]
     pub id: String,
-    /// Shown, and how the Lua names the row: `SetValue("Alliance", 3)`.
     pub name: String,
-    /// `RRGGBB`; white when `None`.
     #[serde(default)]
     pub color: Option<String>,
     pub value: i32,
@@ -52,7 +40,6 @@ pub struct LeaderboardLabel {
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub enum LeaderboardSort {
-    /// In the order the rows were made: players, then labels.
     None,
     HighFirst,
     LowFirst,
@@ -94,7 +81,6 @@ fn check(board: &LeaderboardDesign) -> Result<(), String> {
     Ok(())
 }
 
-/// The Lua module for one leaderboard, checked as Lua 5.3.
 pub fn leaderboard_lua(
     board: &LeaderboardDesign,
     names: &HashMap<String, String>,
