@@ -6,6 +6,16 @@ use wc3_data::objects::Value;
 use crate::{Error, Result};
 
 const TEXT_CATEGORY: &str = "text";
+/// Lists of object IDs. Their metadata maximum is how many the list holds
+/// (5 hero abilities, 4 item abilities, 12 items sold), as the World Editor
+/// enforces; on text lists it is a length instead.
+const ID_LIST_TYPES: &[&str] = &[
+    "abilityList",
+    "heroAbilityList",
+    "itemList",
+    "unitList",
+    "upgradeList",
+];
 
 /// Text the game shows to players (names, tooltips), which maps keep in
 /// their string table.
@@ -15,9 +25,23 @@ pub(crate) fn is_translatable(field: &FieldMeta) -> bool {
 
 /// Parses text as typed in an editor: numbers for numeric fields (bit flags
 /// and numbered choices included), `true`/`false` or `1`/`0` for booleans,
-/// raw codes for lists and choices.
+/// raw codes for lists and choices. Lists of IDs hold at most the
+/// metadata's maximum.
 pub(crate) fn parse_value(field: &FieldMeta, text: &str) -> Result<Value> {
     let text = text.trim();
+    if let Some(max) = list_limit(field) {
+        let count = text
+            .split(',')
+            .filter(|code| !code.trim().is_empty())
+            .count();
+        if count > max {
+            return Err(Error::Invalid(format!(
+                "{} holds at most {max}, got {count}",
+                field.id
+            )));
+        }
+    }
+
     let invalid = || {
         Error::Invalid(format!(
             "{} expects a {}, got {text:?}",
@@ -43,6 +67,15 @@ pub(crate) fn parse_value(field: &FieldMeta, text: &str) -> Result<Value> {
         }
         _ => Value::String(text.to_owned()),
     })
+}
+
+/// How many IDs a list field holds, when the game limits it.
+fn list_limit(field: &FieldMeta) -> Option<usize> {
+    if !ID_LIST_TYPES.contains(&field.value_type.as_str()) {
+        return None;
+    }
+
+    field.max.as_deref()?.trim().parse().ok()
 }
 
 #[cfg(test)]
@@ -98,5 +131,19 @@ mod tests {
         );
         assert!(parse_value(&field("unreal"), "-1").is_err());
         assert!(parse_value(&field("stackFlags"), "damage").is_err());
+    }
+
+    #[test]
+    fn id_lists_hold_at_most_the_metadata_maximum() {
+        let mut heroes = field("heroAbilityList");
+        heroes.max = Some("5".to_owned());
+        assert!(parse_value(&heroes, "AHhb,AHds,AHre,AHad,AHtb").is_ok());
+        let err = parse_value(&heroes, "AHhb,AHds,AHre,AHad,AHtb,AHbz").unwrap_err();
+        assert!(err.to_string().contains("at most 5"), "{err}");
+
+        // On text lists the maximum is a length, not a count.
+        let mut names = field("stringList");
+        names.max = Some("1".to_owned());
+        assert!(parse_value(&names, "Arthas,Uther").is_ok());
     }
 }
