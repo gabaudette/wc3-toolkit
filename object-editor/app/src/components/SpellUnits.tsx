@@ -252,8 +252,13 @@ function UnitFit({ unit, fit, busy, onToggle }: UnitFitProps) {
           {warning}
         </p>
       ))}
+      {fit.blocked && (
+        <p role="status" className="text-sm text-danger">
+          {fit.blocked}
+        </p>
+      )}
       <div>
-        <Button primary={!fit.has} onPress={onToggle} disabled={busy}>
+        <Button primary={!fit.has} onPress={onToggle} disabled={busy || fit.blocked !== null}>
           {action}
         </Button>
       </div>

@@ -21,6 +21,9 @@ const NO_ATTACKS: &str = "0";
 const NO_MOVEMENT: &str = "0";
 /// Spots on a command card or learn menu: 4 columns, 3 rows.
 const SPOTS: usize = 12;
+/// Hero spells a hero can learn: the game leaves out any after the fifth,
+/// and the World Editor lets no more in.
+pub const MAX_HERO_SPELLS: usize = 5;
 /// The learn menu's own button, bottom right.
 const CANCEL: &str = "Cancel";
 /// A unit's normal abilities and a hero's learnable ones.
@@ -297,6 +300,8 @@ pub struct SpellFit {
     /// Empty unless the spell is learned.
     pub learn: Vec<CardButton>,
     pub warnings: Vec<String>,
+    /// Why the spell cannot be given, when it cannot.
+    pub blocked: Option<String>,
 }
 
 fn preview(menu: &Menu, spell: FourCC) -> Vec<CardButton> {
@@ -410,8 +415,30 @@ pub fn spell_fit(
         hero_spell && is_hero
     };
 
+    let names = |list: &[FourCC]| -> Vec<String> {
+        list.iter()
+            .map(|a| ability_name(abilities(*a).as_ref(), *a))
+            .collect()
+    };
+    let blocked = (!has && learned && hero_abilities.len() >= MAX_HERO_SPELLS).then(|| {
+        format!(
+            "Heroes learn at most {MAX_HERO_SPELLS} spells, and this one already has {}: {}. \
+             The game would leave this spell out; take one of those away first.",
+            hero_abilities.len(),
+            and_list(&names(&hero_abilities))
+        )
+    });
+
     let [card, learn, _] = menus(view, abilities, unit, Some((spell, learned)));
     let mut warnings = Vec::new();
+    let place = hero_abilities.iter().position(|a| *a == spell);
+    if let Some(index) = place.filter(|i| *i >= MAX_HERO_SPELLS) {
+        warnings.push(format!(
+            "The game leaves this spell out: it is the hero's spell number {}, and heroes learn \
+             at most {MAX_HERO_SPELLS}.",
+            index + 1
+        ));
+    }
     if hero_spell && !learned {
         warnings.push(
             "Not a hero, so the spell is a normal ability at level 1; only heroes learn levels."
@@ -433,6 +460,7 @@ pub fn spell_fit(
             Vec::new()
         },
         warnings,
+        blocked,
     }
 }
 
@@ -548,6 +576,53 @@ mod tests {
         assert!(!footman.learned && footman.learn.is_empty(), "{footman:?}");
         assert!(footman.warnings[0].starts_with("Not a hero"), "{footman:?}");
         assert!(footman.card.iter().any(|b| b.spell), "{footman:?}");
+        Ok(())
+    }
+
+    #[test]
+    #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+    fn heroes_get_no_sixth_hero_spell() -> TestResult {
+        let (db, abilities, guide) = load()?;
+        let dir = tempfile::tempdir()?;
+        let path = dir.path().join("map.w3m");
+        mpq::Archive::create(&path, MAX_FILES)?.save()?;
+        let mut units = MapUnits::load(&Map::open(&path)?)?;
+        let hero = units.create(&db, FourCC::parse("Hpal").ok_or("bad id")?)?;
+        let field = db.field("uhab").ok_or("no uhab")?;
+        let lookup = |a: FourCC| abilities.info(&a.to_string());
+        let id = |code: &str| FourCC::parse(code).ok_or("bad id");
+
+        units.set(&db, hero, field, "AHhb,AHds,AHre,AHad,AHtb")?;
+        let view = View {
+            db: &db,
+            guide: &guide,
+            map: Some(&units),
+            mode: ArtMode::Sd,
+        };
+        let blizzard = spell_fit(&view, &lookup, hero, id("AHbz")?, true);
+        assert!(
+            blizzard
+                .blocked
+                .as_deref()
+                .is_some_and(|b| b.contains("Storm Bolt")),
+            "{blizzard:?}"
+        );
+        let fifth = spell_fit(&view, &lookup, hero, id("AHtb")?, true);
+        assert!(fifth.blocked.is_none() && fifth.warnings.iter().all(|w| !w.contains("leaves")));
+
+        units.set(&db, hero, field, "AHhb,AHds,AHre,AHad,AHtb,AHbz")?;
+        let view = View {
+            db: &db,
+            guide: &guide,
+            map: Some(&units),
+            mode: ArtMode::Sd,
+        };
+        let sixth = spell_fit(&view, &lookup, hero, id("AHbz")?, true);
+        assert!(sixth.has && sixth.blocked.is_none(), "{sixth:?}");
+        assert!(
+            sixth.warnings.iter().any(|w| w.contains("number 6")),
+            "{sixth:?}"
+        );
         Ok(())
     }
 

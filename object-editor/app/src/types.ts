@@ -229,6 +229,8 @@ export type SpellFit = {
   /** Empty unless the spell is learned. */
   learn: CardButton[];
   warnings: string[];
+  /** Why the spell cannot be given, when it cannot (a hero with five hero spells). */
+  blocked: string | null;
 };
 
 /** An icon the spell wizard offers for a spell's button. */

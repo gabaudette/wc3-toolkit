@@ -261,6 +261,10 @@ pub fn give_spell(
     let (spell, unit) = (fourcc(&spell)?, fourcc(&unit)?);
     state.with(|session| {
         let before = fit(session, spell, unit)?;
+        if let Some(reason) = before.blocked {
+            return Err(reason);
+        }
+
         if !before.has {
             let (mut normal, mut learned) = hotkeys::ability_lists(&view(session), unit);
             if before.learned {
