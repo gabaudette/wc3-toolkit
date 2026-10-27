@@ -1,6 +1,3 @@
-//! Warcraft III game data: SLK tables, profile text files and the Object
-//! Editor's field metadata.
-
 pub mod abilities;
 pub mod blp;
 pub mod doodads;
@@ -38,7 +35,6 @@ pub enum Error {
 }
 
 impl Error {
-    /// Adds the name of the file being read to an error.
     pub fn in_file(self, file: impl Into<String>) -> Self {
         Self::InFile {
             file: file.into(),
@@ -46,7 +42,6 @@ impl Error {
         }
     }
 
-    /// Whether the error is a file missing from the game's storage.
     pub fn is_not_found(&self) -> bool {
         match self {
             Self::Casc(casc::Error::NotFound(_)) => true,

@@ -4,6 +4,24 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Standards, part 4b: comments only where code can't speak, wc3-data (AGE-61)
+
+- `wc3-data` goes from 508 comment lines to 311, after reading all 308 blocks against the
+  rule in `CONTRIBUTING.md`. Most of what stays is knowledge of the game's files that the
+  code cannot show: the module docs on SLK tables, profiles, the Object Editor's metadata,
+  object files, `war3map.wts`, MDX, BLP and TGA; what each metadata column means
+  (`useSpecific`, `per_level`, `data_column`, `netsafe`); the `-` and `_` empty markers;
+  tooltip placeholders (`<AHhb,DataA1,%>`); where Reforged moved data (skin files, the
+  `_de.w3mod:` layer); the editor's string redirects and flag labels. Also kept: the BLP
+  decoder's CMYK note and the model's skin-weight narrowing (tricky code), the byte-level
+  descriptions of hand-built test data, and the CLI's suppression reason.
+- Removed: crate docs, doc comments restating a name (`ids`, `fields`, `field_name`,
+  `category_label`, `fields_for`, `raw_value`...), "field ID → position" notes, the spell
+  wizard's data docs (project data, not game facts), and test docs repeating the test name.
+- One removal left `if skipped {} else if ...` in `model.rs` (the comment had been the
+  branch's only content). It is now a named `skipped` check that moves on to the next
+  chunk; the real-install test that loads every unit's model, SD and HD, still passes.
+
 ## 2026-10-27 · Standards, part 4a: comments only where code can't speak, casc and mpq (AGE-61)
 
 - New project rule in `CONTRIBUTING.md`: a comment stays only for a complex algorithm, a

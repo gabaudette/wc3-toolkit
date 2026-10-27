@@ -17,7 +17,6 @@ const MIP_COUNT_OFFSET: usize = 28;
 const FOURCC_OFFSET: usize = 84;
 const RGBA_CHANNELS: usize = 4;
 
-/// A decoded image, 8-bit RGBA, rows top to bottom.
 #[derive(Debug, Clone)]
 pub struct Image {
     pub width: u32,
@@ -25,12 +24,9 @@ pub struct Image {
     pub rgba: Vec<u8>,
 }
 
-/// Bytes before the pixels in [`Image::to_raw`]: width and height, little-endian.
 pub const RAW_HEADER_SIZE: usize = 8;
 
 impl Image {
-    /// Width and height (u32 little-endian each), then the RGBA pixels. Faster
-    /// than PNG for large textures that are only passed to a renderer.
     pub fn to_raw(&self) -> Vec<u8> {
         let mut out = Vec::with_capacity(RAW_HEADER_SIZE + self.rgba.len());
 
@@ -59,8 +55,6 @@ fn png_error(e: png::EncodingError) -> Error {
     Error::Image(format!("PNG encoding failed: {e}"))
 }
 
-/// Loads a texture by the path the game data uses, e.g.
-/// `ReplaceableTextures\CommandButtons\BTNHeroPaladin.blp`.
 pub fn load_texture(files: &GameFiles, path: &str, mode: ArtMode) -> Result<Image> {
     let dds_path = dds_file(path);
 
@@ -96,14 +90,10 @@ pub fn decode_texture(data: &[u8]) -> Result<Image> {
     }
 }
 
-/// Decodes the top mip level of a DXT1, DXT3, DXT5, ATI1 or ATI2 DDS file.
 pub fn decode_dds(data: &[u8]) -> Result<Image> {
     decode_dds_fitting(data, u32::MAX)
 }
 
-/// Like [`decode_texture`], but a DDS file decodes at its largest mip level
-/// that fits in `max_side` pixels, so a small preview skips detail it cannot
-/// show (an HD texture's 512 px level is a sixteenth of its 2048 px one).
 pub fn decode_texture_fitting(data: &[u8], max_side: u32) -> Result<Image> {
     if data.starts_with(DDS_MAGIC) {
         decode_dds_fitting(data, max_side)
@@ -112,9 +102,6 @@ pub fn decode_texture_fitting(data: &[u8], max_side: u32) -> Result<Image> {
     }
 }
 
-/// Decodes the largest mip level of a DDS file no wider or taller than
-/// `max_side`, or its smallest level when none fits. A file without mip
-/// levels decodes at full size.
 pub fn decode_dds_fitting(data: &[u8], max_side: u32) -> Result<Image> {
     if data.len() < DDS_HEADER_SIZE || &data[..DDS_MAGIC.len()] != DDS_MAGIC {
         return Err(Error::Image("not a DDS file".to_owned()));
@@ -240,7 +227,6 @@ mod tests {
 
         assert_eq!((smallest.width, smallest.height), (1, 1));
 
-        // Without mip levels the full image is all there is.
         data[MIP_COUNT_OFFSET..MIP_COUNT_OFFSET + 4].copy_from_slice(&0u32.to_le_bytes());
         assert_eq!(decode_dds_fitting(&data, 4).unwrap().width, 8);
     }

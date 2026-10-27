@@ -86,7 +86,6 @@ fn header(data: &[u8]) -> Result<Header> {
     })
 }
 
-/// Decodes a TGA image to RGBA, rows top to bottom.
 pub fn decode_tga(data: &[u8]) -> Result<Image> {
     let header = header(data)?;
     let pixels = header.width * header.height;
@@ -114,7 +113,6 @@ pub fn decode_tga(data: &[u8]) -> Result<Image> {
         rgba[at..at + RGBA_CHANNELS].copy_from_slice(&to_rgba(pixel));
     }
 
-    // Image sizes fit in u16, so they fit in u32.
     Ok(Image {
         width: u32::try_from(header.width).unwrap_or(u32::MAX),
         height: u32::try_from(header.height).unwrap_or(u32::MAX),

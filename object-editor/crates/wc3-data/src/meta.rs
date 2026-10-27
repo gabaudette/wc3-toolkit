@@ -9,7 +9,6 @@ use std::collections::HashMap;
 use crate::slk::Slk;
 use crate::{Error, Result};
 
-/// Data rows start after the header row, which is row 1 in the file.
 const FIRST_DATA_ROW: usize = 2;
 
 /// Enumerated types holding bit flags: choice `n` stands for bit `n`, and 0 is "None".
@@ -33,7 +32,6 @@ const NUMBER_CHOICE_TYPES: &[&str] = &[
     "fullFlags",
 ];
 
-/// Which object kinds a field applies to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ObjectKind {
     Hero,
@@ -82,8 +80,6 @@ pub struct FieldMeta {
 }
 
 impl FieldMeta {
-    /// The table column holding this field's value at `level` (1-based) for
-    /// per-level fields, e.g. `DataA2` or `Cool2`; the plain column otherwise.
     pub fn column(&self, level: u32) -> String {
         const FIRST_DATA_LETTER: u8 = b'A';
 
@@ -103,7 +99,6 @@ impl FieldMeta {
         base
     }
 
-    /// Whether the field applies to the object with this ID (or base code).
     pub fn applies_to_id(&self, code: &str) -> bool {
         let allowed = self.use_specific.is_empty() || self.use_specific.iter().any(|s| s == code);
 

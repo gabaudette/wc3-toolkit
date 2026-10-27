@@ -26,7 +26,6 @@ const LIST_SUFFIX: &str = "List";
 
 pub struct DoodadDatabase {
     fields: Vec<FieldMeta>,
-    /// Field ID → position in `fields`.
     field_index: HashMap<String, usize>,
     table: Slk,
     profile: Profile,
@@ -81,7 +80,6 @@ impl DoodadDatabase {
         raw.to_owned()
     }
 
-    /// The game's number of model variations, at least 1.
     pub fn variations(&self, id: &str) -> u32 {
         self.whole(id, VARIATIONS_KEY, TABLE_SOURCE, ArtMode::Sd)
             .and_then(|v| v.trim().parse().ok())

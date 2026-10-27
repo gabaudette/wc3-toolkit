@@ -20,7 +20,6 @@ impl Profile {
         Self::default()
     }
 
-    /// Merges a file into this profile, overriding existing keys.
     pub fn merge_text(&mut self, text: &str) {
         let mut current: Option<String> = None;
 
@@ -82,7 +81,6 @@ pub fn split_list(value: &str) -> Vec<String> {
     items
 }
 
-/// Strips surrounding quotes from a single profile value.
 pub fn unquote(value: &str) -> &str {
     value
         .strip_prefix('"')
