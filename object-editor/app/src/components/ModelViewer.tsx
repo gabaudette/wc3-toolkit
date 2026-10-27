@@ -4,6 +4,7 @@ import { type PointerEvent, useEffect, useRef, useState, type WheelEvent } from 
 import { ModelRenderer, parseMDX } from "war3-model";
 import { errorMessage } from "../api";
 import { Checkbox } from "./Checkbox";
+import { Select } from "./Select";
 
 type Model = ReturnType<typeof parseMDX>;
 
@@ -502,18 +503,15 @@ export function ModelViewer({ path }: ModelViewerProps) {
       </div>
       {status.kind === "ready" && (
         <div className="flex items-center gap-2 text-xs">
-          <select
-            value={sequence}
-            onChange={(e) => pickSequence(Number(e.target.value))}
-            aria-label="Animation"
-            className="min-w-0 flex-1 rounded border border-field bg-well px-1.5 py-1 outline-none focus:border-focus"
-          >
-            {sequences.map((animation) => (
-              <option key={animation.index} value={animation.index}>
-                {animation.name}
-              </option>
-            ))}
-          </select>
+          <div className="min-w-0 flex-1">
+            <Select
+              value={String(sequence)}
+              options={sequences.map((a) => ({ value: String(a.index), label: a.name }))}
+              onChange={(value) => pickSequence(Number(value))}
+              label="Animation"
+              className="py-1"
+            />
+          </div>
           <Checkbox isSelected={turning} onChange={setTurning} className="gap-1.5">
             Turn
           </Checkbox>

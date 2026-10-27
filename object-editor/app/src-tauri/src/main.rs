@@ -9,6 +9,7 @@ mod abilities;
 mod commands;
 mod hotkeys;
 mod icons;
+mod interface;
 mod leveled;
 mod plain;
 mod platform;
@@ -62,6 +63,10 @@ fn main() -> ExitCode {
             spells::write_triggered_spell_lua,
             spells::default_lua_folder,
             spells::build_test_copy,
+            interface::ui_designs,
+            interface::set_ui_designs,
+            interface::ui_lua,
+            interface::write_ui_lua,
             plain::list_plain,
             plain::plain_detail,
             plain::search_plain,

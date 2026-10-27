@@ -6,6 +6,7 @@ import type {
   AbilityDetail,
   AbilitySummary,
   Catalog,
+  Design,
   Field,
   GameSummary,
   HotkeyClash,
@@ -86,6 +87,13 @@ export const api = {
   defaultLuaFolder: () => invoke<string | null>("default_lua_folder"),
   /** Builds the saved map's `[DEV]` copy with the modules in `dir`. */
   buildTestCopy: (dir: string) => invoke<TestCopy>("build_test_copy", { dir }),
+  /** The Interface tab's designs, from `<map> UI.json`. */
+  uiDesigns: () => invoke<Design[]>("ui_designs"),
+  /** Replaces the designs; they are written with the map on Save. */
+  setUiDesigns: (designs: Design[]) => invoke<void>("set_ui_designs", { designs }),
+  uiLua: (id: string) => invoke<string>("ui_lua", { id }),
+  /** Writes every design's Lua module into `dir`; returns the file names. */
+  writeUiLua: (dir: string) => invoke<string[]>("write_ui_lua", { dir }),
   /** Removes a custom ability the spell wizard created, when it is cancelled. */
   discardSpell: (id: string) => invoke<void>("discard_spell", { id }),
   fillPlaceholders: (text: string) => invoke<string>("fill_placeholders", { text }),

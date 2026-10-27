@@ -17,6 +17,8 @@ use wc3_map::leveled::{DOODADS, LeveledObjects, UPGRADES};
 use wc3_map::plain::{BUFFS, DESTRUCTABLES, ITEMS, PlainObjects};
 use wc3_map::units::MapUnits;
 
+use crate::interface::{self, Design};
+
 pub struct Session {
     /// Shared with art requests, which read game files without holding the
     /// session lock (CASC storage reads can run on several threads at once).
@@ -59,12 +61,17 @@ pub struct OpenMap {
     /// PNG bytes of icons the map holds, by the path asked for. Files in a
     /// map never change while it is open; imports only add new ones.
     pub icons: HashMap<String, Vec<u8>>,
+    /// The Interface tab's designs, kept in `<map> UI.json` beside the map.
+    pub ui: Vec<Design>,
+    /// The designs as last loaded or saved.
+    pub saved_ui: Vec<Design>,
 }
 
 impl OpenMap {
     /// Reads every object file, the string table and the import list.
     pub fn load(path: PathBuf) -> wc3_map::Result<Self> {
         let archive = Map::open(&path)?;
+        let ui = interface::load(&path).map_err(wc3_map::Error::Invalid)?;
         let mut map = Self {
             units: MapUnits::load(&archive)?,
             abilities: MapAbilities::load(&archive)?,
@@ -77,6 +84,8 @@ impl OpenMap {
             path,
             saved_files: Vec::new(),
             icons: HashMap::new(),
+            saved_ui: ui.clone(),
+            ui,
         };
         map.saved_files = map.files();
         Ok(map)
@@ -97,7 +106,7 @@ impl OpenMap {
     /// Whether the map differs from the file on disk. Undoing every change
     /// by hand counts as no change.
     pub fn unsaved(&self) -> bool {
-        self.files() != self.saved_files || self.imports.has_pending()
+        self.files() != self.saved_files || self.imports.has_pending() || self.ui != self.saved_ui
     }
 
     /// Reads a file from the map: one an import queued, or else from the
