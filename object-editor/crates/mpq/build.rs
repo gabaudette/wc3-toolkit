@@ -1,23 +1,15 @@
 use std::path::PathBuf;
 
+const RUST_C_RUNTIME_PROFILE: &str = "Release";
+
 fn main() {
-    // Read when the script runs, not when it compiles (`env!`): Cargo reuses a
-    // compiled build script for another checkout of the same crate that shares
-    // the target folder (a worktree), and a baked-in path points at the old one.
-    // Cargo runs build scripts from the crate folder, so the fallback is "here".
-    let manifest = std::env::var_os("CARGO_MANIFEST_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_default();
+    let manifest = crate_dir_at_run_time();
     let source = manifest.join("../../vendor/StormLib");
 
-    // StormLib's own CMake build lists its 240+ sources, including bundled zlib,
-    // bzip2 and LibTomCrypt, so the project does not duplicate that list. CMake
-    // only prints the vendored code's compiler warnings when the build fails
-    // (AGE-QUAL-003: third-party code this project does not modify).
-    // Always a release build: on MSVC, a debug build would link the debug C
-    // runtime while Rust links the release one, and the two cannot be mixed.
+    // AGE-QUAL-003: CMake prints the vendored StormLib's compiler warnings only when
+    // the build fails; this project does not modify that third-party code.
     let out = cmake::Config::new(&source)
-        .profile("Release")
+        .profile(RUST_C_RUNTIME_PROFILE)
         .define("STORM_USE_BUNDLED_LIBRARIES", "ON")
         .define("STORM_BUILD_TESTS", "OFF")
         .define("BUILD_SHARED_LIBS", "OFF")
@@ -27,7 +19,6 @@ fn main() {
         println!("cargo:rustc-link-search=native={}", out.join(dir).display());
     }
 
-    // StormLib's CMake build names the library `StormLib` on Windows, `storm` elsewhere.
     let target = std::env::var("TARGET").unwrap_or_default();
     let library = if target.contains("windows") {
         "StormLib"
@@ -37,15 +28,12 @@ fn main() {
 
     println!("cargo:rustc-link-lib=static={library}");
 
-    // StormLib's HTTP stream support uses WinINet and `wsprintf` (user32) on
-    // Windows. Its CMake file only passes these to CMake projects, so link them here.
     if target.contains("windows") {
         for system_library in ["wininet", "user32"] {
             println!("cargo:rustc-link-lib={system_library}");
         }
     }
 
-    // StormLib is C++; link the platform's C++ runtime (MSVC links it implicitly).
     if target.contains("apple") {
         println!("cargo:rustc-link-lib=c++");
     } else if !target.contains("msvc") {
@@ -53,4 +41,10 @@ fn main() {
     }
 
     println!("cargo:rerun-if-changed={}", source.display());
+}
+
+fn crate_dir_at_run_time() -> PathBuf {
+    std::env::var_os("CARGO_MANIFEST_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_default()
 }

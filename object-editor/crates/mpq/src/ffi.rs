@@ -1,4 +1,3 @@
-//! StormLib's C functions behind owned handles: the only unsafe code in this crate.
 #![allow(unsafe_code)]
 
 use std::ffi::{CStr, c_char, c_void};

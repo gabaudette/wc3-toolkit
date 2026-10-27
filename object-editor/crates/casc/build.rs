@@ -44,22 +44,11 @@ const C_SOURCES: &[&str] = &[
 ];
 
 fn main() {
-    // Read when the script runs, not when it compiles (`env!`): Cargo reuses a
-    // compiled build script for another checkout of the same crate that shares
-    // the target folder (a worktree), and a baked-in path points at the old one.
-    // Cargo runs build scripts from the crate folder, so the fallback is "here".
-    let manifest = std::env::var_os("CARGO_MANIFEST_DIR")
-        .map(PathBuf::from)
-        .unwrap_or_default();
+    let manifest = crate_dir_at_run_time();
     let src = manifest.join("../../vendor/CascLib/src");
 
-    // On MSVC, CascLib.h otherwise asks the linker for a prebuilt
-    // `CascLibRAD.lib` (`#pragma comment(lib, ...)`); this crate builds CascLib
-    // from source instead.
     let no_auto_link = "CASCLIB_NO_AUTO_LINK_LIBRARY";
 
-    // Archives link in the order they are built, so the shim comes first: its
-    // references into CascLib then resolve against the archives that follow.
     cc::Build::new()
         .cpp(true)
         .include(&src)
@@ -85,7 +74,6 @@ fn main() {
         .warnings(false)
         .compile("casc_c");
 
-    // CascLib's network code uses Winsock on Windows.
     let target = std::env::var("TARGET").unwrap_or_default();
 
     if target.contains("windows") {
@@ -94,4 +82,10 @@ fn main() {
 
     println!("cargo:rerun-if-changed=shim.cpp");
     println!("cargo:rerun-if-changed={}", src.display());
+}
+
+fn crate_dir_at_run_time() -> PathBuf {
+    std::env::var_os("CARGO_MANIFEST_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_default()
 }

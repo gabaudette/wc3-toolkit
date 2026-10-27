@@ -4,6 +4,24 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Standards, part 4a: comments only where code can't speak, casc and mpq (AGE-61)
+
+- New project rule in `CONTRIBUTING.md`: a comment stays only for a complex algorithm, a
+  `SAFETY` note, the documented reason for a suppression (AGE-QUAL-003 requires one), or a
+  Warcraft III data or format fact the code cannot show. Doc comments included. AGE-61 goes
+  crate by crate: `casc` and `mpq` first, then `wc3-data`, `wc3-map`, the app's Rust side
+  and the frontend.
+- `casc` and `mpq` go from 100 comment lines to 51, every one of them a `SAFETY` note in
+  `ffi.rs`, one of the two suppression reasons in `build.rs`, or one of two format facts
+  (Warcraft III picks locales by path, not by CASC locale; maps are MPQ version 1 with a
+  `(listfile)`). Removed: crate and module docs, and doc comments restating a function's
+  name (`read_optional`, `list`, `file_names`, `save`) or the C library's error codes.
+- The build scripts' note on reading `CARGO_MANIFEST_DIR` at run time became a function,
+  `crate_dir_at_run_time`, and StormLib's release-only build a named constant,
+  `RUST_C_RUNTIME_PROFILE` (MSVC cannot mix the debug and release C runtimes).
+  Why a step exists in a build script (link order, Windows system libraries) stays in the
+  devlog and `CLAUDE.md` rather than beside the code.
+
 ## 2026-10-27 · Standards, part 5: unsafe only in thin FFI wrappers (AGE-62)
 
 - `unsafe` was spread through `casc` (14 uses) and `mpq` (18), next to the logic, kept
