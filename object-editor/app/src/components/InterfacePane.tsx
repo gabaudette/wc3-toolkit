@@ -3,11 +3,12 @@ import { Plus } from "@untitledui/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, errorMessage } from "../api";
 import { luaNames } from "../interface";
-import type { Design, DialogDesign } from "../types";
+import type { Design, DialogDesign, IconChoice, MultiboardDesign } from "../types";
 import { classes } from "../ui";
 import { Button } from "./Button";
 import { DialogEditor } from "./DialogEditor";
 import { GameText } from "./GameText";
+import { MultiboardEditor } from "./MultiboardEditor";
 
 /** Typing pauses this long before the window re-reads whether the map is unsaved. */
 const MAP_STATUS_DELAY_MS = 300;
@@ -39,6 +40,42 @@ function replaced(designs: Design[], changed: Design): Design[] {
   });
 }
 
+/** A scoreboard to start from: a header row, then a row for each player. */
+function newMultiboard(count: number): MultiboardDesign {
+  const cell = (text: string, color: string | null = null) => ({ text, color, icon: null });
+  return {
+    kind: "multiboard",
+    id: crypto.randomUUID(),
+    name: `Multiboard ${count + 1}`,
+    title: "Scoreboard",
+    titleColor: null,
+    columns: [
+      { name: "Player", width: 12 },
+      { name: "Kills", width: 5 },
+      { name: "Deaths", width: 5 },
+    ],
+    rows: [
+      {
+        name: "Header",
+        perPlayer: false,
+        cells: [cell("Player", "ffcc00"), cell("Kills", "ffcc00"), cell("Deaths", "ffcc00")],
+      },
+      { name: "Players", perPlayer: true, cells: [cell("{player}"), cell("0"), cell("0")] },
+    ],
+    showAtStart: true,
+    minimized: false,
+  };
+}
+
+/** The list's second line for a design. */
+function summary(design: Design): string {
+  if (design.kind === "multiboard") {
+    return `Multiboard · ${counted(design.columns.length, "column")}`;
+  }
+
+  return `Dialog · ${counted(design.buttons.length, "button")}`;
+}
+
 function newDialog(count: number): DialogDesign {
   return {
     kind: "dialog",
@@ -63,6 +100,7 @@ function newDialog(count: number): DialogDesign {
 export function InterfacePane({ editable, onMapChanged, onError }: InterfacePaneProps) {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [icons, setIcons] = useState<IconChoice[]>([]);
   const fail = useCallback((e: unknown) => onError(errorMessage(e)), [onError]);
   /** Updates run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
@@ -102,8 +140,16 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
     }, MAP_STATUS_DELAY_MS);
   }
 
-  function add() {
-    const created = newDialog(designs.length);
+  useEffect(() => {
+    // Cell icons pick from every icon; loaded once, when a board needs them.
+    if (design?.kind !== "multiboard" || icons.length > 0) {
+      return;
+    }
+
+    api.spellIcons().then(setIcons).catch(fail);
+  }, [design?.kind, icons.length, fail]);
+
+  function add(created: Design) {
     update([...designs, created]);
     setSelected(created.id);
   }
@@ -112,16 +158,22 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
     // Buttons that showed it close their dialog instead.
     const next = designs
       .filter((d) => d.id !== id)
-      .map((d) => ({
-        ...d,
-        buttons: d.buttons.map((b) => {
-          if (b.action.kind === "showDialog" && b.action.dialog === id) {
-            return { ...b, action: { kind: "close" as const } };
-          }
+      .map((d) => {
+        if (d.kind !== "dialog") {
+          return d;
+        }
 
-          return b;
-        }),
-      }));
+        return {
+          ...d,
+          buttons: d.buttons.map((b) => {
+            if (b.action.kind === "showDialog" && b.action.dialog === id) {
+              return { ...b, action: { kind: "close" as const } };
+            }
+
+            return b;
+          }),
+        };
+      });
     update(next);
     setSelected(next[0]?.id ?? null);
   }
@@ -129,7 +181,8 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
   if (!editable) {
     return (
       <p className="m-auto text-muted">
-        Open a map to design its dialogs. They are saved next to it, in "&lt;map&gt; UI.json".
+        Open a map to design its dialogs and multiboards. They are saved next to it, in "&lt;map&gt;
+        UI.json".
       </p>
     );
   }
@@ -141,19 +194,28 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
         className="panel flex min-h-0 w-72 shrink-0 flex-col rounded-[3px] bg-surface-1"
       >
         <div className="flex flex-col gap-2 border-b border-line p-3">
-          <Button primary onPress={add}>
-            <span className="flex items-center justify-center gap-1.5">
-              <Plus className="size-4" aria-hidden="true" />
-              New dialog
-            </span>
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button primary onPress={() => add(newDialog(designs.length))}>
+              <span className="flex items-center justify-center gap-1.5">
+                <Plus className="size-4" aria-hidden="true" />
+                Dialog
+              </span>
+            </Button>
+            <Button primary onPress={() => add(newMultiboard(designs.length))}>
+              <span className="flex items-center justify-center gap-1.5">
+                <Plus className="size-4" aria-hidden="true" />
+                Multiboard
+              </span>
+            </Button>
+          </div>
           <p className="text-xs text-faint">
             {counted(designs.length, "design")} · saved with the map
           </p>
         </div>
         {designs.length === 0 && (
           <p className="p-3 text-sm text-faint">
-            No dialogs yet. A dialog asks players to choose: a difficulty, a hero, a game mode.
+            Nothing yet. A dialog asks players to choose (a difficulty, a game mode); a multiboard
+            shows a table in the corner (a scoreboard).
           </p>
         )}
         <ul aria-label="Designs" className="min-h-0 flex-1 overflow-y-auto">
@@ -170,8 +232,7 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
               >
                 <span className="truncate">{d.name || "(unnamed)"}</span>
                 <span className="truncate text-xs text-faint">
-                  Dialog · {counted(d.buttons.length, "button")} ·{" "}
-                  <span className="font-mono">UI.{names.get(d.id)}</span>
+                  {summary(d)} · <span className="font-mono">UI.{names.get(d.id)}</span>
                 </span>
               </button>
             </li>
@@ -187,18 +248,35 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
                 <GameText text={design.name || "(unnamed)"} singleLine />
               </h2>
             </header>
-            <DialogEditor
-              key={design.id}
-              dialog={design}
-              designs={designs}
-              luaName={names.get(design.id) ?? ""}
-              editable={editable}
-              onChange={(changed) => update(replaced(designs, changed))}
-              onDelete={() => remove(design.id)}
-            />
+            {design.kind === "dialog" && (
+              <DialogEditor
+                key={design.id}
+                dialog={design}
+                designs={designs}
+                luaName={names.get(design.id) ?? ""}
+                editable={editable}
+                onChange={(changed) => update(replaced(designs, changed))}
+                onDelete={() => remove(design.id)}
+              />
+            )}
+            {design.kind === "multiboard" && (
+              <MultiboardEditor
+                key={design.id}
+                board={design}
+                icons={icons}
+                luaName={names.get(design.id) ?? ""}
+                editable={editable}
+                onChange={(changed) => update(replaced(designs, changed))}
+                onDelete={() => remove(design.id)}
+              />
+            )}
           </>
         )}
-        {!design && <p className="m-auto text-muted">Make a dialog with "New dialog".</p>}
+        {!design && (
+          <p className="m-auto text-muted">
+            Make a dialog or a multiboard with the buttons on the left.
+          </p>
+        )}
         {designs.length > 0 && (
           <LuaBar
             selected={design?.id ?? null}

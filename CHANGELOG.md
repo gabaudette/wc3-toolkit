@@ -8,6 +8,11 @@ under "What's new".
 
 ### Added
 
+- Multiboards in the Interface tab: a titled board in the top right corner, like a
+  scoreboard. Set its columns and widths, fixed rows or a row for each player (with the
+  player's name in their color), and each cell's text, color and icon, one cell or a whole row
+  or column at a time; the preview shows it as the game does. From Lua, one line updates a
+  cell: `UI.Scoreboard.SetValue(player, "Kills", 5)`.
 - Downloadable Sunwell Warden hero and Wayfarer Draught item starters, with import
   instructions, a merchant dependency example and raw-code collision guidance.
 - Illustrated hero and item walkthroughs, with attribute growth, existing game abilities,

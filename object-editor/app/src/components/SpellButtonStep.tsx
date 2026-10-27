@@ -208,7 +208,7 @@ type IconPickerProps = {
 };
 
 /** The spell's icon, and a searchable grid of the game's and the map's icons. */
-function IconPicker({ current, icons, onPick }: IconPickerProps) {
+export function IconPicker({ current, icons, onPick }: IconPickerProps) {
   const [query, setQuery] = useState("");
   /** Icons the game data names but whose image does not load; left out once seen. */
   const [missing, setMissing] = useState<ReadonlySet<string>>(new Set());
