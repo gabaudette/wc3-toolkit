@@ -1,6 +1,3 @@
-//! Read-only access to a local Blizzard CASC storage, such as the one in a
-//! Warcraft III Reforged install. Wraps the bundled CascLib.
-
 mod ffi;
 
 use std::ffi::CString;
@@ -8,12 +5,10 @@ use std::path::Path;
 
 use ffi::{FileHandle, StorageHandle};
 
-/// Accept files of every locale; Warcraft III selects locales by path instead.
+// Warcraft III selects locales by path (`_locales\enus.w3mod:`), not by CASC locale.
 const CASC_LOCALE_ALL: u32 = 0xFFFF_FFFF;
 const CASC_OPEN_BY_NAME: u32 = 0;
 
-/// CascLib reports a missing file as `ERROR_FILE_NOT_FOUND`, which is 2 on
-/// Windows and maps to `ENOENT` (also 2) elsewhere.
 const ERROR_FILE_NOT_FOUND: u32 = 2;
 
 const READ_CHUNK_SIZE: usize = 64 * 1024;
@@ -32,14 +27,12 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// One entry from [`Storage::list`].
 #[derive(Debug, Clone)]
 pub struct Entry {
     pub name: String,
     pub size: u64,
 }
 
-/// An open CASC storage. Several threads can read files from it at once.
 pub struct Storage {
     handle: StorageHandle,
 }
@@ -49,7 +42,6 @@ fn cstring(s: &str) -> Result<CString> {
 }
 
 impl Storage {
-    /// Opens the storage of a game install, e.g. `.../Warcraft III`.
     pub fn open(game_dir: &Path) -> Result<Self> {
         let path = game_dir.to_string_lossy().into_owned();
         let c_path = cstring(&path)?;
@@ -59,7 +51,6 @@ impl Storage {
         Ok(Self { handle })
     }
 
-    /// Reads a whole file, e.g. `war3.w3mod:units\unitdata.slk`. Names are case-insensitive.
     pub fn read(&self, name: &str) -> Result<Vec<u8>> {
         let c_name = cstring(&name.to_ascii_lowercase())?;
         let file = self
@@ -79,7 +70,6 @@ impl Storage {
         read_open_file(file, name)
     }
 
-    /// Like [`Storage::read`], but returns `Ok(None)` when the file does not exist.
     pub fn read_optional(&self, name: &str) -> Result<Option<Vec<u8>>> {
         match self.read(name) {
             Ok(data) => Ok(Some(data)),
@@ -88,7 +78,6 @@ impl Storage {
         }
     }
 
-    /// Lists files matching a wildcard mask such as `*` or `war3.w3mod:units\*`.
     pub fn list(&self, mask: &str) -> Result<Vec<Entry>> {
         let c_mask = cstring(mask)?;
 

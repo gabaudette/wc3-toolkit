@@ -1,6 +1,3 @@
-//! Read and write MPQ archives, the container format of Warcraft III maps.
-//! Wraps the bundled StormLib.
-
 mod ffi;
 
 use std::ffi::CString;
@@ -16,10 +13,9 @@ const SEARCH_SCOPE_DEFAULT: u32 = 0;
 const LOCALE_NEUTRAL: u32 = 0;
 const NO_FILE_TIME: u64 = 0;
 const PRIORITY_DEFAULT: u32 = 0;
-/// MPQ format version 1 with a `(listfile)`, the layout Warcraft III maps use.
+// MPQ format version 1 with a `(listfile)`, the layout Warcraft III maps use.
 const CREATE_FLAGS: u32 = 0x0010_0000;
 
-/// StormLib reports errors as Windows error codes, mapped to errno values elsewhere.
 const ERROR_FILE_NOT_FOUND: u32 = 2;
 
 #[cfg(windows)]
@@ -28,7 +24,6 @@ const ERROR_DISK_FULL: u32 = 112;
 #[cfg(not(windows))]
 const ERROR_DISK_FULL: u32 = 28; // ENOSPC
 
-/// The file list StormLib maintains inside an archive.
 const LISTFILE: &str = "(listfile)";
 
 #[derive(Debug, thiserror::Error)]
@@ -55,11 +50,6 @@ fn cstring(s: &str) -> Result<CString> {
     CString::new(s).map_err(|_| Error::BadPath(s.to_owned()))
 }
 
-/// An open MPQ archive.
-///
-/// Archives opened with [`Archive::open_writable`] are modified in place; the
-/// changes are saved by [`Archive::save`] or when the archive is dropped. To
-/// keep the original safe, open a copy.
 pub struct Archive {
     handle: ArchiveHandle,
 }
@@ -73,7 +63,6 @@ impl Archive {
         Self::open_with(path, 0)
     }
 
-    /// Creates a new, empty archive with room for `max_files` files (it grows when full).
     pub fn create(path: &Path, max_files: u32) -> Result<Self> {
         let display = path.to_string_lossy().into_owned();
         let c_path = cstring(&display)?;
@@ -127,7 +116,6 @@ impl Archive {
         file.read_all().map_err(read_error)
     }
 
-    /// Like [`Archive::read`], but returns `Ok(None)` when the file does not exist.
     pub fn read_optional(&self, name: &str) -> Result<Option<Vec<u8>>> {
         match self.read(name) {
             Ok(data) => Ok(Some(data)),
@@ -136,7 +124,6 @@ impl Archive {
         }
     }
 
-    /// File names from the archive's `(listfile)`. Archives without one return an empty list.
     pub fn file_names(&self) -> Result<Vec<String>> {
         let Some(data) = self.read_optional(LISTFILE)? else {
             return Ok(Vec::new());
@@ -150,8 +137,6 @@ impl Archive {
             .collect())
     }
 
-    /// Adds or replaces a file, compressed with zlib. Grows the archive's file
-    /// table when it is full.
     pub fn write(&mut self, name: &str, data: &[u8]) -> Result<()> {
         match self.try_write(name, data) {
             Err(Error::Write { code, .. }) if code == ERROR_DISK_FULL => {
@@ -198,7 +183,6 @@ impl Archive {
             })
     }
 
-    /// Writes all changes to disk and closes the archive.
     pub fn save(self) -> Result<()> {
         self.handle.save().map_err(|code| Error::Save { code })
     }

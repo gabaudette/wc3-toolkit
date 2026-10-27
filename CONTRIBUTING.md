@@ -75,6 +75,11 @@ in them must rewrite byte for byte. Building also needs CMake (for the bundled S
   of a `role`). Today these are the compiler-warning suppression for the vendored CascLib and
   StormLib sources, the CLI binaries' use of `eprintln!` for errors, and `autoFocus` on the
   level table's cell editor, which only appears because the user started editing that cell.
+- **Comments** (project rule) — Code explains itself through names and small functions.
+  A comment is kept only for a complex algorithm, a `// SAFETY:` note on `unsafe`, the
+  documented reason for a suppression (AGE-QUAL-003), or a fact about Warcraft III's data or
+  map formats the code cannot show (such as "Reforged keeps names in `war3mapSkin.w3u`").
+  Doc comments follow the same rule; one that restates a name or signature is removed.
 - **AGE-QUAL-004** — Do not relax lint or formatter configuration to make code pass.
 - **AGE-QUAL-006** — `rustfmt` owns Rust formatting (default settings, 100 columns).
 - **AGE-ERR-001/003** — Fallible code returns `Result`. Parsers report malformed data with
