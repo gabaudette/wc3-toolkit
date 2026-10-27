@@ -11,10 +11,23 @@ type DialogShellProps = {
   footer: ReactNode;
   /** Room for tables, like the spell wizard's values. */
   wide?: boolean;
+  /** Names what the body shows, such as a wizard's step: a new page starts scrolled to the top. */
+  page?: string;
+  /** Clicking outside closes it; off for dialogs where closing throws work away. Defaults to on. */
+  dismissable?: boolean;
 };
 
 /** A centered dialog with a title, scrolling content and a footer. */
-export function DialogShell({ open, title, onClose, children, footer, wide }: DialogShellProps) {
+export function DialogShell({
+  open,
+  title,
+  onClose,
+  children,
+  footer,
+  wide,
+  page,
+  dismissable = true,
+}: DialogShellProps) {
   return (
     <ModalOverlay
       isOpen={open}
@@ -23,7 +36,7 @@ export function DialogShell({ open, title, onClose, children, footer, wide }: Di
           onClose();
         }
       }}
-      isDismissable
+      isDismissable={dismissable}
       // Anchored near the top, so the title and buttons stay put while the
       // content below changes height (a search narrowing a list, a new step).
       className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 pt-[8vh]"
@@ -43,7 +56,10 @@ export function DialogShell({ open, title, onClose, children, footer, wide }: Di
             {title}
           </Heading>
           {/* Parts keep their height; the whole body scrolls instead. */}
-          <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 *:shrink-0">
+          <div
+            key={page}
+            className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 *:shrink-0"
+          >
             {children}
           </div>
           <div className="flex justify-end gap-2 border-t border-line p-3">{footer}</div>

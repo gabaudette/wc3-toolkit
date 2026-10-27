@@ -168,6 +168,46 @@ export type AbilitySection = {
   levelFields: LevelField[];
 };
 
+/** A setting of a triggered spell's choice parameter, such as "strength". */
+export type TemplateChoice = { label: string; lua: string };
+
+/** A value a triggered spell's Lua module uses, edited in the wizard. */
+export type TemplateParam = {
+  id: string;
+  label: string;
+  /** The default for each level; empty for a choice. */
+  values: number[];
+  /** Only whole numbers make sense (counts). */
+  whole: boolean;
+  /** One setting for every level instead of values; the first is the default. */
+  choices: TemplateChoice[];
+};
+
+/** A triggered spell: Channel plus a Lua module made from a template. */
+export type SpellTemplate = {
+  id: string;
+  label: string;
+  description: string;
+  file: string;
+  /** Channel's target type. */
+  target: "none" | "unit" | "point";
+  targets: string;
+  icon: string;
+  hotkey: string;
+  range: number;
+  area: number;
+  cooldown: number;
+  mana: number;
+  tooltip: string;
+  params: TemplateParam[];
+};
+
+/** Each parameter's value per level, or for a choice the chosen index alone. */
+export type TemplateValues = Record<string, number[]>;
+
+/** The `[DEV]` copy of the map the harness built. */
+export type TestCopy = { path: string; modules: string[] };
+
 /** A button on a command card or learn menu preview. */
 export type CardButton = {
   name: string;

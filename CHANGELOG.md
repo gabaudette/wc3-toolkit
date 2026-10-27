@@ -26,6 +26,11 @@ under "What's new".
   full. Hero spells are learned by heroes; other units get them as normal abilities. Taking a
   spell away works from the same place, and cancelling the wizard takes it from every unit it
   was given to.
+- Triggered spells in the spell wizard, for effects no game ability has: Attribute Strike
+  (damage from strength, agility or intelligence), Knockback Wave (damages and pushes enemies
+  away) and Arc Bolt (bounces between enemies). Set their values per level, and Tinkerbench
+  writes the Lua code into a folder of your choice, then saves the map and builds a "[DEV]"
+  test copy with it, ready to play. The map must use Lua.
 - Contextual documentation problem links that open a GitHub draft with the page, API or
   field identifier and selected example language.
 - Visual scripting lifecycles for timers, groups and locations, with six responsive diagrams,
@@ -69,6 +74,7 @@ under "What's new".
 
 ### Changed
 
+- The spell wizard no longer closes, and throws the spell away, when clicking outside it.
 - Dialogs open near the top of the window and stay there while their content grows or
   shrinks, so buttons no longer move under the pointer.
 - Documentation navbar title is now “Tinkerbench”. Theme, code-theme and search controls use

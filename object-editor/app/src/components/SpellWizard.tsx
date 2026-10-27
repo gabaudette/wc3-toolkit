@@ -8,6 +8,8 @@ import type {
   LevelField,
   SpellBase,
   SpellKind,
+  SpellTemplate,
+  TemplateValues,
   UnitDetail,
   UnitItem,
 } from "../types";
@@ -21,6 +23,7 @@ import { LevelTable } from "./LevelTable";
 import { LevelText } from "./LevelText";
 import { type BuffChoice, SpellBuffStep } from "./SpellBuffStep";
 import { SpellButtonStep } from "./SpellButtonStep";
+import { CodeStep, defaultValues, EffectStep, TemplateChoices, TestStep } from "./SpellTriggered";
 import { SpellUnits } from "./SpellUnits";
 import { PlaceholderValues } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
@@ -36,7 +39,7 @@ type SpellWizardProps = {
   onUnitsChanged: () => void;
 };
 
-type Step = "kind" | "base" | "values" | "buff" | "button" | "units";
+type Step = "kind" | "base" | "values" | "buff" | "effect" | "button" | "units" | "code" | "test";
 
 const NAME = "anam";
 const LEVELS = "alev";
@@ -46,6 +49,8 @@ const COMMON_VALUES = ["atar", "aran", "acdn", "amcs", "aare", "adur", "ahdu"];
 const SPELL_DATA = "data";
 /** The tooltip title and text, per level. */
 const TOOLTIPS = ["atp1", "aub1"];
+/** The tooltip text, which a triggered spell's values fill in. */
+const TOOLTIP_TEXT = "aub1";
 /** Tooltip texts that show values: normal, turned off, and the hero's learn text. */
 const PLACEHOLDER_TEXTS = ["aub1", "auu1", "arut"];
 /** Texts that usually repeat the spell's name: tooltip titles and the learn title. */
@@ -72,7 +77,31 @@ const STEP_TITLES: Record<Step, string> = {
   buff: "New spell: buff",
   button: "New spell: button",
   units: "New spell: give it to units",
+  effect: "New spell: effect",
+  code: "New spell: Lua code",
+  test: "New spell: try it",
 };
+
+/** Values of a triggered spell's own that matter for its template. */
+function triggeredFields(detail: AbilityDetail, template: SpellTemplate): LevelField[] {
+  const ids = ["acdn", "amcs"];
+  if (template.target !== "none") {
+    ids.push("aran", "atar");
+  }
+
+  if (template.area > 0) {
+    ids.push("aare");
+  }
+
+  return ids.flatMap((id) => {
+    const field = levelField(detail, id);
+    if (field) {
+      return [field];
+    }
+
+    return [];
+  });
+}
 
 /** The fields the values step edits: the common ones first, then the base ability's own. */
 function valueFields(detail: AbilityDetail): LevelField[] {
@@ -196,6 +225,13 @@ export function SpellWizard({
   const [shownBuff, setShownBuff] = useState<UnitDetail | null>(null);
   const [allBuffs, setAllBuffs] = useState<UnitItem[]>([]);
   const [icons, setIcons] = useState<IconChoice[]>([]);
+  const [templates, setTemplates] = useState<SpellTemplate[]>([]);
+  /** The triggered spell's template, while making one. */
+  const [template, setTemplate] = useState<SpellTemplate | null>(null);
+  const [values, setValues] = useState<TemplateValues>({});
+  const [folder, setFolder] = useState("");
+  const [source, setSource] = useState("");
+  const [modulePath, setModulePath] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** Edits run one after another, so a slow answer never overwrites a newer one. */
@@ -210,10 +246,15 @@ export function SpellWizard({
     setKind(null);
     setDetail(null);
     setBuffChoice(BASE_BUFF);
+    setTemplate(null);
     setError(null);
     api
       .spellKinds()
       .then(setKinds)
+      .catch((e: unknown) => setError(errorMessage(e)));
+    api
+      .spellTemplates()
+      .then(setTemplates)
       .catch((e: unknown) => setError(errorMessage(e)));
   }, [open]);
 
@@ -247,11 +288,18 @@ export function SpellWizard({
     await api.discardSpell(draft);
     setDetail(null);
     setBuffChoice(BASE_BUFF);
+    setTemplate(null);
     onMapChanged();
     onUnitsChanged();
   }
 
   async function close() {
+    // The spell and its module exist by now; closing keeps them.
+    if (step === "test" && draft) {
+      done();
+      return;
+    }
+
     try {
       await discard();
     } catch (e) {
@@ -264,13 +312,29 @@ export function SpellWizard({
   async function back() {
     setError(null);
     try {
+      if (step === "code") {
+        setStep("units");
+        return;
+      }
+
       if (step === "units") {
         setStep("button");
         return;
       }
 
+      if (step === "button" && template) {
+        setStep("effect");
+        return;
+      }
+
       if (step === "button") {
         setStep("buff");
+        return;
+      }
+
+      if (step === "effect") {
+        await discard();
+        setStep("kind");
         return;
       }
 
@@ -301,6 +365,83 @@ export function SpellWizard({
       onMapChanged();
       setDetail(await ownValues(created.id, base, await api.abilityDetail(created.id)));
       setStep("values");
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Makes a triggered spell from a template: a copy of Channel, set up for it. */
+  async function startTriggered(picked: SpellTemplate) {
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await api.createTriggeredSpell(picked.id);
+      onMapChanged();
+      setBaseName("Channel");
+      setTemplate(picked);
+      setValues(defaultValues(picked));
+      setDetail(await api.abilityDetail(created.id));
+      setStep("effect");
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Changes one of the module's values; the tooltips follow. */
+  function setValue(param: string, list: number[]) {
+    if (!template) {
+      return;
+    }
+
+    const next = { ...values, [param]: list };
+    setValues(next);
+    edit((id) => api.setTriggeredValues(id, template.id, next));
+  }
+
+  /** Shows the code step: the folder for the module, and the module as it will be. */
+  async function toCode() {
+    if (!(draft && template)) {
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      await queue.current;
+      if (!folder) {
+        setFolder((await api.defaultLuaFolder()) ?? "");
+      }
+
+      setSource(await api.triggeredSpellLua(draft, template.id, values));
+      setStep("code");
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Writes the module; the spell is made, and the last step shows how to try it. */
+  async function createTriggered() {
+    if (!(draft && template)) {
+      return;
+    }
+
+    if (!folder.trim()) {
+      setError("Pick a folder for the Lua module.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      await queue.current;
+      setModulePath(await api.writeTriggeredSpellLua(draft, template.id, values, folder.trim()));
+      setStep("test");
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -533,14 +674,23 @@ export function SpellWizard({
       await setBuffs(draft, buffs);
     }
 
+    done();
+  }
+
+  function done() {
+    if (!draft) {
+      return;
+    }
+
     const created = draft;
     setDetail(null);
+    setTemplate(null);
     onCreated(created);
   }
 
   const footer = (
     <>
-      {step !== "kind" && (
+      {step !== "kind" && step !== "test" && (
         <Button onPress={back} disabled={busy}>
           <span className="flex items-center gap-1.5">
             <ArrowLeft className="size-4" aria-hidden="true" />
@@ -548,7 +698,7 @@ export function SpellWizard({
           </span>
         </Button>
       )}
-      <Button onPress={close}>Cancel</Button>
+      {step !== "test" && <Button onPress={close}>Cancel</Button>}
       {step === "values" && (
         <Button primary onPress={toBuff} disabled={busy}>
           Next: buff
@@ -564,9 +714,29 @@ export function SpellWizard({
           Next: units
         </Button>
       )}
-      {step === "units" && (
+      {step === "effect" && (
+        <Button primary onPress={toButton} disabled={busy}>
+          Next: button
+        </Button>
+      )}
+      {step === "units" && template && (
+        <Button primary onPress={toCode} disabled={busy}>
+          Next: Lua code
+        </Button>
+      )}
+      {step === "units" && !template && (
         <Button primary onPress={finish} disabled={busy}>
           Create spell
+        </Button>
+      )}
+      {step === "code" && (
+        <Button primary onPress={createTriggered} disabled={busy}>
+          Create spell
+        </Button>
+      )}
+      {step === "test" && (
+        <Button primary onPress={done}>
+          Done
         </Button>
       )}
     </>
@@ -577,9 +747,12 @@ export function SpellWizard({
       <DialogShell
         open={open && !picking}
         title={STEP_TITLES[step]}
+        page={step}
+        // A stray click outside would cancel the spell and throw it away.
+        dismissable={false}
         onClose={close}
         footer={footer}
-        wide={step === "values" || step === "units"}
+        wide={step === "values" || step === "units" || step === "effect" || step === "code"}
       >
         {error && (
           <p role="alert" className="text-danger">
@@ -587,12 +760,31 @@ export function SpellWizard({
           </p>
         )}
         {step === "kind" && (
-          <KindStep
-            kinds={kinds}
-            onPick={(picked) => {
-              setKind(picked);
-              setStep("base");
-            }}
+          <>
+            <h3 className="font-semibold text-gold-bright">Based on a game ability</h3>
+            <KindStep
+              kinds={kinds}
+              onPick={(picked) => {
+                setKind(picked);
+                setStep("base");
+              }}
+            />
+            <TemplateChoices templates={templates} busy={busy} onPick={startTriggered} />
+          </>
+        )}
+        {step === "effect" && detail && template && (
+          <EffectStep
+            detail={detail}
+            template={template}
+            values={values}
+            name={plainField(detail, NAME)}
+            fields={triggeredFields(detail, template)}
+            tooltip={levelField(detail, TOOLTIP_TEXT)}
+            onRename={rename}
+            onValue={setValue}
+            onChange={set}
+            onFill={fill}
+            onReset={reset}
           />
         )}
         {step === "base" && kind && (
@@ -629,6 +821,15 @@ export function SpellWizard({
             onSet={(field, value) => set(field, NO_LEVEL, value)}
             onIcon={setIcon}
             onHotkey={setHotkey}
+          />
+        )}
+        {step === "code" && <CodeStep folder={folder} source={source} onFolder={setFolder} />}
+        {step === "test" && detail && (
+          <TestStep
+            name={detail.card.summary.name}
+            modulePath={modulePath}
+            folder={folder.trim()}
+            onSaved={onMapChanged}
           />
         )}
         {step === "units" && draft && (
