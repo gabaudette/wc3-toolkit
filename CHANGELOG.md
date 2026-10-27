@@ -8,6 +8,11 @@ under "What's new".
 
 ### Added
 
+- Reuse Interface designs in other maps. "Export…" saves chosen designs as a design file
+  (.w3ui) with the dialogs their buttons show and the icons imported into the map that they
+  use; "Import…" in another map's Interface tab adds them, numbering any name the map already
+  has ("Scoreboard 2") and adding the icons it lacks. The windows also list the Lua functions
+  the designs call. "Duplicate" copies a design as a starting point for a similar one.
 - Leaderboards and timers in the Interface tab. A leaderboard ranks a row for each player
   (their name in their color) and up to four rows of your own, such as teams, highest or
   lowest first; from Lua, `UI.Kills.AddValue(player, 1)`. A timer counts down with a title

@@ -4,6 +4,32 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · UI tool, part 4: reuse designs across maps (AGE-55)
+
+- Design files (`interface/exchange.rs`): JSON with `format: "tinkerbench-ui"`, a version,
+  the designs as in `<map> UI.json`, and the source map's files they use, base64-encoded.
+  Other JSON files and newer versions are refused.
+- Export takes the chosen designs, then every dialog their buttons show (and those dialogs'
+  targets), each once. Icons come from multiboard cells; `imports::files_used` finds the ones
+  the map holds (pending imports first, then the archive), so game icons stay behind, as with
+  object bundles. The windows also list the Lua functions buttons and timers call
+  (`RunFunction`, `onDone`), which the target map's code must define.
+- Import plans each design against the map: an unused ID (`id-2`...) with buttons following
+  their dialog to its new ID, and a name whose Lua name is free (`Scoreboard 2`, so
+  `UI.Scoreboard2`). Files go through `file_statuses`: new ones are queued in `MapImports`
+  and written on Save with `war3map.imp` entries; the map keeps its own where they differ.
+- Commands `ui_export_preview`, `save_ui_file`, `ui_import_preview`, `import_ui_file`.
+  `transfer::listed_files` and `TransferList`'s file list (`TransferFiles`) are shared with
+  the new windows. `DesignHeader` (name, Duplicate, Delete, Lua call) now heads all four
+  editors. Duplicate is frontend only: a deep copy with a new UUID, `<name> copy` numbered
+  when taken, placed after the original. Design file pickers start in the map's folder.
+- Checked in the app: a copy of the test map with a game icon added as
+  `war3mapImported\BTNCrown.dds` on the Scoreboard's player cells. Exported that board, then
+  imported it into a copy of `test.w3m`: the cell showed the imported icon. A second import
+  became "Scoreboard 2" with the icon "already in this map". Saved and built the `[DEV]`
+  copy; both maps read back with the icon and its import list entry. **Not yet played in
+  game.**
+
 ## 2026-10-27 · UI tool, part 3: leaderboards and timer windows (AGE-54)
 
 - `Design` gained `Leaderboard` (`interface/leaderboard.rs`) and `TimerWindow`

@@ -12,7 +12,11 @@ use tauri::State;
 use wc3_map::lua::check_syntax;
 
 use crate::state::{AppState, NO_MAP};
+use crate::transfer::{TransferFile, listed_files};
+use exchange::{DesignFile, Listed};
+use wc3_map::imports::{FileStatus, ImportedFile, file_statuses};
 
+mod exchange;
 mod leaderboard;
 mod multiboard;
 mod timer;
@@ -69,6 +73,27 @@ impl Design {
             Design::Multiboard(m) => &m.name,
             Design::Leaderboard(l) => &l.name,
             Design::TimerWindow(t) => &t.name,
+        }
+    }
+
+    fn rename(&mut self, id: String, name: String) {
+        let (old_id, old_name) = match self {
+            Design::Dialog(d) => (&mut d.id, &mut d.name),
+            Design::Multiboard(m) => (&mut m.id, &mut m.name),
+            Design::Leaderboard(l) => (&mut l.id, &mut l.name),
+            Design::TimerWindow(t) => (&mut t.id, &mut t.name),
+        };
+        *old_id = id;
+        *old_name = name;
+    }
+
+    /// What the tab calls this kind of design.
+    fn kind_label(&self) -> &'static str {
+        match self {
+            Design::Dialog(_) => "Dialog",
+            Design::Multiboard(_) => "Multiboard",
+            Design::Leaderboard(_) => "Leaderboard",
+            Design::TimerWindow(_) => "Timer window",
         }
     }
 }
@@ -511,6 +536,128 @@ pub fn write_ui_lua(state: State<'_, AppState>, dir: String) -> Result<Vec<Strin
     state.with(|session| {
         let map = session.map.as_ref().ok_or(NO_MAP)?;
         write_modules(Path::new(&dir), &map.ui, &source_name(&map.path))
+    })
+}
+
+/// A design moving between maps, as the export and import windows list it.
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ListedDesign {
+    pub name: String,
+    pub kind: &'static str,
+    /// Its name in Lua once in the map: `Scoreboard2` for `UI.Scoreboard2`.
+    pub lua_name: String,
+    /// Brought along because this dialog's button shows it.
+    pub shown_by: Option<String>,
+    /// Its name in the file, when the map already had a design by that name.
+    pub renamed_from: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DesignTransfer {
+    pub designs: Vec<ListedDesign>,
+    /// Files imported into the source map that the designs use.
+    pub files: Vec<TransferFile>,
+    /// Lua functions the designs call, which the map's own code defines.
+    pub needs: Vec<String>,
+}
+
+/// `names` holds the Lua names of the map the designs end up in.
+fn listed_designs(listed: &[Listed], names: &HashMap<String, String>) -> Vec<ListedDesign> {
+    listed
+        .iter()
+        .map(|l| ListedDesign {
+            name: l.design.name().to_owned(),
+            kind: l.design.kind_label(),
+            lua_name: names.get(l.design.id()).cloned().unwrap_or_default(),
+            shown_by: l.shown_by.clone(),
+            renamed_from: l.renamed_from.clone(),
+        })
+        .collect()
+}
+
+/// What exporting the chosen designs would put in a design file.
+#[tauri::command]
+pub fn ui_export_preview(
+    state: State<'_, AppState>,
+    ids: Vec<String>,
+) -> Result<DesignTransfer, String> {
+    state.with(|session| {
+        let map = session.map.as_ref().ok_or(NO_MAP)?;
+        let (file, listed, files) = exchange::export(&map.ui, &ids, &map.reader());
+        Ok(DesignTransfer {
+            designs: listed_designs(&listed, &lua_names(&map.ui)),
+            files: listed_files(&files, None),
+            needs: exchange::needs(&file.designs),
+        })
+    })
+}
+
+/// Saves the chosen designs, the dialogs they show and the map's files they
+/// use as a design file (`.w3ui`).
+#[tauri::command]
+pub fn save_ui_file(
+    state: State<'_, AppState>,
+    ids: Vec<String>,
+    path: String,
+) -> Result<(), String> {
+    let text = state.with(|session| {
+        let map = session.map.as_ref().ok_or(NO_MAP)?;
+        exchange::export(&map.ui, &ids, &map.reader()).0.to_text()
+    })?;
+    std::fs::write(&path, text).map_err(|e| format!("Cannot write {path}: {e}"))
+}
+
+fn read_design_file(path: &str) -> Result<(DesignFile, Vec<ImportedFile>), String> {
+    let text = std::fs::read_to_string(path).map_err(|e| format!("Cannot read {path}: {e}"))?;
+    let file = DesignFile::parse(&text)?;
+    let files = file.imported_files()?;
+    Ok((file, files))
+}
+
+/// What importing a design file would add to the open map, without changing it.
+#[tauri::command]
+pub fn ui_import_preview(
+    state: State<'_, AppState>,
+    path: String,
+) -> Result<DesignTransfer, String> {
+    let (file, files) = read_design_file(&path)?;
+    state.with(|session| {
+        let map = session.map.as_ref().ok_or(NO_MAP)?;
+        let plan = exchange::planned(&file.designs, &map.ui);
+        let after: Vec<Design> = map
+            .ui
+            .iter()
+            .cloned()
+            .chain(plan.iter().map(|l| l.design.clone()))
+            .collect();
+        let statuses = file_statuses(&files, &map.reader());
+        Ok(DesignTransfer {
+            designs: listed_designs(&plan, &lua_names(&after)),
+            files: listed_files(&files, Some(&statuses)),
+            needs: exchange::needs(&file.designs),
+        })
+    })
+}
+
+/// Adds a design file's designs, and the files the map does not have yet, to
+/// the open map. Nothing is written until the map is saved. Returns the
+/// map's designs.
+#[tauri::command]
+pub fn import_ui_file(state: State<'_, AppState>, path: String) -> Result<Vec<Design>, String> {
+    let (file, files) = read_design_file(&path)?;
+    state.with(|session| {
+        let map = session.map.as_mut().ok_or(NO_MAP)?;
+        let plan = exchange::planned(&file.designs, &map.ui);
+        let statuses = file_statuses(&files, &map.reader());
+        for (file, status) in files.into_iter().zip(statuses) {
+            if status == FileStatus::New {
+                map.imports.add(file);
+            }
+        }
+        map.ui.extend(plan.into_iter().map(|l| l.design));
+        Ok(map.ui.clone())
     })
 }
 

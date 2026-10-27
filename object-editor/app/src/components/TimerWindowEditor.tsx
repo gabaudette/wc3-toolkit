@@ -8,6 +8,7 @@ type TimerWindowEditorProps = {
   luaName: string;
   editable: boolean;
   onChange: (timer: TimerWindowDesign) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 };
 
@@ -29,6 +30,7 @@ export function TimerWindowEditor({
   luaName,
   editable,
   onChange,
+  onDuplicate,
   onDelete,
 }: TimerWindowEditorProps) {
   const set = (change: Partial<TimerWindowDesign>) => onChange({ ...timer, ...change });
@@ -57,6 +59,7 @@ export function TimerWindowEditor({
           lua={`UI.${luaName}.Start()`}
           editable={editable}
           onChange={set}
+          onDuplicate={onDuplicate}
           onDelete={onDelete}
         />
 

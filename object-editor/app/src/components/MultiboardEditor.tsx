@@ -1,12 +1,4 @@
-import {
-  ArrowDown,
-  ArrowLeft,
-  ArrowRight,
-  ArrowUp,
-  Plus,
-  Trash01,
-  XClose,
-} from "@untitledui/icons";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Plus, XClose } from "@untitledui/icons";
 import { useState } from "react";
 import { iconUrl } from "../api";
 import type { BoardCell, BoardColumn, BoardRow, IconChoice, MultiboardDesign } from "../types";
@@ -14,6 +6,7 @@ import { classes } from "../ui";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { ColorSwatches } from "./ColorSwatches";
+import { DesignHeader } from "./DesignBasics";
 import { GameText } from "./GameText";
 import { IconPicker } from "./SpellButtonStep";
 import { UnitIcon } from "./UnitIcon";
@@ -25,6 +18,7 @@ type MultiboardEditorProps = {
   luaName: string;
   editable: boolean;
   onChange: (board: MultiboardDesign) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 };
 
@@ -153,6 +147,7 @@ export function MultiboardEditor({
   luaName,
   editable,
   onChange,
+  onDuplicate,
   onDelete,
 }: MultiboardEditorProps) {
   const [selection, setSelection] = useState<Selection>({ kind: "cell", row: 0, column: 0 });
@@ -243,29 +238,14 @@ export function MultiboardEditor({
     <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-5">
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-5">
         <div className="flex min-w-0 flex-col gap-4">
-          <div className="flex items-end gap-3">
-            <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm text-muted">
-              Name
-              <input
-                value={board.name}
-                disabled={!editable}
-                onChange={(e) => set({ name: e.target.value })}
-                className={`${inputClass} px-2.5 py-1.5`}
-              />
-            </label>
-            <Button onPress={onDelete} disabled={!editable} label={`Delete ${board.name}`}>
-              <span className="flex items-center gap-1.5">
-                <Trash01 className="size-4" aria-hidden="true" />
-                Delete
-              </span>
-            </Button>
-          </div>
-          <p className="-mt-2 text-xs text-faint">
-            In Lua:{" "}
-            <code className="font-mono text-muted">
-              UI.{luaName}.SetValue(player, "{board.columns[1]?.name ?? "Kills"}", 5)
-            </code>
-          </p>
+          <DesignHeader
+            name={board.name}
+            lua={`UI.${luaName}.SetValue(player, "${board.columns[1]?.name ?? "Kills"}", 5)`}
+            editable={editable}
+            onRename={(name) => set({ name })}
+            onDuplicate={onDuplicate}
+            onDelete={onDelete}
+          />
 
           <label className="flex flex-col gap-1 text-sm text-muted">
             Title

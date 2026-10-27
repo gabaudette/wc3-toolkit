@@ -11,8 +11,9 @@ import type {
   MultiboardDesign,
   TimerWindowDesign,
 } from "../types";
-import { classes } from "../ui";
+import { besides, classes, counted, DESIGN_FILTERS } from "../ui";
 import { Button } from "./Button";
+import { ExportDesignsDialog, ImportDesignsDialog } from "./DesignTransferDialogs";
 import { DialogEditor } from "./DialogEditor";
 import { GameText } from "./GameText";
 import { LeaderboardEditor } from "./LeaderboardEditor";
@@ -27,19 +28,12 @@ const MAP_STATUS_DELAY_MS = 300;
 
 type InterfacePaneProps = {
   editable: boolean;
+  /** The open map's file: design files are saved and looked for beside it. */
+  mapPath: string | null;
   /** Called after every change, so the window can show the map as unsaved. */
   onMapChanged: () => void;
   onError: (message: string | null) => void;
 };
-
-/** "1 button", "3 buttons". */
-function counted(count: number, word: string): string {
-  if (count === 1) {
-    return `1 ${word}`;
-  }
-
-  return `${count} ${word}s`;
-}
 
 /** The designs with one swapped for its new version. */
 function replaced(designs: Design[], changed: Design): Design[] {
@@ -158,10 +152,13 @@ function newDialog(count: number): DialogDesign {
  * they become, with the test copy, along the bottom. Designs live in
  * `<map> UI.json` next to the map and are written with it on Save.
  */
-export function InterfacePane({ editable, onMapChanged, onError }: InterfacePaneProps) {
+export function InterfacePane({ editable, mapPath, onMapChanged, onError }: InterfacePaneProps) {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
   const [icons, setIcons] = useState<IconChoice[]>([]);
+  const [exporting, setExporting] = useState(false);
+  /** The design file being imported. */
+  const [importing, setImporting] = useState<string | null>(null);
   const fail = useCallback((e: unknown) => onError(errorMessage(e)), [onError]);
   /** Updates run one after another, so a slow answer never overwrites a newer one. */
   const queue = useRef<Promise<void>>(Promise.resolve());
@@ -183,6 +180,8 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
   }, [editable, fail]);
 
   const names = useMemo(() => luaNames(designs), [designs]);
+  /** Every design, ticked when the export window opens; kept stable so it does not reset the window. */
+  const exportChoice = useMemo(() => designs.map((d) => d.id), [designs]);
   const design = designs.find((d) => d.id === selected);
 
   /**
@@ -213,6 +212,38 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
   function add(created: Design) {
     update([...designs, created]);
     setSelected(created.id);
+  }
+
+  /** A copy right after the original, named "<name> copy" (numbered when taken). */
+  function duplicate(original: Design) {
+    const taken = new Set(designs.map((d) => d.name.toLowerCase()));
+    let name = `${original.name} copy`;
+    for (let n = 2; taken.has(name.toLowerCase()); n++) {
+      name = `${original.name} copy ${n}`;
+    }
+
+    const copy: Design = { ...structuredClone(original), id: crypto.randomUUID(), name };
+    const at = designs.findIndex((d) => d.id === original.id) + 1;
+    update([...designs.slice(0, at), copy, ...designs.slice(at)]);
+    setSelected(copy.id);
+  }
+
+  async function pickDesignFile() {
+    const picked = await open({
+      title: "Import designs",
+      filters: DESIGN_FILTERS,
+      ...(mapPath && { defaultPath: besides(mapPath, "") }),
+    });
+    if (typeof picked === "string") {
+      setImporting(picked);
+    }
+  }
+
+  function imported(next: Design[]) {
+    const added = next.find((d) => !designs.some((old) => old.id === d.id));
+    setDesigns(next);
+    setSelected(added?.id ?? selected);
+    onMapChanged();
   }
 
   function remove(id: string) {
@@ -281,6 +312,14 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
               </span>
             </Button>
           </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Button small onPress={pickDesignFile}>
+              Import…
+            </Button>
+            <Button small disabled={designs.length === 0} onPress={() => setExporting(true)}>
+              Export…
+            </Button>
+          </div>
           <p className="text-xs text-faint">
             {counted(designs.length, "design")} · saved with the map
           </p>
@@ -330,6 +369,7 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
                 luaName={names.get(design.id) ?? ""}
                 editable={editable}
                 onChange={(changed) => update(replaced(designs, changed))}
+                onDuplicate={() => duplicate(design)}
                 onDelete={() => remove(design.id)}
               />
             )}
@@ -341,6 +381,7 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
                 luaName={names.get(design.id) ?? ""}
                 editable={editable}
                 onChange={(changed) => update(replaced(designs, changed))}
+                onDuplicate={() => duplicate(design)}
                 onDelete={() => remove(design.id)}
               />
             )}
@@ -351,6 +392,7 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
                 luaName={names.get(design.id) ?? ""}
                 editable={editable}
                 onChange={(changed) => update(replaced(designs, changed))}
+                onDuplicate={() => duplicate(design)}
                 onDelete={() => remove(design.id)}
               />
             )}
@@ -361,6 +403,7 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
                 luaName={names.get(design.id) ?? ""}
                 editable={editable}
                 onChange={(changed) => update(replaced(designs, changed))}
+                onDuplicate={() => duplicate(design)}
                 onDelete={() => remove(design.id)}
               />
             )}
@@ -378,6 +421,21 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
           />
         )}
       </section>
+
+      <ExportDesignsDialog
+        open={exporting}
+        designs={designs}
+        mapPath={mapPath}
+        initial={exportChoice}
+        flush={flush}
+        onClose={() => setExporting(false)}
+      />
+      <ImportDesignsDialog
+        path={importing}
+        flush={flush}
+        onImported={imported}
+        onClose={() => setImporting(null)}
+      />
     </div>
   );
 }

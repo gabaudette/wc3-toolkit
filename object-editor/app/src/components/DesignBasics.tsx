@@ -1,31 +1,29 @@
-import { Trash01 } from "@untitledui/icons";
+import { Copy01, Trash01 } from "@untitledui/icons";
 import { Button } from "./Button";
 import { ColorSwatches } from "./ColorSwatches";
 
 export const designInputClass =
   "rounded-[3px] border border-field bg-well px-2.5 py-1.5 text-ink outline-none focus:border-focus disabled:opacity-60";
 
-type DesignBasicsProps = {
+type DesignHeaderProps = {
   name: string;
-  title: string;
-  titleColor: string | null;
   /** The Lua call to show under the name, such as `UI.Kills.AddValue(player, 1)`. */
   lua: string;
   editable: boolean;
-  onChange: (change: { name?: string; title?: string; titleColor?: string | null }) => void;
+  onRename: (name: string) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 };
 
-/** What every design has on top: its name (and Lua call), Delete, and a colored title. */
-export function DesignBasics({
+/** What every design has on top: its name, Duplicate and Delete, and its Lua call. */
+export function DesignHeader({
   name,
-  title,
-  titleColor,
   lua,
   editable,
-  onChange,
+  onRename,
+  onDuplicate,
   onDelete,
-}: DesignBasicsProps) {
+}: DesignHeaderProps) {
   return (
     <>
       <div className="flex items-end gap-3">
@@ -34,10 +32,16 @@ export function DesignBasics({
           <input
             value={name}
             disabled={!editable}
-            onChange={(e) => onChange({ name: e.target.value })}
+            onChange={(e) => onRename(e.target.value)}
             className={designInputClass}
           />
         </label>
+        <Button onPress={onDuplicate} disabled={!editable} label={`Duplicate ${name}`}>
+          <span className="flex items-center gap-1.5">
+            <Copy01 className="size-4" aria-hidden="true" />
+            Duplicate
+          </span>
+        </Button>
         <Button onPress={onDelete} disabled={!editable} label={`Delete ${name}`}>
           <span className="flex items-center gap-1.5">
             <Trash01 className="size-4" aria-hidden="true" />
@@ -48,6 +52,43 @@ export function DesignBasics({
       <p className="-mt-2 text-xs text-faint">
         In Lua: <code className="font-mono text-muted">{lua}</code>
       </p>
+    </>
+  );
+}
+
+type DesignBasicsProps = {
+  name: string;
+  title: string;
+  titleColor: string | null;
+  /** The Lua call to show under the name, such as `UI.Kills.AddValue(player, 1)`. */
+  lua: string;
+  editable: boolean;
+  onChange: (change: { name?: string; title?: string; titleColor?: string | null }) => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+};
+
+/** The header, then a colored title: what leaderboards and timers start with. */
+export function DesignBasics({
+  name,
+  title,
+  titleColor,
+  lua,
+  editable,
+  onChange,
+  onDuplicate,
+  onDelete,
+}: DesignBasicsProps) {
+  return (
+    <>
+      <DesignHeader
+        name={name}
+        lua={lua}
+        editable={editable}
+        onRename={(next) => onChange({ name: next })}
+        onDuplicate={onDuplicate}
+        onDelete={onDelete}
+      />
 
       <label className="flex flex-col gap-1 text-sm text-muted">
         Title
