@@ -15,6 +15,7 @@ import { Button } from "./Button";
 import { CommitInput } from "./CommitInput";
 import { LevelTable } from "./LevelTable";
 import { LevelText } from "./LevelText";
+import { Select } from "./Select";
 import { PlaceholderValues } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
@@ -167,20 +168,19 @@ type ChoiceInputProps = {
 
 function ChoiceInput({ param, values, onValue }: ChoiceInputProps) {
   return (
-    <label className="flex items-center gap-2 text-sm text-muted">
-      {param.label}
-      <select
-        value={values[param.id]?.[0] ?? 0}
-        onChange={(e) => onValue(param.id, [Number(e.target.value)])}
-        className="rounded-[3px] border border-field bg-well px-2 py-1 text-ink outline-none focus:border-focus"
-      >
-        {param.choices.map((choice, i) => (
-          <option key={choice.label} value={i}>
-            {capitalized(choice.label)}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="flex items-center gap-2 text-sm text-muted">
+      <span aria-hidden="true">{param.label}</span>
+      <Select
+        value={String(values[param.id]?.[0] ?? 0)}
+        options={param.choices.map((choice, i) => ({
+          value: String(i),
+          label: capitalized(choice.label),
+        }))}
+        onChange={(value) => onValue(param.id, [Number(value)])}
+        label={param.label}
+        className="py-1"
+      />
+    </div>
   );
 }
 

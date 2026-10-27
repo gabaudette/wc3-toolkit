@@ -9,11 +9,13 @@ import {
   useRef,
   useState,
 } from "react";
+import { ListBox } from "react-aria-components";
 import { type Cell, inside, moved, typesCharacter } from "../grid";
 import type { Field, LevelCell, LevelField } from "../types";
 import { classes } from "../ui";
 import { Description } from "./FieldRow";
 import { FlagsInput } from "./FlagsInput";
+import { fieldChoices, Option, optionKey, optionValue } from "./Select";
 
 type LevelTableProps = {
   fields: LevelField[];
@@ -185,26 +187,40 @@ function CellEditor({
   const label = `${meta.name}, ${levelName.toLowerCase()} ${editing.column + 1}`;
 
   if (meta.control === "select") {
+    const choices = fieldChoices(meta.options, editing.draft, editing.draft);
     return (
-      <select
-        // biome-ignore lint/a11y/noAutofocus: editing starts from the keyboard on this cell.
-        autoFocus
-        value={editing.draft}
-        onChange={(e) => onChoice(e.target.value)}
-        onKeyDown={onKey}
-        onBlur={onCommit}
-        aria-label={label}
-        className={inputClass}
-      >
-        {!meta.options.some((o) => o.value.toLowerCase() === editing.draft.toLowerCase()) && (
-          <option value={editing.draft}>{editing.draft || "(none)"}</option>
-        )}
-        {meta.options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      // A list under the cell, like the flags: picking applies; Escape,
+      // Tab or a click away leave the cell as it was.
+      <FlagsPopover anchor={anchor} label={label} onKey={onKey} onCommit={onCommit}>
+        {/* Enter picks the focused choice here, before the panel's Enter applies the draft. */}
+        {/* biome-ignore lint/a11y/noStaticElementInteractions: only stops a key from bubbling; the list handles it. */}
+        <div
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.stopPropagation();
+            }
+          }}
+        >
+          <ListBox
+            aria-label={label}
+            selectionMode="single"
+            disallowEmptySelection
+            selectedKeys={[optionKey(choices.value)]}
+            onSelectionChange={(keys) => {
+              const [key] = [...keys];
+              if (key !== undefined) {
+                onChoice(optionValue(key));
+              }
+            }}
+            autoFocus
+            className="max-h-72 overflow-y-auto outline-none"
+          >
+            {choices.options.map((option) => (
+              <Option key={option.value} option={option} />
+            ))}
+          </ListBox>
+        </div>
+      </FlagsPopover>
     );
   }
 
@@ -499,7 +515,8 @@ export function LevelTable({
                             }}
                           />
                         )}
-                        {!(isEditing && meta.control === "select") && (
+                        {
+                          // The cell stays while its choices are open: their panel sits under it.
                           // biome-ignore lint/a11y/useSemanticElements: a grid cell with roving focus, not a form control.
                           <div
                             ref={(element) => {
@@ -530,7 +547,7 @@ export function LevelTable({
                             {meta.control === "bool" && boolMark(cell)}
                             {meta.control !== "bool" && (shown || "–")}
                           </div>
-                        )}
+                        }
                         {isEditing && (meta.control === "flags" || meta.control === "flagList") && (
                           <CellEditor
                             levelName={levelName}

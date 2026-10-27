@@ -3,8 +3,8 @@
 /*
  * Arcane: Warcraft III Reforged's menus. Deep navy surfaces, fine gold
  * double-line frames, gold for headings and changes, a teal glow for
- * the selected item, and a plain light ring for keyboard focus. Decided in AGE-23; the mockups live on the
- * "WC3 Editor Redesign Directions" canvas.
+ * the selected item, and a plain light ring for keyboard focus. Decided in
+ * AGE-23; the mockups live on the "WC3 Editor Redesign Directions" canvas.
  *
  * Every text color passes 4.5:1 on every surface it is used on.
  */
@@ -51,11 +51,6 @@ html,
 body,
 #root {
   height: 100%;
-}
-
-select option {
-  background: var(--color-surface-1);
-  color: var(--color-ink);
 }
 
 body {

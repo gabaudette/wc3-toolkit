@@ -310,3 +310,36 @@ export type ImportSource =
   | { kind: "code"; code: string }
   | { kind: "bundle"; path: string }
   | { kind: "map"; path: string; ids: string[] };
+
+/** What a dialog button does once clicked; the game hides the dialog first. */
+export type ButtonAction =
+  | { kind: "close" }
+  | { kind: "showDialog"; dialog: string }
+  | { kind: "runFunction"; function: string };
+
+export type DialogButton = {
+  text: string;
+  /** One letter or digit, or empty for none. */
+  hotkey: string;
+  /** The hotkey's letter in the text turns gold, as in the game's own dialogs. */
+  highlightHotkey: boolean;
+  action: ButtonAction;
+};
+
+/** A dialog designed in the Interface tab: a message and a column of buttons. */
+export type DialogDesign = {
+  kind: "dialog";
+  /** Stable, for references between designs. */
+  id: string;
+  /** The name in the tab; the Lua name (`UI.ChoosePath`) comes from it. */
+  name: string;
+  /** The message at the top, as plain text. */
+  title: string;
+  /** The message's color as `RRGGBB`; the game's own gold when null. */
+  titleColor: string | null;
+  buttons: DialogButton[];
+  /** Shown to every player shortly after the game starts. */
+  showAtStart: boolean;
+};
+
+export type Design = DialogDesign;

@@ -81,6 +81,12 @@ would also need a CSP change.
   (`gold-soft` fill, `gold` edge, `gold-bright` semibold text) with a checked box. Here gold
   means "on"; an option that differs from the base gets a gold dot after its label. Tab moves
   between options and Space toggles; read-only groups stay focusable.
+- **Selects** (`Select`, react-aria): a button drawn like an input (`well`, `field` edge, a
+  `muted` chevron) and a list in a `surface-1` panel; the current option is gold with a check,
+  as "on" is for checkboxes. Never a native `<select>`: WebKitGTK draws its open list as a
+  grey system menu that no CSS reaches.
+- **Game previews** (the Interface tab's dialog) use the game's own colors and proportions
+  inside a 16:9 frame, sized with container units; they are the one place raw colors appear.
 - **Focus**: every focusable element shows a 2 px `focus` outline on keyboard focus
   (`:focus-visible`). It is light and neutral (it was teal until AGE-39), so it never reads as
   gold's "on" or "changed"; on a checkbox it goes around the whole option.

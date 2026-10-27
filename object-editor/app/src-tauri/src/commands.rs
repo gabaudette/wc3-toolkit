@@ -19,6 +19,7 @@ use wc3_map::{FourCC, MapStrings, save_files};
 
 use crate::abilities::{AbilityCard, AbilityDetail, AbilitySummary, AbilityView};
 use crate::hotkeys::{self, Clash};
+use crate::interface;
 use crate::platform;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
 use crate::view::{Field, SearchHit, UnitDetail, UnitItem, View};
@@ -391,6 +392,10 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
                 .map(|(path, bytes)| (path.as_str(), bytes.clone())),
         );
         save_files(&map.path, &map.path, &written).map_err(|e| e.to_string())?;
+        if map.ui != map.saved_ui {
+            interface::save(&map.path, &map.ui)?;
+            map.saved_ui = map.ui.clone();
+        }
         map.saved_files = files;
         map.imports.saved();
         Ok(map_summary(session))

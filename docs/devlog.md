@@ -4,6 +4,43 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · UI tool, part 1: the Interface tab and dialogs (AGE-52)
+
+- First part of AGE-37 (split into AGE-52 to AGE-55: dialogs, multiboards, leaderboards and
+  timer windows, reuse across maps). An **Interface** tab next to Doodads: designs on the
+  left, the editor and a preview in the middle, the Lua along the bottom.
+- Designs live in `<map> UI.json` beside the map (`interface.rs`: a versioned `UiFile` with a
+  `kind`-tagged `Design` enum), loaded with the map and written on Save; `OpenMap::unsaved`
+  counts them. A file from a newer format version is refused rather than overwritten.
+- A dialog is a name, a message (plain text plus a color from the player colors, the game's
+  gold by default), buttons with text, hotkey, "gold hotkey letter" and an action (close,
+  show another dialog, run a named global Lua function if the map defines it), and "show to
+  every player at start". The color codes are added by Tinkerbench (`title_text`,
+  `button_text`, mirrored in `interface.ts` for the preview, with the same tests), at the
+  user's request: typing `|cff...|r` was not something map makers should have to read.
+- Each dialog becomes `ui_<name>.lua` in the map's Lua folder, made from code and checked as
+  Lua 5.3: `UI.<Name>.Show(player)`, `.Hide(player)`, `.ShowAll()`, a click trigger that runs
+  the button's action, and the show at start after 1 s (dialogs shown during map init never
+  appear). Writing removes the modules this tab wrote for deleted designs, recognized by their
+  first line, and leaves every other file alone. Lua names come from the design names
+  (`ChooseDifficulty`), numbered when two collide; references between dialogs use stable IDs.
+- "Save and build test copy" writes the modules, saves the map and its designs, and runs the
+  harness's `build_dev_map`, as the spell wizard's last step does.
+- The tab saves designs to the map on every change but re-reads the window's map status only
+  once typing pauses (300 ms): re-reading it per keystroke re-rendered the whole window and
+  dropped keys. Updates run one after another, as in the other panes.
+- Every native `<select>` became `Select` (react-aria `Select`, `Popover`, `ListBox`), at the
+  user's request: WebKitGTK draws the closed select as a grey theme button and the open list
+  as a GTK menu, which no CSS reaches. Option keys get a `v:` prefix, since react-aria treats
+  an empty key as none and fields can store an empty value. In a level table a choice cell
+  opens a list in the panel the flags already use, under the cell: a pick applies; Escape,
+  Tab or a click away leave it. (A pop-up `Select` there closed itself: the Enter that started
+  the edit reached it.) Level table cells start editing on a click, which is why a click and
+  then Enter seemed to "need two Enters" in AGE-39's notes; that was not a bug.
+- Checked on a copy of the test map: "Choose difficulty" with a white message, Normal and
+  Hard (gold N and H, Hard running `OnHardMode`), saved to `button-test UI.json`, the module
+  written and the `[DEV]` copy built and read back. **Not yet played in game.**
+
 ## 2026-10-27 · Checkboxes and multi-option fields (AGE-39)
 
 - `Checkbox` and `CheckChip` (react-aria `Checkbox`, in `Checkbox.tsx`) replace every native

@@ -8,6 +8,7 @@ import { AbilityField } from "./AbilityField";
 import { ColoredTextInput } from "./ColoredTextInput";
 import { FlagsInput } from "./FlagsInput";
 import { GameText, plainGameText } from "./GameText";
+import { fieldChoices, Select } from "./Select";
 import { TextPreview } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
@@ -146,22 +147,12 @@ function Editor({ field, editable, onChange }: Omit<FieldRowProps, "onReset">) {
 
   if (field.control === "select") {
     return (
-      <select
-        value={field.raw}
-        disabled={!editable}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={field.label}
-        className={inputClass}
-      >
-        {!field.options.some((o) => o.value.toLowerCase() === field.raw.toLowerCase()) && (
-          <option value={field.raw}>{field.display || "(none)"}</option>
-        )}
-        {field.options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
+      <Select
+        {...fieldChoices(field.options, field.raw, field.display)}
+        onChange={onChange}
+        label={field.label}
+        isDisabled={!editable}
+      />
     );
   }
 

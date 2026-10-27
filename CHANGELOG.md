@@ -8,6 +8,11 @@ under "What's new".
 
 ### Added
 
+- An Interface tab for in-game UI, starting with dialogs: a message in the color you pick and
+  buttons with hotkeys (their letter shown in gold, as the game does), each closing the
+  dialog, showing another one or running a Lua function you name. The preview shows the
+  dialog at the game's proportions. "Save and build test copy" writes the Lua and builds a
+  "[DEV]" copy of the map to play. Designs are saved next to the map in "<map> UI.json".
 - Spell wizard: "New spell" in the Abilities tab asks what the spell should do (damage, heal,
   stun, summon, aura and 9 more), suggests game abilities to start from and why, then sets its
   name, levels, targets, range, cooldown, mana, its own values and tooltips in one table, with
@@ -74,6 +79,8 @@ under "What's new".
 
 ### Changed
 
+- Drop-down menus are drawn in the app's own style, closed and open, instead of the system's
+  grey buttons and menus.
 - New checkboxes everywhere: a gold box with a check mark when on. Fields with many options,
   like Targets Allowed, Targeted As or Classification, show them as chips that wrap across the
   row, so even 31 options take about four lines; checked ones are gold, and a gold dot marks
