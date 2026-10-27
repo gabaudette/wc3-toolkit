@@ -91,6 +91,8 @@ under "What's new".
 
 ### Fixed
 
+- "Give to units" no longer gives a hero a sixth hero spell, which the game leaves out of the
+  learn menu: it explains the limit of five and which spells the hero already has.
 - Ability, upgrade and doodad pages no longer keep redrawing in the background while open,
   which used processor time for nothing.
 - Tooltip previews now update as soon as a value they show changes, not only when the text

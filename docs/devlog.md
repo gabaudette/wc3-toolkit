@@ -4,6 +4,20 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Heroes learn at most five spells
+
+- Found playing the Knockback Wave test map: the spell was the test hero's sixth hero ability,
+  and the game silently left it out of the learn menu. The World Editor caps "Abilities -
+  Hero" at five; "Give to units" (AGE-50) did not.
+- `SpellFit` gained `blocked`: set when the spell would go in a hero's learnable abilities
+  and the hero already has five (`MAX_HERO_SPELLS`), naming them. `give_spell` refuses then,
+  and the panel shows the reason and disables "Give the spell". A hero already holding the
+  spell past the fifth gets a warning that the game leaves it out.
+- Real-install test: a Paladin with five hero spells cannot get Blizzard, its fifth spell
+  gets no warning, and a sixth one already in the list is flagged.
+- The unit page's own "Abilities - Hero" field still accepts more than five; it lists them
+  like any other ability list.
+
 ## 2026-10-27 · Spell wizard, part 5: triggered spells with generated Lua (AGE-51)
 
 - Last part of AGE-19. `data/spell-templates.toml` lists triggered spells; each is a copy of
