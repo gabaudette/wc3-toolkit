@@ -25,6 +25,9 @@ For help choosing, [compare Armor Type, Defense Type and Defense Base](../../ref
 
 ## Ability levels
 
+To make a new spell with guided base selection, values, buff, button and unit assignment,
+follow the [spell wizard walkthrough](../../guides/custom-spell/).
+
 Abilities have shared fields and per-level fields. The level table edits values such as mana cost and cooldown independently for each level. Spell-specific data depends on the ability’s base code: the same data column can mean different things for different spells.
 
 Changing a spell’s name or artwork does not change its underlying behavior or order ID. Test multiple abilities together; abilities based on the same spell can conflict.

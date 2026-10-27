@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Illustrated spell-wizard walkthrough: create a three-level hero spell, choose its buff
+  and button, assign it to a hero, and build a generated-Lua spell in a separate test copy.
 - An Interface tab for in-game UI, starting with dialogs: a message in the color you pick and
   buttons with hotkeys (their letter shown in gold, as the game does), each closing the
   dialog, showing another one or running a Lua function you name. The preview shows the

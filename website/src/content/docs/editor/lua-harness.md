@@ -6,6 +6,10 @@ description: "Build a development map with external Lua modules while preserving
 
 The World Editor regenerates `war3map.lua` on save. The harness keeps your modules in ordinary files and appends them to the editor’s script in a **development copy** of the map.
 
+The [spell wizard’s generated-Lua path](../../guides/custom-spell/#add-scripted-behavior-later)
+can write a spell module and build this copy from inside Tinkerbench. The commands below
+also work with modules you write yourself.
+
 ## Prepare the map
 
 Use a map configured for Lua scripting in the World Editor. Save it before running the command. A JASS map without `war3map.lua` cannot use this harness.

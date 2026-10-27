@@ -4,6 +4,35 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Spell wizard walkthrough (AGE-56)
+
+- Replaced the manual-copy custom-spell introduction with the finished New spell workflow:
+  Storm Bolt → Sunwell Bolt, three levels, its own buff, distinct cast/learn buttons and
+  explicit Give the spell followed by Create spell and Save. Nine real, focused dialog
+  captures have alt text, full-size links and the shared centered, muted change notice.
+- Added a separate Attribute Strike walkthrough for Lua maps: effect values, button/unit
+  assignment, per-map module folder, Create spell and Save and build test copy. Kept the
+  source-map/module/dev-copy distinction and Lua-only requirement explicit. Linked the
+  workflow from the object-editing and harness guides and documented capture maintenance.
+- AGE-19 is done, but AGE-25/27 also waited for a current tutorial. Tracked that prerequisite
+  as AGE-56 and replaced their completed-tool blocker with this tutorial, preserving their
+  hero/item scope. The original spell guide URL and main section anchors remain stable.
+- Followed both paths in the current app on separate disposable copies. Read back Sunwell
+  Bolt's cooldown/mana/damage, own tooltip placeholders, three buff links, button settings
+  and the hero's fifth ability. The basic map's seven object/string files round-trip
+  identically; the generated map's five do too. Attribute Strike's module uses its assigned
+  code and is present verbatim only in the dev copy's Lua script, which parses as Lua 5.3.
+  The source script remains unchanged. **In-game casting was not exercised**; the guide
+  says so and gives a rank-by-rank play-test checklist.
+- Website validation: all 119 current tests pass; Biome and Astro report no diagnostics.
+  Build and local link/asset checks pass across 6,610 pages. A separate audit checks all
+  nine image dimensions/alt texts/full-size links/notices, preserves four original section
+  anchors and validates 84 internal fragments across the three edited guides. Browser
+  checks cover desktop and 320px in both themes, loaded images, readable tables, centered
+  muted notices, keyboard full-size access and shared instructions with JASS selected.
+  The guide ranks first in Guides searches for spell wizard, Sunwell Bolt and Attribute
+  Strike. No browser errors were reported.
+
 ## 2026-10-27 · UI tool, part 1: the Interface tab and dialogs (AGE-52)
 
 - First part of AGE-37 (split into AGE-52 to AGE-55: dialogs, multiboards, leaderboards and
