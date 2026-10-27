@@ -1,6 +1,3 @@
-//! Abilities shaped for the UI, with the open map's changes applied: list
-//! entries, cards, and ability pages whose per-level fields are tables.
-
 use std::collections::{HashMap, HashSet};
 
 use serde::Serialize;
@@ -15,7 +12,6 @@ use wc3_map::abilities::{MapAbilities, MapAbility, MapPlaceholders};
 
 use crate::view::{Field, FieldValue, SearchHit, base_text, build_field};
 
-/// Category order on an ability page: numbers people tune most come first.
 const CATEGORY_ORDER: &[&str] = &["stats", "data", "text", "art", "tech", "sound"];
 const DATA_SOURCE: &str = "AbilityData";
 const NUMERIC_TYPES: &[&str] = &["int", "real", "unreal"];
@@ -35,9 +31,7 @@ pub struct AbilitySummary {
     pub item: bool,
     pub race: String,
     pub levels: u32,
-    /// Added by the map (`A000`).
     pub custom: bool,
-    /// Added or changed by the map.
     pub in_map: bool,
     pub changed_fields: usize,
 }
@@ -52,7 +46,6 @@ pub struct LevelRow {
 #[serde(rename_all = "camelCase")]
 pub struct AbilityCard {
     pub summary: AbilitySummary,
-    /// Whether the game data or the map has this ability.
     pub known: bool,
     pub hotkey: Option<String>,
     pub required_level: u32,
@@ -62,7 +55,6 @@ pub struct AbilityCard {
     pub rows: Vec<LevelRow>,
 }
 
-/// One level's value of a per-level field.
 #[derive(Serialize)]
 pub struct LevelCell {
     pub raw: String,
@@ -70,10 +62,8 @@ pub struct LevelCell {
     pub modified: bool,
 }
 
-/// A per-level field: its row on the page and one cell per level.
 #[derive(Serialize)]
 pub struct LevelField {
-    /// Names, control and limits; its value is level 1's.
     pub field: Field,
     pub cells: Vec<LevelCell>,
 }
@@ -83,9 +73,7 @@ pub struct LevelField {
 pub struct AbilitySection {
     pub category: String,
     pub label: String,
-    /// Fields with one value.
     pub fields: Vec<Field>,
-    /// Fields with a value per level, shown as a table.
     pub level_fields: Vec<LevelField>,
 }
 
@@ -96,7 +84,6 @@ pub struct AbilityDetail {
     pub sections: Vec<AbilitySection>,
 }
 
-/// The game's abilities with a map's changes on top (none without a map).
 pub struct AbilityView<'a> {
     pub db: &'a AbilityDatabase,
     pub units: &'a UnitDatabase,
@@ -126,7 +113,6 @@ impl AbilityView<'_> {
         }
     }
 
-    /// Fills `<ID,Column>` placeholders with the map's values where it has them.
     pub fn fill_placeholders(&self, text: &str) -> String {
         self.db.fill_placeholders(text, &self.placeholders())
     }
@@ -160,7 +146,6 @@ impl AbilityView<'_> {
         Some(self.summary_with(id, info, entry.as_ref()))
     }
 
-    /// The map's abilities first, then every game ability, each once.
     fn ids_after(&self, map_abilities: &[MapAbility]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_abilities.iter().map(|a| a.id).collect();
         let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
@@ -188,7 +173,6 @@ impl AbilityView<'_> {
             .collect()
     }
 
-    /// A card for an ability code; unknown codes get a card showing only the code.
     pub fn card(&self, code: &str) -> AbilityCard {
         let info = FourCC::parse(code).and_then(|id| Some((id, self.info(id)?)));
         let Some((id, info)) = info else {
@@ -297,8 +281,6 @@ impl AbilityView<'_> {
         }
     }
 
-    /// Fields in page order: by category, then the guide's important fields,
-    /// then data fields by column (`DataA`, `DataB`, ...), then the game's order.
     fn sorted_fields(&self, id: FourCC) -> Vec<&FieldMeta> {
         let mut fields = self.map.fields(self.db, id);
 
@@ -355,8 +337,6 @@ impl AbilityView<'_> {
         })
     }
 
-    /// Abilities whose name, suffix or raw code contains the query, then
-    /// abilities with a number at any level that equals it (e.g. `75`, `0.5`).
     pub fn search(&self, query: &str) -> Vec<SearchHit> {
         let query = query.trim().to_lowercase();
 
@@ -406,9 +386,6 @@ impl AbilityView<'_> {
         by_name
     }
 
-    /// The first numeric per-level field equal to `number`, as `Mana Cost = 75 (level 2)`.
-    /// Game abilities the map does not touch are read from the game data
-    /// directly, which keeps searching large maps fast.
     fn number_match(&self, id: FourCC, in_map: bool, levels: u32, number: f64) -> Option<String> {
         let key = id.to_string();
         let raw = |field: &FieldMeta, level: u32| {
@@ -557,8 +534,6 @@ mod tests {
         Ok(())
     }
 
-    /// A custom ability shows up first in the list and on cards with the
-    /// map's name and values.
     #[test]
     #[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
     fn custom_abilities_show_their_own_values() -> TestResult {

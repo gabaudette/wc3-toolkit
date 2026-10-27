@@ -17,7 +17,6 @@ use std::path::{Path, PathBuf};
 #[allow(unsafe_code)]
 pub fn keep_threads_at_normal_priority() {
     const SYSTEM_BUS_VAR: &str = "DBUS_SYSTEM_BUS_ADDRESS";
-    /// A socket under `/dev/null`, which is not a folder.
     const NO_SYSTEM_BUS: &str = "unix:path=/dev/null/no-system-bus";
 
     // SAFETY: called first in `main`, before any other thread exists, so
@@ -26,7 +25,6 @@ pub fn keep_threads_at_normal_priority() {
     unsafe { std::env::set_var(SYSTEM_BUS_VAR, NO_SYSTEM_BUS) };
 }
 
-/// Only WebKitGTK (Linux) asks for real-time threads.
 #[cfg(not(all(unix, not(target_os = "macos"))))]
 pub fn keep_threads_at_normal_priority() {}
 
@@ -97,7 +95,6 @@ fn candidates() -> Vec<PathBuf> {
     vec![Path::new("/Applications").join(GAME_FOLDER)]
 }
 
-/// Steam (Proton) prefixes and the default Wine prefix.
 #[cfg(all(unix, not(target_os = "macos")))]
 fn candidates() -> Vec<PathBuf> {
     const STEAM_ROOTS: &[&str] = &[

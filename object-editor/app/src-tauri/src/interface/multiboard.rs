@@ -1,8 +1,3 @@
-//! Multiboards: a titled board of rows and columns in the top right corner,
-//! like a scoreboard. Rows are fixed or repeat once per playing player; the
-//! Lua sets any cell by row and column name afterwards
-//! (`UI.Scoreboard.SetValue(player, "Kills", 5)`).
-
 use std::collections::{HashMap, HashSet};
 
 use serde::{Deserialize, Serialize};
@@ -10,10 +5,7 @@ use wc3_map::lua::check_syntax;
 
 use super::{MODULE_MARKER, SHOW_DELAY, color_code, comment_text, lua_string, module_file};
 
-/// The text of a cell on a player's row that becomes that player's name, in
-/// their color.
 pub const PLAYER_NAME: &str = "{player}";
-/// Columns are at most this share of the screen's width, in percent.
 const MAX_WIDTH: f64 = 100.0;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -22,14 +14,11 @@ pub struct MultiboardDesign {
     pub id: String,
     pub name: String,
     pub title: String,
-    /// The title's color as `RRGGBB`; the game's own when `None`.
     #[serde(default)]
     pub title_color: Option<String>,
     pub columns: Vec<BoardColumn>,
     pub rows: Vec<BoardRow>,
-    /// Shown shortly after the game starts.
     pub show_at_start: bool,
-    /// Shown folded to its title bar; players open it with a click.
     #[serde(default)]
     pub minimized: bool,
 }
@@ -39,9 +28,7 @@ pub struct MultiboardDesign {
 pub struct BoardColumn {
     #[serde(default)]
     pub id: String,
-    /// How the Lua names it: `SetValue(row, "Kills", 5)`.
     pub name: String,
-    /// Width in percent of the screen's width.
     pub width: f64,
 }
 
@@ -50,28 +37,21 @@ pub struct BoardColumn {
 pub struct BoardRow {
     #[serde(default)]
     pub id: String,
-    /// How the Lua names a fixed row; rows per player are named by the player.
     pub name: String,
-    /// One row for every playing player, in player order, instead of one.
     pub per_player: bool,
-    /// One per column; missing ones are empty.
     pub cells: Vec<BoardCell>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct BoardCell {
-    /// On a player's row, `{player}` is that player's name in their color.
     pub text: String,
-    /// The text's color as `RRGGBB`; white when `None`.
     #[serde(default)]
     pub color: Option<String>,
-    /// An icon left of the text, such as `ReplaceableTextures\CommandButtons\BTNFootman.blp`.
     #[serde(default)]
     pub icon: Option<String>,
 }
 
-/// Problems that would make the board misbehave, as sentences.
 fn check(board: &MultiboardDesign) -> Result<(), String> {
     let problem = |what: String| Err(format!("{}: {what}", board.name));
 
@@ -135,7 +115,6 @@ fn lua_cell(cell: &BoardCell) -> String {
     )
 }
 
-/// The Lua module for one multiboard, checked as Lua 5.3.
 pub fn multiboard_lua(
     board: &MultiboardDesign,
     names: &HashMap<String, String>,

@@ -1,7 +1,3 @@
-//! Timer windows: a countdown with a title, such as "Next wave 1:30". It can
-//! start with the game, repeat, hide when done, and run a Lua function of the
-//! map's when the time runs out.
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -11,7 +7,6 @@ use super::{
     MODULE_MARKER, SHOW_DELAY, color_code, comment_text, is_identifier, lua_string, module_file,
 };
 
-/// A day in seconds: longer countdowns are surely a typing mistake.
 const MAX_DURATION: f64 = 86_400.0;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -20,19 +15,12 @@ pub struct TimerWindowDesign {
     pub id: String,
     pub name: String,
     pub title: String,
-    /// The title's color as `RRGGBB`; the game's own when `None`.
     #[serde(default)]
     pub title_color: Option<String>,
-    /// In seconds.
     pub duration: f64,
-    /// Starts over each time it runs out.
     pub repeats: bool,
-    /// Starts counting shortly after the game starts.
     pub start_at_start: bool,
-    /// The window goes away when the time runs out (never for repeating ones).
     pub hide_when_done: bool,
-    /// A global Lua function run each time the time runs out, if the map
-    /// defines one; empty for none.
     #[serde(default)]
     pub on_done: String,
 }
@@ -59,7 +47,6 @@ fn check(timer: &TimerWindowDesign) -> Result<(), String> {
     Ok(())
 }
 
-/// The Lua module for one timer window, checked as Lua 5.3.
 pub fn timer_lua(
     timer: &TimerWindowDesign,
     names: &HashMap<String, String>,

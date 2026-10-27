@@ -1,9 +1,3 @@
-//! Design files (`.w3ui`): designs taken from one map's Interface tab to
-//! another's. A file holds the chosen designs, the dialogs their buttons
-//! show, and the files imported into the source map that they use (icons on
-//! multiboard cells), the way object bundles carry models and icons.
-//! Importing gives each design an ID and a name the map does not have yet.
-
 use std::collections::HashSet;
 
 use base64::Engine;
@@ -13,9 +7,7 @@ use wc3_map::imports::{ImportedFile, files_used};
 
 use super::{ButtonAction, Design, fill_missing_ids, pascal_case};
 
-/// What `format` says in every design file, so other JSON files are refused.
 pub const FILE_FORMAT: &str = "tinkerbench-ui";
-/// Bumped when the file changes in a way older versions cannot read.
 pub const FILE_VERSION: u32 = 1;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -23,16 +15,13 @@ pub struct DesignFile {
     pub format: String,
     pub version: u32,
     pub designs: Vec<Design>,
-    /// Files imported into the source map that the designs use.
     #[serde(default)]
     pub files: Vec<SharedFile>,
 }
 
-/// A file from the source map, at its path inside the archive.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct SharedFile {
     pub path: String,
-    /// The bytes, base64-encoded.
     pub data: String,
 }
 
@@ -62,7 +51,6 @@ impl DesignFile {
         Ok(file)
     }
 
-    /// The imported files, decoded.
     pub fn imported_files(&self) -> Result<Vec<ImportedFile>, String> {
         self.files
             .iter()
@@ -80,18 +68,13 @@ impl DesignFile {
     }
 }
 
-/// A design in an export or import, as the window lists it.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Listed {
     pub design: Design,
-    /// Why it is there when nobody chose it: the dialog whose button shows it.
     pub shown_by: Option<String>,
-    /// Its name in the file, when importing renamed it.
     pub renamed_from: Option<String>,
 }
 
-/// The chosen designs, then every dialog their buttons show (and the dialogs
-/// those show), each once, in the map's order within each group.
 pub fn with_dependencies(all: &[Design], chosen: &[String]) -> Vec<Listed> {
     let mut listed: Vec<Listed> = all
         .iter()
@@ -125,7 +108,6 @@ pub fn with_dependencies(all: &[Design], chosen: &[String]) -> Vec<Listed> {
     listed
 }
 
-/// The dialogs a design's buttons show, by ID.
 fn shown_dialogs(design: &Design) -> Vec<String> {
     let Design::Dialog(dialog) = design else {
         return Vec::new();
@@ -141,7 +123,6 @@ fn shown_dialogs(design: &Design) -> Vec<String> {
         .collect()
 }
 
-/// The icon paths the designs name: multiboard cells' icons.
 pub fn icon_paths(designs: &[Design]) -> Vec<String> {
     let mut paths: Vec<String> = Vec::new();
 
@@ -165,9 +146,6 @@ pub fn icon_paths(designs: &[Design]) -> Vec<String> {
     paths
 }
 
-/// What the designs expect the map's own Lua to define: the functions their
-/// buttons and timers call. The designs work without them; those calls do
-/// nothing.
 pub fn needs(designs: &[Design]) -> Vec<String> {
     let mut functions: Vec<String> = Vec::new();
 
@@ -197,8 +175,6 @@ pub fn needs(designs: &[Design]) -> Vec<String> {
     functions
 }
 
-/// The design file for the chosen designs, the dialogs they show, and the
-/// files `read` finds in the source map for their icons.
 pub fn export(
     all: &[Design],
     chosen: &[String],
@@ -224,9 +200,6 @@ pub fn export(
     (file, listed, files)
 }
 
-/// The file's designs as they would join a map holding `existing`: each with
-/// an ID the map does not use (buttons follow their dialog to its new ID) and
-/// a name whose Lua name (`UI.Scoreboard`) is free, numbered when taken.
 pub fn planned(incoming: &[Design], existing: &[Design]) -> Vec<Listed> {
     let mut ids: HashSet<String> = existing.iter().map(|d| d.id().to_owned()).collect();
     let mut lua_names: HashSet<String> = existing
@@ -276,7 +249,6 @@ pub fn planned(incoming: &[Design], existing: &[Design]) -> Vec<Listed> {
     listed
 }
 
-/// `id`, or `id-2`, `id-3`... when taken.
 fn free(id: &str, taken: &HashSet<String>) -> String {
     let mut candidate = id.to_owned();
     let mut n = 2;
@@ -405,7 +377,6 @@ mod tests {
             }
         );
 
-        // Importing the same file twice numbers on.
         let twice: Vec<Design> = existing
             .iter()
             .cloned()

@@ -1,8 +1,3 @@
-//! Commands that move custom objects between maps: share codes, bundle files
-//! (`.w3obj`, which also carry imported models and icons) and imports from
-//! another map file. The work happens in `wc3_map::transfer`; this module names
-//! the objects for the window and picks where they come from.
-
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
@@ -33,30 +28,23 @@ const ITEM_ICON: &str = "iico";
 const UPGRADE_NAME: &str = "gnam";
 const UPGRADE_ICON: &str = "gar1";
 
-/// An object about to move, as the window lists it.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransferObject {
-    /// `unit`, `ability` or `buff`.
     pub kind: &'static str,
     pub id: String,
-    /// The ID it gets in this map, when importing.
     pub new_id: Option<String>,
     pub base: String,
     pub name: String,
     pub icon: Option<String>,
-    /// Brought along because a chosen object uses it.
     pub dependency: bool,
 }
 
-/// A file imported into a map (model, texture, icon) that travels with objects.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TransferFile {
     pub path: String,
     pub size: usize,
-    /// When importing: `new`, `same` (the map has this file already) or
-    /// `different` (the map has another file at that path and keeps it).
     pub status: Option<&'static str>,
 }
 
@@ -65,7 +53,6 @@ pub struct TransferFile {
 pub struct SharePreview {
     pub code: String,
     pub objects: Vec<TransferObject>,
-    /// Imported files the objects use: in bundle files, not in the code.
     pub files: Vec<TransferFile>,
     pub warnings: Vec<String>,
 }
@@ -78,7 +65,6 @@ pub struct ImportPreview {
     pub warnings: Vec<String>,
 }
 
-/// Where imported objects come from.
 #[derive(Deserialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum ImportSource {
@@ -87,8 +73,6 @@ pub enum ImportSource {
     Map { path: String, ids: Vec<String> },
 }
 
-/// Another map's objects, read before taking the session lock, and the map
-/// itself for reading its imported files.
 struct OtherMap {
     map: Map,
     units: MapUnits,
@@ -146,7 +130,6 @@ fn kind_name(ty: ObjectType) -> &'static str {
     }
 }
 
-/// Names an object from its own fields, falling back to its base object.
 fn describe(
     session: &Session,
     bundle: &Bundle,
@@ -207,8 +190,6 @@ fn parse_ids(ids: &[String]) -> Result<Vec<FourCC>, String> {
     ids.iter().map(|id| fourcc(id)).collect()
 }
 
-/// Bundles the open map's chosen custom units, what they use, and the
-/// imported files among that.
 fn export_open_map(session: &Session, chosen: &[FourCC]) -> Result<Export, String> {
     let map = session.map.as_ref().ok_or(NO_MAP)?;
     let source = MapObjects {
@@ -240,7 +221,6 @@ pub(crate) fn listed_files(
         .collect()
 }
 
-/// A share code for the open map's chosen custom units and what they use.
 #[tauri::command]
 pub fn share_code(state: State<'_, AppState>, ids: Vec<String>) -> Result<SharePreview, String> {
     let chosen = parse_ids(&ids)?;
@@ -279,8 +259,6 @@ pub fn share_code(state: State<'_, AppState>, ids: Vec<String>) -> Result<ShareP
     })
 }
 
-/// Saves the chosen units, what they use and their imported files as a
-/// bundle file (`.w3obj`).
 #[tauri::command]
 pub fn save_bundle(
     state: State<'_, AppState>,
@@ -292,7 +270,6 @@ pub fn save_bundle(
     std::fs::write(&path, bytes).map_err(|e| format!("Cannot write {path}: {e}"))
 }
 
-/// Another map's custom units, to pick what to import.
 #[tauri::command]
 pub fn map_custom_units(state: State<'_, AppState>, path: String) -> Result<Vec<UnitItem>, String> {
     let other = OtherMap::load(&path)?;
@@ -305,7 +282,6 @@ pub fn map_custom_units(state: State<'_, AppState>, path: String) -> Result<Vec<
     })
 }
 
-/// A code or file does not say which units were picked: all its units count.
 fn bundled_units(bundle: &Bundle) -> Vec<FourCC> {
     bundle
         .objects()
@@ -315,14 +291,12 @@ fn bundled_units(bundle: &Bundle) -> Vec<FourCC> {
         .collect()
 }
 
-/// How each bundled file compares with the open map's file at that path.
 fn statuses(session: &Session, bundle: &Bundle) -> Result<Vec<FileStatus>, String> {
     let map = session.map.as_ref().ok_or(NO_MAP)?;
 
     Ok(file_statuses(bundle.files(), &map.reader()))
 }
 
-/// The bundle a source holds, the units chosen in it, and warnings.
 fn bundle_from(
     session: &Session,
     source: &ImportSource,
@@ -363,7 +337,6 @@ fn load_other(source: &ImportSource) -> Result<Option<OtherMap>, String> {
     }
 }
 
-/// Where each object would go in the open map.
 fn planned(session: &Session, bundle: &Bundle) -> Result<Vec<PlannedObject>, String> {
     let map = session.map.as_ref().ok_or(NO_MAP)?;
     let target = MapObjects {
@@ -403,7 +376,6 @@ fn listed(
         .collect()
 }
 
-/// What an import would add to the open map, without changing it.
 #[tauri::command]
 pub fn preview_import(
     state: State<'_, AppState>,
@@ -434,8 +406,6 @@ pub fn preview_import(
     })
 }
 
-/// Adds the objects, and the imported files the map does not have yet, to the
-/// open map. Nothing is written until the map is saved.
 #[tauri::command]
 pub fn import_objects(
     state: State<'_, AppState>,

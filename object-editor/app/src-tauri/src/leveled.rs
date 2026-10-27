@@ -1,9 +1,3 @@
-//! The Upgrades and Doodads tabs. List rows take the unit list's shape
-//! (`UnitItem`, with race or category as the filter) and pages the ability
-//! page's (`AbilityDetail`), whose per-level fields are tables: an upgrade's
-//! name, tooltips, icon and requirements have a value per level, a doodad's
-//! tint one per model variation.
-
 use std::collections::{HashMap, HashSet};
 
 use serde::Deserialize;
@@ -24,10 +18,8 @@ use crate::commands::fourcc;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
 use crate::view::{Field, FieldValue, SearchHit, UnitItem, base_text, build_field};
 
-/// Category order on a page: costs and levels, then what it does, then looks.
 const CATEGORY_ORDER: &[&str] = &["stats", "data", "text", "art", "path", "tech", "editor"];
 
-/// Which tab a command is for.
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Catalog {
@@ -35,9 +27,7 @@ pub enum Catalog {
     Doodads,
 }
 
-/// The fields that describe an object on its page, where the kind has them.
 struct Describe {
-    /// The kind, as list rows name it.
     kind: &'static str,
     singular: &'static str,
     name: &'static str,
@@ -86,7 +76,6 @@ impl Catalog {
     }
 }
 
-/// The game's upgrades or doodads with a map's changes on top (none without a map).
 pub struct LeveledView<'a> {
     pub catalog: Catalog,
     pub db: &'a dyn LeveledData,
@@ -116,7 +105,6 @@ impl LeveledView<'_> {
             .map(str::to_owned)
     }
 
-    /// The map's objects first, then every game object, each once.
     fn ids_after(&self, map_upgrades: &[LeveledObject]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_upgrades.iter().map(|u| u.id).collect();
         let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
@@ -157,7 +145,6 @@ impl LeveledView<'_> {
         })
     }
 
-    /// The map's objects first, then the game's.
     pub fn list(&self) -> Vec<UnitItem> {
         let map_upgrades = self.map.objects();
         let by_id: HashMap<FourCC, &LeveledObject> =
@@ -223,8 +210,6 @@ impl LeveledView<'_> {
         }
     }
 
-    /// Fields in page order: by category, then the guide's important fields,
-    /// then the game's order.
     fn sorted_fields(&self) -> Vec<&FieldMeta> {
         let mut fields: Vec<&FieldMeta> = self.db.fields().iter().collect();
 
@@ -241,7 +226,6 @@ impl LeveledView<'_> {
         fields
     }
 
-    /// The page: shaped like an ability page, with a column per level.
     pub fn detail(&self, id: FourCC) -> Option<AbilityDetail> {
         let item = self.item(id)?;
         let levels = self.map.levels(self.db, id);
@@ -301,8 +285,6 @@ impl LeveledView<'_> {
         })
     }
 
-    /// Objects whose code or name contains the query, then upgrades with a
-    /// later level's name that does (`Mithril` finds Iron Forged Swords).
     pub fn search(&self, query: &str) -> Vec<SearchHit> {
         let query = query.trim().to_lowercase();
 
@@ -357,7 +339,6 @@ impl LeveledView<'_> {
     }
 }
 
-/// Runs `f` with a view of the catalog, with the open map's changes if there is one.
 fn with_view<T>(session: &Session, catalog: Catalog, f: impl FnOnce(&LeveledView<'_>) -> T) -> T {
     let unchanged;
     let (map, strings) = match &session.map {
@@ -413,7 +394,6 @@ pub fn search_leveled(
     state.with(|session| Ok(with_view(session, catalog, |view| view.search(&query))))
 }
 
-/// Applies `change` to the open map's objects and returns the new page.
 fn edit(
     state: &AppState,
     catalog: Catalog,
@@ -431,8 +411,6 @@ fn edit(
     let singular = catalog.describe().singular;
 
     state.with(|session| {
-        // The databases and the open map are separate fields of the session,
-        // and the objects and string table separate fields of the map.
         let db: &dyn LeveledData = match catalog {
             Catalog::Upgrades => &session.upgrades,
             Catalog::Doodads => &session.doodads,
@@ -458,7 +436,6 @@ fn edit(
     })
 }
 
-/// `level` is 0 for fields without levels.
 #[tauri::command]
 pub fn set_leveled_field(
     state: State<'_, AppState>,
@@ -501,7 +478,6 @@ pub fn reset_leveled_field(
     )
 }
 
-/// A new custom object copying `base`, numbered like the World Editor (`R000`, `D000`, ...).
 #[tauri::command]
 pub fn create_leveled(
     state: State<'_, AppState>,
