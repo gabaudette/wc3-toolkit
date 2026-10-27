@@ -35,6 +35,18 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   The troubleshooting hub in `editor/troubleshooting.md` follows the current setup, field,
   save and import flows and preview messages. Recheck its advice when those controls or
   errors change; a source-level check does not establish in-game behavior.
+- `src/content/docs/guides/custom-spell.md`: the current spell-wizard walkthrough, with
+  nine real dialog captures in `public/screenshots/spell-*.png`. Recheck against
+  `SpellWizard.tsx`, `SpellBuffStep.tsx`, `SpellButtonStep.tsx`, `SpellUnits.tsx` and
+  `SpellTriggered.tsx` when the workflow changes. Refresh on disposable Lua maps with a
+  Paladin-based hero holding four hero abilities: one map for Sunwell Bolt (Storm Bolt,
+  three levels, its own buff, hotkey B), another for Attribute Strike (Strength defaults,
+  hotkey G). Keep the spell and learn buttons in free slots and use the IDs actually
+  assigned, which need not match the captures. Capture the dialog from the app window;
+  these images are 640 or 1024 pixels wide, with their real heights in the markup.
+  Read saved object data and the generated test-copy script back before describing them
+  as checked. The guide labels in-game casting as unverified; recording an actual play
+  test is required before changing that statement.
 - `src/content/docs/reference/field-tasks.md`: authored goal-to-field index. It sits outside
   the generated reference subdirectories. Recheck linked field labels, object types and
   companion settings against `data/fields.toml` and the shared TOML explanations when
