@@ -65,9 +65,13 @@ in them must rewrite byte for byte. Building also needs CMake (for the bundled S
 
 - **AGE-QUAL-001/002** — Zero errors, zero warnings. Warnings fail validation.
 - **AGE-QUAL-003** — Fix the cause instead of silencing a diagnostic. Every `unsafe` block has a
-  `// SAFETY:` comment. Any suppression is narrow and documented; today these are the
-  compiler-warning suppression for the vendored CascLib and StormLib sources, and the CLI
-  binaries' use of `eprintln!` for errors.
+  `// SAFETY:` comment. A suppression is acceptable only for a genuine false positive (the
+  rule's concern does not apply) or an external constraint, scoped to one line and stating
+  why; first try the fix the rule asks for (a stable key instead of an index, a remount by
+  `key` instead of an effect dependency the effect never reads, the semantic element instead
+  of a `role`). Today these are the compiler-warning suppression for the vendored CascLib and
+  StormLib sources, the CLI binaries' use of `eprintln!` for errors, and `autoFocus` on the
+  level table's cell editor, which only appears because the user started editing that cell.
 - **AGE-QUAL-004** — Do not relax lint or formatter configuration to make code pass.
 - **AGE-QUAL-006** — `rustfmt` owns Rust formatting (default settings, 100 columns).
 - **AGE-ERR-001/003** — Fallible code returns `Result`. Parsers report malformed data with

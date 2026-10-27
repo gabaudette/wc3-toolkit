@@ -99,8 +99,7 @@ export function LeaderboardEditor({
           <ol className="flex flex-col gap-2">
             {board.labels.map((label, index) => (
               <li
-                // biome-ignore lint/suspicious/noArrayIndexKey: rows are known by their place.
-                key={index}
+                key={label.id}
                 className="flex flex-col gap-1.5 rounded-[3px] border border-line bg-surface-2/40 p-2"
               >
                 <div className="flex items-center gap-2">
@@ -150,7 +149,12 @@ export function LeaderboardEditor({
                 set({
                   labels: [
                     ...board.labels,
-                    { name: `Team ${board.labels.length + 1}`, color: null, value: 0 },
+                    {
+                      id: crypto.randomUUID(),
+                      name: `Team ${board.labels.length + 1}`,
+                      color: null,
+                      value: 0,
+                    },
                   ],
                 })
               }
@@ -204,14 +208,14 @@ function previewRows(board: LeaderboardDesign): PreviewRow[] {
     }
   }
 
-  for (const [index, label] of board.labels.entries()) {
+  for (const label of board.labels) {
     let text = label.name;
 
     if (label.color) {
       text = `|cff${label.color}${label.name}|r`;
     }
 
-    rows.push({ key: `row ${index}`, text, value: label.value });
+    rows.push({ key: label.id, text, value: label.value });
   }
 
   if (board.sort === "highFirst") {

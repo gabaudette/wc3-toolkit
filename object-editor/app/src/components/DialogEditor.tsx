@@ -20,13 +20,15 @@ type DialogEditorProps = {
   onDelete: () => void;
 };
 
-/** How a new button starts. */
-const NEW_BUTTON: DialogButton = {
-  text: "New button",
-  hotkey: "",
-  highlightHotkey: true,
-  action: { kind: "close" },
-};
+function newButton(): DialogButton {
+  return {
+    id: crypto.randomUUID(),
+    text: "New button",
+    hotkey: "",
+    highlightHotkey: true,
+    action: { kind: "close" },
+  };
+}
 
 const ACTION_LABELS: Record<ButtonAction["kind"], string> = {
   close: "Close the dialog",
@@ -128,9 +130,7 @@ export function DialogEditor({
           <ol className="flex flex-col gap-2">
             {dialog.buttons.map((button, index) => (
               <ButtonRow
-                // Buttons have no ID of their own; their place is who they are.
-                // biome-ignore lint/suspicious/noArrayIndexKey: see above.
-                key={index}
+                key={button.id}
                 button={button}
                 index={index}
                 count={dialog.buttons.length}
@@ -146,7 +146,7 @@ export function DialogEditor({
             <Button
               small
               disabled={!editable}
-              onPress={() => set({ buttons: [...dialog.buttons, NEW_BUTTON] })}
+              onPress={() => set({ buttons: [...dialog.buttons, newButton()] })}
             >
               <span className="flex items-center gap-1">
                 <Plus className="size-3.5" aria-hidden="true" />
@@ -317,10 +317,9 @@ function DialogPreview({ dialog }: { dialog: DialogDesign }) {
           <p className="text-center text-[1.5cqw] leading-snug font-semibold text-[#ffcc00]">
             <GameText text={titleText(dialog)} />
           </p>
-          {dialog.buttons.map((button, index) => (
+          {dialog.buttons.map((button) => (
             <div
-              // biome-ignore lint/suspicious/noArrayIndexKey: buttons are known by their place.
-              key={index}
+              key={button.id}
               className="rounded-[0.3cqw] border-[0.15cqw] border-[#6b5a3a] bg-[linear-gradient(#3a3024,#211a12)] px-[1cqw] py-[0.6cqw] text-center text-[1.3cqw] text-[#f0e6d0]"
             >
               <GameText text={buttonText(button)} singleLine />

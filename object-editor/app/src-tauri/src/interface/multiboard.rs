@@ -37,6 +37,8 @@ pub struct MultiboardDesign {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct BoardColumn {
+    #[serde(default)]
+    pub id: String,
     /// How the Lua names it: `SetValue(row, "Kills", 5)`.
     pub name: String,
     /// Width in percent of the screen's width.
@@ -46,6 +48,8 @@ pub struct BoardColumn {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct BoardRow {
+    #[serde(default)]
+    pub id: String,
     /// How the Lua names a fixed row; rows per player are named by the player.
     pub name: String,
     /// One row for every playing player, in player order, instead of one.
@@ -379,16 +383,19 @@ mod tests {
             title_color: Some("FFCC00".to_owned()),
             columns: vec![
                 BoardColumn {
+                    id: String::new(),
                     name: "Player".to_owned(),
                     width: 12.0,
                 },
                 BoardColumn {
+                    id: String::new(),
                     name: "Kills".to_owned(),
                     width: 5.0,
                 },
             ],
             rows: vec![
                 BoardRow {
+                    id: String::new(),
                     name: "Header".to_owned(),
                     per_player: false,
                     cells: vec![
@@ -400,6 +407,7 @@ mod tests {
                     ],
                 },
                 BoardRow {
+                    id: String::new(),
                     name: "Players".to_owned(),
                     per_player: true,
                     cells: vec![

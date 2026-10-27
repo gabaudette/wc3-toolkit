@@ -190,7 +190,10 @@ export function MultiboardEditor({
 
   function addColumn() {
     set({
-      columns: [...board.columns, { name: `Column ${board.columns.length + 1}`, width: 6 }],
+      columns: [
+        ...board.columns,
+        { id: crypto.randomUUID(), name: `Column ${board.columns.length + 1}`, width: 6 },
+      ],
       rows: board.rows.map((row) => ({
         ...row,
         cells: [...board.columns.map((_, c) => cellAt(row, c)), EMPTY_CELL],
@@ -226,6 +229,7 @@ export function MultiboardEditor({
       rows: [
         ...board.rows,
         {
+          id: crypto.randomUUID(),
           name: `Row ${board.rows.length + 1}`,
           perPlayer: false,
           cells: board.columns.map(() => EMPTY_CELL),
@@ -310,13 +314,7 @@ export function MultiboardEditor({
                   Rows
                 </th>
                 {board.columns.map((column, c) => (
-                  <th
-                    // Columns have no ID of their own; their place is who they are.
-                    // biome-ignore lint/suspicious/noArrayIndexKey: see above.
-                    key={c}
-                    scope="col"
-                    className="min-w-36 align-bottom font-normal"
-                  >
+                  <th key={column.id} scope="col" className="min-w-36 align-bottom font-normal">
                     <div className="flex flex-col gap-1">
                       <input
                         value={column.name}
@@ -384,8 +382,7 @@ export function MultiboardEditor({
             </thead>
             <tbody>
               {board.rows.map((row, r) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: rows are known by their place.
-                <tr key={r}>
+                <tr key={row.id}>
                   <th scope="row" className="min-w-52 text-left align-top font-normal">
                     <div className="flex flex-col gap-1">
                       <input
@@ -442,8 +439,7 @@ export function MultiboardEditor({
                       selection.kind === "cell" && selection.row === r && selection.column === c;
 
                     return (
-                      // biome-ignore lint/suspicious/noArrayIndexKey: cells are known by their place.
-                      <td key={c} className="align-top">
+                      <td key={column.id} className="align-top">
                         <div
                           className={classes(
                             "flex items-center gap-1 rounded-[3px] border p-0.5",
@@ -604,16 +600,14 @@ function BoardPreview({ board }: { board: MultiboardDesign }) {
             <GameText text={title} singleLine />
           </p>
           {!board.minimized &&
-            shownRows.map(({ row, player }, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: preview rows are known by their place.
-              <div key={i} className="flex">
+            shownRows.map(({ row, player }) => (
+              <div key={`${row.id}-${player?.name}`} className="flex">
                 {board.columns.map((column, c) => {
                   const cell = cellAt(row, c);
 
                   return (
                     <div
-                      // biome-ignore lint/suspicious/noArrayIndexKey: preview cells are known by their place.
-                      key={c}
+                      key={column.id}
                       className="flex shrink-0 items-center gap-[0.3cqw] overflow-hidden py-[0.15cqw] whitespace-nowrap"
                       style={{ width: `${column.width * PREVIEW_WIDTH_SCALE}cqw` }}
                     >

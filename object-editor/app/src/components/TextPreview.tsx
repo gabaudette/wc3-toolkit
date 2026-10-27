@@ -11,17 +11,40 @@ const PLACEHOLDER_START = "<";
  * object after an edit, so previews fill their placeholders again: a tooltip's
  * `<A000,DataA1>` must follow the damage typed a moment ago.
  */
-export const PlaceholderValues = createContext<unknown>(null);
+export const PlaceholderValues = createContext<object | null>(null);
+
+const revisions = new WeakMap<object, number>();
+let lastRevision = 0;
+
+function revisionOf(values: object | null): number {
+  if (values === null) {
+    return 0;
+  }
+
+  let revision = revisions.get(values);
+
+  if (revision === undefined) {
+    lastRevision += 1;
+    revision = lastRevision;
+    revisions.set(values, revision);
+  }
+
+  return revision;
+}
 
 /**
  * Shows text the way the game draws it: colors, line breaks and filled-in
  * `<ID,Column>` placeholders. Updates as the user types.
  */
 export function TextPreview({ text }: { text: string }) {
-  const [filled, setFilled] = useState(text);
   const values = useContext(PlaceholderValues);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: `values` changing fills the placeholders again.
+  return <FilledText key={revisionOf(values)} text={text} />;
+}
+
+function FilledText({ text }: { text: string }) {
+  const [filled, setFilled] = useState(text);
+
   useEffect(() => {
     setFilled(text);
     if (!text.includes(PLACEHOLDER_START)) {
@@ -38,7 +61,7 @@ export function TextPreview({ text }: { text: string }) {
     }, FILL_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [text, values]);
+  }, [text]);
 
   if (!text.trim()) {
     return null;
