@@ -64,8 +64,11 @@ in them must rewrite byte for byte. Building also needs CMake (for the bundled S
 ## Rules
 
 - **AGE-QUAL-001/002** — Zero errors, zero warnings. Warnings fail validation.
-- **AGE-QUAL-003** — Fix the cause instead of silencing a diagnostic. Every `unsafe` block has a
-  `// SAFETY:` comment. A suppression is acceptable only for a genuine false positive (the
+- **AGE-QUAL-003** — Fix the cause instead of silencing a diagnostic. `unsafe` is a last
+  resort and denied workspace-wide (`unsafe_code` in `[workspace.lints.rust]`). It is allowed
+  only in `crates/casc/src/ffi.rs` and `crates/mpq/src/ffi.rs`, which call CascLib and
+  StormLib (C libraries) behind owned handle types, and in `platform.rs`'s `set_var`, which
+  std offers only as `unsafe`. Every `unsafe` block there has a `// SAFETY:` comment. A suppression is acceptable only for a genuine false positive (the
   rule's concern does not apply) or an external constraint, scoped to one line and stating
   why; first try the fix the rule asks for (a stable key instead of an index, a remount by
   `key` instead of an effect dependency the effect never reads, the semantic element instead
