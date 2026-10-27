@@ -20,6 +20,12 @@ under "What's new".
   the learn menu too. Warns when the button would hide Move, Stop, Hold Position, Attack,
   Patrol or Learn, or share their hotkey. Changing the hotkey updates the highlighted key in
   older tooltips.
+- Give a spell to units, heroes and buildings: the spell wizard's last step, and "Give to
+  units" on any ability's page. Picking a unit shows its command card (and a hero's learn menu)
+  with the spell on its spot, and warns when its hotkey or spot is already used or the card is
+  full. Hero spells are learned by heroes; other units get them as normal abilities. Taking a
+  spell away works from the same place, and cancelling the wizard takes it from every unit it
+  was given to.
 - Contextual documentation problem links that open a GitHub draft with the page, API or
   field identifier and selected example language.
 - Visual scripting lifecycles for timers, groups and locations, with six responsive diagrams,

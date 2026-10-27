@@ -21,6 +21,7 @@ import { LevelTable } from "./LevelTable";
 import { LevelText } from "./LevelText";
 import { type BuffChoice, SpellBuffStep } from "./SpellBuffStep";
 import { SpellButtonStep } from "./SpellButtonStep";
+import { SpellUnits } from "./SpellUnits";
 import { PlaceholderValues } from "./TextPreview";
 import { UnitIcon } from "./UnitIcon";
 
@@ -31,9 +32,11 @@ type SpellWizardProps = {
   onCreated: (id: string) => void;
   /** Called after every change, so the window can show the map as unsaved. */
   onMapChanged: () => void;
+  /** The spell was given to a unit or taken away, or the units that had it lost it. */
+  onUnitsChanged: () => void;
 };
 
-type Step = "kind" | "base" | "values" | "buff" | "button";
+type Step = "kind" | "base" | "values" | "buff" | "button" | "units";
 
 const NAME = "anam";
 const LEVELS = "alev";
@@ -68,6 +71,7 @@ const STEP_TITLES: Record<Step, string> = {
   values: "New spell: values",
   buff: "New spell: buff",
   button: "New spell: button",
+  units: "New spell: give it to units",
 };
 
 /** The fields the values step edits: the common ones first, then the base ability's own. */
@@ -173,7 +177,13 @@ function levelField(detail: AbilityDetail, id: string): LevelField | undefined {
  * picked, so the values step edits the real thing with a live tooltip;
  * cancelling or going back removes it again.
  */
-export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWizardProps) {
+export function SpellWizard({
+  open,
+  onClose,
+  onCreated,
+  onMapChanged,
+  onUnitsChanged,
+}: SpellWizardProps) {
   const [step, setStep] = useState<Step>("kind");
   const [kinds, setKinds] = useState<SpellKind[]>([]);
   const [kind, setKind] = useState<SpellKind | null>(null);
@@ -233,10 +243,12 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
       await api.discardPlain("buffs", buffChoice.id);
     }
 
+    // Also takes the spell from any unit it was given to.
     await api.discardSpell(draft);
     setDetail(null);
     setBuffChoice(BASE_BUFF);
     onMapChanged();
+    onUnitsChanged();
   }
 
   async function close() {
@@ -252,6 +264,11 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
   async function back() {
     setError(null);
     try {
+      if (step === "units") {
+        setStep("button");
+        return;
+      }
+
       if (step === "button") {
         setStep("buff");
         return;
@@ -498,6 +515,12 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
       return updated;
     });
 
+  /** Shows the units step, once the button's last edit is in, so its warnings use it. */
+  async function toUnits() {
+    await queue.current;
+    setStep("units");
+  }
+
   async function finish() {
     if (!draft) {
       return;
@@ -537,6 +560,11 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
         </Button>
       )}
       {step === "button" && (
+        <Button primary onPress={toUnits} disabled={busy}>
+          Next: units
+        </Button>
+      )}
+      {step === "units" && (
         <Button primary onPress={finish} disabled={busy}>
           Create spell
         </Button>
@@ -551,7 +579,7 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
         title={STEP_TITLES[step]}
         onClose={close}
         footer={footer}
-        wide={step === "values"}
+        wide={step === "values" || step === "units"}
       >
         {error && (
           <p role="alert" className="text-danger">
@@ -601,6 +629,15 @@ export function SpellWizard({ open, onClose, onCreated, onMapChanged }: SpellWiz
             onSet={(field, value) => set(field, NO_LEVEL, value)}
             onIcon={setIcon}
             onHotkey={setHotkey}
+          />
+        )}
+        {step === "units" && draft && (
+          <SpellUnits
+            spell={draft}
+            onChanged={() => {
+              onMapChanged();
+              onUnitsChanged();
+            }}
           />
         )}
       </DialogShell>

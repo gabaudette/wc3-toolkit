@@ -1,4 +1,4 @@
-import { Copy01 } from "@untitledui/icons";
+import { Copy01, UsersPlus } from "@untitledui/icons";
 import { useMemo, useState } from "react";
 import type { AbilityDetail, AbilitySection, Field, LevelField } from "../types";
 import { capitalized, levelCount, variationModel } from "../ui";
@@ -42,6 +42,8 @@ type AbilityPageProps = {
   onFill: (field: string, fromLevel: number, value: string) => void;
   onReset: (field: string, level: number) => void;
   onCreateCopy: () => void;
+  /** Opens the list of units to give the ability to; abilities only. */
+  onGiveToUnits?: () => void;
 };
 
 /** Sections open by default; the rest start folded to keep the page short. */
@@ -145,6 +147,7 @@ export function AbilityPage({
   onFill,
   onReset,
   onCreateCopy,
+  onGiveToUnits,
 }: AbilityPageProps) {
   const [filter, setFilter] = useState("");
   const [changedOnly, setChangedOnly] = useState(false);
@@ -242,12 +245,23 @@ export function AbilityPage({
                 <p className="text-sm text-muted">{facts(detail, noun)}</p>
               </div>
               {editable && (
-                <Button onPress={onCreateCopy}>
-                  <span className="flex items-center gap-1.5">
-                    <Copy01 className="size-4" aria-hidden="true" />
-                    New {noun} based on this
-                  </span>
-                </Button>
+                // Stacked, so the facts beside the name keep their width.
+                <div className="flex flex-col items-stretch gap-2">
+                  <Button onPress={onCreateCopy}>
+                    <span className="flex items-center gap-1.5">
+                      <Copy01 className="size-4" aria-hidden="true" />
+                      New {noun} based on this
+                    </span>
+                  </Button>
+                  {onGiveToUnits && (
+                    <Button onPress={onGiveToUnits}>
+                      <span className="flex items-center gap-1.5">
+                        <UsersPlus className="size-4" aria-hidden="true" />
+                        Give to units
+                      </span>
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
 

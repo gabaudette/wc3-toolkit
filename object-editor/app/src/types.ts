@@ -168,6 +168,29 @@ export type AbilitySection = {
   levelFields: LevelField[];
 };
 
+/** A button on a command card or learn menu preview. */
+export type CardButton = {
+  name: string;
+  icon: string | null;
+  hotkey: string | null;
+  x: number;
+  y: number;
+  /** The spell being placed. */
+  spell: boolean;
+};
+
+/** How a spell sits, or would sit, on a unit's command card and learn menu. */
+export type SpellFit = {
+  /** The unit already has the spell. */
+  has: boolean;
+  /** The spell goes in the hero's learnable abilities rather than the normal ones. */
+  learned: boolean;
+  card: CardButton[];
+  /** Empty unless the spell is learned. */
+  learn: CardButton[];
+  warnings: string[];
+};
+
 /** An icon the spell wizard offers for a spell's button. */
 export type IconChoice = {
   /** As data files name it, e.g. `ReplaceableTextures\\CommandButtons\\BTNStormBolt.blp`. */
