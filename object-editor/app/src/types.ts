@@ -382,4 +382,47 @@ export type MultiboardDesign = {
   minimized: boolean;
 };
 
-export type Design = DialogDesign | MultiboardDesign;
+/** A leaderboard row of the map's own, such as a team. */
+export type LeaderboardLabel = {
+  /** Shown, and how Lua names the row: `SetValue("Alliance", 3)`. */
+  name: string;
+  /** `RRGGBB`, or null for white. */
+  color: string | null;
+  value: number;
+};
+
+/** A leaderboard: a titled list of names and numbers in the top right corner. */
+export type LeaderboardDesign = {
+  kind: "leaderboard";
+  id: string;
+  name: string;
+  title: string;
+  titleColor: string | null;
+  /** A row for every playing player, with their name in their color. */
+  players: boolean;
+  /** What the players' rows start at. */
+  playerValue: number;
+  /** At most four: the game gives every row a player, and these use the neutral ones. */
+  labels: LeaderboardLabel[];
+  sort: "none" | "highFirst" | "lowFirst";
+  showAtStart: boolean;
+};
+
+/** A timer window: a countdown with a title, such as "Next wave 1:30". */
+export type TimerWindowDesign = {
+  kind: "timerWindow";
+  id: string;
+  name: string;
+  title: string;
+  titleColor: string | null;
+  /** In seconds. */
+  duration: number;
+  repeats: boolean;
+  startAtStart: boolean;
+  /** The window goes away when the time runs out (never for repeating ones). */
+  hideWhenDone: boolean;
+  /** A global Lua function run when the time runs out, or empty. */
+  onDone: string;
+};
+
+export type Design = DialogDesign | MultiboardDesign | LeaderboardDesign | TimerWindowDesign;

@@ -39,7 +39,7 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   react-aria-components, Bun, Biome with the AGE baseline plus the React domain. Rust side in
   `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI
   (`abilities.rs` the same for abilities: list, cards, pages with per-level cells),
-  `commands.rs` (Tauri commands), `interface.rs` (the Interface tab: dialogs and multiboards, in `interface/`, designed visually,
+  `commands.rs` (Tauri commands), `interface.rs` (the Interface tab: dialogs, multiboards, leaderboards and timer windows, in `interface/`, designed visually,
   kept in `<map> UI.json` beside the map, and the Lua modules they become), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
   the open map's imported file first, then the game's; they read game files outside the
   session lock, since `casc::Storage` is `Sync`, and textures decode at most 512 px),

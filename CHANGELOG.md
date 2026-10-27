@@ -8,6 +8,11 @@ under "What's new".
 
 ### Added
 
+- Leaderboards and timers in the Interface tab. A leaderboard ranks a row for each player
+  (their name in their color) and up to four rows of your own, such as teams, highest or
+  lowest first; from Lua, `UI.Kills.AddValue(player, 1)`. A timer counts down with a title
+  ("Next wave 1:30"), can start with the game, start over each time and run a Lua function
+  you name when the time runs out. Both have a live preview.
 - Multiboards in the Interface tab: a titled board in the top right corner, like a
   scoreboard. Set its columns and widths, fixed rows or a row for each player (with the
   player's name in their color), and each cell's text, color and icon, one cell or a whole row

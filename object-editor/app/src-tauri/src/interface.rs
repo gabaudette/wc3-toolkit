@@ -1,5 +1,5 @@
-//! The Interface tab: in-game UI designed visually (dialogs and
-//! multiboards so far), kept in
+//! The Interface tab: in-game UI designed visually (dialogs, multiboards,
+//! leaderboards and timer windows), kept in
 //! `<map> UI.json` next to the map, and the Lua that builds it in game. The
 //! modules go in the map's Lua folder with the triggered spells, for the
 //! harness's `[DEV]` copy.
@@ -13,10 +13,16 @@ use wc3_map::lua::check_syntax;
 
 use crate::state::{AppState, NO_MAP};
 
+mod leaderboard;
 mod multiboard;
+mod timer;
 
+pub use leaderboard::LeaderboardDesign;
+use leaderboard::leaderboard_lua;
 pub use multiboard::MultiboardDesign;
 use multiboard::multiboard_lua;
+pub use timer::TimerWindowDesign;
+use timer::timer_lua;
 
 /// Bumped when the file changes in a way older versions cannot read.
 pub const FORMAT_VERSION: u32 = 1;
@@ -43,6 +49,8 @@ pub struct UiFile {
 pub enum Design {
     Dialog(DialogDesign),
     Multiboard(MultiboardDesign),
+    Leaderboard(LeaderboardDesign),
+    TimerWindow(TimerWindowDesign),
 }
 
 impl Design {
@@ -50,6 +58,8 @@ impl Design {
         match self {
             Design::Dialog(d) => &d.id,
             Design::Multiboard(m) => &m.id,
+            Design::Leaderboard(l) => &l.id,
+            Design::TimerWindow(t) => &t.id,
         }
     }
 
@@ -57,6 +67,8 @@ impl Design {
         match self {
             Design::Dialog(d) => &d.name,
             Design::Multiboard(m) => &m.name,
+            Design::Leaderboard(l) => &l.name,
+            Design::TimerWindow(t) => &t.name,
         }
     }
 }
@@ -410,6 +422,14 @@ fn modules(designs: &[Design], source: &str) -> Result<Vec<(String, String)>, St
                 let code = multiboard_lua(board, &names, source)?;
                 Ok((module_file(&names[&board.id]), code))
             }
+            Design::Leaderboard(board) => {
+                let code = leaderboard_lua(board, &names, source)?;
+                Ok((module_file(&names[&board.id]), code))
+            }
+            Design::TimerWindow(timer) => {
+                let code = timer_lua(timer, &names, source)?;
+                Ok((module_file(&names[&timer.id]), code))
+            }
         })
         .collect()
 }
@@ -478,6 +498,8 @@ pub fn ui_lua(state: State<'_, AppState>, id: String) -> Result<String, String> 
         match map.ui.iter().find(|d| d.id() == id) {
             Some(Design::Dialog(dialog)) => dialog_lua(dialog, &names, &source),
             Some(Design::Multiboard(board)) => multiboard_lua(board, &names, &source),
+            Some(Design::Leaderboard(board)) => leaderboard_lua(board, &names, &source),
+            Some(Design::TimerWindow(timer)) => timer_lua(timer, &names, &source),
             None => Err(format!("No design {id}.")),
         }
     })
