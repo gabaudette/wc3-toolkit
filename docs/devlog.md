@@ -4,6 +4,47 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Downloadable hero and item starters (PR #56, AGE-27)
+
+- Added two project-authored `.w3obj` starters with equivalent text share codes. The hero
+  pack contains Sunwell Warden (`H000` based on `Hpal`), matching the illustrated guide's
+  attributes and growth. The item pack contains Wayfarer Supplies (`n000`/`ngme`) whose
+  Items Sold (`usei`) references Wayfarer Draught (`I000`/`phea`), so sharing discovers the
+  potion as a dependency. No custom spells, game map/scripts or standalone assets ship.
+- The first shop test exposed the base potion's initial stock delay. Added `isst = 0` to
+  the starter's item edits so purchases are available immediately; the healing cooldown
+  remains inherited. The starter page documents this extra field alongside the guide's
+  name, cost, charges and tooltips.
+- A Rust example defines the edits and generates both formats through the existing
+  create/set/export functions using local game metadata. Shipped-artifact tests validate
+  all three objects, documented fields, empty asset lists and file/code equivalence.
+  Refresh instructions explain generation to a review directory and collision/game checks.
+- Added a starter page with downloads, complete object/field inventory, actual import UI
+  labels, placement and gameplay steps, collision guidance and links from both illustrated
+  guides and sharing. Two genuine import previews have alt text, captions, full-size links
+  and the shared centered muted change notice.
+- Imported the final hero and item bundles through the app's Bundle file flow into a
+  separate map with occupied IDs; imported the item code a second time through Share code.
+  Saved/read back `H000` → `H002`, `I000` → `I001`, then `n000` → `n001` and `I000` → `I002`.
+  Both merchants point to their assigned potion and retain `isst = 0`; eight existing
+  gameplay/skin object entries and their resolved strings are unchanged.
+- A temporary Lua harness on a separate copy checks the actual imported IDs in Warcraft
+  III **3.0.1.24371**, Linux/GE-Proton11-7. All twelve runtime checks pass: level-1/3
+  attributes, Holy Light ranks 1/2, both merchants' 125-gold purchases, pickup and
+  dropping/reacquisition, three healing uses through final consumption and merchant sale.
+  It leaves the real healing cooldown in place and waits 65 game seconds between uses.
+  [Gameplay evidence](verification/age27-gameplay.png) records the results and hero HUD.
+- Required Rust format/lint hooks pass; workspace tests report 93 passed and 46
+  installation-dependent tests ignored, including two new shipped-artifact checks.
+  Website validation passes: 119 tests, no Astro diagnostics, a 6,611-page build, local
+  link/asset checks and Vercel packaging. A focused audit checks both screenshot dimensions,
+  alt texts, full-size links/notices, guide backlinks and 84 internal fragments.
+- Browser checks pass at 1440 × 1000 and 320 × 740 in both themes, without horizontal
+  overflow. Actual downloads match the final committed bytes; both text alternatives
+  return valid code prefixes. Keyboard image links and centered muted notices work. The
+  Guides filter finds this page first for starter/Wayfarer Supplies and second for
+  download hero (after the linked hero guide). No browser errors.
+
 ## 2026-10-27 · Illustrated hero and item tutorials (PR #55, AGE-25)
 
 - Expanded the existing hero/item URLs into short walkthroughs with seven real Tinkerbench

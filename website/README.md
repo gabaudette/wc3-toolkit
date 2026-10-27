@@ -162,6 +162,43 @@ regenerates them. Edit the source guide or snapshot, rather than generated Markd
 URLs include the script filename and declaration kind so `rect` (type) and `Rect` (native)
 remain distinct on case-insensitive hosts. Generation rejects duplicate URL paths and guide IDs.
 
+## Refresh downloadable starters
+
+The project-authored definitions are in
+`../object-editor/crates/wc3-map/examples/starter_examples.rs`. They use the editor's
+create/set/export functions and local game metadata. Only custom modifications and strings
+are exported: no map, script, model, texture or icon is distributed. The item pack starts
+from a custom Goblin Merchant whose `usei` references the custom potion. There are exactly
+three custom objects across the two packs: `H000`/`Hpal`, `n000`/`ngme`, `I000`/`phea`.
+The potion adds `isst = 0` to the illustrated guide's edits so shop testing can start
+immediately, without the base potion's inherited initial stock delay.
+
+From `object-editor/`, generate to a temporary review directory:
+
+```sh
+cargo run -p wc3-map --example starter_examples -- /path/to/Warcraft-III /path/to/starter-review
+```
+
+Review the `.w3obj` files and matching `W3OBJ1:` text alternatives, then copy the four files
+into `website/public/downloads/starters/` in the repository. Keep the `v1` URLs stable for
+corrections to these examples;
+use a new version suffix for different objects or behavior. The generator rejects unexpected
+IDs, dependency counts or assets. `cargo test -p wc3-map --test starter_examples` validates
+the shipped files against the documented inventory/fields and equivalent share codes without
+needing a game installation. Full regeneration needs a local installation; the website build
+serves the reviewed artifacts and does not open game data.
+
+Import both packs through **Import… → Bundle file → Preview** into a separate map. Also
+check the Share code alternative. Test collisions for the hero, merchant and item: preserve
+existing objects, inspect the assigned IDs and confirm that the imported merchant's Items
+Sold points at the newly assigned potion. Save, reopen and read back the fields and strings.
+Check level-1/3 attributes and Holy Light learning, then buy from a Neutral Passive copy of
+the imported merchant for 125 gold and check three charges, dropping/reacquisition, healing
+uses, final consumption and selling. Allow for missing health and the real item cooldown.
+Record the exact game build and evidence before changing the starter page's checked results.
+Refresh `screenshots/starter-*.png` from real import previews and keep their captions,
+dimensions, full-size links and centered muted change notices aligned with the captures.
+
 ## Refresh local API and metadata
 
 Never commit Blizzard game scripts, implementations, comments or assets. Export inputs to a

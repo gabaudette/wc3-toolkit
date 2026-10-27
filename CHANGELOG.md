@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- Downloadable Sunwell Warden hero and Wayfarer Draught item starters, with import
+  instructions, a merchant dependency example and raw-code collision guidance.
 - Illustrated hero and item walkthroughs, with attribute growth, existing game abilities,
   a three-charge healing potion and in-game progression and inventory checks.
 - Illustrated spell-wizard walkthrough: create a three-level hero spell, choose its buff
