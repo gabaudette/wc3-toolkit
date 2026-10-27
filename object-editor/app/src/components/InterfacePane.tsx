@@ -3,12 +3,24 @@ import { Plus } from "@untitledui/icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, errorMessage } from "../api";
 import { luaNames } from "../interface";
-import type { Design, DialogDesign, IconChoice, MultiboardDesign } from "../types";
+import type {
+  Design,
+  DialogDesign,
+  IconChoice,
+  LeaderboardDesign,
+  MultiboardDesign,
+  TimerWindowDesign,
+} from "../types";
 import { classes } from "../ui";
 import { Button } from "./Button";
 import { DialogEditor } from "./DialogEditor";
 import { GameText } from "./GameText";
+import { LeaderboardEditor } from "./LeaderboardEditor";
 import { MultiboardEditor } from "./MultiboardEditor";
+import { clock, TimerWindowEditor } from "./TimerWindowEditor";
+
+/** How long a new timer window counts down, in seconds. */
+const NEW_TIMER_SECONDS = 90;
 
 /** Typing pauses this long before the window re-reads whether the map is unsaved. */
 const MAP_STATUS_DELAY_MS = 300;
@@ -73,7 +85,56 @@ function summary(design: Design): string {
     return `Multiboard · ${counted(design.columns.length, "column")}`;
   }
 
+  if (design.kind === "leaderboard") {
+    const rows: string[] = [];
+    if (design.players) {
+      rows.push("players");
+    }
+
+    if (design.labels.length > 0) {
+      rows.push(counted(design.labels.length, "own row"));
+    }
+
+    return ["Leaderboard", ...rows].join(" · ");
+  }
+
+  if (design.kind === "timerWindow") {
+    return `Timer window · ${clock(design.duration)}`;
+  }
+
   return `Dialog · ${counted(design.buttons.length, "button")}`;
+}
+
+/** A kills leaderboard: one row per player, highest first. */
+function newLeaderboard(count: number): LeaderboardDesign {
+  return {
+    kind: "leaderboard",
+    id: crypto.randomUUID(),
+    name: `Leaderboard ${count + 1}`,
+    title: "Kills",
+    titleColor: null,
+    players: true,
+    playerValue: 0,
+    labels: [],
+    sort: "highFirst",
+    showAtStart: true,
+  };
+}
+
+/** A wave countdown: 90 seconds, started with the game, repeating. */
+function newTimerWindow(count: number): TimerWindowDesign {
+  return {
+    kind: "timerWindow",
+    id: crypto.randomUUID(),
+    name: `Timer ${count + 1}`,
+    title: "Next wave",
+    titleColor: null,
+    duration: NEW_TIMER_SECONDS,
+    repeats: true,
+    startAtStart: true,
+    hideWhenDone: true,
+    onDone: "",
+  };
 }
 
 function newDialog(count: number): DialogDesign {
@@ -181,8 +242,8 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
   if (!editable) {
     return (
       <p className="m-auto text-muted">
-        Open a map to design its dialogs and multiboards. They are saved next to it, in "&lt;map&gt;
-        UI.json".
+        Open a map to design its dialogs, boards and timers. They are saved next to it, in
+        "&lt;map&gt; UI.json".
       </p>
     );
   }
@@ -207,6 +268,18 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
                 Multiboard
               </span>
             </Button>
+            <Button primary onPress={() => add(newLeaderboard(designs.length))}>
+              <span className="flex items-center justify-center gap-1.5">
+                <Plus className="size-4" aria-hidden="true" />
+                Leaderboard
+              </span>
+            </Button>
+            <Button primary onPress={() => add(newTimerWindow(designs.length))}>
+              <span className="flex items-center justify-center gap-1.5">
+                <Plus className="size-4" aria-hidden="true" />
+                Timer
+              </span>
+            </Button>
           </div>
           <p className="text-xs text-faint">
             {counted(designs.length, "design")} · saved with the map
@@ -215,7 +288,8 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
         {designs.length === 0 && (
           <p className="p-3 text-sm text-faint">
             Nothing yet. A dialog asks players to choose (a difficulty, a game mode); a multiboard
-            shows a table in the corner (a scoreboard).
+            shows a table in the corner (a scoreboard); a leaderboard ranks players or teams; a
+            timer counts down (to the next wave).
           </p>
         )}
         <ul aria-label="Designs" className="min-h-0 flex-1 overflow-y-auto">
@@ -270,12 +344,30 @@ export function InterfacePane({ editable, onMapChanged, onError }: InterfacePane
                 onDelete={() => remove(design.id)}
               />
             )}
+            {design.kind === "leaderboard" && (
+              <LeaderboardEditor
+                key={design.id}
+                board={design}
+                luaName={names.get(design.id) ?? ""}
+                editable={editable}
+                onChange={(changed) => update(replaced(designs, changed))}
+                onDelete={() => remove(design.id)}
+              />
+            )}
+            {design.kind === "timerWindow" && (
+              <TimerWindowEditor
+                key={design.id}
+                timer={design}
+                luaName={names.get(design.id) ?? ""}
+                editable={editable}
+                onChange={(changed) => update(replaced(designs, changed))}
+                onDelete={() => remove(design.id)}
+              />
+            )}
           </>
         )}
         {!design && (
-          <p className="m-auto text-muted">
-            Make a dialog or a multiboard with the buttons on the left.
-          </p>
+          <p className="m-auto text-muted">Make a design with the buttons on the left.</p>
         )}
         {designs.length > 0 && (
           <LuaBar

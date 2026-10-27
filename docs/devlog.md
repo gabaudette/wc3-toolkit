@@ -4,6 +4,32 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · UI tool, part 3: leaderboards and timer windows (AGE-54)
+
+- `Design` gained `Leaderboard` (`interface/leaderboard.rs`) and `TimerWindow`
+  (`interface/timer.rs`). A leaderboard has a title and its color, a row for each playing
+  player (starting value), up to four rows of the map's own (name, color, value), an order
+  (`none`, `highFirst`, `lowFirst`) and show at start. The game ties every leaderboard item
+  to a player, so the map's own rows use the four neutral players, hence the limit.
+- The leaderboard module adds players' rows in their color (the multiboard's 24-color
+  table), then the map's rows, sizes the board to its items and gives it to every player.
+  `UI.<Name>.SetValue(row, value)`, `.AddValue`, `.GetValue`, `.Show` and `.Hide` take a
+  player or a row's name and re-sort after each change (`LeaderboardSortItemsByValue`).
+  Checks refuse boards without rows, more than four own rows, unnamed or twin rows and bad
+  colors.
+- The timer window module creates a timer and its `CreateTimerDialog` window at start.
+  `UI.<Name>.Start(seconds)` (the designed length when left out), `.Stop`, `.Show`, `.Hide`
+  and `.Remaining`. When the time runs out it calls the named global function if the map
+  defines one (`type(f) == "function"`), then hides unless it repeats. Checks refuse lengths
+  outside (0, one day] and function names that are not Lua identifiers.
+- The editors share `DesignBasics` (name, Delete, Lua hint, title and its color) and
+  `GameScreen` (the 16:9 preview). The leaderboard preview sorts sample players and the
+  map's rows as the game would; the timer preview shows the title and `m:ss`.
+- Checked on a copy of the test map: a Kills leaderboard (players plus a blue "Waves" row,
+  highest first) and a 20 s repeating Next wave timer calling `SpawnWave`, the modules written
+  and the `[DEV]` copy built, plus a test-only module counting kills and waves and a `-board`
+  chat command switching to the Scoreboard multiboard. **Not yet played in game.**
+
 ## 2026-10-27 · UI tool, part 2: multiboards (AGE-53)
 
 - `Design` gained `Multiboard` (`interface/multiboard.rs`): a title and its color, columns

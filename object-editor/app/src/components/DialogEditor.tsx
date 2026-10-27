@@ -4,6 +4,7 @@ import type { ButtonAction, Design, DialogButton, DialogDesign } from "../types"
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { ColorSwatches } from "./ColorSwatches";
+import { designInputClass } from "./DesignBasics";
 import { GameText } from "./GameText";
 import { Select } from "./Select";
 
@@ -18,8 +19,6 @@ type DialogEditorProps = {
   onDelete: () => void;
 };
 
-const inputClass =
-  "rounded-[3px] border border-field bg-well px-2.5 py-1.5 text-ink outline-none focus:border-focus disabled:opacity-60";
 /** How a new button starts. */
 const NEW_BUTTON: DialogButton = {
   text: "New button",
@@ -87,7 +86,7 @@ export function DialogEditor({
               value={dialog.name}
               disabled={!editable}
               onChange={(e) => set({ name: e.target.value })}
-              className={inputClass}
+              className={designInputClass}
             />
           </label>
           <Button onPress={onDelete} disabled={!editable} label={`Delete ${dialog.name}`}>
@@ -108,7 +107,7 @@ export function DialogEditor({
             rows={2}
             disabled={!editable}
             onChange={(e) => set({ title: e.target.value })}
-            className={inputClass}
+            className={designInputClass}
           />
         </label>
         <div className="-mt-2">
@@ -205,7 +204,7 @@ function ButtonRow({
           disabled={!editable}
           onChange={(e) => onChange({ text: e.target.value })}
           aria-label={`${label} text`}
-          className={`${inputClass} min-w-0 flex-1`}
+          className={`${designInputClass} min-w-0 flex-1`}
         />
         <input
           value={button.hotkey}
@@ -215,7 +214,7 @@ function ButtonRow({
           aria-label={`${label} hotkey`}
           title="Hotkey: one letter or digit"
           placeholder="Key"
-          className={`${inputClass} w-14 text-center font-mono`}
+          className={`${designInputClass} w-14 text-center font-mono`}
         />
         <IconButton
           label={`Move ${label} up`}
@@ -278,7 +277,7 @@ function ButtonRow({
             }
             aria-label={`${label}: Lua function`}
             placeholder="OnHardMode"
-            className={`${inputClass} w-44 font-mono`}
+            className={`${designInputClass} w-44 font-mono`}
           />
         )}
       </div>
