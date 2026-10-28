@@ -30,6 +30,18 @@ export function choosePath(options: ChooseOptions): Promise<Result<string | null
   return reported(() => open({ ...options, multiple: false }));
 }
 
+export function chooseFiles(options: ChooseOptions): Promise<Result<string[]>> {
+  return reported(async () => {
+    const picked = await open({ ...options, multiple: true });
+
+    if (picked === null) {
+      return [];
+    }
+
+    return picked;
+  });
+}
+
 export function chooseSavePath(options: SaveDialogOptions): Promise<Result<string | null>> {
   return reported(() => save(options));
 }

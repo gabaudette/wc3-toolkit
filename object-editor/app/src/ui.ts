@@ -84,6 +84,10 @@ export const remembered = {
 export const MAP_FILTERS = [{ name: "Warcraft III maps", extensions: ["w3m", "w3x"] }];
 
 export const BUNDLE_FILTERS = [{ name: "Object bundles", extensions: ["w3obj"] }];
+export const ASSET_FILTERS = [
+  { name: "Models and textures", extensions: ["mdx", "mdl", "blp", "dds", "tga"] },
+];
+export const PNG_FILTERS = [{ name: "PNG images", extensions: ["png"] }];
 export const DESIGN_FILTERS = [{ name: "Interface designs", extensions: ["w3ui"] }];
 
 const KILOBYTE = 1024;

@@ -5,6 +5,8 @@ import { api, report } from "../api";
 import { choosePath, confirm } from "../dialogs";
 import { attempt, type Result, settle } from "../result";
 import type {
+  AssetUse,
+  AssetUseKind,
   Catalog,
   Field,
   GameSummary,
@@ -18,6 +20,7 @@ import type {
 import { classes, MAP_FILTERS, MAP_PATH_KEY, remembered, replaceField } from "../ui";
 import { AbilitiesPane } from "./AbilitiesPane";
 import { AppVersion } from "./AppVersion";
+import { AssetsPane } from "./AssetsPane";
 import { Button } from "./Button";
 import { CommandPalette, type PaletteCommand } from "./CommandPalette";
 import { ImportDialog } from "./ImportDialog";
@@ -38,7 +41,7 @@ import {
 } from "./UnitList";
 import { UnitPage } from "./UnitPage";
 
-type Tab = "units" | "abilities" | LeveledCatalog | Catalog | "interface";
+type Tab = "units" | "abilities" | LeveledCatalog | Catalog | "interface" | "assets";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "units", label: "Units" },
@@ -49,7 +52,19 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "destructables", label: "Destructables" },
   { id: "doodads", label: "Doodads" },
   { id: "interface", label: "Interface" },
+  { id: "assets", label: "Assets" },
 ];
+
+const PLAIN_USES: Partial<Record<AssetUseKind, Catalog>> = {
+  item: "items",
+  buff: "buffs",
+  destructable: "destructables",
+};
+
+const LEVELED_USES: Partial<Record<AssetUseKind, LeveledCatalog>> = {
+  upgrade: "upgrades",
+  doodad: "doodads",
+};
 
 const LEVELED_TABS: { catalog: LeveledCatalog; list: ListConfig }[] = [
   { catalog: "upgrades", list: UPGRADE_LIST },
@@ -285,6 +300,36 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     setSelected(id);
   }
 
+  function openUse(use: AssetUse) {
+    const plain = PLAIN_USES[use.kind];
+    const leveled = LEVELED_USES[use.kind];
+
+    if (use.kind === "unit") {
+      openUnit(use.id);
+      return;
+    }
+
+    if (use.kind === "ability") {
+      openAbility(use.id);
+      return;
+    }
+
+    if (plain) {
+      openPlain(plain, use.id);
+      return;
+    }
+
+    if (leveled) {
+      openLeveled(leveled, use.id);
+    }
+  }
+
+  function unitCreated(id: string) {
+    refreshMap();
+    refreshList();
+    openUnit(id);
+  }
+
   useEffect(() => {
     const appWindow = getCurrentWindow();
     const unlisten = appWindow.onCloseRequested(async (event) => {
@@ -451,6 +496,20 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
             editable={editable}
             mapPath={map?.path ?? null}
             onMapChanged={refreshMap}
+            onError={setError}
+          />
+        )}
+
+        {tab === "assets" && (
+          <AssetsPane
+            key={revision}
+            editable={editable}
+            mapPath={map?.path ?? null}
+            unsaved={map?.unsaved ?? false}
+            units={units}
+            onMapChanged={refreshMap}
+            onUnitCreated={unitCreated}
+            onOpenUse={openUse}
             onError={setError}
           />
         )}

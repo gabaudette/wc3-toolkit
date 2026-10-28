@@ -372,3 +372,42 @@ export type TimerWindowDesign = {
 };
 
 export type Design = DialogDesign | MultiboardDesign | LeaderboardDesign | TimerWindowDesign;
+
+export type AssetKind = "model" | "image" | "other";
+
+export type AssetUseKind =
+  | "unit"
+  | "ability"
+  | "item"
+  | "buff"
+  | "destructable"
+  | "upgrade"
+  | "doodad";
+
+export type AssetUse = { kind: AssetUseKind; id: string; name: string; field: string };
+
+export type AssetItem = {
+  path: string;
+  kind: AssetKind;
+  size: number;
+  queued: boolean;
+  uses: AssetUse[];
+};
+
+export type AssetList = { assets: AssetItem[]; listed: boolean };
+
+export type TextureStatusKind = "batch" | "map" | "game" | "missing";
+
+export type TextureStatus = { path: string; status: TextureStatusKind };
+
+export type ImportCandidate = {
+  diskPath: string;
+  importPath: string;
+  kind: AssetKind;
+  size: number;
+  convert: boolean;
+  exists: boolean;
+  textures: TextureStatus[];
+};
+
+export type ImportRequest = { diskPath: string; importPath: string; converted?: string };

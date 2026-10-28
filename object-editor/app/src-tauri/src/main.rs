@@ -1,6 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod abilities;
+mod assets;
 mod commands;
 mod hotkeys;
 mod icons;
@@ -89,6 +90,16 @@ fn main() -> ExitCode {
             transfer::preview_import,
             transfer::import_objects,
             log::log_failure,
+            assets::list_assets,
+            assets::asset_textures,
+            assets::plan_import,
+            assets::read_text_file,
+            assets::import_assets,
+            assets::remove_asset,
+            assets::replace_asset,
+            assets::rename_asset,
+            assets::export_asset,
+            assets::export_game_file,
         ])
         .run(context);
 

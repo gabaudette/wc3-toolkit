@@ -8,6 +8,7 @@ pub mod imports;
 pub mod leveled;
 pub mod lua;
 pub mod plain;
+pub mod references;
 pub mod transfer;
 pub mod units;
 mod values;
@@ -136,13 +137,22 @@ impl Map {
 }
 
 pub fn save_files(source: &Path, dest: &Path, files: &[(&str, Vec<u8>)]) -> Result<()> {
+    save_changes(source, dest, files, &[])
+}
+
+pub fn save_changes(
+    source: &Path,
+    dest: &Path,
+    files: &[(&str, Vec<u8>)],
+    removed: &[&str],
+) -> Result<()> {
     let mut temp_name = dest.file_name().unwrap_or_default().to_os_string();
 
     temp_name.push(TEMP_SUFFIX);
     let temp = dest.with_file_name(temp_name);
 
     std::fs::copy(source, &temp).map_err(io_error(&temp))?;
-    let result = write_into(&temp, files)
+    let result = write_into(&temp, files, removed)
         .and_then(|()| std::fs::rename(&temp, dest).map_err(io_error(dest)));
 
     if result.is_err() {
@@ -154,8 +164,12 @@ pub fn save_files(source: &Path, dest: &Path, files: &[(&str, Vec<u8>)]) -> Resu
     result
 }
 
-fn write_into(path: &Path, files: &[(&str, Vec<u8>)]) -> Result<()> {
+fn write_into(path: &Path, files: &[(&str, Vec<u8>)], removed: &[&str]) -> Result<()> {
     let mut archive = mpq::Archive::open_writable(path)?;
+
+    for name in removed {
+        archive.remove(name)?;
+    }
 
     for (name, data) in files {
         archive.write(name, data)?;

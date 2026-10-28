@@ -78,6 +78,13 @@ fn with_view<T>(
     f(&view)
 }
 
+pub(crate) fn items_of(session: &Session, catalog: Catalog) -> Vec<(String, String)> {
+    with_view(session, catalog, |view| view.items())
+        .into_iter()
+        .map(|item| (item.id, item.name))
+        .collect()
+}
+
 #[tauri::command]
 pub fn list_plain(state: State<'_, AppState>, catalog: Catalog) -> Result<Vec<UnitItem>, String> {
     state.with(|session| Ok(with_view(session, catalog, |view| view.items())))

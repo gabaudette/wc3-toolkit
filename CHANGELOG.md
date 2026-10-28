@@ -8,6 +8,14 @@ under "What's new".
 
 ### Added
 
+- An Assets tab for the files imported into a map. Import models and textures, single files
+  or a whole folder (text `.mdl` models are converted to `.mdx`), choose the path each one
+  gets in the map, and see which textures a model needs and whether the map or the game has
+  them. Preview models with their textures and images, see which objects use each file,
+  rename a file (the fields that use it follow), replace or remove it, and export it, with
+  PNG for images. "Create a unit from this model" makes a custom unit from a base unit you
+  pick, with the model and an imported icon. "Export a game file…" copies a model, texture or
+  icon out of the game for your own use. Imports go into the map when you save it.
 - Reuse Interface designs in other maps. "Export…" saves chosen designs as a design file
   (.w3ui) with the dialogs their buttons show and the icons imported into the map that they
   use; "Import…" in another map's Interface tab adds them, numbering any name the map already
