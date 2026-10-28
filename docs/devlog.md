@@ -4,6 +4,36 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-27 · Asset importer: the Assets tab (AGE-43)
+
+- `mpq::Archive::remove` (StormLib's `SFileRemoveFile`, a missing file is not an error) and
+  `wc3_map::save_changes`, which removes files, then writes, through the same temp copy as
+  `save_files`.
+- `MapImports` now queues removals beside pending files: `files()` writes the pending ones
+  and an updated `war3map.imp`, `removed()` lists what to delete (unless re-added),
+  `paths()` merges the list, pending and removed files. Until Save, the art URL schemes
+  serve queued files, so previews work before anything is written. `listed()` is false only
+  for protected maps (no `war3map.imp` and no `(listfile)`); a map with nothing imported
+  has no `war3map.imp` either.
+- `wc3_map::references`: `ObjectTables` gives the map and skin tables of every object kind;
+  `file_uses` finds the fields naming a file (any item of a comma list), through the same
+  candidates as the art schemes, so `.mdl` fields match `.mdx` files and `.blp` fields
+  `.dds` or `.tga` files; `rename_file_uses` rewrites them, keeping each field's own
+  extension. Rename uses it across all seven kinds.
+- `assets.rs`: list (with each file's users and their names), a model's textures and
+  where each is found (this import, the map, the game, or missing), import planning (a
+  folder is walked; paths default to `war3mapImported\<relative path>`, `.mdl` becomes
+  `.mdx`, and an image whose name matches a model's texture gets that texture's path),
+  import, remove, replace, rename and export (raw, or PNG through `decode_texture`), and
+  export from the game through `read_art` (`dds_file`/`model_file`). Import paths that are
+  empty, absolute, contain `..` or name a root `war3map*` file are refused.
+- Text models are converted in the frontend with war3-model (`parseMDL` then
+  `generateMDX`) and sent as base64; the backend reads their textures from `Image "..."`
+  lines, undoubling escaped backslashes.
+- "Create a unit from this model" creates a unit from the chosen base, then sets `umdl` to
+  the import path with `.mdl` (as the World Editor writes it) and `uico` to an imported
+  image when one is picked.
+
 ## 2026-10-27 · Standards, part 4e: comments only where code can't speak, the frontend (AGE-61)
 
 - The frontend (`app/src`, `app/scripts`) loses 600 of its comment lines, after reading all

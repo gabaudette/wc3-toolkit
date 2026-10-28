@@ -43,6 +43,7 @@ unsafe extern "C" {
     ) -> bool;
     fn SFileWriteFile(file: Handle, data: *const c_void, size: u32, compression: u32) -> bool;
     fn SFileFinishFile(file: Handle) -> bool;
+    fn SFileRemoveFile(mpq: Handle, name: *const c_char, scope: u32) -> bool;
     fn SErrGetLastError() -> u32;
 }
 
@@ -157,6 +158,15 @@ impl ArchiveHandle {
         }
 
         if !finished {
+            return Err(last_error());
+        }
+
+        Ok(())
+    }
+
+    pub fn remove_file(&mut self, name: &CStr, scope: u32) -> Result<(), u32> {
+        // SAFETY: `self.0` is an open, writable archive and `name` is NUL-terminated.
+        if !unsafe { SFileRemoveFile(self.0, name.as_ptr(), scope) } {
             return Err(last_error());
         }
 

@@ -13,7 +13,7 @@ use wc3_data::units::UnitDatabase;
 use wc3_data::upgrades::UpgradeDatabase;
 use wc3_map::abilities::MapAbilities;
 use wc3_map::units::MapUnits;
-use wc3_map::{FourCC, MapStrings, save_files};
+use wc3_map::{FourCC, MapStrings, save_changes};
 
 use crate::abilities::{AbilityCard, AbilityDetail, AbilitySummary, AbilityView};
 use crate::hotkeys::{self, Clash};
@@ -398,7 +398,10 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
                 .iter()
                 .map(|(path, bytes)| (path.as_str(), bytes.clone())),
         );
-        save_files(&map.path, &map.path, &written).map_err(|e| e.to_string())?;
+        let removed = map.imports.removed();
+        let removed: Vec<&str> = removed.iter().map(String::as_str).collect();
+
+        save_changes(&map.path, &map.path, &written, &removed).map_err(|e| e.to_string())?;
         if map.ui != map.saved_ui {
             interface::save(&map.path, &map.ui)?;
             map.saved_ui = map.ui.clone();

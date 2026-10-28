@@ -15,7 +15,8 @@ use wc3_data::model::texture_paths;
 
 use crate::{Error, Map, Result};
 
-pub const IMPORT_LIST_FILE: &str = "war3map.imp";
+pub const LISTFILE: &str = "(listfile)";
+const IMPORT_LIST_FILE: &str = "war3map.imp";
 const IMPORT_LIST_VERSION: u32 = 1;
 /// Flag written for added entries: a full path inside the archive (13 in the
 /// classic format, plus the 0x10 bit every Reforged entry carries).
@@ -104,7 +105,7 @@ impl ImportList {
     }
 
     fn contains(&self, path: &str) -> bool {
-        self.entries.iter().any(|(_, p)| same_path(p, path))
+        self.paths().any(|p| same_path(&p, path))
     }
 
     fn add(&mut self, path: &str) {
@@ -112,10 +113,29 @@ impl ImportList {
             self.entries.push((FULL_PATH_FLAG, path.to_owned()));
         }
     }
+
+    fn remove(&mut self, path: &str) {
+        self.entries
+            .retain(|(flag, entry)| !same_path(&full_path(*flag, entry), path));
+    }
+
+    fn paths(&self) -> impl Iterator<Item = String> + '_ {
+        self.entries
+            .iter()
+            .map(|(flag, path)| full_path(*flag, path))
+    }
+}
+
+fn full_path(flag: u8, path: &str) -> String {
+    if IMPORTED_DIR_FLAGS.contains(&(flag & FLAG_KIND_MASK)) {
+        return format!("{IMPORTED_DIR}{path}");
+    }
+
+    path.to_owned()
 }
 
 /// Archive paths ignore case and treat `/` like `\`.
-fn same_path(a: &str, b: &str) -> bool {
+pub(crate) fn same_path(a: &str, b: &str) -> bool {
     normalized(a) == normalized(b)
 }
 
@@ -125,7 +145,11 @@ fn normalized(path: &str) -> String {
 
 pub struct MapImports {
     list: Option<ImportList>,
+    // Protected maps drop the archive's `(listfile)` and often `war3map.imp`, so
+    // their earlier imports cannot be found.
+    protected: bool,
     pending: Vec<ImportedFile>,
+    removed: Vec<String>,
 }
 
 impl MapImports {
@@ -136,8 +160,10 @@ impl MapImports {
         };
 
         Ok(Self {
+            protected: list.is_none() && map.read_file(LISTFILE)?.is_none(),
             list,
             pending: Vec::new(),
+            removed: Vec::new(),
         })
     }
 
@@ -152,19 +178,15 @@ impl MapImports {
     /// list's entries and the files queued for the next save. Protected maps
     /// often have no list, so their imports are not known.
     pub fn paths(&self) -> Vec<String> {
-        let listed = self.list.iter().flat_map(|list| {
-            list.entries.iter().map(|(flag, path)| {
-                if IMPORTED_DIR_FLAGS.contains(&(flag & FLAG_KIND_MASK)) {
-                    format!("{IMPORTED_DIR}{path}")
-                } else {
-                    path.clone()
-                }
-            })
-        });
+        let listed = self.list.iter().flat_map(ImportList::paths);
         let mut paths: Vec<String> = Vec::new();
 
         for path in listed.chain(self.pending.iter().map(|f| f.path.clone())) {
-            if !paths.iter().any(|p| same_path(p, &path)) {
+            let removed = self.removed.iter().any(|r| same_path(r, &path));
+            let pending = self.pending(&path).is_some();
+            let known = paths.iter().any(|p| same_path(p, &path));
+
+            if (!removed || pending) && !known {
                 paths.push(path);
             }
         }
@@ -172,8 +194,12 @@ impl MapImports {
         paths
     }
 
+    pub fn listed(&self) -> bool {
+        !self.protected
+    }
+
     pub fn has_pending(&self) -> bool {
-        !self.pending.is_empty()
+        !self.pending.is_empty() || !self.removed.is_empty()
     }
 
     pub fn add(&mut self, file: ImportedFile) {
@@ -181,35 +207,61 @@ impl MapImports {
         self.pending.push(file);
     }
 
-    pub fn files(&self) -> Vec<(String, Vec<u8>)> {
-        if self.pending.is_empty() {
-            return Vec::new();
-        }
+    pub fn remove(&mut self, path: &str) {
+        self.pending.retain(|f| !same_path(&f.path, path));
+        let listed = self.list.as_ref().is_some_and(|list| list.contains(path));
+        let known = self.removed.iter().any(|r| same_path(r, path));
 
+        if listed && !known {
+            self.removed.push(path.to_owned());
+        }
+    }
+
+    fn updated_list(&self) -> ImportList {
         let mut list = self.list.clone().unwrap_or_else(ImportList::new);
-        let mut files = Vec::new();
+
+        for path in &self.removed {
+            list.remove(path);
+        }
 
         for file in &self.pending {
             list.add(&file.path);
-            files.push((file.path.clone(), file.bytes.clone()));
         }
 
-        files.push((IMPORT_LIST_FILE.to_owned(), list.to_bytes()));
+        list
+    }
+
+    pub fn files(&self) -> Vec<(String, Vec<u8>)> {
+        if !self.has_pending() {
+            return Vec::new();
+        }
+
+        let mut files: Vec<(String, Vec<u8>)> = self
+            .pending
+            .iter()
+            .map(|file| (file.path.clone(), file.bytes.clone()))
+            .collect();
+
+        files.push((IMPORT_LIST_FILE.to_owned(), self.updated_list().to_bytes()));
         files
     }
 
+    pub fn removed(&self) -> Vec<String> {
+        self.removed
+            .iter()
+            .filter(|path| self.pending(path).is_none())
+            .cloned()
+            .collect()
+    }
+
     pub fn saved(&mut self) {
-        let mut list = self.list.take().unwrap_or_else(ImportList::new);
-
-        for file in self.pending.drain(..) {
-            list.add(&file.path);
-        }
-
-        self.list = Some(list);
+        self.list = Some(self.updated_list());
+        self.pending.clear();
+        self.removed.clear();
     }
 }
 
-fn split_extension(path: &str) -> (&str, Option<String>) {
+pub(crate) fn split_extension(path: &str) -> (&str, Option<String>) {
     let name_start = path.rfind(PATH_SEPARATOR).map_or(0, |i| i + 1);
 
     match path[name_start..].rfind('.') {
@@ -406,8 +458,10 @@ mod tests {
         list.entries
             .push((FULL_PATH_FLAG, "Textures\\Skin.dds".to_owned()));
         let mut imports = MapImports {
+            protected: false,
             list: Some(list),
             pending: Vec::new(),
+            removed: Vec::new(),
         };
 
         imports.add(ImportedFile {
@@ -442,8 +496,10 @@ mod tests {
         assert!(ImportList::parse(&bytes[..bytes.len() - 1]).is_err());
 
         let mut imports = MapImports {
+            protected: false,
             list: Some(list),
             pending: Vec::new(),
+            removed: Vec::new(),
         };
 
         assert!(imports.files().is_empty());
@@ -469,6 +525,46 @@ mod tests {
         imports.saved();
         assert!(!imports.has_pending());
         assert!(imports.list.as_ref().unwrap().contains("HERO.mdx"));
+    }
+
+    #[test]
+    fn removed_imports_leave_the_list_and_the_archive() {
+        let mut list = ImportList::new();
+
+        list.entries.push((5, "BTNOld.blp".to_owned()));
+        list.entries
+            .push((FULL_PATH_FLAG, "Textures\\Skin.dds".to_owned()));
+        let mut imports = MapImports {
+            protected: false,
+            list: Some(list),
+            pending: Vec::new(),
+            removed: Vec::new(),
+        };
+
+        imports.add(ImportedFile {
+            path: "war3mapImported\\Queued.mdx".into(),
+            bytes: vec![1],
+        });
+
+        imports.remove("WAR3MAPIMPORTED\\btnold.blp");
+        imports.remove("war3mapImported\\Queued.mdx");
+        imports.remove("Never\\There.blp");
+
+        assert_eq!(imports.paths(), ["Textures\\Skin.dds"]);
+        assert_eq!(imports.removed(), ["WAR3MAPIMPORTED\\btnold.blp"]);
+        let files = imports.files();
+
+        assert_eq!(files.len(), 1);
+        let written = ImportList::parse(&files[0].1).unwrap();
+
+        assert_eq!(
+            written.entries,
+            [(FULL_PATH_FLAG, "Textures\\Skin.dds".to_owned())]
+        );
+
+        imports.saved();
+        assert!(!imports.has_pending());
+        assert!(imports.removed().is_empty());
     }
 
     #[test]

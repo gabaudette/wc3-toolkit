@@ -366,6 +366,13 @@ fn with_view<T>(session: &Session, catalog: Catalog, f: impl FnOnce(&LeveledView
     })
 }
 
+pub(crate) fn items_of(session: &Session, catalog: Catalog) -> Vec<(String, String)> {
+    with_view(session, catalog, |view| view.list())
+        .into_iter()
+        .map(|item| (item.id, item.name))
+        .collect()
+}
+
 #[tauri::command]
 pub fn list_leveled(state: State<'_, AppState>, catalog: Catalog) -> Result<Vec<UnitItem>, String> {
     state.with(|session| Ok(with_view(session, catalog, |view| view.list())))

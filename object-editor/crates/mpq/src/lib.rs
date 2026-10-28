@@ -183,6 +183,19 @@ impl Archive {
             })
     }
 
+    pub fn remove(&mut self, name: &str) -> Result<()> {
+        let c_name = cstring(name)?;
+
+        match self.handle.remove_file(&c_name, SEARCH_SCOPE_DEFAULT) {
+            Err(code) if code == ERROR_FILE_NOT_FOUND => Ok(()),
+            Err(code) => Err(Error::Write {
+                name: name.to_owned(),
+                code,
+            }),
+            Ok(()) => Ok(()),
+        }
+    }
+
     pub fn save(self) -> Result<()> {
         self.handle.save().map_err(|code| Error::Save { code })
     }
@@ -225,6 +238,28 @@ mod tests {
                 .unwrap()
                 .contains(&"war3map.wts".to_owned())
         );
+    }
+
+    #[test]
+    fn removes_files_and_ignores_missing_ones() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("remove.mpq");
+        let mut archive = Archive::create(&path, SMALL_TABLE).unwrap();
+
+        archive.write("a.txt", b"a").unwrap();
+        archive.write("b.txt", b"b").unwrap();
+        archive.save().unwrap();
+
+        let mut archive = Archive::open_writable(&path).unwrap();
+
+        archive.remove("a.txt").unwrap();
+        archive.remove("never-there.txt").unwrap();
+        archive.save().unwrap();
+
+        let archive = Archive::open(&path).unwrap();
+
+        assert!(!archive.contains("a.txt"));
+        assert_eq!(archive.read("b.txt").unwrap(), b"b");
     }
 
     #[test]
