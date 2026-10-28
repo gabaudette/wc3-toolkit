@@ -3,13 +3,16 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use wc3_data::abilities::AbilityDatabase;
+use wc3_data::constants::ConstantsDatabase;
 use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{ArtMode, GameFiles};
 use wc3_data::guide::FieldGuide;
 use wc3_data::units::UnitDatabase;
 use wc3_data::upgrades::UpgradeDatabase;
+use wc3_data::weather::WeatherEffect;
 use wc3_map::Map;
 use wc3_map::abilities::MapAbilities;
+use wc3_map::constants::{CONSTANTS_FILE, MapConstants};
 use wc3_map::imports::{MapImports, candidates};
 use wc3_map::info::{INFO_FILE, MapInfo};
 use wc3_map::leveled::{DOODADS, LeveledObjects, UPGRADES};
@@ -36,6 +39,9 @@ pub struct Session {
     pub doodad_guide: FieldGuide,
     pub upgrades: UpgradeDatabase,
     pub upgrade_guide: FieldGuide,
+    pub constants: ConstantsDatabase,
+    pub constant_guide: FieldGuide,
+    pub weather: Vec<WeatherEffect>,
     pub mode: ArtMode,
     pub map: Option<OpenMap>,
     pub icons: HashMap<(ArtMode, String), Vec<u8>>,
@@ -60,6 +66,7 @@ pub struct OpenMap {
     pub loot_error: Option<String>,
     pub cascades: Vec<Cascade>,
     pub saved_cascades: Vec<Cascade>,
+    pub constants: MapConstants,
 }
 
 impl OpenMap {
@@ -77,6 +84,7 @@ impl OpenMap {
             destructables: PlainObjects::load(&archive, DESTRUCTABLES)?,
             doodads: LeveledObjects::load(&archive, DOODADS)?,
             imports: MapImports::load(&archive)?,
+            constants: MapConstants::load(&archive)?,
             path,
             saved_files: Vec::new(),
             icons: HashMap::new(),
@@ -110,7 +118,25 @@ impl OpenMap {
             files.push((INFO_FILE, info.to_bytes()));
         }
 
+        if let Some(constants) = self.constants.to_bytes() {
+            files.push((CONSTANTS_FILE, constants));
+        }
+
         files
+    }
+
+    // Turning custom gameplay constants off deletes their file on save.
+    pub fn removed_files(&self) -> Vec<&'static str> {
+        let had_constants = self
+            .saved_files
+            .iter()
+            .any(|(name, _)| *name == CONSTANTS_FILE);
+
+        if had_constants && self.constants.to_bytes().is_none() {
+            return vec![CONSTANTS_FILE];
+        }
+
+        Vec::new()
     }
 
     pub fn unsaved(&self) -> bool {

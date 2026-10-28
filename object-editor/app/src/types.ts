@@ -469,3 +469,73 @@ export type ItemChoice = {
   custom: boolean;
   inMap: boolean;
 };
+
+export type ScreenView = { model: string; title: string; subtitle: string; text: string };
+
+export type FogView = {
+  enabled: boolean;
+  style: number;
+  start: number;
+  end: number;
+  density: number;
+  color: string;
+};
+
+export type OptionView = { flag: number; label: string; on: boolean };
+
+export type PlayerView = {
+  index: number;
+  number: number;
+  name: string;
+  controller: number;
+  race: number;
+  fixedStart: boolean;
+};
+
+export type ForceView = { name: string; flags: number; players: number[] };
+
+export type PropertiesView = {
+  name: string;
+  author: string;
+  description: string;
+  suggestedPlayers: string;
+  options: OptionView[];
+  loadingScreen: ScreenView;
+  prologue: ScreenView;
+  fog: FogView;
+  weather: string;
+  soundEnvironment: string;
+  waterTinting: boolean;
+  waterColor: string;
+  fixedPlayerSettings: boolean;
+  customForces: boolean;
+  players: PlayerView[];
+  forces: ForceView[];
+};
+
+export type WeatherChoice = { id: string; name: string };
+
+export type MapInfoView = {
+  version: number;
+  lua: boolean;
+  properties: PropertiesView;
+  weather: WeatherChoice[];
+};
+
+export type ConstantView = {
+  id: string;
+  label: string;
+  description: string;
+  unverified: boolean;
+  advanced: boolean;
+  valueType: string;
+  min: string | null;
+  max: string | null;
+  default: string;
+  value: string;
+  changed: boolean;
+};
+
+export type ConstantGroup = { id: string; label: string; constants: ConstantView[] };
+
+export type ConstantsView = { custom: boolean; groups: ConstantGroup[] };

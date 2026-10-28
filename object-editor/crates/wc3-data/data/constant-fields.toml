@@ -1,0 +1,573 @@
+# Field guide for gameplay constants (the World Editor's Advanced > Gameplay
+# Constants): what each constant does in game, its unit and an example.
+# Written for this project (not taken from the game). Mark anything not
+# confirmed in game with `unverified = true` so the editor shows it as such.
+#
+# [order]      the groups, each listing its constants in the order shown.
+# [[field]]    ids sharing one description; `advanced = true` folds the
+#              constants into the "Advanced" group of their category.
+
+[order]
+experience = [
+  "gexp", "hexr", "bgxp", "mhdx", "skif", "mhel", "mule",
+  "mxpn", "xpn1", "xpn2", "xpn3",
+  "gnxp", "gnxa", "gnxb", "gnxc", "ghxp", "ghfa", "ghfb", "ghfc", "hfxp",
+  "txp1", "txp2", "txp3", "txp4", "txp5", "txp6", "txp7", "txp8", "txp9",
+]
+attributes = ["satb", "shpb", "sreb", "imab", "imrb", "adeb", "adba", "amvb", "aasb"]
+revival = [
+  "mhrc", "mhrl", "mhrt", "rbfg", "rlfg", "rbfl", "rlfl", "rmaf", "rbft", "rmtf",
+  "hrms", "hrmf", "hrlf",
+  "mhac", "mhal", "awbf", "awlf", "awbl", "awll", "awmf", "hams", "hamf", "half",
+  "hals",
+]
+combat = [
+  "ctno", "ctpi", "ctsi", "ctma", "ctch", "ctsp", "cthe", "edbo",
+  "defa", "chtm", "mdre", "bmcd", "bscd", "cfhr", "cfhc", "cfha",
+]
+economy = [
+  "fcap", "upku", "upkg", "upkw", "gmmg", "loga", "gmod", "tras", "tral",
+  "rrco", "rrre", "rrhr", "rrtu", "rrbu", "cldr", "cdrp", "udrp", "ruco",
+]
+items = ["istk", "pick", "drop", "give", "pair", "paif", "foli"]
+movement = ["mxus", "mnus", "mxbs", "mnbs", "folr", "fols", "scrb", "read", "mcor"]
+creeps = ["guad", "guam", "guat", "bcnr", "nunr", "cccr", "isar", "usar", "asar", "nbpp"]
+time = [
+  "dayl", "dayh", "dawn", "dusk",
+  "dect", "bdet", "sdet", "dist", "budt", "efdt", "cadt", "ffdt",
+]
+display = [
+  "dbst", "dein", "farr", "dfrr", "invs", "ande", "anra",
+  "bubr", "bang", "rang", "rzof", "rzoh", "sant",
+]
+spells = [
+  "from", "froa", "ehbo", "mird", "mirt", "mirl", "miru", "cyst", "eima", "wima",
+  "ambo", "dede", "isdd", "cizd",
+  "mtcl", "dscl", "tpcl", "arcl", "mlcl", "madi",
+  "dtli", "dtma", "dgbl", "dgbm", "dueb", "edba",
+  "cdds", "cdav", "cdaf", "cdbs", "cdbf", "cdbm", "cdbu", "cdca", "cdcr", "cdcf",
+  "cdde", "cdim", "cdmf", "cdms", "cdme", "cdrf", "cdrg", "cdsf", "cdsu", "cdww",
+]
+illusions = [
+  "igab", "iasb", "igmb", "igdb", "ighb", "igmr", "icrl", "icrm", "ibau", "igau",
+  "inba", "puba", "buba", "auba", "fhba", "msbs", "shut", "dcal",
+]
+techtree = [
+  "hero", "eqnh", "talt", "eqna",
+  "twn1", "eqn1", "twn2", "eqn2", "twn3", "eqn3", "twn4", "eqn4", "twn5", "eqn5",
+  "twn6", "eqn6", "twn7", "eqn7", "twn8", "eqn8", "twn9", "eqn9",
+]
+
+# --- Hero experience ---------------------------------------------------------
+
+[[field]]
+ids = ["gexp"]
+description = "On: experience from a kill is shared by all of the player's heroes in range. Off: only the hero that landed the killing blow gains it."
+
+[[field]]
+ids = ["hexr"]
+description = "How far (game units) a hero can be from a dying enemy and still gain experience. 1200 is about a screen width."
+
+[[field]]
+ids = ["bgxp"]
+description = "Whether destroying buildings gives heroes experience. Off in melee, so tower rushes do not level heroes."
+
+[[field]]
+ids = ["mhdx"]
+description = "Whether heroes at the maximum level still take a share of experience. On: they soak up their share and gain nothing, so lower heroes level slower. Off: the share goes to the other heroes."
+
+[[field]]
+ids = ["skif"]
+description = "Experience from killing a summoned unit, as a factor of a normal kill (0.5 = half)."
+
+[[field]]
+ids = ["mhel"]
+description = "Highest level a hero can reach. Melee uses 10; RPG maps often raise it (the experience tables then extend by their formulas)."
+
+[[field]]
+ids = ["mule"]
+description = "Highest level a non-hero unit can have, used for its experience bounty and ability levels."
+advanced = true
+
+[[field]]
+ids = ["mxpn"]
+description = "Experience needed for each hero level, as a list: the first value is for level 2. Levels past the list follow the formula below."
+
+[[field]]
+ids = ["xpn1", "xpn2", "xpn3"]
+description = "Formula for the experience needed past the table: previous value × Previous Value Factor + level × Level Factor + Constant Factor. Melee: 1 × previous + 100 × level, so 200, 500, 900, 1400..."
+
+[[field]]
+ids = ["gnxp"]
+description = "Experience a hero gains for killing a normal unit, by the unit's level: the first value is for a level 1 unit. Levels past the list follow the formula below."
+
+[[field]]
+ids = ["gnxa", "gnxb", "gnxc"]
+description = "Formula for kill experience of normal units past the table: previous value × Previous Value Factor + level × Level Factor + Constant Factor."
+
+[[field]]
+ids = ["ghxp"]
+description = "Experience a hero gains for killing an enemy hero, by that hero's level: the first value is for a level 1 hero. Melee: 100, 120, 160, 220, 300, then the formula."
+
+[[field]]
+ids = ["ghfa", "ghfb", "ghfc"]
+description = "Formula for hero kill experience past the table: previous value × Previous Value Factor + level × Level Factor + Constant Factor."
+
+[[field]]
+ids = ["hfxp"]
+description = "Percent of normal experience a hero gets from creeps (Neutral Hostile), by hero level: melee 80, 70, 60, 50, then 0 from level 5, so heroes stop leveling on creeps."
+
+[[field]]
+ids = ["txp1", "txp2", "txp3", "txp4", "txp5", "txp6", "txp7", "txp8", "txp9"]
+description = "Extra experience factor from creeps while the player owns a hall of this tier, by hero level (melee tier 2: 0.15). Lets heroes keep leveling on creeps as the base grows."
+advanced = true
+unverified = true
+
+# --- Hero attributes ---------------------------------------------------------
+
+[[field]]
+ids = ["satb"]
+description = "Attack damage a hero gains per point of its primary attribute."
+
+[[field]]
+ids = ["shpb"]
+description = "Maximum life per point of Strength. Melee: 25."
+
+[[field]]
+ids = ["sreb"]
+description = "Life regeneration (per second) per point of Strength."
+
+[[field]]
+ids = ["imab"]
+description = "Maximum mana per point of Intelligence."
+
+[[field]]
+ids = ["imrb"]
+description = "Mana regeneration (per second) per point of Intelligence."
+
+[[field]]
+ids = ["adeb"]
+description = "Armor per point of Agility. Melee: 0.3, so 10 Agility gives 3 armor."
+
+[[field]]
+ids = ["adba"]
+description = "Armor a hero starts from before Agility is added. Melee: -2, which the hero's starting Agility makes up."
+
+[[field]]
+ids = ["amvb"]
+description = "Movement speed per point of Agility. 0 in melee."
+
+[[field]]
+ids = ["aasb"]
+description = "Attack speed per point of Agility, as a fraction: 0.02 = 2% faster per point."
+
+# --- Hero revival and awakening ----------------------------------------------
+
+[[field]]
+ids = ["mhrc", "mhrl", "mhrt"]
+description = "Highest gold, lumber and time (seconds) reviving a hero at an altar can cost, whatever its level."
+
+[[field]]
+ids = ["rbfg", "rlfg"]
+description = "Gold to revive a hero at an altar: the hero's gold cost × (Constant Factor + Level Factor × (level − 1)), capped by Maximum Gold/Lumber Factor × gold cost and the maximum above."
+
+[[field]]
+ids = ["rbfl", "rlfl"]
+description = "Lumber to revive a hero, with the same formula as gold. 0 in melee: revival costs no lumber."
+
+[[field]]
+ids = ["rmaf"]
+description = "Revival gold and lumber can be at most this many times the hero's base cost."
+
+[[field]]
+ids = ["rbft", "rmtf"]
+description = "Revival time: the hero's training time × level × Time Level Factor, at most Maximum Time Factor × training time (and the maximum time above)."
+
+[[field]]
+ids = ["hrms", "hrmf", "hrlf"]
+description = "Life and mana a hero has after reviving at an altar. Use Starting Mana gives it the mana it had when first trained; otherwise Mana Factor × its maximum. Life Factor 1.0 = full life."
+
+[[field]]
+ids = ["mhac", "mhal", "awbf", "awlf", "awbl", "awll", "awmf"]
+description = "Gold and lumber to awaken a hero at a Tavern (campaigns: a hero who died while its player owned no altar), with the same formula as altar revival."
+
+[[field]]
+ids = ["hams", "hamf", "half"]
+description = "Life and mana an awakened hero has. Melee: half life and no extra mana."
+
+[[field]]
+ids = ["hals"]
+description = "Default number of levels between a hero's ability levels (ultimates have their own requirement). Melee: 2, so level 2 of a spell needs hero level 3."
+
+# --- Combat ------------------------------------------------------------------
+
+[[field]]
+ids = ["ctno", "ctpi", "ctsi", "ctma", "ctch", "ctsp", "cthe"]
+description = "The damage table: how much damage this attack type deals to each defense type (Small, Medium, Large, Fortified, Normal, Hero, Divine, Unarmored), 1.00 = full damage. Example: Pierce deals 2.00 to Small and 0.35 to Fortified in melee."
+
+[[field]]
+ids = ["edbo"]
+description = "Damage bonus against ethereal units (Banish, Ethereal Form) by attack type, in the order Normal, Pierce, Siege, Magic, Chaos, Spells, Hero. 1.66 = 66% more; 0 = no damage, which is why physical attacks cannot hit them."
+
+[[field]]
+ids = ["defa"]
+description = "How much each point of armor reduces damage. Melee: 0.06, so armor A takes 1 − (0.06 × A) / (1 + 0.06 × A) of the damage (10 armor = 37.5% less)."
+
+[[field]]
+ids = ["chtm"]
+description = "Chance (0.25 = 25%) that an attack misses a target on higher ground."
+
+[[field]]
+ids = ["mdre"]
+description = "Damage a missed attack still deals to whatever it hits, as a factor (0.5 = half)."
+unverified = true
+
+[[field]]
+ids = ["bmcd", "bscd"]
+description = "Damage of critical strikes from attacks and from spells, in percent of normal damage, before the ability's own multiplier. 150 = one and a half times."
+unverified = true
+
+[[field]]
+ids = ["cfhr"]
+description = "When a unit is attacked, the player's idle units within this range (game units) come to help."
+
+[[field]]
+ids = ["cfhc"]
+description = "Range (game units) at which creeps join a fight when a creep near them is attacked."
+
+[[field]]
+ids = ["cfha"]
+description = "Call for help range for computer players' units."
+
+# --- Food, upkeep, gold and refunds ------------------------------------------
+
+[[field]]
+ids = ["fcap"]
+description = "Highest food a player can have, however many farms they build. Melee: 100; up to 300."
+
+[[field]]
+ids = ["upku"]
+description = "Food levels where upkeep starts, as a list: above the first value players pay the first tax rate below, above the second the second rate. Melee: 50 and 80."
+unverified = true
+
+[[field]]
+ids = ["upkg", "upkw"]
+description = "Share of gold (and lumber) income taken at each upkeep level: no upkeep, low upkeep, high upkeep. Melee gold: 0, 0.30, 0.60."
+unverified = true
+
+[[field]]
+ids = ["gmmg"]
+description = "Most gold a gold mine can be given in the World Editor."
+advanced = true
+
+[[field]]
+ids = ["loga"]
+description = "Gold left in a mine at which players are warned it is running low."
+
+[[field]]
+ids = ["gmod"]
+description = "Seconds a gold mine stays claimed by a player after their last worker stops mining, before another player's workers can use it."
+unverified = true
+
+[[field]]
+ids = ["tras", "tral"]
+description = "Gold or lumber sent per click when trading resources with allies; Control-click sends the larger amount."
+
+[[field]]
+ids = ["rrco", "rrre", "rrhr", "rrtu", "rrbu"]
+description = "Share of the cost refunded when cancelling construction, research, hero revival, unit training or a building upgrade. 1.0 = all; melee buildings refund 0.75."
+
+[[field]]
+ids = ["cldr"]
+description = "Life lost per second by a building whose construction was cancelled while it collapses."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["cdrp", "udrp"]
+description = "Whether cancelling a damaged construction (or building upgrade) refunds less, in proportion to the damage taken."
+
+[[field]]
+ids = ["ruco"]
+description = "On: an upgrade's cost per level is a factor of the previous level instead of a fixed increment. Only changes upgrades whose costs were made for it."
+advanced = true
+unverified = true
+
+# --- Items and inventory -----------------------------------------------------
+
+[[field]]
+ids = ["istk"]
+description = "Whether charged items of the same kind stack in one inventory slot (as in campaigns). Their stack limit is set per item."
+
+[[field]]
+ids = ["pick", "drop", "give"]
+description = "How close (game units) a hero must get to pick up, drop or give an item."
+
+[[field]]
+ids = ["pair"]
+description = "How close (game units) a hero must be to a shop to sell it an item."
+
+[[field]]
+ids = ["paif"]
+description = "Share of an item's cost paid back when selling it to a shop. Melee: 0.6."
+
+[[field]]
+ids = ["foli"]
+description = "Range (game units) at which a unit ordered to pick up an item stops following other orders and goes for it."
+advanced = true
+unverified = true
+
+# --- Movement and ranges -----------------------------------------------------
+
+[[field]]
+ids = ["mxus", "mnus"]
+description = "Fastest and slowest a unit can move, whatever its bonuses and slows. Movement speed fields above 522 are capped here."
+
+[[field]]
+ids = ["mxbs", "mnbs"]
+description = "Fastest and slowest a moving building (rooted Ancients, Night Elf buildings uprooted) can move."
+
+[[field]]
+ids = ["folr", "fols"]
+description = "How close a unit following another unit (or a structure) stays to it."
+
+[[field]]
+ids = ["scrb"]
+description = "How far a target can move away during a spell's cast before the cast fails: extra range beyond the spell's own."
+
+[[field]]
+ids = ["read"]
+description = "Longest delay (seconds) before an idle unit reacts to an enemy coming into range. Units react after a random delay up to this."
+
+[[field]]
+ids = ["mcor"]
+description = "Largest collision size a unit can have. Bigger values in unit data are capped here."
+advanced = true
+
+# --- Creeps --------------------------------------------------------------------
+
+[[field]]
+ids = ["guad"]
+description = "Distance creeps chase an attacker from their camp before considering going back."
+
+[[field]]
+ids = ["guam"]
+description = "Distance from their camp at which creeps always give up the chase and go back."
+
+[[field]]
+ids = ["guat"]
+description = "Seconds creeps wait out of combat before walking back to their camp."
+
+[[field]]
+ids = ["bcnr"]
+description = "Creeps within this range of a building under construction wake up and attack it."
+
+[[field]]
+ids = ["nunr"]
+description = "Creeps within this range of a neutral building (shop, mercenary camp) attack players who use it."
+
+[[field]]
+ids = ["cccr"]
+description = "Largest radius (in pathing cells of 32 game units) the game uses to group creeps into one camp."
+advanced = true
+
+[[field]]
+ids = ["isar", "usar", "asar"]
+description = "Range at which creeps attack a player who buys an item, hires a unit or uses an ability at a neutral building. 0 = never."
+
+[[field]]
+ids = ["nbpp"]
+description = "Seconds between checks of neutral buildings for nearby units that can use them (shops, waygates)."
+advanced = true
+
+# --- Time and decay ------------------------------------------------------------
+
+[[field]]
+ids = ["dayl"]
+description = "Real seconds in one game day (day and night). Melee: 480, so 8 minutes."
+
+[[field]]
+ids = ["dayh"]
+description = "Hours in one game day, as shown by the clock."
+
+[[field]]
+ids = ["dawn", "dusk"]
+description = "Game hours when day starts and when night starts. Melee: 6 and 18."
+
+[[field]]
+ids = ["dect", "bdet", "sdet", "dist"]
+description = "Seconds a corpse lasts: flesh before it turns to bones (corpses for Raise Dead), then bones, destroyed structures, and the fade of dying heroes."
+
+[[field]]
+ids = ["budt", "efdt", "cadt", "ffdt"]
+description = "Seconds missiles, special effects, cancelled constructions and the fog of war flash at an attacker stay before disappearing."
+advanced = true
+
+# --- Display and visibility ----------------------------------------------------
+
+[[field]]
+ids = ["dbst"]
+description = "Shows the construction and upgrade progress bars over buildings."
+
+[[field]]
+ids = ["dein"]
+description = "Lets players see an enemy hero's items when selecting it."
+
+[[field]]
+ids = ["farr", "dfrr"]
+description = "Radius revealed for a moment when an unseen unit attacks you from the fog, or when a unit dies."
+
+[[field]]
+ids = ["invs"]
+description = "How fast units fade in and out when becoming invisible or visible (higher is faster)."
+advanced = true
+
+[[field]]
+ids = ["ande", "anra"]
+description = "\"You are under attack\" warnings: at most one per this many seconds, and only for attacks farther than this from the last one."
+
+[[field]]
+ids = ["bubr"]
+description = "Radius of blight a building removes around itself when placed (Night Elf and others on Undead blight)."
+advanced = true
+unverified = true
+
+[[field]]
+ids = ["bang", "rang"]
+description = "Direction (degrees) new buildings face, and rooted Ancients. 270 faces the bottom of the screen."
+
+[[field]]
+ids = ["rzof", "rzoh"]
+description = "Height of the rally point flag above the ground, in the classic and Reforged graphics."
+advanced = true
+
+[[field]]
+ids = ["sant"]
+description = "How animation speed follows unit scale. Rarely needs changing."
+advanced = true
+unverified = true
+
+# --- Spells and rules ----------------------------------------------------------
+
+[[field]]
+ids = ["from", "froa"]
+description = "How much frost attacks and spells slow movement and attack speed (0.5 = half speed)."
+
+[[field]]
+ids = ["ehbo"]
+description = "Healing bonus on ethereal units, as a factor (1.66 = 66% more)."
+
+[[field]]
+ids = ["mird", "mirt", "mirl", "miru"]
+description = "What magic immunity protects from: spell damage, Thorns-like return damage, life or mana leech, and ultimates."
+
+[[field]]
+ids = ["cyst"]
+description = "Whether a unit caught in Cyclone is hidden from the game (cannot be targeted) instead of just disabled."
+advanced = true
+
+[[field]]
+ids = ["eima", "wima"]
+description = "Whether Ensnare and Web are blocked by magic immunity."
+
+[[field]]
+ids = ["ambo"]
+description = "Whether a bouncing attack or spell (Chain Lightning, moon glaive) can hit the same unit more than once."
+
+[[field]]
+ids = ["dede"]
+description = "Whether Defend can deflect piercing attacks back at the attacker."
+
+[[field]]
+ids = ["isdd"]
+description = "Whether invulnerable summoned units still die to dispels (Dispel Magic, Purge)."
+advanced = true
+
+[[field]]
+ids = ["cizd"]
+description = "Whether a buff with no duration (a stun of 0 seconds) still interrupts a spell being cast."
+advanced = true
+
+[[field]]
+ids = ["mtcl", "dscl", "tpcl", "arcl"]
+description = "Whether Mass Teleport, Dark Summoning, Town Portal and the Amulet of Recall gather the units into a tight group on arrival."
+advanced = true
+
+[[field]]
+ids = ["mlcl"]
+description = "Whether a flyer that morphs into a ground unit lands at the closest open spot."
+advanced = true
+
+[[field]]
+ids = ["madi"]
+description = "Whether morphing disables the abilities of the other form."
+advanced = true
+
+[[field]]
+ids = ["dtli", "dtma", "dgbl", "dgbm"]
+description = "Drain Life and Drain Mana: whether they move life or mana to the caster, and whether the caster can go above its maximum."
+advanced = true
+
+[[field]]
+ids = ["dueb", "edba"]
+description = "Whether drains use the ethereal damage bonus, and whether allied ethereal units take that bonus too."
+advanced = true
+
+[[field]]
+ids = ["cdds"]
+description = "Whether a hero can end Divine Shield early by casting it again."
+
+[[field]]
+ids = [
+  "cdav", "cdaf", "cdbs", "cdbf", "cdbm", "cdbu", "cdca", "cdcr", "cdcf",
+  "cdde", "cdim", "cdmf", "cdms", "cdme", "cdrf", "cdrg", "cdsf", "cdsu", "cdww",
+]
+description = "Whether the ability can be turned off before it ends. The World Editor marks these \"not yet implemented\": the game ignores most of them."
+advanced = true
+unverified = true
+
+# --- Illusions and auras -------------------------------------------------------
+
+[[field]]
+ids = ["igab", "iasb", "igmb", "igdb", "ighb", "igmr"]
+description = "Whether illusions get attack damage, attack speed, movement speed, armor, healing and magic resistance bonuses from items, auras and buffs."
+
+[[field]]
+ids = ["icrl", "icrm"]
+description = "Whether illusions can restore life or mana with abilities."
+advanced = true
+
+[[field]]
+ids = ["ibau", "igau"]
+description = "Whether illusions give their auras to nearby units, and whether autocast spells (Heal, Inner Fire) target them."
+
+[[field]]
+ids = ["inba", "puba", "buba", "auba", "fhba"]
+description = "Whether invisible, polymorphed, burrowed, animated dead and flying heroes still give their auras."
+advanced = true
+
+[[field]]
+ids = ["msbs"]
+description = "Whether movement speed bonuses from different sources add up (otherwise only the largest applies)."
+
+[[field]]
+ids = ["shut"]
+description = "Whether hiding or showing a unit (by trigger) also hides or shows the units inside it when it is a transport."
+advanced = true
+
+[[field]]
+ids = ["dcal"]
+description = "Whether ability requirements check an ability's base (Data ID) instead of its own ID."
+advanced = true
+unverified = true
+
+# --- Techtree equivalents ------------------------------------------------------
+
+[[field]]
+ids = ["hero", "talt", "twn1", "twn2", "twn3", "twn4", "twn5", "twn6", "twn7", "twn8", "twn9"]
+description = "Units and buildings that count as \"a hero\", \"an altar\" or a hall of this tier for requirements. Melee tier 2 lists Keep, Stronghold, Tree of Ages and Halls of the Dead. Add your own buildings so their units can be required too."
+
+[[field]]
+ids = ["eqnh", "eqna", "eqn1", "eqn2", "eqn3", "eqn4", "eqn5", "eqn6", "eqn7", "eqn8", "eqn9"]
+description = "How a requirement on this equivalent is written in tooltips, such as \"Keep or Stronghold or Tree of Ages or Halls of the Dead\"."
+unverified = true
