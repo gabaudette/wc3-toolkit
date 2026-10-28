@@ -16,7 +16,9 @@ use wc3_data::units::UnitDatabase;
 use wc3_data::upgrades::UpgradeDatabase;
 use wc3_map::abilities::{MapAbilities, MapPlaceholders};
 use wc3_map::imports::MapImports;
+use wc3_map::info::{INFO_FILE, MapInfo};
 use wc3_map::leveled::{DOODADS, LeveledObjects, UPGRADES};
+use wc3_map::placements::{PLACEMENTS_FILE, UnitPlacements};
 use wc3_map::plain::{BUFFS, DESTRUCTABLES, ITEMS, PlainKind, PlainObjects};
 use wc3_map::transfer::{self, Bundle, MapObjects, MapObjectsMut, ObjectType, References};
 use wc3_map::units::MapUnits;
@@ -98,6 +100,77 @@ fn every_map_round_trips() -> TestResult {
     assert!(!maps.is_empty(), "no maps found");
     assert!(failures.is_empty(), "{}", failures.join("\n"));
     assert!(files > 0, "no object data in {} maps", maps.len());
+    Ok(())
+}
+
+fn placement_failures(map: &Map, name: &str) -> Result<Vec<String>, Box<dyn std::error::Error>> {
+    let mut failures = Vec::new();
+
+    if let Some(original) = map.read_file(PLACEMENTS_FILE)? {
+        match UnitPlacements::parse(&original) {
+            Ok(units) if units.to_bytes() == original => {}
+            Ok(_) => failures.push(format!("{name}: {PLACEMENTS_FILE} differs")),
+            Err(e) => failures.push(format!("{name}: {e}")),
+        }
+    }
+
+    if let Some(original) = map.read_file(INFO_FILE)? {
+        match MapInfo::parse(&original) {
+            Ok(info) if info.to_bytes() == original && info.supports_tables() => {}
+            Ok(_) => failures.push(format!("{name}: {INFO_FILE} differs or has no item tables")),
+            Err(e) => failures.push(format!("{name}: {e}")),
+        }
+    }
+
+    Ok(failures)
+}
+
+#[test]
+#[ignore = "needs maps (WC3_MAPS_DIR)"]
+fn every_map_round_trips_placements_and_item_tables() -> TestResult {
+    let mut maps = Vec::new();
+    let mut failures = Vec::new();
+
+    find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
+    for path in &maps {
+        failures.extend(placement_failures(
+            &Map::open(path)?,
+            &path.display().to_string(),
+        )?);
+    }
+
+    assert!(!maps.is_empty(), "no maps found");
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn every_game_map_round_trips_placements_and_item_tables() -> TestResult {
+    let storage = casc::Storage::open(&env_dir(GAME_DIR_VAR)?)?;
+    let dir = std::env::temp_dir().join("wc3-toolkit-game-maps");
+    let mut failures = Vec::new();
+    let mut maps = 0;
+
+    std::fs::create_dir_all(&dir)?;
+    for entry in storage.list("*.w3x")? {
+        let Ok(bytes) = storage.read(&entry.name) else {
+            continue;
+        };
+        let path = dir.join("map.w3x");
+
+        std::fs::write(&path, bytes)?;
+        let Ok(map) = Map::open(&path) else {
+            continue;
+        };
+
+        maps += 1;
+        failures.extend(placement_failures(&map, &entry.name)?);
+    }
+
+    std::fs::remove_dir_all(&dir)?;
+    assert!(maps > 0, "no game maps found");
+    assert!(failures.is_empty(), "{}", failures.join("\n"));
     Ok(())
 }
 

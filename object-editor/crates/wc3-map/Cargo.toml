@@ -16,6 +16,7 @@ full_moon = { version = "3", default-features = false, features = ["lua53"] }
 
 [dev-dependencies]
 tempfile = "3"
+casc = { path = "../casc" }
 
 [lints]
 workspace = true

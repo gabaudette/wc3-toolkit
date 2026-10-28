@@ -11,11 +11,14 @@ use wc3_data::upgrades::UpgradeDatabase;
 use wc3_map::Map;
 use wc3_map::abilities::MapAbilities;
 use wc3_map::imports::{MapImports, candidates};
+use wc3_map::info::{INFO_FILE, MapInfo};
 use wc3_map::leveled::{DOODADS, LeveledObjects, UPGRADES};
+use wc3_map::placements::{PLACEMENTS_FILE, UnitPlacements};
 use wc3_map::plain::{BUFFS, DESTRUCTABLES, ITEMS, PlainObjects};
 use wc3_map::units::MapUnits;
 
 use crate::interface::{self, Design};
+use crate::loot::{self, Cascade};
 
 pub struct Session {
     pub files: Arc<GameFiles>,
@@ -52,12 +55,19 @@ pub struct OpenMap {
     pub icons: HashMap<String, Vec<u8>>,
     pub ui: Vec<Design>,
     pub saved_ui: Vec<Design>,
+    pub placements: Option<UnitPlacements>,
+    pub info: Option<MapInfo>,
+    pub loot_error: Option<String>,
+    pub cascades: Vec<Cascade>,
+    pub saved_cascades: Vec<Cascade>,
 }
 
 impl OpenMap {
     pub fn load(path: PathBuf) -> wc3_map::Result<Self> {
         let archive = Map::open(&path)?;
         let ui = interface::load(&path).map_err(wc3_map::Error::Invalid)?;
+        let cascades = loot::load(&path).map_err(wc3_map::Error::Invalid)?;
+        let (placements, info, loot_error) = load_placements(&archive);
         let mut map = Self {
             units: MapUnits::load(&archive)?,
             abilities: MapAbilities::load(&archive)?,
@@ -72,6 +82,11 @@ impl OpenMap {
             icons: HashMap::new(),
             saved_ui: ui.clone(),
             ui,
+            placements,
+            info,
+            loot_error,
+            saved_cascades: cascades.clone(),
+            cascades,
         };
 
         map.saved_files = map.files();
@@ -87,11 +102,22 @@ impl OpenMap {
         files.extend(self.buffs.files());
         files.extend(self.destructables.files());
         files.extend(self.doodads.files());
+        if let Some(placements) = &self.placements {
+            files.push((PLACEMENTS_FILE, placements.to_bytes()));
+        }
+
+        if let Some(info) = &self.info {
+            files.push((INFO_FILE, info.to_bytes()));
+        }
+
         files
     }
 
     pub fn unsaved(&self) -> bool {
-        self.files() != self.saved_files || self.imports.has_pending() || self.ui != self.saved_ui
+        self.files() != self.saved_files
+            || self.imports.has_pending()
+            || self.ui != self.saved_ui
+            || self.cascades != self.saved_cascades
     }
 
     pub fn reader(&self) -> impl Fn(&str) -> Option<Vec<u8>> + '_ {
@@ -111,6 +137,50 @@ impl OpenMap {
         candidates(path)
             .into_iter()
             .find_map(|file| read(&file).map(|bytes| (file, bytes)))
+    }
+}
+
+type LoadedPlacements = (Option<UnitPlacements>, Option<MapInfo>, Option<String>);
+
+// A map is still opened when its placements or info cannot be read; only the
+// Placed tab is unavailable. Files that would not be written back exactly are
+// left alone.
+fn load_placements(archive: &Map) -> LoadedPlacements {
+    let exact = |name: &str, original: Option<Vec<u8>>, written: Option<Vec<u8>>| {
+        if original == written {
+            return Ok(());
+        }
+
+        Err(format!(
+            "Tinkerbench cannot write {name} back unchanged, so it leaves it alone."
+        ))
+    };
+    let placements = UnitPlacements::load(archive)
+        .map_err(|e| e.to_string())
+        .and_then(|p| {
+            exact(
+                PLACEMENTS_FILE,
+                archive.read_file(PLACEMENTS_FILE).ok().flatten(),
+                p.as_ref().map(UnitPlacements::to_bytes),
+            )
+            .map(|()| p)
+        });
+    let info = MapInfo::load(archive)
+        .map_err(|e| e.to_string())
+        .and_then(|i| {
+            exact(
+                INFO_FILE,
+                archive.read_file(INFO_FILE).ok().flatten(),
+                i.as_ref().map(MapInfo::to_bytes),
+            )
+            .map(|()| i)
+        });
+
+    match (placements, info) {
+        (Ok(placements), Ok(info)) => (placements, info, None),
+        (Ok(placements), Err(e)) => (placements, None, Some(e)),
+        (Err(e), Ok(info)) => (None, info, Some(e)),
+        (Err(e), Err(_)) => (None, None, Some(e)),
     }
 }
 

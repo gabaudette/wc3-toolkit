@@ -4,6 +4,34 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-28 · Hero inventories and drop tables (AGE-42)
+
+- `wc3_map::placements` reads and writes `war3mapUnits.doo` byte for byte: versions 7/8
+  and Reforged's 12/13, subversions 9 and 11. Checked against all 144 of the user's maps
+  and every unit file in the game's own maps (375, including campaigns). Versions 12 and 13
+  add a group ID after the skin, then roll, pitch and a list of lights (36 bytes each) at
+  the end; subversion 11 adds the map item table link (-1 for none) before the dropped
+  item sets and hero strength, agility and intelligence (0 = default) after the level.
+  The user's World Editor (2.0) writes version 13 with subversion 9, so linking a unit to
+  an item table moves the file to subversion 11 and fills those fields for every unit.
+  The skin ID (1.32+) is detected by trying both layouts.
+- `wc3_map::info` finds the item tables in `war3map.w3i` (versions 25 to 39) and keeps
+  everything before and after them as is. A few of the game's own patch 2.0 maps leave out
+  the players' HUD skin field; the reader falls back to that layout.
+- Units link a table by its number; a table's items store chance before ID, the reverse
+  of a unit's own drops. Random drops are `Y<class>I<level>`: `YYI` any class, then `i` to
+  `o` for permanent, charged, power-up, artifact, purchasable, campaign and miscellaneous
+  (JASS `ITEM_TYPE` order). Confirmed by comparing melee maps' drops with the
+  `ChooseRandomItemEx` calls in their generated `war3map.j`.
+- `loot.rs`: a cascade gives tier k the share chance(k) × the product of misses before it,
+  splits it by weight, and rounds to whole percents by largest remainder, so the total is
+  kept. The World Editor table holds the flattened set; the tiers live in
+  `<map> Loot.json`, written on Save like `<map> UI.json`. A map whose unit or info file
+  cannot be written back unchanged still opens; only the tab is unavailable.
+- Frontend: the Placed units tab (placed units with inventory and drops, item tables with
+  the cascade and item set editors) and an item picker with class and level filters and
+  random items. Sets, drops and tiers carry generated keys instead of index keys.
+
 ## 2026-10-27 · Asset importer: the Assets tab (AGE-43)
 
 - `mpq::Archive::remove` (StormLib's `SFileRemoveFile`, a missing file is not an error) and

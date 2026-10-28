@@ -411,3 +411,61 @@ export type ImportCandidate = {
 };
 
 export type ImportRequest = { diskPath: string; importPath: string; converted?: string };
+
+export type DropView = { item: string; chance: number };
+
+export type DropsView =
+  | { kind: "none" }
+  | { kind: "table"; table: number }
+  | { kind: "sets"; sets: DropView[][] };
+
+export type PlacedUnit = {
+  index: number;
+  id: string;
+  name: string;
+  icon: string | null;
+  hero: boolean;
+  player: number;
+  playerName: string;
+  level: number;
+  x: number;
+  y: number;
+  inventory: (string | null)[];
+  drops: DropsView;
+};
+
+export type PlacedList = { units: PlacedUnit[]; error: string | null };
+
+export type TierItem = { item: string; weight: number };
+
+export type Tier = { name: string; chance: number; items: TierItem[] };
+
+export type FlatDrop = { item: string; tier: number; exact: number; chance: number };
+
+export type ItemTableView = {
+  number: number;
+  name: string;
+  sets: DropView[][];
+  tiers: Tier[] | null;
+  flattened: FlatDrop[];
+  users: number;
+};
+
+export type ItemTableList = { tables: ItemTableView[]; error: string | null };
+
+export type ItemTableInput = {
+  number: number | null;
+  name: string;
+  sets: DropView[][];
+  tiers: Tier[] | null;
+};
+
+export type ItemChoice = {
+  id: string;
+  name: string;
+  icon: string | null;
+  class: string;
+  level: number;
+  custom: boolean;
+  inMap: boolean;
+};

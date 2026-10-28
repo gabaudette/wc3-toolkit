@@ -8,6 +8,7 @@ mod icons;
 mod interface;
 mod leveled;
 mod log;
+mod loot;
 mod plain;
 mod platform;
 mod spells;
@@ -90,6 +91,13 @@ fn main() -> ExitCode {
             transfer::preview_import,
             transfer::import_objects,
             log::log_failure,
+            loot::list_placed_units,
+            loot::set_placed_inventory,
+            loot::set_placed_drops,
+            loot::list_item_tables,
+            loot::save_item_table,
+            loot::remove_item_table,
+            loot::item_choices,
             assets::list_assets,
             assets::asset_textures,
             assets::plan_import,

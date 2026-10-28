@@ -4065,6 +4065,7 @@ name = "wc3-map"
 version = "0.1.0"
 dependencies = [
  "base64 0.22.1",
+ "casc",
  "flate2",
  "full_moon",
  "mpq",

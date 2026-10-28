@@ -27,7 +27,9 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   reference to them (found through field metadata types). Bundle files (`.w3obj`) also carry
   the files imported into the source map that the objects use; `imports` finds them by trying
   names from art fields (protected maps cannot list their files) and following models to their
-  textures, and adds them to a map with `war3map.imp` entries. `wc3map` is its CLI
+  textures, and adds them to a map with `war3map.imp` entries. `placements` reads and
+  writes `war3mapUnits.doo` (placed units: hero inventories, drops, item table links) and
+  `info` the item tables in `war3map.w3i`, both byte for byte. `wc3map` is its CLI
   (`check`, `units`, `unit`, `set`, `new`, `lua`).
 - Everything must build and run on Windows and Linux (CI tests both). Windows specifics:
   StormLib's library is named `StormLib` and needs `wininet` + `user32`; CascLib needs
@@ -39,7 +41,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   react-aria-components, Bun, Biome with the AGE baseline plus the React domain. Rust side in
   `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI
   (`abilities.rs` the same for abilities: list, cards, pages with per-level cells),
-  `commands.rs` (Tauri commands), `interface.rs` (the Interface tab: dialogs, multiboards, leaderboards and timer windows, in `interface/`, designed visually,
+  `commands.rs` (Tauri commands), `loot.rs` (the Placed units tab: inventories, drops,
+  item tables and cascades, whose tiers are kept in `<map> Loot.json`), `interface.rs` (the Interface tab: dialogs, multiboards, leaderboards and timer windows, in `interface/`, designed visually,
   kept in `<map> UI.json` beside the map, and the Lua modules they become; `.w3ui` design files carry them and their imported icons between maps), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
   the open map's imported file first, then the game's; they read game files outside the
   session lock, since `casc::Storage` is `Sync`, and textures decode at most 512 px),
@@ -112,6 +115,10 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
   path; Reforged adds `0x10` (24 = `KoboldDigger.mdx` under `war3mapImported\`). Entries added
   here use 29 (full path); not yet confirmed in the World Editor. Protected maps have no
   `(listfile)` and often no `war3map.imp`, but files still read by name.
+- `war3mapUnits.doo`: versions 12/13 add a group ID after the skin and roll, pitch and
+  lights at the end of each unit; subversion 11 adds the item table link and hero
+  attributes (the 2.0 World Editor writes 13 with subversion 9). Random drops are
+  `Y<class>I<level>` (`YYI` any class, `i`..`o` in JASS `ITEM_TYPE` order).
 - Never commit Blizzard game files or assets; tools read them from the user's install.
 - `crates/wc3-data/data/unit-fields.toml` is the field guide (written for this project):
   importance order per category, `advanced` (folded in the UI), a description for every unit
