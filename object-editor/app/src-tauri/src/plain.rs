@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tauri::State;
 use wc3_data::guide::FieldGuide;
 use wc3_data::meta::FieldMeta;
@@ -83,6 +83,46 @@ pub(crate) fn items_of(session: &Session, catalog: Catalog) -> Vec<(String, Stri
         .into_iter()
         .map(|item| (item.id, item.name))
         .collect()
+}
+
+const ITEM_CLASS_FIELD: &str = "icla";
+const ITEM_LEVEL_FIELD: &str = "ilev";
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ItemChoice {
+    pub id: String,
+    pub name: String,
+    pub icon: Option<String>,
+    pub class: String,
+    pub level: u32,
+    pub custom: bool,
+    pub in_map: bool,
+}
+
+pub(crate) fn item_choices(session: &Session) -> Vec<ItemChoice> {
+    with_view(session, Catalog::Items, |view| {
+        view.items()
+            .into_iter()
+            .filter_map(|item| {
+                let id = fourcc(&item.id).ok()?;
+                let level = view
+                    .raw_by_id(id, ITEM_LEVEL_FIELD)
+                    .and_then(|l| l.trim().parse().ok())
+                    .unwrap_or_default();
+
+                Some(ItemChoice {
+                    class: view.raw_by_id(id, ITEM_CLASS_FIELD).unwrap_or_default(),
+                    level,
+                    custom: item.custom,
+                    in_map: item.group == "map",
+                    id: item.id,
+                    name: item.name,
+                    icon: item.icon,
+                })
+            })
+            .collect()
+    })
 }
 
 #[tauri::command]

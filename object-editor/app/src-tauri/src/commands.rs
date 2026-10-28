@@ -18,6 +18,7 @@ use wc3_map::{FourCC, MapStrings, save_changes};
 use crate::abilities::{AbilityCard, AbilityDetail, AbilitySummary, AbilityView};
 use crate::hotkeys::{self, Clash};
 use crate::interface;
+use crate::loot;
 use crate::platform;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
 use crate::view::{Field, SearchHit, UnitDetail, UnitItem, View};
@@ -405,6 +406,11 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
         if map.ui != map.saved_ui {
             interface::save(&map.path, &map.ui)?;
             map.saved_ui = map.ui.clone();
+        }
+
+        if map.cascades != map.saved_cascades {
+            loot::save(&map.path, &map.cascades)?;
+            map.saved_cascades = map.cascades.clone();
         }
 
         map.saved_files = files;

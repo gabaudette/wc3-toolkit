@@ -8,6 +8,14 @@ under "What's new".
 
 ### Added
 
+- A Placed units tab for the units placed on the map. Give a placed hero the items it
+  starts with, picking them by icon and name from the game's items and the map's own, with
+  search and class and level filters. Choose what each unit drops when it dies: nothing, one
+  of the map's item tables, or its own item sets (one item per set, by chance, or a random
+  item of a class and level). Item tables can be cascades: tiers roll from the rarest
+  (Legendary 2%, then Epic 5%, ...) until one hits, then pick one of its items by weight.
+  Tinkerbench shows each item's exact chance and the whole percent the World Editor gets,
+  warns when an item rounds to 0%, and keeps the tiers in "<map> Loot.json" beside the map.
 - An Assets tab for the files imported into a map. Import models and textures, single files
   or a whole folder (text `.mdl` models are converted to `.mdx`), choose the path each one
   gets in the map, and see which textures a model needs and whether the map or the game has
