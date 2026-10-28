@@ -4,6 +4,35 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-10-28 · Map properties and gameplay constants (AGE-63)
+
+- `wc3_map::info` now parses every property of `war3map.w3i` into fields (texts, flags,
+  loading screen, prologue, fog, weather, sound environment, water color, players, forces)
+  and keeps the rest (version and bounds data, Reforged's extra fog, camera and water
+  values, upgrade and tech availability, random unit tables) as raw bytes. Unchanged files
+  still round-trip on every map (the user's 144 and the game's 375). Fog and water colors
+  are stored red, green, blue, alpha.
+- Texts that hold `TRIGSTR_` references are edited through the map's string table; a
+  literal text becomes a new string.
+- `wc3_map::constants` reads and writes `war3mapMisc.txt`. The World Editor stores only the
+  constants a map changes (most of the game's own maps hold 1 to 8 keys): sections and keys
+  in alphabetical order, CRLF, a blank line between sections, decimals with a digit after
+  the point (`BoneDecayTime=43.0`). Without the file the map uses the game's constants;
+  turning them off deletes it on Save. Files nobody touched are written back as they were.
+- `wc3_data::constants` loads the 233 constants from `MiscMetaData.slk` (now with the
+  `section` column in `FieldMeta`) with labels from the editor strings and defaults from
+  `MiscData.txt`, `MiscGame.txt` (balance-layered) and, for the techtree equivalents
+  (`[TWN1]`...`[TALT]`), `ItemFunc.txt` and `ItemStrings.txt`. Five defaults are in no game
+  file (food limit, upkeep levels and taxes, item stacking) and are built in. Game values
+  carry trailing `//` comments, which are dropped.
+- `data/constant-fields.toml` explains every constant, in 13 groups, with `advanced` and
+  `unverified` like the other guides; a real-install test checks it covers them all and
+  that each `[Misc]` constant has a game value. `wc3_data::weather` lists the weather
+  effects from `Weather.slk` with their editor names.
+- Frontend: the Map tab (sections for description, screens, options, environment, players,
+  forces and constants) and the constants panel with search, changed-only, reset, folded
+  advanced constants and the damage table grid.
+
 ## 2026-10-28 · Hero inventories and drop tables (AGE-42)
 
 - `wc3_map::placements` reads and writes `war3mapUnits.doo` byte for byte: versions 7/8

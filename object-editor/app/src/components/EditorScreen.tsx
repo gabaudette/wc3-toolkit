@@ -26,6 +26,7 @@ import { CommandPalette, type PaletteCommand } from "./CommandPalette";
 import { ImportDialog } from "./ImportDialog";
 import { InterfacePane } from "./InterfacePane";
 import { LeveledPane } from "./LeveledPane";
+import { MapPane } from "./MapPane";
 import { OpenAbilityContext } from "./openAbility";
 import { PlacedPane } from "./PlacedPane";
 import { PlainPane } from "./PlainPane";
@@ -42,7 +43,15 @@ import {
 } from "./UnitList";
 import { UnitPage } from "./UnitPage";
 
-type Tab = "units" | "abilities" | LeveledCatalog | Catalog | "placed" | "interface" | "assets";
+type Tab =
+  | "units"
+  | "abilities"
+  | LeveledCatalog
+  | Catalog
+  | "placed"
+  | "map"
+  | "interface"
+  | "assets";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "units", label: "Units" },
@@ -53,6 +62,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: "destructables", label: "Destructables" },
   { id: "doodads", label: "Doodads" },
   { id: "placed", label: "Placed units" },
+  { id: "map", label: "Map" },
   { id: "interface", label: "Interface" },
   { id: "assets", label: "Assets" },
 ];
@@ -497,6 +507,15 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
             key={revision}
             editable={editable}
             mapPath={map?.path ?? null}
+            onMapChanged={refreshMap}
+            onError={setError}
+          />
+        )}
+
+        {tab === "map" && (
+          <MapPane
+            key={revision}
+            editable={editable}
             onMapChanged={refreshMap}
             onError={setError}
           />

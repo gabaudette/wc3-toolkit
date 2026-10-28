@@ -1,5 +1,6 @@
 pub mod abilities;
 pub mod blp;
+pub mod constants;
 pub mod doodads;
 pub mod game;
 pub mod guide;
@@ -15,6 +16,7 @@ pub mod strings;
 pub mod tga;
 pub mod units;
 pub mod upgrades;
+pub mod weather;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

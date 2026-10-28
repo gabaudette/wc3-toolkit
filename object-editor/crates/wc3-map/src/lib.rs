@@ -5,6 +5,7 @@ pub use wc3_data::strings::MapStrings;
 
 pub mod abilities;
 mod binary;
+pub mod constants;
 pub mod imports;
 pub mod info;
 pub mod leveled;

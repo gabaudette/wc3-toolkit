@@ -48,6 +48,8 @@ pub struct FieldMeta {
     pub id: String,
     /// Column (SLK) or key (profile) holding the value, e.g. `HP`.
     pub field: String,
+    /// Profile section holding the value (gameplay constants: `Misc`, `TWN1`, ...).
+    pub section: String,
     /// Source table: `UnitData`, `UnitBalance`, `UnitUI`, `UnitWeapons`, `UnitAbilities`, `Profile`, ...
     pub source: String,
     /// Position inside a comma-separated value, or `None` for the whole value.
@@ -171,6 +173,7 @@ fn parse_record(record: &HashMap<&str, &str>, row: usize) -> Result<FieldMeta> {
     Ok(FieldMeta {
         id: required("ID")?,
         field: required("field")?,
+        section: get("section").unwrap_or_default().to_owned(),
         source: required("slk")?,
         index,
         category: get("category").unwrap_or_default().to_owned(),

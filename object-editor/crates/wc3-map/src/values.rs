@@ -82,6 +82,7 @@ mod tests {
         FieldMeta {
             id: "test".to_owned(),
             field: "Test".to_owned(),
+            section: String::new(),
             source: "Profile".to_owned(),
             index: None,
             category: "stats".to_owned(),

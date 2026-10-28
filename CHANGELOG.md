@@ -8,6 +8,14 @@ under "What's new".
 
 ### Added
 
+- A Map tab for the map's own settings. Edit its name, author, description and suggested
+  players, the loading screen and prologue texts, map options, terrain fog, weather and water
+  tint, the players (name, controller, race, fixed start) and the forces (name, members,
+  alliance and shared vision or control).
+- Gameplay constants with a plain explanation for every one of them: what it does in game, its
+  unit and an example. Search them, show only the ones the map changed, see the game's value
+  next to each, and reset any. The damage table is a grid of attack types against defense
+  types. Like the World Editor, only the constants you change are stored in the map.
 - A Placed units tab for the units placed on the map. Give a placed hero the items it
   starts with, picking them by icon and name from the game's items and the map's own, with
   search and class and level filters. Choose what each unit drops when it dies: nothing, one

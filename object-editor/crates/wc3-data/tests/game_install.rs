@@ -8,6 +8,7 @@
 
 use std::path::PathBuf;
 
+use wc3_data::constants::ConstantsDatabase;
 use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::guide::FieldGuide;
@@ -835,5 +836,31 @@ fn choices_know_other_spellings() -> TestResult {
     let shown = db.format_value(field, Some("air,invu".to_owned()));
 
     assert_eq!(shown, format!("Air, {}", invulnerable.label));
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs a Warcraft III install (WC3_GAME_DIR)"]
+fn the_constant_guide_covers_every_gameplay_constant() -> TestResult {
+    let (files, _) = open(GameOptions::default())?;
+    let db = ConstantsDatabase::load(&files)?;
+    let guide = FieldGuide::constants()?;
+    let ids: Vec<&str> = db.constants().iter().map(|c| c.meta.id.as_str()).collect();
+    let missing: Vec<&&str> = ids.iter().filter(|id| guide.entry(id).is_none()).collect();
+    let unordered: Vec<&&str> = ids.iter().filter(|id| guide.rank(id).is_none()).collect();
+    let unknown: Vec<&str> = guide.field_ids().filter(|id| !ids.contains(id)).collect();
+    let no_default: Vec<&str> = db
+        .constants()
+        .iter()
+        .filter(|c| c.default.is_empty() && c.meta.section == "Misc")
+        .map(|c| c.meta.id.as_str())
+        .collect();
+    let max_level = db.find("mhel").map(|c| c.default.as_str());
+
+    assert!(missing.is_empty(), "no description: {missing:?}");
+    assert!(unordered.is_empty(), "in no group: {unordered:?}");
+    assert!(unknown.is_empty(), "not constants: {unknown:?}");
+    assert!(no_default.is_empty(), "no game value: {no_default:?}");
+    assert_eq!(max_level, Some("10"));
     Ok(())
 }

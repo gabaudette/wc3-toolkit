@@ -5,6 +5,7 @@ use std::sync::Arc;
 use serde::Serialize;
 use tauri::State;
 use wc3_data::abilities::AbilityDatabase;
+use wc3_data::constants::ConstantsDatabase;
 use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::guide::FieldGuide;
@@ -107,6 +108,9 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
     let doodad_guide = FieldGuide::doodads().map_err(|e| e.to_string())?;
     let upgrades = UpgradeDatabase::load(&files).map_err(|e| e.to_string())?;
     let upgrade_guide = FieldGuide::upgrades().map_err(|e| e.to_string())?;
+    let constants = ConstantsDatabase::load(&files).map_err(|e| e.to_string())?;
+    let constant_guide = FieldGuide::constants().map_err(|e| e.to_string())?;
+    let weather = wc3_data::weather::load(&files).map_err(|e| e.to_string())?;
     let summary = GameSummary {
         dir: path_text(&dir),
         units: db.ids().len(),
@@ -131,6 +135,9 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
         doodad_guide,
         upgrades,
         upgrade_guide,
+        constants,
+        constant_guide,
+        weather,
         mode,
         map: None,
         icons: HashMap::new(),
@@ -400,7 +407,9 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
                 .map(|(path, bytes)| (path.as_str(), bytes.clone())),
         );
         let removed = map.imports.removed();
-        let removed: Vec<&str> = removed.iter().map(String::as_str).collect();
+        let mut removed: Vec<&str> = removed.iter().map(String::as_str).collect();
+
+        removed.extend(map.removed_files());
 
         save_changes(&map.path, &map.path, &written, &removed).map_err(|e| e.to_string())?;
         if map.ui != map.saved_ui {

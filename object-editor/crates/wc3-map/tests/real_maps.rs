@@ -116,7 +116,10 @@ fn placement_failures(map: &Map, name: &str) -> Result<Vec<String>, Box<dyn std:
 
     if let Some(original) = map.read_file(INFO_FILE)? {
         match MapInfo::parse(&original) {
-            Ok(info) if info.to_bytes() == original && info.supports_tables() => {}
+            Ok(info)
+                if info.to_bytes() == original
+                    && info.supports_tables()
+                    && info.properties().is_some() => {}
             Ok(_) => failures.push(format!("{name}: {INFO_FILE} differs or has no item tables")),
             Err(e) => failures.push(format!("{name}: {e}")),
         }

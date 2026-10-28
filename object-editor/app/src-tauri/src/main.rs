@@ -9,6 +9,7 @@ mod interface;
 mod leveled;
 mod log;
 mod loot;
+mod mapinfo;
 mod plain;
 mod platform;
 mod spells;
@@ -91,6 +92,11 @@ fn main() -> ExitCode {
             transfer::preview_import,
             transfer::import_objects,
             log::log_failure,
+            mapinfo::map_info,
+            mapinfo::set_map_info,
+            mapinfo::gameplay_constants,
+            mapinfo::set_gameplay_constant,
+            mapinfo::set_custom_constants,
             loot::list_placed_units,
             loot::set_placed_inventory,
             loot::set_placed_drops,
