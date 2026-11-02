@@ -32,9 +32,12 @@ Open **Fog, weather and water**:
 - **Sound environment** sets a reverb name, such as `cave` or `forest`; empty keeps the default.
 - **Tint the water** enables the tint chosen with **Water color**.
 
-<!-- Screenshot placeholder: Map tab, Fog, weather and water section; Terrain fog enabled,
-Style open, weather chosen and Tint the water enabled. Use an app-screenshot figure,
-descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/map-environment.png">
+    <img src="../../screenshots/map-environment.png" alt="Map tab&#x27;s Fog, weather and water section with terrain fog enabled, its Style menu open, Ashenvale rain selected and water tint enabled." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>Fog style, weather and water tint are map settings; this capture shows the editor controls, not the in-game environment.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## Configure existing players and forces
 
@@ -52,9 +55,12 @@ two exist. Set its name and tick players to move them into that force: each play
 to one force. Choose **Allied**, **Allied victory**, **Share vision**, **Share unit control**
 and **Share advanced unit control** as needed.
 
-<!-- Screenshot placeholder: Map tab, Forces section; custom forces enabled, two named
-forces with player membership and alliance/vision/control checkboxes visible. Use an
-app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/map-forces.png">
+    <img src="../../screenshots/map-forces.png" alt="Forces section with custom forces enabled, Alliance and Reserve forces, player membership and alliance, vision and unit-control checkboxes." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>Player 1 belongs to Alliance; ticking that player under Reserve would move the membership to the other force.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## Change gameplay constants
 
@@ -74,9 +80,12 @@ from an individual unit's damage dice and armor amount. See
 [Armor Type versus Defense Type](../../reference/common-confusions/#armor-type-versus-defense-type)
 and [damage dice](../objects/#damage-and-bounty-dice).
 
-<!-- Screenshot placeholder: Map tab, Gameplay constants section; damage table grid with
-one edited multiplier, its Reset control and Use custom gameplay constants visible.
-Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/map-constants.png">
+    <img src="../../screenshots/map-constants.png" alt="Gameplay constants filtered to the damage bonus table, with attack rows, defense columns and an edited Normal-against-Small multiplier with Reset." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>The damage table places attack types on rows and defense types on columns; the changed Normal-against-Small cell is 1.2.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## Save and verify the result
 

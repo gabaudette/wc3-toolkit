@@ -8,6 +8,8 @@ under "What's new".
 
 ### Added
 
+- The expanded editor guides now include real application screenshots for startup, fields,
+  Interface designs, placed units and loot, map settings, assets, exports and AI prompts.
 - The documentation covers Interface designs and their Lua functions, placed units and loot,
   map settings and gameplay constants, imported assets, CSV/JSON exports and AI assistant
   prompts, with updated startup, field-editing and troubleshooting guides.

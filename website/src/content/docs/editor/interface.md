@@ -30,9 +30,12 @@ on this page are **not yet confirmed in game**.
    name, such as `OnHardMode`, without parentheses.
 5. Enable **Show to every player when the game starts** if this is the opening choice.
 
-<!-- Screenshot placeholder: Interface tab, Difficulty dialog selected; Message, Message color,
-two buttons with hotkeys, When clicked: Run a Lua function with OnHardMode, and live preview visible.
-Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/interface-dialog.png">
+    <img src="../../screenshots/interface-dialog.png" alt="Difficulty dialog in the Interface tab, with a white message, Normal and Hard hotkeys, an OnHardMode callback and the live dialog preview." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>Set the message, hotkeys and button actions beside the dialog preview; Hard calls OnHardMode with the clicking player.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 Your own module must define the named function. The generated action passes the player
 who clicked: `function OnHardMode(player)`. Function names accept letters, digits and `_`,
@@ -61,9 +64,19 @@ Enter cell text in the table. Select a cell, or a row or column's **Style** butt
 **Show when the game starts**, and optionally **Start folded to its title (players open it
 with a click)**.
 
-<!-- Screenshot placeholder: Interface tab, Scoreboard multiboard selected; Player, Kills and
-Deaths columns, repeating player row, a selected column's Style controls and live preview visible.
-Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/interface-multiboard.png">
+    <img src="../../screenshots/interface-multiboard.png" alt="Scoreboard multiboard with Player, Kills and Deaths columns, a repeating player row and the live corner-board preview." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>The multiboard&#x27;s fixed header and per-player row are edited in the same table, with a live preview above.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
+
+<figure class="app-screenshot">
+  <a href="../../screenshots/interface-style.png">
+    <img src="../../screenshots/interface-style.png" alt="The Kills column selected for styling, showing multiboard cells, text-color swatches, No icon and the icon picker." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>Scroll below the table to style the selected cell, row or column; here Style selects the whole Kills column.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 For a design whose displayed Lua name is `Scoreboard`:
 
@@ -92,9 +105,12 @@ Choose **Order**: **Highest first**, **Lowest first** or **As listed**. Enable *
 the game starts** if needed. Player rows use the player's name and color; the generated
 module creates them for playing slots, including computers.
 
-<!-- Screenshot placeholder: Interface tab, Kills leaderboard selected; player starting value,
-one own row, Order set to Highest first and live preview visible. Use an app-screenshot figure,
-descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/interface-leaderboard.png">
+    <img src="../../screenshots/interface-leaderboard.png" alt="Kills leaderboard with player rows starting at zero, a blue Waves row, Highest first order and the live ranking preview." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>A leaderboard combines player scores with named rows of your own and previews the selected order.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 For a design whose displayed Lua name is `Kills`:
 
@@ -120,9 +136,12 @@ To run your code on expiry, fill **When the time runs out, run this Lua function
 a function name, such as `SpawnWave`. Define `function SpawnWave()` in your own module;
 no player argument is passed. A repeating timer calls it each time it expires.
 
-<!-- Screenshot placeholder: Interface tab, Next wave timer selected; Length, repeat and
-start options, SpawnWave callback and countdown preview visible. Use an app-screenshot figure,
-descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/interface-timer.png">
+    <img src="../../screenshots/interface-timer.png" alt="Next wave timer design set to one minute thirty seconds, starting with the game, repeating and calling SpawnWave on expiry." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>The timer preview reflects its title and length; the callback field names SpawnWave without arguments.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 For a design whose displayed Lua name is `NextWave`:
 
@@ -145,9 +164,12 @@ For a design whose displayed Lua name is `NextWave`:
    module in the folder. The source map must use Lua.
 4. Open that development copy in Warcraft III and test your choices, scores and timers.
 
-<!-- Screenshot placeholder: Interface tab with Show Lua expanded and Lua folder filled;
-show the success message after Save and build test copy. Use an app-screenshot figure,
-descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/interface-lua-build.png">
+    <img src="../../screenshots/interface-lua-build.png" alt="Interface tab with Show Lua expanded, the Lua folder set to a temporary directory and a success message for five modules and Field guide_dev.w3m." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>Save and build test copy wrote five generated modules and built the development map; this is a build result, not an in-game test.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 Tinkerbench rewrites its generated modules on the next build. Keep your callbacks and game
 logic in separate files. The modules create their game handles through `Dev.OnStart`;
@@ -167,9 +189,19 @@ To transfer designs:
 4. Review **Import designs**, including the resulting `UI.Name` values, then choose
    **Import** with the displayed design count. Save the destination map and build its test copy.
 
-<!-- Screenshot placeholder: Interface tab with Import designs open; show a numbered name
-collision, a brought-along dialog, imported icon and required Lua callback list. Use an
-app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/interface-export.png">
+    <img src="../../screenshots/interface-export.png" alt="Export designs with Difficulty and Scoreboard selected, Details brought along by Difficulty, an imported icon and the required OnHardMode callback." width="678" height="577" loading="lazy" />
+  </a>
+  <figcaption>The export preview brings Details along because a Difficulty button shows it, and lists the imported icon and required callback.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
+
+<figure class="app-screenshot">
+  <a href="../../screenshots/interface-import.png">
+    <img src="../../screenshots/interface-import.png" alt="Import designs preview with Difficulty 2, Scoreboard 2 and Details 2 name conflicts, their Lua names, an existing imported icon and the OnHardMode requirement." width="678" height="410" loading="lazy" />
+  </a>
+  <figcaption>The import preview numbers taken design names and shows the resulting Lua names before you add anything.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 Existing designs remain. An imported design with a taken name receives a number, such as
 `Scoreboard 2`; icons the destination lacks are added. The design file lists required Lua

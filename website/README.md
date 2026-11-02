@@ -74,7 +74,7 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   for game behavior that has not been tested. The page is not generated.
 - `public/screenshots/`: real desktop captures shared by the visual tour, startup guides,
   homepage and root README. Editor views are 1440 × 900; startup captures focus on their
-  panels (600 × 420 and 600 × 600) to keep the controls readable. Sharing and import dialogs
+  panels (600 × 480, 600 × 400 and 600 × 740) to keep the controls readable. Sharing and import dialogs
   use 680 × 540 and 680 × 420 captures. Capture only the Tinkerbench
   window with `import -window <window-id>`;
   `xdotool search --name '^Tinkerbench$'` finds it on X11. Use a test map, let data and models
@@ -82,6 +82,31 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   stable when refreshing the UI. Screenshots show game art in context; do not export or add
   standalone game assets. The guide’s captions and alt text should match each refreshed image.
   Include “Image subject to change.” below every screenshot, including reused images.
+- The expanded editor guides use 24 captures: refreshed `load-game.png` and `open-map.png`,
+  plus `auto-open.png`, `objects-{options,dice,formatting,export}.png`,
+  `interface-{dialog,multiboard,style,leaderboard,timer,lua-build,export,import}.png`,
+  `placed-{map,inventory,cascade}.png`, `map-{environment,forces,constants}.png`,
+  `assets-{import,model}.png` and `assistant-prompt.png`. Use isolated app settings and a
+  disposable Lua map with a Footman, a level-3 Paladin and one player. Capture the real
+  automatic-loading screen before it finishes; do not simulate it or change the app's UI.
+  Set up Sunwell Warden with 10 base damage, two six-sided dice and 22 Strength (34–44,
+  average 39), and a Training construct with Mechanical selected under Targeted as. Unit
+  Classification currently uses a dropdown (AGE-71), not chips. Give Sunwell Light an
+  intentionally incomplete color code, unmatched reset and unresolved placeholder, and open
+  Formatting help. For Creep rewards, use 0.2%, 5% and 100% tiers so the warning and rounded
+  chances are visible. Set a custom force and fog/weather/water settings, and edit the
+  Normal-against-Small damage multiplier to 1.2.
+  Create Difficulty/Details dialogs, a Player/Kills/Deaths Scoreboard, Kills leaderboard and
+  Next wave timer; use OnHardMode and SpawnWave callbacks. Capture multiboard styling below
+  the table separately. Build the five generated modules and development map copy, then
+  export Difficulty and Scoreboard to show the referenced Details dialog and imported icon.
+  Preview importing into the same map to show numbered names; cancel rather than adding
+  duplicates. Use a locally obtained Knight model, texture and icon only in the disposable
+  map, with a text-model folder import and Sunwell Knight usage visible. Export controls
+  should select the custom hero as CSV; the assistant prompt should include a goal and the
+  open-map summary. Capture dialogs with margins around their actual bounds and keep their
+  true dimensions in the markup. These captures establish editor behavior and generated
+  output, not an in-game play test; retain the guides' unconfirmed-in-game notices (AGE-69).
 - `../object-editor/crates/wc3-data/data/*-fields.toml`: project-authored field explanations,
   shared with the editor. Every guide ID gets a page, including IDs absent from the snapshot.
 - `data/fields.toml`: display names, types, limits, choices and applicability extracted from

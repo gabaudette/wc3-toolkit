@@ -21,9 +21,9 @@ and starting player.
 
 <figure class="app-screenshot">
   <a href="../../screenshots/open-map.png">
-    <img src="../../screenshots/open-map.png" alt="The startup Map section after game data loads, with buttons to reopen the last map, open a map or browse game data only." width="600" height="600" loading="lazy" />
+    <img src="../../screenshots/open-map.png" alt="Tinkerbench setup after loading 928 units, offering Reopen Field guide.w3m, Open a map, read-only browsing and the checked automatic-startup setting." width="600" height="740" loading="lazy" />
   </a>
-  <figcaption>Choose Open a map… to select your test map. Reopen appears when a previous map is remembered.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption>After game data loads, open a map or browse read-only; the checkbox controls later automatic launches.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 ## Change one field

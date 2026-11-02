@@ -31,9 +31,12 @@ and **Mana**. Heroes also have **Hero level**, **Strength**, **Agility** and **I
 Leave hit points, mana or attributes empty to keep the unit's normal values. A random unit
 must be changed in the World Editor.
 
-<!-- Screenshot placeholder: Placed units tab, terrain map with a hero picked and rotation
-handle visible; show its list entry, Add unit, Owner of new units and Placement fields.
-Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/placed-map.png">
+    <img src="../../screenshots/placed-map.png" alt="Paladin selected on the Placed units terrain view, with its rotation handle, matching list selection, owner, position, facing and hero settings." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>Picking the level-3 Paladin links its terrain marker, list entry and placement fields; the handle turns that placement.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## Give a hero starting items
 
@@ -42,9 +45,12 @@ Select a placed hero and use its **Inventory** slots. Choose an item by icon and
 choices. The picker includes custom map items. Use the slot's clear control to empty it.
 Only heroes receive starting items here; other units can still have drops.
 
-<!-- Screenshot placeholder: Placed units tab, hero Inventory visible with starting items;
-open an Inventory slot picker showing This map, Game, class chips and Item level.
-Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/placed-inventory.png">
+    <img src="../../screenshots/placed-inventory.png" alt="Inventory slot 1 item picker with item icons, names, raw codes, This map and Game filters, class chips and Any level." width="1062" height="601" loading="lazy" />
+  </a>
+  <figcaption>A hero&#x27;s inventory slot opens the item picker, including map/game, class and level filters.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## Choose a unit's drops
 
@@ -83,9 +89,12 @@ For example, a first tier at 2% followed by a tier at 5% gives the second tier a
 overall chance: `98% × 5%`. Two equally weighted items in that second tier each have a
 calculated chance of 2.45%. Weight divides a tier's share; it is not a percent by itself.
 
-<!-- Screenshot placeholder: Placed units tab, Item tables mode, cascade with populated
-Legendary, Epic and Common tiers; show weights, exact → whole-percent values and a 0% warning.
-Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/placed-cascade.png">
+    <img src="../../screenshots/placed-cascade.png" alt="Creep rewards cascade with Legendary, Epic and Common tiers, weights, calculated-to-whole-percent chances and a warning that one entry rounds to zero." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>The Legendary entry&#x27;s calculated 0.20% becomes 0%; the warning below the tiers explains that it will never drop from the stored table.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 Each item shows its exact calculated chance followed by the whole percent the World Editor
 gets. Tinkerbench converts the cascade to one item set with whole percentages; do not read

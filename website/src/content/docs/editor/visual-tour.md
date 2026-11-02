@@ -17,15 +17,11 @@ On the first launch, Tinkerbench asks for your Warcraft III installation. Choose
 type or paste the folder’s path. Tinkerbench may already fill it in from detection or your
 previous session.
 
-<!-- Screenshot placeholder (refresh shared load-game.png, also used by Install Tinkerbench):
-first-launch setup with game folder and HD choice, Load game data and Prompt for an AI assistant….
-Keep the app-screenshot figure, descriptive alt text and Image subject to change. notice. -->
-
 <figure class="app-screenshot">
   <a href="../../screenshots/load-game.png">
-    <img src="../../screenshots/load-game.png" alt="Tinkerbench’s first startup screen with a Warcraft III folder path, Browse button, HD art checkbox and Load game data button." width="600" height="420" />
+    <img src="../../screenshots/load-game.png" alt="First-launch Tinkerbench setup with the detected Warcraft III folder, HD art checkbox, Load game data and Prompt for an AI assistant buttons." width="600" height="480" loading="lazy" />
   </a>
-  <figcaption>Choose your game installation, select the art mode, then load its object data.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption>On the first launch, connect the game installation before opening a map.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 Enable **Use HD (Reforged) art values and icons** if you want HD art, then select
@@ -37,25 +33,23 @@ On later launches, Tinkerbench loads that folder and art choice, then reopens th
 directly. While game data loads, **Stop and choose** or Escape stops before the map opens.
 With no remembered map, it stays on setup. If loading fails, setup shows the reason.
 
-<!-- Screenshot placeholder: automatic startup while game data is loading, with Stop and
-choose and the Escape hint visible. Use an app-screenshot figure, descriptive alt text and
-an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/auto-open.png">
+    <img src="../../screenshots/auto-open.png" alt="Tinkerbench loading the remembered game folder, with Stop and choose and the Escape hint visible." width="600" height="400" loading="lazy" />
+  </a>
+  <figcaption>During automatic loading, Stop and choose or Escape lets you choose another map.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## 2. Open a map
 
 After the game data loads, choose **Open a map…** and select a copy of a `.w3m` or `.w3x`
 map. If you previously opened a map, **Reopen** offers that file directly.
 
-<!-- Screenshot placeholder (refresh shared open-map.png, also used by Your first map):
-setup after loading game data, with Reopen, Open a map…, Browse game data only, the checked
-At start, load this game data and reopen the last map setting, and the AI prompt action.
-Keep the app-screenshot figure, descriptive alt text and Image subject to change. notice. -->
-
 <figure class="app-screenshot">
   <a href="../../screenshots/open-map.png">
-    <img src="../../screenshots/open-map.png" alt="Tinkerbench’s startup screen after loading 928 units, with a Map section offering Reopen test.w3m, Open a map and Browse game data only." width="600" height="600" loading="lazy" />
+    <img src="../../screenshots/open-map.png" alt="Tinkerbench setup after loading 928 units, offering Reopen Field guide.w3m, Open a map, read-only browsing and the checked automatic-startup setting." width="600" height="740" loading="lazy" />
   </a>
-  <figcaption>Once the game is loaded, open a map to edit it or browse the game data read-only.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption>After game data loads, open a map or browse read-only; the checkbox controls later automatic launches.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 **Browse game data only** opens the workbench without a map. You can inspect objects, fields

@@ -4,6 +4,27 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · Illustrate the expanded editor guides (AGE-68)
+
+- Replaced all 22 screenshot placeholders with actual desktop captures: 22 new PNGs and
+  refreshed startup panels shared by installation, first-map and visual-tour pages. Added
+  separate multiboard styling and design-export views so those controls remain readable.
+  Every figure links to its full-size capture and includes matching alt text, dimensions,
+  a caption and the change notice. Documented the capture setups in the website README.
+- Used isolated app settings and disposable map copies. Exercised the rendered controls
+  and real Tauri APIs for designs, placements, loot, settings, constants, imports, exports
+  and the assistant prompt. Generated five Interface Lua modules and a development map
+  copy; captures do not establish in-game behavior, which remains tracked by AGE-69.
+  Standalone model, texture and icon files stayed outside the repository.
+- Live capture exposed that Unit Classification uses a single-choice dropdown rather than
+  option chips. Corrected the guide's examples to Targets Allowed and Targeted as, showed
+  the actual dropdown and filed AGE-71 for the control mismatch.
+- Validation: sequential website test (119 passed), generate, check (zero errors, warnings
+  or hints), build (6,617 pages) and check:links passed. The production preview loaded all
+  images without overflow on 13 pages at 1440 px and 390 px, checked 494 heading-anchor
+  references and retained mobile navigation and Lua/JASS switching. Checked dimensions,
+  full-size links, alt text and change notices across all 32 editor-guide figures.
+
 ## 2026-11-02 · Correct Interface APIs in the assistant prompt (PR #79, AGE-67)
 
 - Replaced the dialog-only API summary in `docs/assistant-prompt.md` with per-kind examples
