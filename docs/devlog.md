@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-11-02 · Document the expanded editor
+## 2026-11-02 · Document the expanded editor (PR #78)
 
 - Added six authored Starlight guides for Interface designs, placed units and loot, map
   settings/constants, assets, object exports and the AI assistant prompt. Added sidebar
