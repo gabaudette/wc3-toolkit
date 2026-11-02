@@ -571,3 +571,34 @@ export type ConstantView = {
 export type ConstantGroup = { id: string; label: string; constants: ConstantView[] };
 
 export type ConstantsView = { custom: boolean; groups: ConstantGroup[] };
+
+export type ObjectType =
+  | "units"
+  | "items"
+  | "buffs"
+  | "destructables"
+  | "abilities"
+  | "upgrades"
+  | "doodads";
+
+export type ExportFormat = "csv" | "json";
+
+export type CsvValues = "display" | "raw";
+
+export type ExportOrigin = "all" | "changed" | "custom";
+
+export type ExportSelection = {
+  types: ObjectType[];
+  ids: string[] | null;
+  origin: ExportOrigin;
+  plainText: boolean;
+};
+
+export type ExportRequest = {
+  selection: ExportSelection;
+  format: ExportFormat;
+  values: CsvValues;
+  path: string;
+};
+
+export type ExportResult = { objects: number; files: string[] };

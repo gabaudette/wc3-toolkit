@@ -137,7 +137,6 @@ function turnOf(dx: number, dy: number): number {
   return Math.round((degrees + FULL_TURN) % FULL_TURN);
 }
 
-/** What a key does to the picked unit: move, turn or remove it. */
 export function placementKey(
   event: KeyboardEvent,
   unit: PlacedUnit,

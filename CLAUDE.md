@@ -33,8 +33,10 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   byte; `constants` reads and writes `war3mapMisc.txt` (gameplay constants); `terrain` reads
   `war3map.w3e`. `script` writes the map script's unit functions (creation, drops, item
   tables) and `setup` its player, force and environment parts, both as the World Editor
-  would. `wc3map` is its CLI
-  (`check`, `units`, `unit`, `set`, `new`, `lua`).
+  would. `export` writes every object type as CSV or JSON (format in
+  `docs/export-format.md`), from a map or the game alone. `wc3map` is its CLI
+  (`check`, `units`, `unit`, `set`, `new`, `lua`, `export`; `-` as the map exports the game's
+  objects).
 - Everything must build and run on Windows and Linux (CI tests both). Windows specifics:
   StormLib's library is named `StormLib` and needs `wininet` + `user32`; CascLib needs
   `ws2_32` and `CASCLIB_NO_AUTO_LINK_LIBRARY` (its header otherwise auto-links a prebuilt
@@ -48,7 +50,7 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `commands.rs` (Tauri commands), `mapinfo.rs` (the Map tab: properties, players,
   forces and gameplay constants), `loot.rs` (the Placed units tab: placements, inventories,
   drops, item tables and cascades, whose tiers are kept in `<map> Loot.json`), `mapview.rs`
-  (the terrain image under the map view), `sync.rs` (rewrites those script parts on save,
+  (the terrain image under the map view), `export.rs` (the export dialog's command), `sync.rs` (rewrites those script parts on save,
   only when it reproduces the map's script exactly at load), `interface.rs` (the Interface tab: dialogs, multiboards, leaderboards and timer windows, in `interface/`, designed visually,
   kept in `<map> UI.json` beside the map, and the Lua modules they become; `.w3ui` design files carry them and their imported icons between maps), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
   the open map's imported file first, then the game's; they read game files outside the

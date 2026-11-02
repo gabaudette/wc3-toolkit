@@ -47,6 +47,15 @@ impl MapUnits {
         })
     }
 
+    pub fn empty() -> Self {
+        Self {
+            data: ObjectData::empty(Layout::Plain),
+            skins: ObjectData::empty(Layout::Plain),
+            strings: MapStrings::default(),
+            added_strings: Vec::new(),
+        }
+    }
+
     pub fn strings(&self) -> &MapStrings {
         &self.strings
     }

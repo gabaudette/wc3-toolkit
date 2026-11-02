@@ -1,11 +1,12 @@
 import { Stars02 } from "@untitledui/icons";
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { settle } from "../result";
 import type { AbilitySummary, SearchHit } from "../types";
 import { classes } from "../ui";
 import { Button } from "./Button";
 import { Chip, toggle } from "./Chip";
+import { ExportContext } from "./exportObjects";
 import { GameText } from "./GameText";
 import { ListFold, useFolded } from "./ListFold";
 import { UnitIcon } from "./UnitIcon";
@@ -106,6 +107,14 @@ export function AbilityList({
     visible = own.length;
   }
 
+  const openExport = use(ExportContext);
+  const visibleIds = own.map((r) => r.ability.id);
+  const selectedAbility = abilities.find((a) => a.id === selected) ?? null;
+
+  if (!folded) {
+    visibleIds.push(...game.map((r) => r.ability.id));
+  }
+
   function row({ ability, reason }: { ability: AbilitySummary; reason: string }) {
     return (
       <li key={ability.id}>
@@ -188,10 +197,29 @@ export function AbilityList({
             />
           ))}
         </div>
-        <p className="text-xs text-faint">
-          {visible} shown
-          {folded && game.length > 0 && ` · ${game.length} game abilities folded`}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="flex-1 text-xs text-faint">
+            {visible} shown
+            {folded && game.length > 0 && ` · ${game.length} game abilities folded`}
+          </p>
+          {openExport && (
+            <Button
+              small
+              onPress={() =>
+                openExport({
+                  type: "abilities",
+                  shown: visibleIds,
+                  selected: selectedAbility && {
+                    id: selectedAbility.id,
+                    name: selectedAbility.name,
+                  },
+                })
+              }
+            >
+              Export…
+            </Button>
+          )}
+        </div>
       </div>
 
       <ul className="min-h-0 flex-1 overflow-y-auto" aria-label="Abilities">

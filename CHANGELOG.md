@@ -8,6 +8,14 @@ under "What's new".
 
 ### Added
 
+- Export objects as CSV or JSON for spreadsheets, wiki pages and other tools. "Export…" above
+  any object list exports what the list shows, the open object, all objects of the type, or
+  every type; "Export objects…" in the command palette too. Every field comes with its value
+  as stored and as the editor shows it (choices by name, tooltip numbers filled in), with the
+  map's changes and, if you like, only what the map adds or changes, or only its custom
+  objects, without color codes.
+  CSV gives a column per field and per level; the JSON format is documented for tool makers.
+  `wc3map` exports the same way from the command line.
 - A map view in the Placed units tab, drawn from the map's terrain. Zoom and pan, pick a unit
   on the map or in the list, drag it to move it and turn it by its handle, or use the arrow
   keys and [ ] on the picked unit. Add units of any type for any player by clicking the map,

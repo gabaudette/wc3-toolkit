@@ -1,9 +1,5 @@
-//! The parts of the map script the World Editor writes from the map's data:
-//! placed units (`CreateAllUnits` and the functions it calls) and the item
-//! drops of placed units and item tables. The game creates placed units from
-//! these functions, not from `war3mapUnits.doo`, so changed placements only
-//! take effect once these functions are written again. Everything else in the
-//! script (triggers, custom code) is kept as it is.
+//! The game creates placed units and their drops from functions the World
+//! Editor writes into the map script, not from `war3mapUnits.doo`.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
@@ -45,14 +41,12 @@ pub enum Language {
     Jass,
 }
 
-/// What the generator needs to know about unit types, from the game data.
 pub trait UnitKinds {
     fn is_building(&self, id: FourCC) -> bool;
     fn is_hero(&self, id: FourCC) -> bool;
     fn is_item(&self, id: FourCC) -> bool;
     /// Whether the unit holds gold (its gold amount is written to the script).
     fn is_gold_mine(&self, id: FourCC) -> bool;
-    /// The unit type's own team color (Art - Team Color), when it has one.
     fn team_color(&self, id: FourCC) -> Option<i32>;
     /// The orders turning an ability's autocast on and off (`healon`,
     /// `healoff`), if it has autocast.
@@ -462,7 +456,6 @@ pub fn table_drop_name(number: u32) -> String {
     format!("ItemTable{number:06}_DropItems")
 }
 
-/// The statements creating one placed unit, without indentation.
 fn unit_block(
     style: &Style,
     unit: &Placement,
@@ -640,7 +633,6 @@ fn unit_block(
     lines
 }
 
-/// A creation function's group and its units, with their placement indexes.
 type GroupUnits<'a> = (Group, Vec<(usize, &'a Placement)>);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -720,8 +712,6 @@ fn locals(style: &Style, group: &Group) -> Vec<String> {
     }
 }
 
-/// Splits an existing creation function into the statements of each unit,
-/// keyed by the unit's creation line (`id`, x, y as written).
 fn original_blocks(text: &str, function: &Function) -> Vec<(String, Vec<String>)> {
     let body = &text[function.start..function.end];
     let mut blocks: Vec<(String, Vec<String>)> = Vec::new();
@@ -773,12 +763,8 @@ fn placement_key(style: &Style, unit: &Placement) -> String {
     )
 }
 
-/// Script text for everything the World Editor generates from placed units:
-/// what the functions should be, given the placements and the script they go into.
 pub struct UnitSection<'a> {
     pub placements: &'a UnitPlacements,
-    /// The placements the script was written from, to keep the text of
-    /// unchanged units as the World Editor wrote it.
     pub original: Option<&'a UnitPlacements>,
     pub tables: &'a [ItemTable],
     pub kinds: &'a dyn UnitKinds,
@@ -993,7 +979,6 @@ fn identity(unit: &Placement) -> String {
     format!("{}#{}", unit.id, unit.creation_number)
 }
 
-// Fields that change what the script does for a unit.
 fn same_script(a: &Placement, b: &Placement) -> bool {
     a.id == b.id
         && a.x == b.x
@@ -1022,8 +1007,6 @@ fn global_names(text: &str) -> HashSet<String> {
         .collect()
 }
 
-/// The generated functions as the World Editor would write them now, in the
-/// order they appear in the script. For tests and for writing.
 pub fn unit_functions(
     language: Language,
     text: &str,
@@ -1034,7 +1017,6 @@ pub fn unit_functions(
     section.generate(text, &style)
 }
 
-/// The existing generated unit functions of a script, in file order.
 pub fn existing_unit_functions(language: Language, text: &str) -> Vec<(String, String)> {
     functions(text, language)
         .into_iter()
@@ -1043,9 +1025,6 @@ pub fn existing_unit_functions(language: Language, text: &str) -> Vec<(String, S
         .collect()
 }
 
-/// Replaces the script's generated unit functions with `generated`: drop
-/// functions where the first old drop function was, creation functions where
-/// the first old creation function was, and makes `main` call `CreateAllUnits`.
 pub fn splice_units(
     language: Language,
     text: &str,

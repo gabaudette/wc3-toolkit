@@ -1,8 +1,3 @@
-//! The player, force and environment parts of the map script the World Editor
-//! writes from `war3map.w3i`: `config`, `InitCustomPlayerSlots`,
-//! `InitCustomTeams`, `InitAllyPriorities`, and the fog, water, weather and
-//! sound lines of `main`.
-
 use crate::info::{Player, Properties};
 use crate::script::{Function, Language, Style, functions, skipped_end};
 use crate::{Error, Result};
@@ -519,8 +514,6 @@ fn setup_style(language: Language, text: &str) -> Style {
     style
 }
 
-// `main` with its fog, water, weather and sound lines and the weather
-// variable rewritten; the lines around them stay as they are.
 fn rewrite_main(setup: &Setup<'_>, body: &str) -> Option<String> {
     let lines: Vec<&str> = body.split_inclusive('\n').collect();
     let indent = &setup.style.indent;
@@ -587,9 +580,6 @@ fn rewrite_main(setup: &Setup<'_>, body: &str) -> Option<String> {
     Some(text)
 }
 
-/// The script with its player, force and environment parts written from the
-/// map's properties. Fails when the script lacks the World Editor's `main`
-/// or `config`.
 pub fn rewrite(language: Language, text: &str, section: &SetupSection<'_>) -> Result<String> {
     let found = functions(text, language);
     let setup = Setup {
@@ -650,7 +640,6 @@ pub fn rewrite(language: Language, text: &str, section: &SetupSection<'_>) -> Re
     Ok(out)
 }
 
-/// Whether Tinkerbench writes these parts exactly as the World Editor did.
 pub fn reproduces(language: Language, text: &str, section: &SetupSection<'_>) -> bool {
     rewrite(language, text, section).is_ok_and(|rewritten| rewritten == text)
 }

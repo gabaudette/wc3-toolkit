@@ -7,6 +7,7 @@ use wc3_data::spells::{
     SpellTemplate, fill_tooltip, render_template, spell_kinds as kinds,
     spell_templates as templates,
 };
+use wc3_data::strings::plain_text;
 use wc3_map::lua::{build_dev_map, check_syntax, default_output};
 
 use wc3_map::FourCC;
@@ -504,32 +505,7 @@ fn module_source(
 }
 
 fn without_color_codes(text: &str) -> String {
-    const COLOR_LENGTH: usize = 10;
-
-    let mut plain = String::new();
-    let mut rest = text;
-
-    while let Some(at) = rest.find('|') {
-        plain.push_str(&rest[..at]);
-        let code = &rest[at..];
-        let skip = match code.as_bytes().get(1).map(u8::to_ascii_lowercase) {
-            Some(b'c') if code.len() >= COLOR_LENGTH => COLOR_LENGTH,
-            Some(b'r') => 2,
-            Some(b'n') => {
-                plain.push(' ');
-                2
-            }
-            _ => {
-                plain.push('|');
-                1
-            }
-        };
-
-        rest = &code[skip.min(code.len())..];
-    }
-
-    plain.push_str(rest);
-    plain
+    plain_text(text).replace('\n', " ")
 }
 
 fn module_file_name(name: &str, spell: FourCC) -> String {

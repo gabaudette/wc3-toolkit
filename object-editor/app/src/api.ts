@@ -10,6 +10,8 @@ import type {
   Design,
   DesignTransfer,
   DropsView,
+  ExportRequest,
+  ExportResult,
   Field,
   GameSummary,
   HotkeyClash,
@@ -178,5 +180,6 @@ export const api = {
     call<void>("export_asset", { path, dest, png }),
   exportGameFile: (path: string, dest: string, png: boolean) =>
     call<void>("export_game_file", { path, dest, png }),
+  exportObjects: (request: ExportRequest) => call<ExportResult>("export_objects", { request }),
   importObjects: (source: ImportSource) => call<TransferObject[]>("import_objects", { source }),
 };

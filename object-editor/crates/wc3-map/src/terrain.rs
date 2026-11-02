@@ -29,7 +29,6 @@ pub struct Corner {
     pub layer: u8,
 }
 
-/// `war3map.w3e`: the terrain grid, read for the map view.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Terrain {
     pub tileset: u8,
@@ -139,7 +138,6 @@ impl Terrain {
         })
     }
 
-    /// The map's extent in game units: left, bottom, right, top.
     pub fn bounds(&self) -> [f32; 4] {
         let span = |n: usize| n.saturating_sub(1) as f32 * TILE_SIZE;
 
@@ -155,7 +153,6 @@ impl Terrain {
         self.corners.get(y * self.width + x)
     }
 
-    /// Ground height under a point, from the nearest corner.
     pub fn height_at(&self, x: f32, y: f32) -> f32 {
         let column = ((x - self.offset_x) / TILE_SIZE).round().max(0.0) as usize;
         let row = ((y - self.offset_y) / TILE_SIZE).round().max(0.0) as usize;
