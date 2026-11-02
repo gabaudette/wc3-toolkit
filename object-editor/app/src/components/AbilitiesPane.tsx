@@ -34,6 +34,7 @@ export function AbilitiesPane({
   const queue = useRef<Promise<void>>(Promise.resolve());
 
   const listError = useCallback((message: string) => onError(message), [onError]);
+  const openWizard = useCallback(() => setWizardOpen(true), []);
 
   const refreshList = useCallback(() => {
     void settle(api.listAbilities(), setAbilities, onError);
@@ -113,7 +114,7 @@ export function AbilitiesPane({
         selected={selected}
         onSelect={onSelect}
         onError={listError}
-        {...(editable && { onNewSpell: () => setWizardOpen(true) })}
+        {...(editable && { onNewSpell: openWizard })}
       />
       {wizardOpen && (
         <SpellWizard

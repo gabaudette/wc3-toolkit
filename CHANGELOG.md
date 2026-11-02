@@ -159,6 +159,11 @@ under "What's new".
 
 ### Changed
 
+- Coming back to a tab is instant: it keeps its list, icons, search, filters and the object
+  you had open instead of loading them again. A tab reloads only when something changed in
+  another tab since you last looked at it, so it never shows outdated data. Switching between
+  the Units and Items tabs shows the new tab two to four times sooner, and 3D previews stop
+  drawing while their tab is hidden.
 - Tinkerbench now keeps a log of what went wrong, to attach to a bug report:
   `tinkerbench.log` in `~/.local/share/io.github.gabaudette.wc3toolkit/logs` on Linux and
   `%LOCALAPPDATA%\io.github.gabaudette.wc3toolkit\logs` on Windows. Opening a file or

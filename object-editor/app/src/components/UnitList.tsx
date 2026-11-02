@@ -1,4 +1,4 @@
-import { use, useEffect, useMemo, useState } from "react";
+import { memo, use, useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { type Result, settle } from "../result";
 import type { ObjectType, SearchHit, UnitGroup, UnitItem } from "../types";
@@ -144,7 +144,7 @@ function filtersFrom(units: UnitItem[], filterOf: (unit: UnitItem) => string): F
   return values.map((value) => ({ id: value, label: value }));
 }
 
-export function UnitList({ config, units, selected, onSelect, onError }: UnitListProps) {
+function UnitListView({ config, units, selected, onSelect, onError }: UnitListProps) {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[] | null>(null);
   const [groups, setGroups] = useState<UnitGroup[]>(config.defaultGroups);
@@ -318,3 +318,5 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
     </aside>
   );
 }
+
+export const UnitList = memo(UnitListView);

@@ -1,6 +1,6 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { SearchLg } from "@untitledui/icons";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, report } from "../api";
 import { choosePath, confirm } from "../dialogs";
 import { attempt, type Result, settle } from "../result";
@@ -103,6 +103,77 @@ const NO_PLAIN_SELECTION: Record<Catalog, string | null> = {
   destructables: null,
 };
 
+function ignoreSelection(): void {}
+
+type TabPanelProps = { shown: boolean; children: ReactNode };
+
+const HIDE_FROM_FOCUS_MS = 1000;
+
+function afterPaint(run: () => void): () => void {
+  let timer = 0;
+  const frame = window.requestAnimationFrame(() => {
+    timer = window.setTimeout(run);
+  });
+
+  return () => {
+    window.cancelAnimationFrame(frame);
+    window.clearTimeout(timer);
+  };
+}
+
+function blur(target: EventTarget | null): void {
+  if (target instanceof HTMLElement) {
+    target.blur();
+  }
+}
+
+function TabPanel({ shown, children }: TabPanelProps) {
+  const [inert, setInert] = useState(!shown);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (shown) {
+      return afterPaint(() => setInert(false));
+    }
+
+    const panel = panelRef.current;
+    const stayOut = (e: FocusEvent) => blur(e.target);
+
+    if (panel?.contains(document.activeElement)) {
+      blur(document.activeElement);
+    }
+
+    panel?.addEventListener("focusin", stayOut);
+    const timer = window.setTimeout(() => setInert(true), HIDE_FROM_FOCUS_MS);
+
+    return () => {
+      panel?.removeEventListener("focusin", stayOut);
+      window.clearTimeout(timer);
+    };
+  }, [shown]);
+
+  return (
+    <div
+      ref={panelRef}
+      inert={inert}
+      className={classes(
+        "col-start-1 row-start-1 flex min-h-0 flex-col",
+        !shown && "-translate-x-[200vw]",
+      )}
+    >
+      <TabContent shown={shown}>{children}</TabContent>
+    </div>
+  );
+}
+
+function hiddenOrSame(before: TabPanelProps, after: TabPanelProps): boolean {
+  return !after.shown || before.children === after.children;
+}
+
+const TabContent = memo(function TabContent({ children }: TabPanelProps) {
+  return children;
+}, hiddenOrSame);
+
 type EditorScreenProps = {
   game: GameSummary;
   initialMap: MapSummary | null;
@@ -131,6 +202,34 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
   const [dialog, setDialog] = useState<"share" | "import" | "search" | "assistant" | null>(null);
   const [exportScope, setExportScope] = useState<ExportScope | null>(null);
   const [tab, setTab] = useState<Tab>("units");
+  const [visited, setVisited] = useState<Tab[]>(["units"]);
+  const [changes, setChanges] = useState(0);
+  const [reloads, setReloads] = useState<Partial<Record<Tab, number>>>({});
+  const seenChanges = useRef<Partial<Record<Tab, number>>>({});
+  const shownTab = useRef<Tab>(tab);
+
+  useEffect(() => {
+    const seen = seenChanges.current[tab];
+
+    if (shownTab.current !== tab && seen !== undefined && seen < changes) {
+      setReloads((current) => ({ ...current, [tab]: (current[tab] ?? 0) + 1 }));
+    }
+
+    seenChanges.current[tab] = changes;
+    shownTab.current = tab;
+    setVisited((current) => {
+      if (current.includes(tab)) {
+        return current;
+      }
+
+      return [...current, tab];
+    });
+  }, [tab, changes]);
+
+  function paneKey(pane: Tab): string {
+    return `${revision}-${reloads[pane] ?? 0}`;
+  }
+
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
   const [selectedPlain, setSelectedPlain] = useState(NO_PLAIN_SELECTION);
   const [selectedLeveled, setSelectedLeveled] = useState(NO_LEVELED_SELECTION);
@@ -150,6 +249,7 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
   mapRef.current = map;
 
   const refreshMap = useCallback(() => {
+    setChanges((count) => count + 1);
     void settle(api.mapStatus(), setMap, setError);
   }, []);
 
@@ -167,6 +267,19 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
     setSelectedLeveled((current) => ({ ...current, [catalog]: id }));
     setTab(catalog);
   }, []);
+
+  const selectPlain = useMemo(
+    () =>
+      new Map(PLAIN_TABS.map(({ catalog }) => [catalog, (id: string) => openPlain(catalog, id)])),
+    [openPlain],
+  );
+  const selectLeveled = useMemo(
+    () =>
+      new Map(
+        LEVELED_TABS.map(({ catalog }) => [catalog, (id: string) => openLeveled(catalog, id)]),
+      ),
+    [openLeveled],
+  );
 
   const refreshList = useCallback(() => {
     void settle(api.listUnits(), setUnits, setError);
@@ -528,118 +641,138 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
       />
 
       <ExportContext value={setExportScope}>
-        <main className="flex min-h-0 flex-1 flex-col">
-          {tab === "abilities" && (
-            <AbilitiesPane
-              key={revision}
-              editable={editable}
-              selected={selectedAbility}
-              onSelect={setSelectedAbility}
-              onMapChanged={refreshMap}
-              onUnitsChanged={refreshUnits}
-              onError={setError}
-            />
+        <main className="grid min-h-0 flex-1 grid-cols-1 grid-rows-1 overflow-hidden">
+          {visited.includes("abilities") && (
+            <TabPanel shown={tab === "abilities"}>
+              <AbilitiesPane
+                key={paneKey("abilities")}
+                editable={editable}
+                selected={selectedAbility}
+                onSelect={setSelectedAbility}
+                onMapChanged={refreshMap}
+                onUnitsChanged={refreshUnits}
+                onError={setError}
+              />
+            </TabPanel>
           )}
 
-          {tab === "interface" && (
-            <InterfacePane
-              key={revision}
-              editable={editable}
-              mapPath={map?.path ?? null}
-              onMapChanged={refreshMap}
-              onError={setError}
-            />
+          {visited.includes("interface") && (
+            <TabPanel shown={tab === "interface"}>
+              <InterfacePane
+                key={paneKey("interface")}
+                editable={editable}
+                mapPath={map?.path ?? null}
+                onMapChanged={refreshMap}
+                onError={setError}
+              />
+            </TabPanel>
           )}
 
-          {tab === "map" && (
-            <MapPane
-              key={revision}
-              editable={editable}
-              onMapChanged={refreshMap}
-              onError={setError}
-            />
+          {visited.includes("map") && (
+            <TabPanel shown={tab === "map"}>
+              <MapPane
+                key={paneKey("map")}
+                editable={editable}
+                onMapChanged={refreshMap}
+                onError={setError}
+              />
+            </TabPanel>
           )}
 
-          {tab === "placed" && (
-            <PlacedPane
-              key={revision}
-              editable={editable}
-              units={units}
-              onMapChanged={refreshMap}
-              onOpenUnit={openUnit}
-              onError={setError}
-            />
+          {visited.includes("placed") && (
+            <TabPanel shown={tab === "placed"}>
+              <PlacedPane
+                key={paneKey("placed")}
+                editable={editable}
+                units={units}
+                onMapChanged={refreshMap}
+                onOpenUnit={openUnit}
+                onError={setError}
+              />
+            </TabPanel>
           )}
 
-          {tab === "assets" && (
-            <AssetsPane
-              key={revision}
-              editable={editable}
-              mapPath={map?.path ?? null}
-              unsaved={map?.unsaved ?? false}
-              units={units}
-              onMapChanged={refreshMap}
-              onUnitCreated={unitCreated}
-              onOpenUse={openUse}
-              onError={setError}
-            />
+          {visited.includes("assets") && (
+            <TabPanel shown={tab === "assets"}>
+              <AssetsPane
+                key={paneKey("assets")}
+                editable={editable}
+                mapPath={map?.path ?? null}
+                unsaved={map?.unsaved ?? false}
+                units={units}
+                onMapChanged={refreshMap}
+                onUnitCreated={unitCreated}
+                onOpenUse={openUse}
+                onError={setError}
+              />
+            </TabPanel>
           )}
 
-          {LEVELED_TABS.filter(({ catalog }) => tab === catalog).map(({ catalog, list }) => (
-            <LeveledPane
-              key={`${catalog}-${revision}`}
-              catalog={catalog}
-              list={list}
-              editable={editable}
-              selected={selectedLeveled[catalog]}
-              onSelect={(id) => openLeveled(catalog, id)}
-              onMapChanged={refreshMap}
-              onError={setError}
-            />
-          ))}
-
-          {PLAIN_TABS.filter(({ catalog }) => tab === catalog).map(({ catalog, list }) => (
-            <PlainPane
-              key={`${catalog}-${revision}`}
-              catalog={catalog}
-              list={list}
-              editable={editable}
-              selected={selectedPlain[catalog]}
-              onSelect={(id) => openPlain(catalog, id)}
-              onMapChanged={refreshMap}
-              onError={setError}
-            />
-          ))}
-
-          <div className={classes("flex min-h-0 flex-1 gap-2.5", tab !== "units" && "hidden")}>
-            <UnitList
-              config={UNIT_LIST}
-              units={units}
-              selected={selected}
-              onSelect={setSelected}
-              onError={setError}
-            />
-            {detail && tab === "units" && (
-              <OpenAbilityContext value={openAbility}>
-                <UnitPage
-                  key={detail.item.id}
-                  detail={detail}
-                  clashes={clashes}
+          {LEVELED_TABS.filter(({ catalog }) => visited.includes(catalog)).map(
+            ({ catalog, list }) => (
+              <TabPanel key={catalog} shown={tab === catalog}>
+                <LeveledPane
+                  key={paneKey(catalog)}
+                  catalog={catalog}
+                  list={list}
                   editable={editable}
-                  onChange={(field, value) =>
-                    applyField(api.setField(detail.item.id, field, value))
-                  }
-                  onReset={(field) => applyField(api.resetField(detail.item.id, field))}
-                  onCreateCopy={createCopy}
+                  selected={selectedLeveled[catalog]}
+                  onSelect={selectLeveled.get(catalog) ?? ignoreSelection}
+                  onMapChanged={refreshMap}
+                  onError={setError}
                 />
-              </OpenAbilityContext>
-            )}
-            {!detail && (
-              <p className="m-auto text-muted">
-                Pick a unit on the left. {game.units} game units loaded.
-              </p>
-            )}
-          </div>
+              </TabPanel>
+            ),
+          )}
+
+          {PLAIN_TABS.filter(({ catalog }) => visited.includes(catalog)).map(
+            ({ catalog, list }) => (
+              <TabPanel key={catalog} shown={tab === catalog}>
+                <PlainPane
+                  key={paneKey(catalog)}
+                  catalog={catalog}
+                  list={list}
+                  editable={editable}
+                  selected={selectedPlain[catalog]}
+                  onSelect={selectPlain.get(catalog) ?? ignoreSelection}
+                  onMapChanged={refreshMap}
+                  onError={setError}
+                />
+              </TabPanel>
+            ),
+          )}
+
+          <TabPanel shown={tab === "units"}>
+            <div className="flex min-h-0 flex-1 gap-2.5">
+              <UnitList
+                config={UNIT_LIST}
+                units={units}
+                selected={selected}
+                onSelect={setSelected}
+                onError={setError}
+              />
+              {detail && (
+                <OpenAbilityContext value={openAbility}>
+                  <UnitPage
+                    key={detail.item.id}
+                    detail={detail}
+                    clashes={clashes}
+                    editable={editable}
+                    onChange={(field, value) =>
+                      applyField(api.setField(detail.item.id, field, value))
+                    }
+                    onReset={(field) => applyField(api.resetField(detail.item.id, field))}
+                    onCreateCopy={createCopy}
+                  />
+                </OpenAbilityContext>
+              )}
+              {!detail && (
+                <p className="m-auto text-muted">
+                  Pick a unit on the left. {game.units} game units loaded.
+                </p>
+              )}
+            </div>
+          </TabPanel>
         </main>
       </ExportContext>
     </div>

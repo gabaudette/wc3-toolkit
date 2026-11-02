@@ -4,6 +4,39 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · Keep visited tabs alive
+
+- Every tab but Units was mounted only while shown (`{tab === "map" && <MapPane/>}`), so each
+  return reloaded its list from the backend and requested every icon again. Now a tab mounts
+  on its first visit and is only hidden afterwards (`TabPanel`). The unit page stays mounted
+  too.
+- Freshness: `refreshMap` (called after every edit) counts changes; each tab remembers the
+  count when it was last shown. Returning to a tab after changes made elsewhere remounts it
+  (its key gets a per-tab reload number), the same as before. Changes made in the tab itself
+  do not. Opening another map or importing still remounts everything through `revision`.
+- Switch cost, measured in the production build (WebKitGTK) from the click to the first
+  painted frame, with a unit and an item open: 155 ms between Units and Items with
+  `display: none`, about 15 ms for small tabs. With the list folded and nothing open it was
+  10 ms, so the cost is the size of the DOM: about 100 ms for the 800-row list and 100 ms for
+  the unit page's field table. Anything that changes an inherited state across that subtree
+  restyles all of it: `display`, `visibility`, `content-visibility: hidden` (worse, 250 ms)
+  and `inert` (about 75 ms per pane).
+- So hidden tabs stay laid out, stacked in one grid cell and moved off screen with a
+  transform, which restyles nothing. They still leave keyboard focus and the accessibility
+  tree through `inert`, set where it costs least: a tab coming back loses `inert` just after
+  the first frame paints, and a tab being left gets it after a second (quick back-and-forth
+  switches skip it). Until then a `focusin` listener blurs anything focused inside it.
+  Units/Items now paint in 40–75 ms and settle by 105–180 ms; small tabs about 20 ms.
+- Hidden tabs do not re-render: `TabContent` is a memo that skips while hidden, and
+  `UnitList`/`AbilityList` are memos with stable callbacks (`selectPlain`, `selectLeveled`,
+  `openWizard`), so showing a tab re-renders its page but not its list. In the dev build
+  (StrictMode) this alone took switches from about 500 ms to 250 ms.
+- `ModelViewer` shares one WebGL canvas. With several viewers mounted, an
+  `IntersectionObserver` pauses drawing while a viewer is off screen and moves the canvas back
+  into its holder when it is on screen again; unmounting removes the canvas only if this
+  viewer holds it.
+- Next step if switches still feel slow: render only the visible rows of the long lists.
+
 ## 2026-11-02 · Open straight into the editor (AGE-66)
 
 - Measured before changing anything: loading the game data takes 0.6 s (release build, the
