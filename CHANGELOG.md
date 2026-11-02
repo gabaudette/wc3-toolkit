@@ -8,6 +8,16 @@ under "What's new".
 
 ### Added
 
+- A map view in the Placed units tab, drawn from the map's terrain. Zoom and pan, pick a unit
+  on the map or in the list, drag it to move it and turn it by its handle, or use the arrow
+  keys and [ ] on the picked unit. Add units of any type for any player by clicking the map,
+  remove them, and change their owner, position, facing, hit points, mana, and a hero's level
+  and attributes. "Open unit type" goes to the unit's page.
+- Changes in the Placed units and Map tabs now take effect in game. On save, Tinkerbench
+  rewrites the parts of the map script the World Editor writes from them: unit creation,
+  drops and item tables, players, forces, fog, weather, water tint and sound. It does this
+  only when it can write those parts exactly as the World Editor did (nearly every map);
+  otherwise the tab says so, and saving the map in the World Editor applies the changes.
 - A Map tab for the map's own settings. Edit its name, author, description and suggested
   players, the loading screen and prologue texts, map options, terrain fog, weather and water
   tint, the players (name, controller, race, fixed start) and the forces (name, members,
@@ -153,6 +163,8 @@ under "What's new".
 
 ### Fixed
 
+- Weather chosen in the Map tab was saved in the wrong place in maps from the current World
+  Editor, and fog and water colors showed with red and blue swapped.
 - Lists of units, items and abilities hold no more than the game allows, as in the World
   Editor: 12 items or units sold, made or upgraded to, 4 item abilities, 5 hero abilities.
 - "Give to units" no longer gives a hero a sixth hero spell, which the game leaves out of the

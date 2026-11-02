@@ -1,4 +1,4 @@
-import { Plus } from "@untitledui/icons";
+import { AlertCircle, Plus } from "@untitledui/icons";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { newKey } from "../loot";
@@ -235,6 +235,12 @@ export function MapPane({ editable, onMapChanged, onError }: MapPaneProps) {
             <h2 className="font-display text-3xl font-bold text-gold-bright">
               {SECTIONS.find((s) => s.id === section)?.label}
             </h2>
+            {info.scriptProblem && (
+              <p className="flex items-start gap-2 rounded-[3px] border border-line bg-well px-3 py-2 text-sm text-muted">
+                <AlertCircle className="mt-0.5 size-4 shrink-0 text-gold" aria-hidden="true" />
+                {info.scriptProblem}
+              </p>
+            )}
             {section === "description" && (
               <DescriptionSection properties={info.properties} onChange={update} />
             )}

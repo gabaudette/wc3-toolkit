@@ -525,7 +525,9 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
           <PlacedPane
             key={revision}
             editable={editable}
+            units={units}
             onMapChanged={refreshMap}
+            onOpenUnit={openUnit}
             onError={setError}
           />
         )}

@@ -10,10 +10,12 @@ mod leveled;
 mod log;
 mod loot;
 mod mapinfo;
+mod mapview;
 mod plain;
 mod platform;
 mod spells;
 mod state;
+mod sync;
 mod transfer;
 mod view;
 
@@ -98,6 +100,10 @@ fn main() -> ExitCode {
             mapinfo::set_gameplay_constant,
             mapinfo::set_custom_constants,
             loot::list_placed_units,
+            loot::edit_placed_unit,
+            loot::add_placed_unit,
+            loot::remove_placed_unit,
+            mapview::map_view,
             loot::set_placed_inventory,
             loot::set_placed_drops,
             loot::list_item_tables,

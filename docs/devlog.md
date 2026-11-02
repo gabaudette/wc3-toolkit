@@ -4,6 +4,42 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · Placed units editor with a map view (AGE-41)
+
+- The World Editor writes parts of `war3map.lua`/`war3map.j` from the map's data, and the
+  game uses only the script: placed units, drops, item tables and player settings changed in
+  the files alone did nothing in game. `wc3_map::script` now writes the unit functions
+  (`CreateAllUnits`, `CreateBuildingsForPlayerN`/`CreateUnitsForPlayerN`, the neutral ones,
+  `UnitNNNNNN_DropItems` by the unit's index in `war3mapUnits.doo` and
+  `ItemTableNNNNNN_DropItems` for every table), and `wc3_map::setup` writes `config`,
+  `InitCustomPlayerSlots`, `InitCustomTeams`, `InitAllyPriorities` and the fog, water,
+  weather and sound lines of `main`.
+- Both copy the script's own style (JASS spacing and comments; Lua with or without
+  indentation, blank lines after locals) and keep the World Editor's text for units that did
+  not change. Lua functions are found with `full_moon`, since current editors do not indent
+  nested `end`s. At load the app regenerates both parts from the map's data and allows writing
+  only if the result is the script byte for byte; otherwise the tab shows why. Against the
+  user's maps and the game's own: unit functions identical in 490 of 520 maps (random units,
+  waygates and a few odd maps differ), player setup in 516 of 522.
+- What the corpus taught: units are sorted by creation number and grouped per player,
+  buildings first; only gold mines get `SetResourceAmount`; team color comes from the unit's
+  `utco`; autocast orders come from the ability's `Orderon`/`Orderoff`; `SetTeams` is the
+  number of players; forces without players are left out and alliance sections need two
+  members; shared vision is force flag 0x08; HUD skins are race preference bits (0 and 1
+  write nothing); a player's start is forced when its fixed-start field is 1 (or the text
+  old editors left there), not 0 or 2; start location priorities count the player itself and
+  low wins over high; game placement follows the melee flag but is otherwise kept from the
+  script, as no property decides it.
+- `war3map.w3i` version 39 stores its 24 bytes of extra fog before the weather, not after:
+  the AGE-63 reader read weather from the fog, so weather set in the Map tab landed there.
+  Fog and water colors are blue, green, red, alpha (AGE-63 showed them swapped).
+- `wc3_map::terrain` reads `war3map.w3e` (versions 11 and 12) for the map view: heights,
+  cliff layers, water, ramps and boundaries. `mapview.rs` draws one pixel per corner, the
+  average color of each ground tile's texture, lit by slope and shaded at cliffs, under water
+  and at the boundary; added and moved units take the ground height.
+- Frontend: `PlacedMap` (SVG over the terrain image, markers by player color, drag to move,
+  a handle to turn), the unit picker, and the placement fields beside inventory and drops.
+
 ## 2026-10-28 · Map properties and gameplay constants (AGE-63)
 
 - `wc3_map::info` now parses every property of `war3map.w3i` into fields (texts, flags,

@@ -44,6 +44,7 @@ const CONSTANT_GROUPS: &[(&str, &str)] = &[
     ("illusions", "Illusions and auras"),
     ("techtree", "Techtree equivalents"),
 ];
+const NO_SCRIPT: &str = "This map has no script Tinkerbench can read, so changes to players, forces, fog, weather, water and sound take effect in game only after you save the map in the World Editor.";
 const TERRAIN_FOG: u32 = 0x2000;
 const WATER_TINTING: u32 = 0x1_0000;
 const FIXED_PLAYER_SETTINGS: u32 = 0x0020;
@@ -131,10 +132,12 @@ pub struct MapInfoView {
     pub lua: bool,
     pub properties: PropertiesView,
     pub weather: Vec<Choice>,
+    pub script_problem: Option<String>,
 }
 
+// Fog and water colors are stored blue, green, red, alpha.
 fn color_text(color: [u8; 4]) -> String {
-    let [red, green, blue, _] = color;
+    let [blue, green, red, _] = color;
 
     format!("{red:02x}{green:02x}{blue:02x}")
 }
@@ -146,7 +149,7 @@ fn color_bytes(text: &str, alpha: u8) -> Result<[u8; 4], String> {
             .ok_or(format!("“{text}” is not a color like ff8000."))
     };
 
-    Ok([channel(0)?, channel(2)?, channel(4)?, alpha])
+    Ok([channel(4)?, channel(2)?, channel(0)?, alpha])
 }
 
 fn shown(strings: &MapStrings, value: &str) -> String {
@@ -347,6 +350,10 @@ pub fn map_info(state: State<'_, AppState>) -> Result<MapInfoView, String> {
                     name: w.name.clone(),
                 })
                 .collect(),
+            script_problem: match &map.script {
+                Some(script) => script.setup_problem.clone(),
+                None => Some(NO_SCRIPT.to_owned()),
+            },
         })
     })
 }
@@ -601,10 +608,10 @@ mod tests {
     }
 
     #[test]
-    fn colors_are_stored_red_green_blue_alpha() {
-        assert_eq!(color_text([0x10, 0x20, 0x30, 0xff]), "102030");
+    fn colors_are_stored_blue_green_red_alpha() {
+        assert_eq!(color_text([0x10, 0x20, 0x30, 0xff]), "302010");
         assert_eq!(
-            color_bytes("102030", 0xff).ok(),
+            color_bytes("302010", 0xff).ok(),
             Some([0x10, 0x20, 0x30, 0xff])
         );
     }

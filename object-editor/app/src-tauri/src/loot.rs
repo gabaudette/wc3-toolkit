@@ -13,7 +13,17 @@ use crate::state::{AppState, NO_MAP, OpenMap, Session};
 const FORMAT_VERSION: u32 = 1;
 const PERCENT: f64 = 100.0;
 const HERO_SLOTS: usize = 6;
+const FULL_TURN: f32 = 360.0;
+const NO_SCRIPT: &str = "This map has no script Tinkerbench can read, so placed unit changes take effect in game only after you save the map in the World Editor.";
 const START_LOCATION: &str = "sloc";
+const RANDOM_SUFFIX: &[u8; 3] = b"DNR";
+const RANDOM_BUILDING: u8 = b'b';
+const RANDOM_UNIT_NAME: &str = "Random unit";
+const RANDOM_BUILDING_NAME: &str = "Random building";
+const RANDOM_UNIT_EDIT: &str =
+    "Random units cannot be changed here yet. Change them in the World Editor.";
+const HERO: &str = "hero";
+const BUILDING: &str = "building";
 // Reforged's 24 player slots come first; the neutral players follow.
 const NEUTRAL_PLAYERS: &[&str] = &[
     "Neutral Hostile",
@@ -222,6 +232,12 @@ pub struct PlacedUnit {
     pub level: u32,
     pub x: f32,
     pub y: f32,
+    pub facing: f32,
+    pub life: i32,
+    pub mana: i32,
+    pub attributes: Option<[i32; 3]>,
+    pub building: bool,
+    pub random: bool,
     pub inventory: Vec<Option<String>>,
     pub drops: DropsView,
 }
@@ -230,7 +246,16 @@ pub struct PlacedUnit {
 #[serde(rename_all = "camelCase")]
 pub struct PlacedList {
     pub units: Vec<PlacedUnit>,
+    pub players: Vec<PlayerChoice>,
     pub error: Option<String>,
+    pub script_problem: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlayerChoice {
+    pub number: u32,
+    pub name: String,
 }
 
 #[derive(Serialize)]
@@ -322,7 +347,9 @@ fn placed_units(session: &Session) -> Result<PlacedList, String> {
     let Some(placements) = &map.placements else {
         return Ok(PlacedList {
             units: Vec::new(),
+            players: Vec::new(),
             error: Some(map.loot_error.clone().unwrap_or(NO_PLACEMENTS.to_owned())),
+            script_problem: None,
         });
     };
     let units: HashMap<String, _> = view(session)
@@ -336,28 +363,66 @@ fn placed_units(session: &Session) -> Result<PlacedList, String> {
         .enumerate()
         .filter_map(|(index, placed)| {
             let id = placed.id.to_string();
-            let unit = units.get(&id)?;
+            let random = placed.id.0[1..] == *RANDOM_SUFFIX;
+            let (name, icon, kind) = match units.get(&id) {
+                Some(unit) => (unit.name.clone(), unit.icon.clone(), unit.kind),
+                None if random && placed.id.0[0] == RANDOM_BUILDING => {
+                    (RANDOM_BUILDING_NAME.to_owned(), None, BUILDING)
+                }
+                None if random => (RANDOM_UNIT_NAME.to_owned(), None, ""),
+                None => return None,
+            };
 
             (id != START_LOCATION).then(|| PlacedUnit {
                 index,
-                name: unit.name.clone(),
-                icon: unit.icon.clone(),
-                hero: unit.kind == "hero",
+                name,
+                icon,
+                hero: kind == HERO,
                 player: placed.player,
                 player_name: player_name(placed.player),
                 level: placed.level,
                 x: placed.x,
                 y: placed.y,
+                facing: placed.angle.to_degrees().rem_euclid(FULL_TURN),
+                life: placed.life,
+                mana: placed.mana,
+                attributes: placed.attributes,
+                building: kind == BUILDING,
+                random,
                 inventory: inventory_slots(placed.inventory()),
                 drops: drops_view(placed.drops()),
                 id,
             })
         })
         .collect();
+    let players = map
+        .info
+        .as_ref()
+        .and_then(|i| i.properties())
+        .map(|p| {
+            p.players
+                .iter()
+                .map(|player| player.number)
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_else(|| (0..PLAYER_COLORS.len() as u32).collect());
+    let neutral = PLAYER_COLORS.len() as u32..(PLAYER_COLORS.len() + NEUTRAL_PLAYERS.len()) as u32;
 
     Ok(PlacedList {
         units: list,
+        players: players
+            .into_iter()
+            .chain(neutral)
+            .map(|number| PlayerChoice {
+                number,
+                name: player_name(number),
+            })
+            .collect(),
         error: None,
+        script_problem: match &map.script {
+            Some(script) => script.problem.clone(),
+            None => Some(NO_SCRIPT.to_owned()),
+        },
     })
 }
 
@@ -466,6 +531,127 @@ pub fn set_placed_drops(
         placements
             .set_drops(index, drops)
             .map_err(|e| e.to_string())?;
+        Ok(map_summary(session))
+    })
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PlacementEdit {
+    pub x: Option<f32>,
+    pub y: Option<f32>,
+    pub facing: Option<f32>,
+    pub player: Option<u32>,
+    pub life: Option<i32>,
+    pub mana: Option<i32>,
+    pub level: Option<u32>,
+    pub attributes: Option<[i32; 3]>,
+}
+
+fn ground_height(map: &OpenMap, x: f32, y: f32) -> Option<f32> {
+    map.terrain.as_ref().map(|t| t.height_at(x, y))
+}
+
+#[tauri::command]
+pub fn edit_placed_unit(
+    state: State<'_, AppState>,
+    index: usize,
+    edit: PlacementEdit,
+) -> Result<MapSummary, String> {
+    state.with(|session| {
+        let map = session.map.as_mut().ok_or(NO_MAP)?;
+        let z = match (edit.x, edit.y) {
+            (Some(x), Some(y)) => ground_height(map, x, y),
+            _ => None,
+        };
+        let placements = map.placements.as_mut().ok_or(NO_PLACEMENTS)?;
+
+        if placements
+            .units()
+            .get(index)
+            .is_some_and(|u| u.id.0[1..] == *RANDOM_SUFFIX)
+        {
+            return Err(RANDOM_UNIT_EDIT.to_owned());
+        }
+
+        if let Some(attributes) = edit.attributes {
+            placements
+                .set_attributes(index, attributes)
+                .map_err(|e| e.to_string())?;
+        }
+
+        let unit = placements.unit_mut(index).map_err(|e| e.to_string())?;
+
+        if let Some(x) = edit.x {
+            unit.x = x;
+        }
+
+        if let Some(y) = edit.y {
+            unit.y = y;
+        }
+
+        if let Some(z) = z {
+            unit.z = z;
+        }
+
+        if let Some(facing) = edit.facing {
+            unit.angle = facing.rem_euclid(FULL_TURN).to_radians();
+        }
+
+        if let Some(player) = edit.player {
+            unit.player = player;
+        }
+
+        if let Some(life) = edit.life {
+            unit.life = life;
+        }
+
+        if let Some(mana) = edit.mana {
+            unit.mana = mana;
+        }
+
+        if let Some(level) = edit.level {
+            unit.level = level.max(1);
+        }
+
+        Ok(map_summary(session))
+    })
+}
+
+#[tauri::command]
+pub fn add_placed_unit(
+    state: State<'_, AppState>,
+    id: String,
+    player: u32,
+    x: f32,
+    y: f32,
+) -> Result<usize, String> {
+    let id = fourcc(&id)?;
+
+    state.with(|session| {
+        let map = session.map.as_mut().ok_or(NO_MAP)?;
+        let z = ground_height(map, x, y).unwrap_or_default();
+        let placements = map.placements.as_mut().ok_or(NO_PLACEMENTS)?;
+
+        Ok(placements.add(id, player, x, y, z))
+    })
+}
+
+#[tauri::command]
+pub fn remove_placed_unit(state: State<'_, AppState>, index: usize) -> Result<MapSummary, String> {
+    state.with(|session| {
+        let map = session.map.as_mut().ok_or(NO_MAP)?;
+        let placements = map.placements.as_mut().ok_or(NO_PLACEMENTS)?;
+
+        if placements
+            .units()
+            .get(index)
+            .is_some_and(|u| u.id.0[1..] == *RANDOM_SUFFIX)
+        {
+            return Err(RANDOM_UNIT_EDIT.to_owned());
+        }
+
+        placements.remove(index).map_err(|e| e.to_string())?;
         Ok(map_summary(session))
     })
 }
