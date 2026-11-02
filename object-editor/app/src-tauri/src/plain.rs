@@ -9,7 +9,9 @@ use wc3_map::plain::PlainObjects;
 
 use crate::commands::fourcc;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
-use crate::view::{Field, PlainObjectChanges, SearchHit, UnitDetail, UnitItem, View};
+use crate::view::{
+    DEFAULT_ATTRIBUTE_DAMAGE, Field, PlainObjectChanges, SearchHit, UnitDetail, UnitItem, View,
+};
 
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -73,6 +75,7 @@ fn with_view<T>(
         guide,
         map: changes.as_ref(),
         mode: session.mode,
+        attribute_damage: DEFAULT_ATTRIBUTE_DAMAGE,
     };
 
     f(&view)

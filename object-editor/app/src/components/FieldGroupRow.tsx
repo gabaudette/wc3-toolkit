@@ -3,10 +3,13 @@ import { type KeyboardEvent, useEffect, useState } from "react";
 import {
   BUTTON_COLUMNS,
   BUTTON_ROWS,
-  diceRange,
+  diceProblem,
+  diceStats,
   type FieldGroup,
   hexToRgb,
+  partProblem,
   rgbToHex,
+  rollStats,
 } from "../fieldGroups";
 import type { DamageBonus, Field } from "../types";
 import { classes, FIELD_ROW_GRID } from "../ui";
@@ -20,6 +23,7 @@ type FieldGroupRowProps = {
   onReset: (fieldId: string) => void;
 };
 
+const AMOUNT_PRECISION = 100;
 const numberClass =
   "w-full rounded border border-field bg-well px-2 py-1 font-mono outline-none focus:border-focus read-only:opacity-70";
 
@@ -36,29 +40,23 @@ function numberOf(field: Field | undefined): number {
 function Part({
   field,
   label,
+  draft,
+  problem,
   editable,
-  onChange,
+  onDraft,
+  onCommit,
 }: {
   field: Field;
   label: string;
+  draft: string;
+  problem: string | null;
   editable: boolean;
-  onChange: (value: string) => void;
+  onDraft: (value: string) => void;
+  onCommit: () => void;
 }) {
-  const [draft, setDraft] = useState(field.raw);
-
-  useEffect(() => {
-    setDraft(field.raw);
-  }, [field.raw]);
-
-  function commit() {
-    if (draft !== field.raw) {
-      onChange(draft);
-    }
-  }
-
   function key(e: KeyboardEvent) {
     if (e.key === "Enter") {
-      commit();
+      onCommit();
     }
   }
 
@@ -69,31 +67,62 @@ function Part({
         type="number"
         value={draft}
         readOnly={!editable}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
+        onChange={(e) => onDraft(e.target.value)}
+        onBlur={onCommit}
         onKeyDown={key}
         aria-label={`${label} (${field.name})`}
-        className={classes(numberClass, field.modified && "border-changed")}
+        aria-invalid={problem !== null}
+        className={classes(
+          numberClass,
+          field.modified && "border-changed",
+          problem !== null && "border-danger",
+        )}
       />
     </label>
   );
 }
 
+function amount(value: number): string {
+  return String(Math.round(value * AMOUNT_PRECISION) / AMOUNT_PRECISION);
+}
+
 function DiceResult({
   group,
-  fields,
+  values,
   damageBonus,
-}: Omit<FieldGroupRowProps, "editable" | "onChange" | "onReset">) {
-  const [base, dice, sides] = fields.map(numberOf);
-  const bonus = (group.attack && damageBonus?.amount) || 0;
-  const range = diceRange(base ?? 0, dice ?? 0, sides ?? 0, bonus);
+}: {
+  group: FieldGroup;
+  values: number[];
+  damageBonus: DamageBonus | null;
+}) {
+  const [base = 0, dice = 0, sides = 0] = values;
+  let bonus: DamageBonus | null = null;
+
+  if (group.attack && damageBonus && damageBonus.amount !== 0) {
+    bonus = damageBonus;
+  }
+
+  const total = diceStats(base, dice, sides, bonus?.amount ?? 0);
+  const roll = rollStats(dice, sides);
 
   return (
-    <p className="text-xs text-muted">
-      Range <span className="font-mono text-ink">{range.min}</span> –{" "}
-      <span className="font-mono text-ink">{range.max}</span>
-      {bonus > 0 && damageBonus && ` (includes +${bonus} from ${damageBonus.attribute})`}
-    </p>
+    <div className="text-xs text-muted">
+      <p>
+        <span className="font-mono text-ink">{amount(total.min)}</span> to{" "}
+        <span className="font-mono text-ink">{amount(total.max)}</span>, average{" "}
+        <span className="font-mono text-ink">{amount(total.average)}</span>
+      </p>
+      <p className="text-faint">
+        {`${amount(base)} base + ${dice} × d${sides} (${amount(roll.min)} to ${amount(roll.max)}, average ${amount(roll.average)})`}
+        {bonus &&
+          ` + ${amount(bonus.amount)} from ${bonus.attribute} (${amount(bonus.points)} × ${amount(bonus.perPoint)} per point)`}
+      </p>
+      {group.attack && (
+        <p className="text-faint">
+          Per attack at level 1, before armor, upgrades, items and auras.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -182,7 +211,44 @@ export function FieldGroupRow({
   onChange,
   onReset,
 }: FieldGroupRowProps) {
+  const raws = fields.map((f) => f.raw).join("\u0000");
+  const [drafts, setDrafts] = useState(() => fields.map((f) => f.raw));
   const modified = fields.filter((f) => f.modified);
+  const problems = fields.map((field, index) =>
+    partProblem(drafts[index] ?? "", {
+      label: group.parts[index] ?? field.name,
+      min: field.min,
+      max: field.max,
+      integer: field.integer,
+    }),
+  );
+  const [, dice = 0, sides = 0] = drafts.map(Number);
+  let problem = problems.find((p) => p !== null) ?? null;
+
+  if (group.kind === "dice" && problem === null) {
+    problem = diceProblem(dice, sides);
+  }
+
+  useEffect(() => {
+    setDrafts(raws.split("\u0000"));
+  }, [raws]);
+
+  function draft(index: number, value: string) {
+    const next = [...drafts];
+
+    next[index] = value;
+    setDrafts(next);
+  }
+
+  function commit(index: number) {
+    const field = fields[index];
+    const value = drafts[index] ?? "";
+
+    if (field && value !== field.raw && problem === null) {
+      onChange(field.id, value);
+    }
+  }
+
   const description = fields.find((f) => f.description)?.description;
   const bases = fields.map((f) => f.base).join(" / ");
 
@@ -216,13 +282,21 @@ export function FieldGroupRow({
               key={field.id}
               field={field}
               label={group.parts[index] ?? field.name}
+              draft={drafts[index] ?? ""}
+              problem={problems[index] ?? null}
               editable={editable}
-              onChange={(value) => onChange(field.id, value)}
+              onDraft={(value) => draft(index, value)}
+              onCommit={() => commit(index)}
             />
           ))}
         </div>
-        {group.kind === "dice" && (
-          <DiceResult group={group} fields={fields} damageBonus={damageBonus} />
+        {problem && (
+          <p role="alert" className="text-xs text-danger">
+            {problem}
+          </p>
+        )}
+        {group.kind === "dice" && !problem && (
+          <DiceResult group={group} values={drafts.map(Number)} damageBonus={damageBonus} />
         )}
       </div>
 

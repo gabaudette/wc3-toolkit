@@ -4,6 +4,23 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · Tooltip checks and damage dice (AGE-28)
+
+- `fieldGroups.ts`: `rollStats` (each die rolls 1 to sides evenly, so a roll averages
+  dice × (sides + 1) / 2) and `diceStats` add the base and any bonus; `partProblem` checks a
+  typed value against the field's metadata (`min`, `max`, whole numbers) and explains it.
+  `FieldGroupRow` keeps drafts for its parts, so the result follows typing and invalid
+  values are never committed.
+- The hero damage bonus is the primary attribute times the gameplay constant `satb` (1 in the
+  game's data), read from the map's constants when it uses custom ones; `DamageBonus` now
+  carries the points and the factor so the page can show the sum. The unit summary's Damage
+  uses the same bonus.
+- `gameTextCheck.ts` walks game text like `parseGameText` and reports malformed `|c` codes,
+  stray `|r`, colors left open, unknown `|` codes and malformed or unclosed placeholders;
+  after the backend fills placeholders, the ones left are reported as unfilled (only once
+  filling finished, so typing does not flash warnings). Rendering stays React text nodes,
+  never HTML, and a test keeps markup as text.
+
 ## 2026-11-02 · Object export as CSV and JSON (AGE-64)
 
 - `wc3_map::export` reads every object type through the map layer (`MapUnits`,

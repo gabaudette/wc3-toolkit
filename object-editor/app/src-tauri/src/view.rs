@@ -45,6 +45,8 @@ const SUMMARIES: &[(&str, &[(&str, &str)])] = &[
     ),
 ];
 const NOT_PLACEABLE: &str = "0";
+// The game's damage per point of a hero's primary attribute (gameplay constant `satb`).
+pub const DEFAULT_ATTRIBUTE_DAMAGE: f64 = 1.0;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -71,8 +73,11 @@ pub struct UnitDetail {
 }
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct DamageBonus {
     pub amount: f64,
+    pub points: f64,
+    pub per_point: f64,
     pub attribute: String,
 }
 
@@ -214,6 +219,7 @@ pub struct View<'a, M = MapUnits> {
     pub guide: &'a FieldGuide,
     pub map: Option<&'a M>,
     pub mode: ArtMode,
+    pub attribute_damage: f64,
 }
 
 impl<M: PlainChanges> View<'_, M> {
@@ -430,8 +436,12 @@ impl<M: PlainChanges> View<'_, M> {
             .find(|(code, _)| primary.eq_ignore_ascii_case(code))
             .map(|(_, field)| *field)?;
 
+        let points = self.number(id, field);
+
         Some(DamageBonus {
-            amount: self.number(id, field),
+            amount: points * self.attribute_damage,
+            points,
+            per_point: self.attribute_damage,
             attribute: self.shown(id, "upra"),
         })
     }
@@ -658,6 +668,7 @@ mod tests {
             guide: &guide,
             map: None,
             mode: ArtMode::Sd,
+            attribute_damage: DEFAULT_ATTRIBUTE_DAMAGE,
         };
         let paladin = FourCC::parse("Hpal").ok_or("bad id")?;
         let detail = view.detail(paladin).ok_or("no detail")?;
@@ -720,6 +731,7 @@ mod tests {
             guide: &guide,
             map: None,
             mode: ArtMode::Sd,
+            attribute_damage: DEFAULT_ATTRIBUTE_DAMAGE,
         };
 
         assert_eq!(
@@ -759,6 +771,7 @@ mod tests {
             guide: &guide,
             map: Some(&units),
             mode: ArtMode::Sd,
+            attribute_damage: DEFAULT_ATTRIBUTE_DAMAGE,
         };
 
         assert_eq!(view.ids().first(), Some(&hero));
@@ -798,6 +811,7 @@ mod tests {
             guide: &guide,
             map: Some(&units),
             mode: ArtMode::Sd,
+            attribute_damage: DEFAULT_ATTRIBUTE_DAMAGE,
         };
         let items = view.items();
 
