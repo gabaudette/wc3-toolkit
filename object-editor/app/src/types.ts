@@ -77,6 +77,8 @@ export type Stat = {
 
 export type DamageBonus = {
   amount: number;
+  points: number;
+  perPoint: number;
   attribute: string;
 };
 

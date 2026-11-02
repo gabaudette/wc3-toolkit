@@ -68,14 +68,84 @@ const HEX_RADIX = 16;
 const CHANNEL_MAX = 255;
 const HEX_DIGITS = 2;
 
-export type DiceRange = {
+export type DiceStats = {
   min: number;
   max: number;
+  average: number;
 };
 
-/** The game rolls base + `dice` dice with `sides` sides: from base + dice to base + dice × sides. */
-export function diceRange(base: number, dice: number, sides: number, bonus: number): DiceRange {
-  return { min: base + bonus + dice, max: base + bonus + dice * sides };
+/** Each of `dice` dice rolls 1 to `sides`, evenly. */
+export function rollStats(dice: number, sides: number): DiceStats {
+  return { min: dice, max: dice * sides, average: (dice * (sides + 1)) / 2 };
+}
+
+export function diceStats(base: number, dice: number, sides: number, bonus: number): DiceStats {
+  const roll = rollStats(dice, sides);
+  const added = base + bonus;
+
+  return { min: added + roll.min, max: added + roll.max, average: added + roll.average };
+}
+
+export function diceProblem(dice: number, sides: number): string | null {
+  if (dice < 0) {
+    return "Dice cannot be fewer than 0.";
+  }
+
+  if (dice > 0 && sides < 1) {
+    return "A die needs at least 1 side.";
+  }
+
+  return null;
+}
+
+export type PartLimits = {
+  label: string;
+  min: number | null;
+  max: number | null;
+  integer: boolean;
+};
+
+function limitsText(limits: PartLimits): string {
+  const { min, max } = limits;
+
+  if (min !== null && max !== null) {
+    return ` from ${min} to ${max}`;
+  }
+
+  if (min !== null) {
+    return ` of ${min} or more`;
+  }
+
+  if (max !== null) {
+    return ` of ${max} or less`;
+  }
+
+  return "";
+}
+
+export function partProblem(text: string, limits: PartLimits): string | null {
+  const value = Number(text);
+  let kind = "a number";
+
+  if (limits.integer) {
+    kind = "a whole number";
+  }
+
+  const wanted = `${limits.label} must be ${kind}${limitsText(limits)}.`;
+
+  if (!text.trim() || !Number.isFinite(value)) {
+    return wanted;
+  }
+
+  if (limits.integer && !Number.isInteger(value)) {
+    return wanted;
+  }
+
+  if ((limits.min !== null && value < limits.min) || (limits.max !== null && value > limits.max)) {
+    return wanted;
+  }
+
+  return null;
 }
 
 function clampChannel(value: number): number {

@@ -476,6 +476,7 @@ mod tests {
     use wc3_map::units::MapUnits;
 
     use super::*;
+    use crate::view::DEFAULT_ATTRIBUTE_DAMAGE;
 
     type TestResult = Result<(), Box<dyn std::error::Error>>;
 
@@ -503,6 +504,7 @@ mod tests {
             guide: &guide,
             map: None,
             mode: ArtMode::Sd,
+            attribute_damage: DEFAULT_ATTRIBUTE_DAMAGE,
         };
         let mut found = Vec::new();
 
@@ -550,6 +552,7 @@ mod tests {
             guide: &guide,
             map: None,
             mode: ArtMode::Sd,
+            attribute_damage: DEFAULT_ATTRIBUTE_DAMAGE,
         };
         let lookup = |a: FourCC| abilities.info(&a.to_string());
         let id = |code: &str| FourCC::parse(code).ok_or("bad id");
@@ -600,6 +603,7 @@ mod tests {
             guide: &guide,
             map: Some(&units),
             mode: ArtMode::Sd,
+            attribute_damage: DEFAULT_ATTRIBUTE_DAMAGE,
         };
         let blizzard = spell_fit(&view, &lookup, hero, id("AHbz")?, true);
 
@@ -642,6 +646,7 @@ mod tests {
             guide: &guide,
             map: Some(&units),
             mode: ArtMode::Sd,
+            attribute_damage: DEFAULT_ATTRIBUTE_DAMAGE,
         };
         let found = clashes(&view, &|a| abilities.info(&a.to_string()), hero);
 

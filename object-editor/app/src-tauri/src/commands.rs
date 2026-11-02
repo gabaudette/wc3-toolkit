@@ -23,7 +23,7 @@ use crate::loot;
 use crate::platform;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
 use crate::sync;
-use crate::view::{Field, SearchHit, UnitDetail, UnitItem, View};
+use crate::view::{DEFAULT_ATTRIBUTE_DAMAGE, Field, SearchHit, UnitDetail, UnitItem, View};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -45,12 +45,34 @@ pub(crate) fn fourcc(code: &str) -> Result<FourCC, String> {
     FourCC::parse(code).ok_or(format!("“{code}” is not a four-character code."))
 }
 
+const ATTRIBUTE_DAMAGE: &str = "satb";
+
+fn attribute_damage(session: &Session) -> f64 {
+    let Some(constant) = session.constants.find(ATTRIBUTE_DAMAGE) else {
+        return DEFAULT_ATTRIBUTE_DAMAGE;
+    };
+
+    session
+        .map
+        .as_ref()
+        .filter(|m| m.constants.is_custom())
+        .and_then(|m| {
+            m.constants
+                .get(&constant.meta.section, &constant.meta.field)
+        })
+        .unwrap_or(&constant.default)
+        .trim()
+        .parse()
+        .unwrap_or(DEFAULT_ATTRIBUTE_DAMAGE)
+}
+
 pub(crate) fn view(session: &Session) -> View<'_> {
     View {
         db: &session.db,
         guide: &session.guide,
         map: session.map.as_ref().map(|m| &m.units),
         mode: session.mode,
+        attribute_damage: attribute_damage(session),
     }
 }
 

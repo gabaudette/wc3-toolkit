@@ -8,6 +8,13 @@ under "What's new".
 
 ### Added
 
+- Damage and bounty dice show the minimum, maximum and average, and how they add up: the base,
+  the dice roll and, for heroes, the primary attribute's bonus (using the map's damage per
+  attribute point). The result follows the numbers as you type, and a value a field does not
+  take (a fraction, or out of its range) is explained instead of saved.
+- Text previews point out mistakes: a color code without its 8 digits, `|r` with no color to
+  end, a color left open, an unknown `|` code, an unclosed or malformed placeholder, and
+  placeholders Tinkerbench cannot fill. "Formatting help" in the preview lists the codes.
 - Export objects as CSV or JSON for spreadsheets, wiki pages and other tools. "Export…" above
   any object list exports what the list shows, the open object, all objects of the type, or
   every type; "Export objects…" in the command palette too. Every field comes with its value

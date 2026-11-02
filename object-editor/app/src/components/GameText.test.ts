@@ -46,3 +46,11 @@ describe("readableColor", () => {
     expect(g).toBe(b);
   });
 });
+
+describe("game text safety", () => {
+  test("markup in game text stays text", () => {
+    expect(plainGameText('<img src=x onerror="alert(1)"><b>Bold</b>')).toBe(
+      '<img src=x onerror="alert(1)"><b>Bold</b>',
+    );
+  });
+});
