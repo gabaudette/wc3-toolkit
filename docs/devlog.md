@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-11-02 · Correct Interface APIs in the assistant prompt (AGE-67)
+## 2026-11-02 · Correct Interface APIs in the assistant prompt (PR #79, AGE-67)
 
 - Replaced the dialog-only API summary in `docs/assistant-prompt.md` with per-kind examples
   checked against `interface.rs` and its multiboard, leaderboard and timer generators. The
