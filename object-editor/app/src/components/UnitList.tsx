@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { type Result, settle } from "../result";
-import type { SearchHit, UnitGroup, UnitItem } from "../types";
+import type { ObjectType, SearchHit, UnitGroup, UnitItem } from "../types";
 import { capitalized, classes } from "../ui";
+import { Button } from "./Button";
 import { Chip, toggle } from "./Chip";
+import { ExportContext } from "./exportObjects";
 import { GameText } from "./GameText";
 import { ListFold, useFolded } from "./ListFold";
 import { UnitIcon } from "./UnitIcon";
@@ -11,6 +13,7 @@ import { UnitIcon } from "./UnitIcon";
 type Filter = { id: string; label: string };
 
 export type ListConfig = {
+  type: ObjectType;
   singular: string;
   article: string;
   noun: string;
@@ -23,6 +26,7 @@ export type ListConfig = {
 };
 
 export const UNIT_LIST: ListConfig = {
+  type: "units",
   singular: "unit",
   article: "a",
   noun: "units",
@@ -45,6 +49,7 @@ export const UNIT_LIST: ListConfig = {
 };
 
 export const ITEM_LIST: ListConfig = {
+  type: "items",
   singular: "item",
   article: "an",
   noun: "items",
@@ -60,6 +65,7 @@ export const ITEM_LIST: ListConfig = {
 };
 
 export const UPGRADE_LIST: ListConfig = {
+  type: "upgrades",
   singular: "upgrade",
   article: "an",
   noun: "upgrades",
@@ -75,6 +81,7 @@ export const UPGRADE_LIST: ListConfig = {
 };
 
 export const DOODAD_LIST: ListConfig = {
+  type: "doodads",
   singular: "doodad",
   article: "a",
   noun: "doodads",
@@ -90,6 +97,7 @@ export const DOODAD_LIST: ListConfig = {
 };
 
 export const BUFF_LIST: ListConfig = {
+  type: "buffs",
   singular: "buff",
   article: "a",
   noun: "buffs",
@@ -105,6 +113,7 @@ export const BUFF_LIST: ListConfig = {
 };
 
 export const DESTRUCTABLE_LIST: ListConfig = {
+  type: "destructables",
   singular: "destructable",
   article: "a",
   noun: "destructables",
@@ -186,6 +195,15 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
     visible = own.length;
   }
 
+  const openExport = use(ExportContext);
+  const visibleIds = own.map((r) => r.unit.id);
+
+  if (!folded) {
+    visibleIds.push(...game.map((r) => r.unit.id));
+  }
+
+  const selectedItem = units.find((u) => u.id === selected) ?? null;
+
   function row({ unit, reason }: { unit: UnitItem; reason: string }) {
     return (
       <li key={unit.id}>
@@ -258,10 +276,26 @@ export function UnitList({ config, units, selected, onSelect, onError }: UnitLis
             ))}
           </div>
         )}
-        <p className="text-xs text-faint">
-          {visible} shown
-          {folded && game.length > 0 && ` · ${game.length} game ${config.noun} folded`}
-        </p>
+        <div className="flex items-center gap-2">
+          <p className="flex-1 text-xs text-faint">
+            {visible} shown
+            {folded && game.length > 0 && ` · ${game.length} game ${config.noun} folded`}
+          </p>
+          {openExport && (
+            <Button
+              small
+              onPress={() =>
+                openExport({
+                  type: config.type,
+                  shown: visibleIds,
+                  selected: selectedItem && { id: selectedItem.id, name: selectedItem.name },
+                })
+              }
+            >
+              Export…
+            </Button>
+          )}
+        </div>
       </div>
 
       <ul className="min-h-0 flex-1 overflow-y-auto" aria-label={capitalized(config.noun)}>

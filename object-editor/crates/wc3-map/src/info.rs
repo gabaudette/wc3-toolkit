@@ -120,7 +120,6 @@ fn u32_at(bytes: &[u8], at: usize) -> Option<u32> {
 }
 
 impl Player {
-    /// The start location, in game units.
     pub fn start(&self) -> [f32; 2] {
         [f32_at(&self.rest, 0), f32_at(&self.rest, 4)]
     }

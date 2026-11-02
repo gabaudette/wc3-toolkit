@@ -1180,12 +1180,9 @@ impl wc3_map::script::UnitKinds for GameKinds<'_> {
 }
 
 const PERCENT: usize = 100;
-// Share of maps whose generated script parts match the World Editor's
-// exactly; the rest are refused at load, so this only guards regressions.
 const UNIT_SCRIPT_MATCH: usize = 90;
 const SETUP_SCRIPT_MATCH: usize = 98;
 
-/// The user's maps plus the game's own, copied out of its storage.
 fn script_maps() -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
     let mut maps = Vec::new();
 
@@ -1675,5 +1672,117 @@ fn edited_properties_rewrite_the_setup_script() -> TestResult {
     }
 
     assert_eq!(checked, [3, 3], "too few maps checked (JASS, Lua)");
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs maps and an install (WC3_MAPS_DIR, WC3_GAME_DIR)"]
+fn exports_every_object_type_with_filled_tooltips() -> TestResult {
+    use wc3_map::export::{self, CsvValues, ExportType, GameData, LoadedMap, Origin, Selection};
+
+    const BLIZZARD: &str = "AHbz";
+    const EXTENDED_TOOLTIP: &str = "aub1";
+
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let units = UnitDatabase::load(&files)?;
+    let items = UnitDatabase::load_items(&files)?;
+    let buffs = UnitDatabase::load_buffs(&files)?;
+    let destructables = UnitDatabase::load_destructables(&files)?;
+    let abilities = AbilityDatabase::load(&files)?;
+    let upgrades = UpgradeDatabase::load(&files)?;
+    let doodads = DoodadDatabase::load(&files)?;
+    let game = GameData {
+        units: &units,
+        items: &items,
+        buffs: &buffs,
+        destructables: &destructables,
+        abilities: &abilities,
+        upgrades: &upgrades,
+        doodads: &doodads,
+        mode: ArtMode::Sd,
+    };
+    let everything = Selection {
+        types: ExportType::ALL.to_vec(),
+        ..Selection::default()
+    };
+    let empty = LoadedMap::empty();
+    let exported = export::export(&game, &empty.data(), None, &everything);
+
+    for kind in ExportType::ALL {
+        let objects = exported
+            .objects
+            .get(&kind)
+            .map(Vec::len)
+            .unwrap_or_default();
+        let rows = exported
+            .to_csv(kind, CsvValues::Raw)
+            .matches("\r\n")
+            .count();
+
+        assert!(objects > 0, "no {}", kind.name());
+        assert!(
+            rows > objects,
+            "{}: {rows} CSV lines for {objects} objects",
+            kind.name()
+        );
+    }
+
+    let blizzard = exported
+        .objects
+        .get(&ExportType::Abilities)
+        .and_then(|list| list.iter().find(|o| o.id == BLIZZARD))
+        .ok_or("no Blizzard")?;
+    let tooltip = blizzard
+        .values
+        .get(EXTENDED_TOOLTIP)
+        .ok_or("no extended tooltip")?
+        .levels();
+
+    assert_eq!(tooltip.len(), 3);
+    assert!(tooltip.iter().all(|v| !v.display.contains('<')));
+    assert!(
+        exported
+            .fields
+            .get(&ExportType::Abilities)
+            .is_some_and(|f| f.get(EXTENDED_TOOLTIP).is_some_and(|i| i.per_level))
+    );
+    assert_eq!(
+        exported,
+        export::export(&game, &empty.data(), None, &everything)
+    );
+
+    let mut maps = Vec::new();
+
+    find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
+    let changed = Selection {
+        origin: Origin::Changed,
+        ..everything.clone()
+    };
+    let custom = Selection {
+        origin: Origin::Custom,
+        ..everything
+    };
+    let with_changes = maps.iter().find_map(|path| {
+        let loaded = LoadedMap::load(&Map::open(path).ok()?).ok()?;
+        let exported = export::export(&game, &loaded.data(), None, &changed);
+
+        (exported.object_count() > 0).then_some(exported)
+    });
+    let exported = with_changes.ok_or("no map with changed objects")?;
+
+    assert!(exported.objects.values().flatten().all(|o| o.changed));
+    assert!(
+        export::export(&game, &empty.data(), None, &custom)
+            .objects
+            .values()
+            .all(Vec::is_empty)
+    );
+    assert!(
+        exported
+            .objects
+            .values()
+            .flatten()
+            .any(|o| !o.modified.is_empty())
+    );
     Ok(())
 }

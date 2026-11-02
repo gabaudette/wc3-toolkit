@@ -4069,6 +4069,8 @@ dependencies = [
  "flate2",
  "full_moon",
  "mpq",
+ "serde",
+ "serde_json",
  "tempfile",
  "thiserror 2.0.21",
  "wc3-data",

@@ -6,14 +6,21 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
+use wc3_data::abilities::AbilityDatabase;
+use wc3_data::doodads::DoodadDatabase;
 use wc3_data::game::{ArtMode, GameFiles, GameOptions};
 use wc3_data::units::UnitDatabase;
+use wc3_data::upgrades::UpgradeDatabase;
+use wc3_map::export::{
+    self, CsvValues, ExportType, Format, GameData, LoadedMap, Origin, Selection,
+};
 use wc3_map::lua;
 use wc3_map::units::MapUnits;
 use wc3_map::{FourCC, Layout, Map, OBJECT_FILES, ObjectData, STRINGS_FILE, save_files};
 
 const USAGE: &str = "\
 usage: wc3map [--game DIR] [--balance SET] [--hd] <map> <command>
+       wc3map [--game DIR] [--balance SET] [--hd] - export ...   (the game's own objects)
 
 options:
   --game DIR      Warcraft III install folder (default: $WC3_GAME_DIR)
@@ -30,10 +37,19 @@ commands:
   lua <DIR> [-o OUT] [--script FILE] build a [DEV] copy of the map with the Lua modules in
                                      DIR added to its script (default OUT: <map>_dev.<ext>);
                                      --script also saves the final script to FILE
+  export <json|csv> [TYPE...] -o OUT [--changed|--custom] [--plain] [--raw] [--id ID]...
+                                     export objects with every field (types: units, items,
+                                     buffs, destructables, abilities, upgrades, doodads;
+                                     default all). JSON is one file; CSV is one file for one
+                                     type, else a folder of <type>.csv. --changed: only what
+                                     the map adds or changes; --custom: only what it adds;
+                                     --plain: no color codes;
+                                     --raw: CSV cells hold stored values, not shown ones
 
 OUT may be the input map itself; it is replaced only after a complete save.";
 
 const GAME_DIR_VAR: &str = "WC3_GAME_DIR";
+const GAME_ONLY: &str = "-";
 
 const OUTPUT_CLOSED: &str = "\0output closed";
 
@@ -59,6 +75,8 @@ struct Args {
     mode: ArtMode,
     output: Option<PathBuf>,
     script_out: Option<PathBuf>,
+    selection: Selection,
+    raw: bool,
     positional: Vec<String>,
 }
 
@@ -69,6 +87,8 @@ fn parse_args() -> Result<Args, String> {
         mode: ArtMode::Sd,
         output: None,
         script_out: None,
+        selection: Selection::default(),
+        raw: false,
         positional: Vec::new(),
     };
     let mut args = std::env::args().skip(1);
@@ -84,6 +104,15 @@ fn parse_args() -> Result<Args, String> {
             "--script" => {
                 parsed.script_out = Some(args.next().ok_or("--script needs a file")?.into())
             }
+            "--changed" => parsed.selection.origin = Origin::Changed,
+            "--custom" => parsed.selection.origin = Origin::Custom,
+            "--plain" => parsed.selection.plain_text = true,
+            "--raw" => parsed.raw = true,
+            "--id" => parsed
+                .selection
+                .ids
+                .get_or_insert_with(Vec::new)
+                .push(args.next().ok_or("--id needs an object ID")?),
             "-h" | "--help" => return Err(String::new()),
             _ => parsed.positional.push(arg),
         }
@@ -133,13 +162,76 @@ fn check(map: &Map) -> Result<(), String> {
     Ok(())
 }
 
-fn load_db(args: &Args) -> Result<UnitDatabase, String> {
+fn game_files(args: &Args) -> Result<GameFiles, String> {
     let dir = args
         .game_dir
         .as_ref()
         .ok_or(format!("no game folder: pass --game or set {GAME_DIR_VAR}"))?;
-    let files = GameFiles::open(dir, args.options.clone()).map_err(|e| e.to_string())?;
-    UnitDatabase::load(&files).map_err(|e| e.to_string())
+
+    GameFiles::open(dir, args.options.clone()).map_err(|e| e.to_string())
+}
+
+fn load_db(args: &Args) -> Result<UnitDatabase, String> {
+    UnitDatabase::load(&game_files(args)?).map_err(|e| e.to_string())
+}
+
+fn export_objects(map_arg: &str, options: &[&str], args: &Args) -> Result<(), String> {
+    let (format, types) = options.split_first().ok_or(String::new())?;
+    let format = Format::parse(format).ok_or(format!("{format:?} is not json or csv"))?;
+    let out = args.output.as_ref().ok_or("export needs -o <OUT>")?;
+    let mut selection = args.selection.clone();
+
+    selection.types = match types {
+        [] | ["all"] => ExportType::ALL.to_vec(),
+        names => names
+            .iter()
+            .map(|n| ExportType::parse(n).ok_or(format!("{n:?} is not an object type")))
+            .collect::<Result<_, _>>()?,
+    };
+
+    let (objects, map_name) = match map_arg {
+        GAME_ONLY => (LoadedMap::empty(), None),
+        path => {
+            let map = Map::open(Path::new(path)).map_err(|e| e.to_string())?;
+            let name = Path::new(path)
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned());
+
+            (LoadedMap::load(&map).map_err(|e| e.to_string())?, name)
+        }
+    };
+    let files = game_files(args)?;
+    let error = |e: wc3_data::Error| e.to_string();
+    let units = UnitDatabase::load(&files).map_err(error)?;
+    let items = UnitDatabase::load_items(&files).map_err(error)?;
+    let buffs = UnitDatabase::load_buffs(&files).map_err(error)?;
+    let destructables = UnitDatabase::load_destructables(&files).map_err(error)?;
+    let abilities = AbilityDatabase::load(&files).map_err(error)?;
+    let upgrades = UpgradeDatabase::load(&files).map_err(error)?;
+    let doodads = DoodadDatabase::load(&files).map_err(error)?;
+    let game = GameData {
+        units: &units,
+        items: &items,
+        buffs: &buffs,
+        destructables: &destructables,
+        abilities: &abilities,
+        upgrades: &upgrades,
+        doodads: &doodads,
+        mode: args.mode,
+    };
+    let exported = export::export(&game, &objects.data(), map_name, &selection);
+    let values = match args.raw {
+        true => CsvValues::Raw,
+        false => CsvValues::Display,
+    };
+    let written = export::write(&exported, format, values, out).map_err(|e| e.to_string())?;
+
+    say!("exported {} objects", exported.object_count());
+    for path in written {
+        say!("  {}", path.display());
+    }
+
+    Ok(())
 }
 
 fn list_units(db: &UnitDatabase, units: &MapUnits) -> Result<(), String> {
@@ -231,6 +323,10 @@ fn run(args: Args) -> Result<(), String> {
     };
 
     let map_path = Path::new(map_arg);
+
+    if let ["export", options @ ..] = command {
+        return export_objects(map_arg, options, &args);
+    }
 
     if let ["lua", modules_dir] = command {
         return build_lua(map_path, Path::new(modules_dir), &args);

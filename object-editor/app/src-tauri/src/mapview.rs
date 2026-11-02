@@ -31,7 +31,6 @@ const NO_TERRAIN: &str = "This map has no terrain file (war3map.w3e), so it has 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct MapView {
-    /// Left, bottom, right, top in game units.
     pub bounds: [f32; 4],
     pub width: usize,
     pub height: usize,
@@ -120,7 +119,6 @@ fn mix(a: [f32; 3], b: [f32; 3], amount: f32) -> [f32; 3] {
     [0, 1, 2].map(|i| a[i] * (1.0 - amount) + b[i] * amount)
 }
 
-// Light falls from the top left; slopes facing it are brighter.
 fn render(terrain: &Terrain, colors: &[[f32; 3]]) -> Image {
     let (width, height) = (terrain.width, terrain.height);
     let mut rgba = Vec::with_capacity(width * height * 4);

@@ -23,6 +23,8 @@ import { AppVersion } from "./AppVersion";
 import { AssetsPane } from "./AssetsPane";
 import { Button } from "./Button";
 import { CommandPalette, type PaletteCommand } from "./CommandPalette";
+import { ExportDialog } from "./ExportDialog";
+import { ExportContext, type ExportScope } from "./exportObjects";
 import { ImportDialog } from "./ImportDialog";
 import { InterfacePane } from "./InterfacePane";
 import { LeveledPane } from "./LeveledPane";
@@ -125,6 +127,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [dialog, setDialog] = useState<"share" | "import" | "search" | null>(null);
+  const [exportScope, setExportScope] = useState<ExportScope | null>(null);
   const [tab, setTab] = useState<Tab>("units");
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
   const [selectedPlain, setSelectedPlain] = useState(NO_PLAIN_SELECTION);
@@ -303,6 +306,12 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     commands.push({ id: "share", label: "Share units…", run: () => setDialog("share") });
   }
 
+  commands.push({
+    id: "export",
+    label: "Export objects…",
+    run: () => setExportScope({ type: null, shown: [], selected: null }),
+  });
+
   for (const t of TABS.filter((other) => other.id !== tab)) {
     commands.push({ id: `tab-${t.id}`, label: `Go to ${t.label}`, run: () => setTab(t.id) });
   }
@@ -466,6 +475,12 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         </div>
       )}
 
+      <ExportDialog
+        scope={exportScope}
+        mapName={map?.name ?? null}
+        onClose={() => setExportScope(null)}
+        onError={setError}
+      />
       <ShareDialog
         open={dialog === "share"}
         units={customUnits}
@@ -489,117 +504,121 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         onClose={() => setDialog(null)}
       />
 
-      <main className="flex min-h-0 flex-1 flex-col">
-        {tab === "abilities" && (
-          <AbilitiesPane
-            key={revision}
-            editable={editable}
-            selected={selectedAbility}
-            onSelect={setSelectedAbility}
-            onMapChanged={refreshMap}
-            onUnitsChanged={refreshUnits}
-            onError={setError}
-          />
-        )}
-
-        {tab === "interface" && (
-          <InterfacePane
-            key={revision}
-            editable={editable}
-            mapPath={map?.path ?? null}
-            onMapChanged={refreshMap}
-            onError={setError}
-          />
-        )}
-
-        {tab === "map" && (
-          <MapPane
-            key={revision}
-            editable={editable}
-            onMapChanged={refreshMap}
-            onError={setError}
-          />
-        )}
-
-        {tab === "placed" && (
-          <PlacedPane
-            key={revision}
-            editable={editable}
-            units={units}
-            onMapChanged={refreshMap}
-            onOpenUnit={openUnit}
-            onError={setError}
-          />
-        )}
-
-        {tab === "assets" && (
-          <AssetsPane
-            key={revision}
-            editable={editable}
-            mapPath={map?.path ?? null}
-            unsaved={map?.unsaved ?? false}
-            units={units}
-            onMapChanged={refreshMap}
-            onUnitCreated={unitCreated}
-            onOpenUse={openUse}
-            onError={setError}
-          />
-        )}
-
-        {LEVELED_TABS.filter(({ catalog }) => tab === catalog).map(({ catalog, list }) => (
-          <LeveledPane
-            key={`${catalog}-${revision}`}
-            catalog={catalog}
-            list={list}
-            editable={editable}
-            selected={selectedLeveled[catalog]}
-            onSelect={(id) => openLeveled(catalog, id)}
-            onMapChanged={refreshMap}
-            onError={setError}
-          />
-        ))}
-
-        {PLAIN_TABS.filter(({ catalog }) => tab === catalog).map(({ catalog, list }) => (
-          <PlainPane
-            key={`${catalog}-${revision}`}
-            catalog={catalog}
-            list={list}
-            editable={editable}
-            selected={selectedPlain[catalog]}
-            onSelect={(id) => openPlain(catalog, id)}
-            onMapChanged={refreshMap}
-            onError={setError}
-          />
-        ))}
-
-        <div className={classes("flex min-h-0 flex-1 gap-2.5", tab !== "units" && "hidden")}>
-          <UnitList
-            config={UNIT_LIST}
-            units={units}
-            selected={selected}
-            onSelect={setSelected}
-            onError={setError}
-          />
-          {detail && tab === "units" && (
-            <OpenAbilityContext value={openAbility}>
-              <UnitPage
-                key={detail.item.id}
-                detail={detail}
-                clashes={clashes}
-                editable={editable}
-                onChange={(field, value) => applyField(api.setField(detail.item.id, field, value))}
-                onReset={(field) => applyField(api.resetField(detail.item.id, field))}
-                onCreateCopy={createCopy}
-              />
-            </OpenAbilityContext>
+      <ExportContext value={setExportScope}>
+        <main className="flex min-h-0 flex-1 flex-col">
+          {tab === "abilities" && (
+            <AbilitiesPane
+              key={revision}
+              editable={editable}
+              selected={selectedAbility}
+              onSelect={setSelectedAbility}
+              onMapChanged={refreshMap}
+              onUnitsChanged={refreshUnits}
+              onError={setError}
+            />
           )}
-          {!detail && (
-            <p className="m-auto text-muted">
-              Pick a unit on the left. {game.units} game units loaded.
-            </p>
+
+          {tab === "interface" && (
+            <InterfacePane
+              key={revision}
+              editable={editable}
+              mapPath={map?.path ?? null}
+              onMapChanged={refreshMap}
+              onError={setError}
+            />
           )}
-        </div>
-      </main>
+
+          {tab === "map" && (
+            <MapPane
+              key={revision}
+              editable={editable}
+              onMapChanged={refreshMap}
+              onError={setError}
+            />
+          )}
+
+          {tab === "placed" && (
+            <PlacedPane
+              key={revision}
+              editable={editable}
+              units={units}
+              onMapChanged={refreshMap}
+              onOpenUnit={openUnit}
+              onError={setError}
+            />
+          )}
+
+          {tab === "assets" && (
+            <AssetsPane
+              key={revision}
+              editable={editable}
+              mapPath={map?.path ?? null}
+              unsaved={map?.unsaved ?? false}
+              units={units}
+              onMapChanged={refreshMap}
+              onUnitCreated={unitCreated}
+              onOpenUse={openUse}
+              onError={setError}
+            />
+          )}
+
+          {LEVELED_TABS.filter(({ catalog }) => tab === catalog).map(({ catalog, list }) => (
+            <LeveledPane
+              key={`${catalog}-${revision}`}
+              catalog={catalog}
+              list={list}
+              editable={editable}
+              selected={selectedLeveled[catalog]}
+              onSelect={(id) => openLeveled(catalog, id)}
+              onMapChanged={refreshMap}
+              onError={setError}
+            />
+          ))}
+
+          {PLAIN_TABS.filter(({ catalog }) => tab === catalog).map(({ catalog, list }) => (
+            <PlainPane
+              key={`${catalog}-${revision}`}
+              catalog={catalog}
+              list={list}
+              editable={editable}
+              selected={selectedPlain[catalog]}
+              onSelect={(id) => openPlain(catalog, id)}
+              onMapChanged={refreshMap}
+              onError={setError}
+            />
+          ))}
+
+          <div className={classes("flex min-h-0 flex-1 gap-2.5", tab !== "units" && "hidden")}>
+            <UnitList
+              config={UNIT_LIST}
+              units={units}
+              selected={selected}
+              onSelect={setSelected}
+              onError={setError}
+            />
+            {detail && tab === "units" && (
+              <OpenAbilityContext value={openAbility}>
+                <UnitPage
+                  key={detail.item.id}
+                  detail={detail}
+                  clashes={clashes}
+                  editable={editable}
+                  onChange={(field, value) =>
+                    applyField(api.setField(detail.item.id, field, value))
+                  }
+                  onReset={(field) => applyField(api.resetField(detail.item.id, field))}
+                  onCreateCopy={createCopy}
+                />
+              </OpenAbilityContext>
+            )}
+            {!detail && (
+              <p className="m-auto text-muted">
+                Pick a unit on the left. {game.units} game units loaded.
+              </p>
+            )}
+          </div>
+        </main>
+      </ExportContext>
     </div>
   );
 }

@@ -86,7 +86,6 @@ impl UnitKinds for GameKinds<'_> {
     }
 }
 
-/// The map script as last written, with the data it was written from.
 pub struct ScriptState {
     pub file: &'static str,
     pub language: Language,
@@ -95,9 +94,7 @@ pub struct ScriptState {
     placements: Option<UnitPlacements>,
     tables: Vec<ItemTable>,
     properties: Option<Properties>,
-    /// Why placed unit changes cannot be written into the script.
-    pub problem: Option<String>,
-    /// Why map property changes cannot be written into the script.
+    pub units_problem: Option<String>,
     pub setup_problem: Option<String>,
 }
 
@@ -156,9 +153,6 @@ fn setup_section<'a>(map: &'a OpenMap, properties: &'a Properties) -> SetupSecti
     }
 }
 
-/// Reads the map's script and checks Tinkerbench rewrites its unit functions
-/// and player setup exactly as the World Editor wrote them before trusting it
-/// with changes.
 pub fn load(session: &Session, map: &OpenMap) -> Option<ScriptState> {
     let archive = Map::open(&map.path).ok()?;
     let (file, language, bytes) = read_script(&archive)?;
@@ -190,13 +184,11 @@ pub fn load(session: &Session, map: &OpenMap) -> Option<ScriptState> {
         placements: map.placements.clone(),
         tables,
         properties,
-        problem: (!units_ok).then(|| UNREPRODUCIBLE.to_owned()),
+        units_problem: (!units_ok).then(|| UNREPRODUCIBLE.to_owned()),
         setup_problem: (!setup_ok).then(|| SETUP_UNREPRODUCIBLE.to_owned()),
     })
 }
 
-/// The rewritten script when placed units, item tables or map properties
-/// changed, or `None`.
 pub fn updated(session: &Session, map: &OpenMap) -> Result<Option<(&'static str, String)>, String> {
     let Some(state) = &map.script else {
         return Ok(None);
@@ -207,7 +199,7 @@ pub fn updated(session: &Session, map: &OpenMap) -> Result<Option<(&'static str,
     let units_changed = map.placements != state.placements || tables != state.tables;
     let setup_changed = properties != state.properties;
 
-    if let (true, None, Some(placements)) = (units_changed, &state.problem, &map.placements) {
+    if let (true, None, Some(placements)) = (units_changed, &state.units_problem, &map.placements) {
         let kinds = kinds(session, map);
         let section = UnitSection {
             placements,
@@ -239,14 +231,12 @@ impl ScriptState {
         text.as_bytes().to_vec()
     }
 
-    /// Records what the saved map now holds: the script, when it was
-    /// rewritten, and the data it was written from.
     pub fn saved(&mut self, text: Option<String>, map: &OpenMap) {
         if let Some(text) = text {
             self.text = text;
         }
 
-        if self.problem.is_none() {
+        if self.units_problem.is_none() {
             self.placements = map.placements.clone();
             self.tables = tables_of(map);
         }

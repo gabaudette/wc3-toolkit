@@ -4,6 +4,30 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · Object export as CSV and JSON (AGE-64)
+
+- `wc3_map::export` reads every object type through the map layer (`MapUnits`,
+  `PlainObjects`, `MapAbilities`, `LeveledObjects`) behind one private `Source` trait; with
+  empty map tables (`LoadedMap::empty`, new `MapUnits::empty`) it is the game's own data, so
+  the app, `wc3map` and the tests share it. It lives in `wc3-map` rather than `wc3-data`
+  because map values need the map layer, so the game-only export is `wc3map - export`
+  instead of a `wc3data` command.
+- Each value is the stored one and the shown one: `UnitDatabase::format_value`, then
+  `AbilityDatabase::fill_placeholders` with `MapPlaceholders` for any text holding `<`, so
+  tooltips read like the app's (Blizzard's "6 freezing ice shard waves"). `plain_text`
+  (now in `wc3_data::strings`, shared with the spell wizard) removes color codes on request.
+- Objects are sorted by ID and fields by field ID, with no time stamps, so an export is the
+  same every time (a real-install test checks it). CSV has a BOM and CRLF for spreadsheets
+  and a column per level of per-level fields. JSON describes each type's fields once
+  (`fields`) and keys each object's values by field ID, with a `modified` list instead of a
+  flag per value; pretty-printed for diffs, it is about 40 MB for all 4658 game objects
+  (130 MB with the field details repeated in every object). `docs/export-format.md` documents both, with a version number.
+- App: `ExportContext` lets every list (`UnitList`, `AbilityList`) open the export dialog
+  with what it shows and the selected object; `export_objects` writes through
+  `export::write` (one file, or a folder of `<type>.csv` for several types as CSV).
+- Removed comments from AGE-41 code that restated it rather than stating a Warcraft III
+  fact, per the project's comment rule; `ScriptState::problem` is now `units_problem`.
+
 ## 2026-11-02 · Placed units editor with a map view (AGE-41)
 
 - The World Editor writes parts of `war3map.lua`/`war3map.j` from the map's data, and the

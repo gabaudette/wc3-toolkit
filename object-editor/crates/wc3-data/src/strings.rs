@@ -22,6 +22,37 @@ const REFERENCE_PREFIX: &str = "TRIGSTR_";
 const CRLF: &str = "\r\n";
 const LF: &str = "\n";
 
+// `|cAARRGGBB` starts a color, `|r` ends it and `|n` is a line break.
+const COLOR_CODE_LENGTH: usize = 10;
+const SHORT_CODE_LENGTH: usize = 2;
+
+pub fn plain_text(text: &str) -> String {
+    let mut plain = String::with_capacity(text.len());
+    let mut rest = text;
+
+    while let Some(at) = rest.find('|') {
+        plain.push_str(&rest[..at]);
+        let code = &rest[at..];
+        let skip = match code.as_bytes().get(1).map(u8::to_ascii_lowercase) {
+            Some(b'c') if code.len() >= COLOR_CODE_LENGTH => COLOR_CODE_LENGTH,
+            Some(b'r') => SHORT_CODE_LENGTH,
+            Some(b'n') => {
+                plain.push('\n');
+                SHORT_CODE_LENGTH
+            }
+            _ => {
+                plain.push('|');
+                1
+            }
+        };
+
+        rest = &code[skip.min(code.len())..];
+    }
+
+    plain.push_str(rest);
+    plain
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct StringEntry {
     pub id: u32,
