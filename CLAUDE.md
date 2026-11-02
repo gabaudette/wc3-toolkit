@@ -30,7 +30,10 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   textures, and adds them to a map with `war3map.imp` entries. `placements` reads and
   writes `war3mapUnits.doo` (placed units: hero inventories, drops, item table links) and
   `info` the properties, players, forces and item tables of `war3map.w3i`, both byte for
-  byte; `constants` reads and writes `war3mapMisc.txt` (gameplay constants). `wc3map` is its CLI
+  byte; `constants` reads and writes `war3mapMisc.txt` (gameplay constants); `terrain` reads
+  `war3map.w3e`. `script` writes the map script's unit functions (creation, drops, item
+  tables) and `setup` its player, force and environment parts, both as the World Editor
+  would. `wc3map` is its CLI
   (`check`, `units`, `unit`, `set`, `new`, `lua`).
 - Everything must build and run on Windows and Linux (CI tests both). Windows specifics:
   StormLib's library is named `StormLib` and needs `wininet` + `user32`; CascLib needs
@@ -43,8 +46,10 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `app/src-tauri` (workspace member): `view.rs` shapes game data + map changes for the UI
   (`abilities.rs` the same for abilities: list, cards, pages with per-level cells),
   `commands.rs` (Tauri commands), `mapinfo.rs` (the Map tab: properties, players,
-  forces and gameplay constants), `loot.rs` (the Placed units tab: inventories, drops,
-  item tables and cascades, whose tiers are kept in `<map> Loot.json`), `interface.rs` (the Interface tab: dialogs, multiboards, leaderboards and timer windows, in `interface/`, designed visually,
+  forces and gameplay constants), `loot.rs` (the Placed units tab: placements, inventories,
+  drops, item tables and cascades, whose tiers are kept in `<map> Loot.json`), `mapview.rs`
+  (the terrain image under the map view), `sync.rs` (rewrites those script parts on save,
+  only when it reproduces the map's script exactly at load), `interface.rs` (the Interface tab: dialogs, multiboards, leaderboards and timer windows, in `interface/`, designed visually,
   kept in `<map> UI.json` beside the map, and the Lua modules they become; `.w3ui` design files carry them and their imported icons between maps), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
   the open map's imported file first, then the game's; they read game files outside the
   session lock, since `casc::Storage` is `Sync`, and textures decode at most 512 px),
@@ -121,6 +126,12 @@ to this repo plus validation commands in `CONTRIBUTING.md`; follow them for ever
   lights at the end of each unit; subversion 11 adds the item table link and hero
   attributes (the 2.0 World Editor writes 13 with subversion 9). Random drops are
   `Y<class>I<level>` (`YYI` any class, `i`..`o` in JASS `ITEM_TYPE` order).
+- `war3map.w3i`: fog and water colors are blue, green, red, alpha; version 39 stores 24 bytes
+  of extra fog before the weather ID. A player's start is fixed when its field is 1 (or old
+  editors' leftover text), not 0 or 2.
+- The game runs only the map script: placed units, drops, item tables, players, forces and
+  environment changed in the data files alone do nothing in game until the World Editor's
+  generated script parts are rewritten (`script`, `setup`).
 - `war3mapMisc.txt` (gameplay constants) holds only what a map changes: sorted sections and
   keys, CRLF. Constants are described by `MiscMetaData.slk`; their guide is
   `crates/wc3-data/data/constant-fields.toml`.

@@ -9,22 +9,26 @@ const TABLE_SUBVERSION: u32 = 11;
 // Version 12 adds a group, roll and pitch, and lights to each unit.
 const GROUP_VERSION: u32 = 12;
 const NO_TABLE: i32 = -1;
-const POSITION_BYTES: usize = 4 + 12 + 4 + 12;
-const PLAYER_BYTES: usize = 2 + 4 + 4;
-const ATTRIBUTE_BYTES: usize = 12;
-const ABILITY_BYTES: usize = 12;
-const RANDOM_ENTRY_BYTES: usize = 8;
-const ROLL_PITCH_BYTES: usize = 8;
+const NO_GROUP: i32 = -1;
+const MIN_UNIT_BYTES: usize = 4 + 4 + 12 + 4 + 12;
 const LIGHT_BYTES: usize = 36;
 const DROP_ENTRY_BYTES: usize = 8;
 const INVENTORY_ENTRY_BYTES: usize = 8;
+const ABILITY_BYTES: usize = 12;
+const RANDOM_ENTRY_BYTES: usize = 8;
 // How a placed unit is randomized: from a level and class, from a map unit
 // table column, or from its own list; other values mean a fixed unit.
 const RANDOM_BY_LEVEL: i32 = 0;
 const RANDOM_FROM_TABLE: i32 = 1;
 const RANDOM_FROM_LIST: i32 = 2;
-const RANDOM_BY_LEVEL_BYTES: usize = 4;
-const RANDOM_FROM_TABLE_BYTES: usize = 8;
+const FIXED_UNIT: i32 = -1;
+// Placement flags: 2 is what the World Editor writes for every placed unit.
+const DEFAULT_FLAGS: u8 = 2;
+const DEFAULT_LIFE: i32 = -1;
+const DEFAULT_MANA: i32 = -1;
+const DEFAULT_ACQUISITION: f32 = -1.0;
+const NO_COLOR: i32 = -1;
+const NO_WAYGATE: i32 = -1;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DropChance {
@@ -39,27 +43,62 @@ pub struct InventorySlot {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AbilityLevel {
+    pub ability: FourCC,
+    pub autocast: bool,
+    pub level: u32,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Drops {
     None,
     Table(i32),
     Sets(Vec<Vec<DropChance>>),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RandomUnit {
+    Fixed(i32),
+    ByLevel([u8; 4]),
+    FromTable { group: u32, column: u32 },
+    FromList(Vec<(FourCC, u32)>),
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Placement {
     pub id: FourCC,
+    pub variation: u32,
     pub x: f32,
     pub y: f32,
+    pub z: f32,
+    /// Facing in radians, as stored; scripts use degrees.
+    pub angle: f32,
+    pub scale: [f32; 3],
+    pub skin: Option<FourCC>,
+    group: Option<i32>,
+    pub flags: u8,
     pub player: u32,
-    pub level: u32,
-    pub creation_number: u32,
+    unknown: [u8; 2],
+    /// Life in percent of the maximum, or -1 for full.
+    pub life: i32,
+    /// Mana in points, or -1 for the unit's starting mana.
+    pub mana: i32,
     item_table: Option<i32>,
     sets: Vec<Vec<DropChance>>,
+    pub gold: u32,
+    /// Acquisition range: -1 normal, -2 creep camp, or a range.
+    pub acquisition: f32,
+    pub level: u32,
+    /// Hero strength, agility and intelligence; 0 keeps the hero's own.
+    pub attributes: Option<[i32; 3]>,
     inventory: Vec<InventorySlot>,
-    head: Vec<u8>,
-    middle: Vec<u8>,
-    attributes: Option<Vec<u8>>,
-    tail: Vec<u8>,
+    pub abilities: Vec<AbilityLevel>,
+    pub random: RandomUnit,
+    pub color: i32,
+    pub waygate: i32,
+    pub creation_number: u32,
+    pub roll_pitch: Option<[f32; 2]>,
+    lights: Option<Vec<u8>>,
 }
 
 impl Placement {
@@ -73,6 +112,14 @@ impl Placement {
             _ if !self.sets.is_empty() => Drops::Sets(self.sets.clone()),
             _ => Drops::None,
         }
+    }
+
+    pub fn item_table(&self) -> Option<i32> {
+        self.item_table.filter(|t| *t != NO_TABLE)
+    }
+
+    pub fn item_sets(&self) -> &[Vec<DropChance>] {
+        &self.sets
     }
 }
 
@@ -141,7 +188,7 @@ impl UnitPlacements {
         let mut r = Reader::new(PLACEMENTS_FILE, data);
 
         r.take(12)?;
-        let count = r.count(POSITION_BYTES)?;
+        let count = r.count(MIN_UNIT_BYTES)?;
         let mut units = Vec::with_capacity(count);
 
         for _ in 0..count {
@@ -159,6 +206,10 @@ impl UnitPlacements {
         &self.units
     }
 
+    pub fn has_table_links(&self) -> bool {
+        self.subversion >= TABLE_SUBVERSION
+    }
+
     pub fn to_bytes(&self) -> Vec<u8> {
         let mut out = MAGIC.to_vec();
 
@@ -166,38 +217,13 @@ impl UnitPlacements {
         put_u32(&mut out, self.subversion);
         put_count(&mut out, self.units.len());
         for unit in &self.units {
-            out.extend_from_slice(&unit.head);
-            if let Some(table) = unit.item_table {
-                put_i32(&mut out, table);
-            }
-
-            put_count(&mut out, unit.sets.len());
-            for set in &unit.sets {
-                put_count(&mut out, set.len());
-                for drop in set {
-                    out.extend_from_slice(&drop.item.0);
-                    put_u32(&mut out, drop.chance);
-                }
-            }
-
-            out.extend_from_slice(&unit.middle);
-            if let Some(attributes) = &unit.attributes {
-                out.extend_from_slice(attributes);
-            }
-
-            put_count(&mut out, unit.inventory.len());
-            for slot in &unit.inventory {
-                put_u32(&mut out, slot.slot);
-                out.extend_from_slice(&slot.item.0);
-            }
-
-            out.extend_from_slice(&unit.tail);
+            write_unit(&mut out, unit);
         }
 
         out
     }
 
-    fn unit_mut(&mut self, index: usize) -> Result<&mut Placement> {
+    pub fn unit_mut(&mut self, index: usize) -> Result<&mut Placement> {
         self.units
             .get_mut(index)
             .ok_or_else(|| Error::Invalid(format!("No placed unit number {index}.")))
@@ -228,6 +254,12 @@ impl UnitPlacements {
         Ok(())
     }
 
+    pub fn set_attributes(&mut self, index: usize, attributes: [i32; 3]) -> Result<()> {
+        self.link_tables();
+        self.unit_mut(index)?.attributes = Some(attributes);
+        Ok(())
+    }
+
     fn link_tables(&mut self) {
         if self.subversion >= TABLE_SUBVERSION {
             return;
@@ -236,7 +268,7 @@ impl UnitPlacements {
         self.subversion = TABLE_SUBVERSION;
         for unit in &mut self.units {
             unit.item_table = Some(NO_TABLE);
-            unit.attributes = Some(vec![0; ATTRIBUTE_BYTES]);
+            unit.attributes = Some([0; 3]);
         }
     }
 
@@ -247,30 +279,83 @@ impl UnitPlacements {
             }
         }
     }
+
+    /// Adds a unit as the World Editor places one: facing 270°, full life and
+    /// mana, the next creation number. Returns its index.
+    pub fn add(&mut self, id: FourCC, player: u32, x: f32, y: f32, z: f32) -> usize {
+        let creation_number = self
+            .units
+            .iter()
+            .map(|u| u.creation_number + 1)
+            .max()
+            .unwrap_or_default();
+        let tables = self.subversion >= TABLE_SUBVERSION;
+        let grouped = self.version >= GROUP_VERSION;
+
+        self.units.push(Placement {
+            id,
+            variation: 0,
+            x,
+            y,
+            z,
+            angle: std::f32::consts::FRAC_PI_2 * 3.0,
+            scale: [1.0; 3],
+            skin: self.skins.then_some(id),
+            group: grouped.then_some(NO_GROUP),
+            flags: DEFAULT_FLAGS,
+            player,
+            unknown: [0; 2],
+            life: DEFAULT_LIFE,
+            mana: DEFAULT_MANA,
+            item_table: tables.then_some(NO_TABLE),
+            sets: Vec::new(),
+            gold: 0,
+            acquisition: DEFAULT_ACQUISITION,
+            level: 1,
+            attributes: tables.then_some([0; 3]),
+            inventory: Vec::new(),
+            abilities: Vec::new(),
+            random: RandomUnit::Fixed(FIXED_UNIT),
+            color: NO_COLOR,
+            waygate: NO_WAYGATE,
+            creation_number,
+            roll_pitch: grouped.then_some([0.0; 2]),
+            lights: grouped.then(|| 0u32.to_le_bytes().to_vec()),
+        });
+
+        self.units.len() - 1
+    }
+
+    pub fn remove(&mut self, index: usize) -> Result<Placement> {
+        if index >= self.units.len() {
+            return Err(Error::Invalid(format!("No placed unit number {index}.")));
+        }
+
+        Ok(self.units.remove(index))
+    }
 }
 
 fn parse_unit(r: &mut Reader<'_>, layout: &Layout) -> Result<Placement> {
-    let start = r.pos();
     let id = r.fourcc()?;
-
-    r.u32()?;
-    let x = r.f32()?;
-    let y = r.f32()?;
-
-    r.take(POSITION_BYTES - 12)?;
-    if layout.skins {
-        r.fourcc()?;
-    }
-
-    if layout.version >= GROUP_VERSION {
-        r.u32()?;
-    }
-
-    r.u8()?;
+    let variation = r.u32()?;
+    let (x, y, z) = (r.f32()?, r.f32()?, r.f32()?);
+    let angle = r.f32()?;
+    let scale = [r.f32()?, r.f32()?, r.f32()?];
+    let skin = if layout.skins {
+        Some(r.fourcc()?)
+    } else {
+        None
+    };
+    let group = if layout.version >= GROUP_VERSION {
+        Some(r.i32()?)
+    } else {
+        None
+    };
+    let flags = r.u8()?;
     let player = r.u32()?;
-
-    r.take(PLAYER_BYTES)?;
-    let head = r.since(start);
+    let unknown = [r.u8()?, r.u8()?];
+    let life = r.i32()?;
+    let mana = r.i32()?;
     let item_table = if layout.subversion >= TABLE_SUBVERSION {
         Some(r.i32()?)
     } else {
@@ -293,14 +378,11 @@ fn parse_unit(r: &mut Reader<'_>, layout: &Layout) -> Result<Placement> {
         sets.push(set);
     }
 
-    let middle_start = r.pos();
-
-    r.u32()?;
-    r.f32()?;
+    let gold = r.u32()?;
+    let acquisition = r.f32()?;
     let level = r.u32()?;
-    let middle = r.since(middle_start);
     let attributes = if layout.subversion >= TABLE_SUBVERSION {
-        Some(r.take(ATTRIBUTE_BYTES)?.to_vec())
+        Some([r.i32()?, r.i32()?, r.i32()?])
     } else {
         None
     };
@@ -314,53 +396,180 @@ fn parse_unit(r: &mut Reader<'_>, layout: &Layout) -> Result<Placement> {
         });
     }
 
-    let tail_start = r.pos();
-    let abilities = r.count(ABILITY_BYTES)?;
+    let n = r.count(ABILITY_BYTES)?;
+    let mut abilities = Vec::with_capacity(n);
 
-    r.take(abilities * ABILITY_BYTES)?;
-    match r.i32()? {
+    for _ in 0..n {
+        abilities.push(AbilityLevel {
+            ability: r.fourcc()?,
+            autocast: r.u32()? != 0,
+            level: r.u32()?,
+        });
+    }
+
+    let random = match r.i32()? {
         RANDOM_BY_LEVEL => {
-            r.take(RANDOM_BY_LEVEL_BYTES)?;
+            let bytes = r.take(4)?;
+
+            RandomUnit::ByLevel([bytes[0], bytes[1], bytes[2], bytes[3]])
         }
-        RANDOM_FROM_TABLE => {
-            r.take(RANDOM_FROM_TABLE_BYTES)?;
-        }
+        RANDOM_FROM_TABLE => RandomUnit::FromTable {
+            group: r.u32()?,
+            column: r.u32()?,
+        },
         RANDOM_FROM_LIST => {
             let n = r.count(RANDOM_ENTRY_BYTES)?;
+            let mut list = Vec::with_capacity(n);
 
-            r.take(n * RANDOM_ENTRY_BYTES)?;
+            for _ in 0..n {
+                list.push((r.fourcc()?, r.u32()?));
+            }
+
+            RandomUnit::FromList(list)
         }
-        _ => {}
-    }
-
-    r.u32()?;
-    r.u32()?;
+        other => RandomUnit::Fixed(other),
+    };
+    let color = r.i32()?;
+    let waygate = r.i32()?;
     let creation_number = r.u32()?;
+    let (roll_pitch, lights) = if layout.version >= GROUP_VERSION {
+        let roll_pitch = [r.f32()?, r.f32()?];
+        let start = r.pos();
+        let count = r.count(LIGHT_BYTES)?;
 
-    if layout.version >= GROUP_VERSION {
-        r.take(ROLL_PITCH_BYTES)?;
-        let lights = r.count(LIGHT_BYTES)?;
-
-        r.take(lights * LIGHT_BYTES)?;
-    }
-
-    let tail = r.since(tail_start);
+        r.take(count * LIGHT_BYTES)?;
+        (Some(roll_pitch), Some(r.since(start)))
+    } else {
+        (None, None)
+    };
 
     Ok(Placement {
         id,
+        variation,
         x,
         y,
+        z,
+        angle,
+        scale,
+        skin,
+        group,
+        flags,
         player,
-        level,
-        creation_number,
+        unknown,
+        life,
+        mana,
         item_table,
         sets,
-        inventory,
-        head,
-        middle,
+        gold,
+        acquisition,
+        level,
         attributes,
-        tail,
+        inventory,
+        abilities,
+        random,
+        color,
+        waygate,
+        creation_number,
+        roll_pitch,
+        lights,
     })
+}
+
+fn put_f32(out: &mut Vec<u8>, value: f32) {
+    out.extend_from_slice(&value.to_le_bytes());
+}
+
+fn write_unit(out: &mut Vec<u8>, unit: &Placement) {
+    out.extend_from_slice(&unit.id.0);
+    put_u32(out, unit.variation);
+    for value in [unit.x, unit.y, unit.z, unit.angle] {
+        put_f32(out, value);
+    }
+
+    for value in unit.scale {
+        put_f32(out, value);
+    }
+
+    if let Some(skin) = unit.skin {
+        out.extend_from_slice(&skin.0);
+    }
+
+    if let Some(group) = unit.group {
+        put_i32(out, group);
+    }
+
+    out.push(unit.flags);
+    put_u32(out, unit.player);
+    out.extend_from_slice(&unit.unknown);
+    put_i32(out, unit.life);
+    put_i32(out, unit.mana);
+    if let Some(table) = unit.item_table {
+        put_i32(out, table);
+    }
+
+    put_count(out, unit.sets.len());
+    for set in &unit.sets {
+        put_count(out, set.len());
+        for drop in set {
+            out.extend_from_slice(&drop.item.0);
+            put_u32(out, drop.chance);
+        }
+    }
+
+    put_u32(out, unit.gold);
+    put_f32(out, unit.acquisition);
+    put_u32(out, unit.level);
+    if let Some(attributes) = unit.attributes {
+        for value in attributes {
+            put_i32(out, value);
+        }
+    }
+
+    put_count(out, unit.inventory.len());
+    for slot in &unit.inventory {
+        put_u32(out, slot.slot);
+        out.extend_from_slice(&slot.item.0);
+    }
+
+    put_count(out, unit.abilities.len());
+    for ability in &unit.abilities {
+        out.extend_from_slice(&ability.ability.0);
+        put_u32(out, u32::from(ability.autocast));
+        put_u32(out, ability.level);
+    }
+
+    match &unit.random {
+        RandomUnit::Fixed(kind) => put_i32(out, *kind),
+        RandomUnit::ByLevel(bytes) => {
+            put_i32(out, RANDOM_BY_LEVEL);
+            out.extend_from_slice(bytes);
+        }
+        RandomUnit::FromTable { group, column } => {
+            put_i32(out, RANDOM_FROM_TABLE);
+            put_u32(out, *group);
+            put_u32(out, *column);
+        }
+        RandomUnit::FromList(list) => {
+            put_i32(out, RANDOM_FROM_LIST);
+            put_count(out, list.len());
+            for (id, chance) in list {
+                out.extend_from_slice(&id.0);
+                put_u32(out, *chance);
+            }
+        }
+    }
+
+    put_i32(out, unit.color);
+    put_i32(out, unit.waygate);
+    put_u32(out, unit.creation_number);
+    if let Some([roll, pitch]) = unit.roll_pitch {
+        put_f32(out, roll);
+        put_f32(out, pitch);
+    }
+
+    if let Some(lights) = &unit.lights {
+        out.extend_from_slice(lights);
+    }
 }
 
 #[cfg(test)]
@@ -374,6 +583,7 @@ mod tests {
     const CLAWS: FourCC = FourCC(*b"ratc");
     const NO_RANDOM: i32 = -1;
     const HOSTILE: u32 = 24;
+    const ATTRIBUTE_BYTES: usize = 12;
 
     fn unit(version: u32, subversion: u32) -> Vec<u8> {
         let mut out = HERO.0.to_vec();
@@ -417,7 +627,7 @@ mod tests {
         put_i32(&mut out, -1);
         put_u32(&mut out, 7);
         if version >= GROUP_VERSION {
-            out.extend_from_slice(&[0; ROLL_PITCH_BYTES]);
+            out.extend_from_slice(&[0; 8]);
             put_u32(&mut out, 0);
         }
 

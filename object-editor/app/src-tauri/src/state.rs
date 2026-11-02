@@ -18,10 +18,12 @@ use wc3_map::info::{INFO_FILE, MapInfo};
 use wc3_map::leveled::{DOODADS, LeveledObjects, UPGRADES};
 use wc3_map::placements::{PLACEMENTS_FILE, UnitPlacements};
 use wc3_map::plain::{BUFFS, DESTRUCTABLES, ITEMS, PlainObjects};
+use wc3_map::terrain::Terrain;
 use wc3_map::units::MapUnits;
 
 use crate::interface::{self, Design};
 use crate::loot::{self, Cascade};
+use crate::sync::ScriptState;
 
 pub struct Session {
     pub files: Arc<GameFiles>,
@@ -45,6 +47,7 @@ pub struct Session {
     pub mode: ArtMode,
     pub map: Option<OpenMap>,
     pub icons: HashMap<(ArtMode, String), Vec<u8>>,
+    pub tile_colors: HashMap<String, [f32; 3]>,
 }
 
 pub struct OpenMap {
@@ -67,6 +70,8 @@ pub struct OpenMap {
     pub cascades: Vec<Cascade>,
     pub saved_cascades: Vec<Cascade>,
     pub constants: MapConstants,
+    pub script: Option<ScriptState>,
+    pub terrain: Option<Terrain>,
 }
 
 impl OpenMap {
@@ -85,6 +90,8 @@ impl OpenMap {
             doodads: LeveledObjects::load(&archive, DOODADS)?,
             imports: MapImports::load(&archive)?,
             constants: MapConstants::load(&archive)?,
+            script: None,
+            terrain: Terrain::load(&archive).ok().flatten(),
             path,
             saved_files: Vec::new(),
             icons: HashMap::new(),

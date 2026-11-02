@@ -24,7 +24,9 @@ import type {
   LeveledCatalog,
   MapInfoView,
   MapSummary,
+  MapView,
   PlacedList,
+  PlacementEdit,
   PropertiesView,
   SearchHit,
   SharePreview,
@@ -153,6 +155,12 @@ export const api = {
     call<MapSummary>("set_placed_inventory", { index, items }),
   setPlacedDrops: (index: number, drops: DropsView) =>
     call<MapSummary>("set_placed_drops", { index, drops }),
+  editPlacedUnit: (index: number, edit: PlacementEdit) =>
+    call<MapSummary>("edit_placed_unit", { index, edit }),
+  addPlacedUnit: (id: string, player: number, x: number, y: number) =>
+    call<number>("add_placed_unit", { id, player, x, y }),
+  removePlacedUnit: (index: number) => call<MapSummary>("remove_placed_unit", { index }),
+  mapView: () => call<MapView>("map_view"),
   listItemTables: () => call<ItemTableList>("list_item_tables"),
   saveItemTable: (table: ItemTableInput) => call<number>("save_item_table", { table }),
   removeItemTable: (number: number) => call<void>("remove_item_table", { number }),

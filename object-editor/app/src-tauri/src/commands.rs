@@ -22,6 +22,7 @@ use crate::interface;
 use crate::loot;
 use crate::platform;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
+use crate::sync;
 use crate::view::{Field, SearchHit, UnitDetail, UnitItem, View};
 
 #[derive(Serialize)]
@@ -141,6 +142,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
         mode,
         map: None,
         icons: HashMap::new(),
+        tile_colors: HashMap::new(),
     })?;
 
     Ok(summary)
@@ -148,9 +150,10 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
 
 #[tauri::command]
 pub fn open_map(state: State<'_, AppState>, path: String) -> Result<MapSummary, String> {
-    let open = OpenMap::load(PathBuf::from(path)).map_err(|e| e.to_string())?;
+    let mut open = OpenMap::load(PathBuf::from(path)).map_err(|e| e.to_string())?;
 
     state.with(|session| {
+        open.script = sync::load(session, &open);
         session.map = Some(open);
         Ok(map_summary(session))
     })
@@ -396,6 +399,7 @@ pub fn create_ability(state: State<'_, AppState>, base: String) -> Result<Abilit
 #[tauri::command]
 pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
     state.with(|session| {
+        let script = sync::updated(session, session.map.as_ref().ok_or(NO_MAP)?)?;
         let map = session.map.as_mut().ok_or(NO_MAP)?;
         let files = map.files();
         let imported = map.imports.files();
@@ -410,6 +414,13 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
         let mut removed: Vec<&str> = removed.iter().map(String::as_str).collect();
 
         removed.extend(map.removed_files());
+        let script_bytes = script
+            .as_ref()
+            .and_then(|(file, text)| map.script.as_ref().map(|s| (*file, s.bytes(text))));
+
+        if let Some((file, bytes)) = &script_bytes {
+            written.push((file, bytes.clone()));
+        }
 
         save_changes(&map.path, &map.path, &written, &removed).map_err(|e| e.to_string())?;
         if map.ui != map.saved_ui {
@@ -420,6 +431,11 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
         if map.cascades != map.saved_cascades {
             loot::save(&map.path, &map.cascades)?;
             map.saved_cascades = map.cascades.clone();
+        }
+
+        if let Some(mut state) = map.script.take() {
+            state.saved(script.map(|(_, text)| text), map);
+            map.script = Some(state);
         }
 
         map.saved_files = files;

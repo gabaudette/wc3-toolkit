@@ -23,6 +23,7 @@ const CAMERA_DISTANCE_BYTES: usize = 8;
 const MIN_CAMERA_BYTES: usize = 4;
 const PATCH_2_WATER_BYTES: usize = 4 * 10;
 const PLAYER_POSITION_BYTES: usize = 8;
+const FIXED_START: u32 = 1;
 const PRIORITY_BYTES: usize = 8;
 const UPGRADE_BYTES: usize = 16;
 const TECH_BYTES: usize = 8;
@@ -100,9 +101,69 @@ pub struct Properties {
     options_tail: Vec<u8>,
 }
 
+// A player's start location is fixed when the field is 1 or holds the text
+// older editors left there; 0 and 2 leave it free.
+fn fixes_start(raw: u32) -> bool {
+    !matches!(raw, 0 | 2)
+}
+
+fn f32_at(bytes: &[u8], at: usize) -> f32 {
+    bytes
+        .get(at..at + 4)
+        .map_or(0.0, |b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+}
+
+fn u32_at(bytes: &[u8], at: usize) -> Option<u32> {
+    bytes
+        .get(at..at + 4)
+        .map(|b| u32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+}
+
+impl Player {
+    /// The start location, in game units.
+    pub fn start(&self) -> [f32; 2] {
+        [f32_at(&self.rest, 0), f32_at(&self.rest, 4)]
+    }
+
+    /// Start locations (bits by player number) this player's allies prefer
+    /// to start near: low and high priority.
+    pub fn ally_priorities(&self) -> [u32; 2] {
+        [
+            u32_at(&self.rest, PLAYER_POSITION_BYTES).unwrap_or_default(),
+            u32_at(&self.rest, PLAYER_POSITION_BYTES + 4).unwrap_or_default(),
+        ]
+    }
+
+    /// The same for enemies; Reforged only.
+    pub fn enemy_priorities(&self) -> Option<[u32; 2]> {
+        let at = PLAYER_POSITION_BYTES + PRIORITY_BYTES;
+
+        Some([u32_at(&self.rest, at)?, u32_at(&self.rest, at + 4)?])
+    }
+
+    pub fn hud_skin(&self) -> Option<u32> {
+        self.hud_skin
+    }
+}
+
 impl Properties {
     pub fn version(&self) -> u32 {
         self.version
+    }
+
+    /// Patch 2.0's extra fog settings, as `SetTerrainFogExV` takes them, and
+    /// the maximum linear density.
+    pub fn fog_extra(&self) -> Option<([f32; 4], f32)> {
+        (!self.fog_extra.is_empty()).then(|| {
+            (
+                [0, 4, 8, 12].map(|at| f32_at(&self.fog_extra, at)),
+                f32_at(&self.fog_extra, 16),
+            )
+        })
+    }
+
+    pub fn fog_over_sky(&self) -> bool {
+        u32_at(&self.fog_extra, 20).is_some_and(|v| v != 0)
     }
 
     pub fn uses_lua(&self) -> bool {
@@ -182,12 +243,13 @@ fn parse_properties(r: &mut Reader<'_>, version: u32, hud_skins: bool) -> Result
         density: r.f32()?,
         color: [r.u8()?, r.u8()?, r.u8()?, r.u8()?],
     };
-    let weather = r.fourcc()?;
+    // Patch 2.0 maps store their extra fog settings before the weather.
     let fog_extra = if version >= PATCH_2_VERSION {
         r.take(PATCH_2_FOG_BYTES)?.to_vec()
     } else {
         Vec::new()
     };
+    let weather = r.fourcc()?;
     let sound_environment = text(r.c_string()?);
     let light_tileset = r.u8()?;
     let water_color = [r.u8()?, r.u8()?, r.u8()?, r.u8()?];
@@ -235,7 +297,7 @@ fn parse_properties(r: &mut Reader<'_>, version: u32, hud_skins: bool) -> Result
             number,
             controller,
             race,
-            fixed_start: fixed_start_raw != 0,
+            fixed_start: fixes_start(fixed_start_raw),
             name,
             hud_skin,
             fixed_start_raw,
@@ -305,8 +367,8 @@ fn write_properties(out: &mut Vec<u8>, p: &Properties) {
     }
 
     out.extend_from_slice(&p.fog.color);
-    out.extend_from_slice(&p.weather.0);
     out.extend_from_slice(&p.fog_extra);
+    out.extend_from_slice(&p.weather.0);
     put_text(out, &p.sound_environment);
     out.push(p.light_tileset);
     out.extend_from_slice(&p.water_color);
@@ -324,9 +386,9 @@ fn write_properties(out: &mut Vec<u8>, p: &Properties) {
             put_u32(out, hud);
         }
 
-        let fixed = match (player.fixed_start, player.fixed_start_raw) {
-            (true, 0) => 1,
-            (true, raw) => raw,
+        let fixed = match (player.fixed_start, fixes_start(player.fixed_start_raw)) {
+            (wanted, now) if wanted == now => player.fixed_start_raw,
+            (true, _) => FIXED_START,
             (false, _) => 0,
         };
 

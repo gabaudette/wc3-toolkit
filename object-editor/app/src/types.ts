@@ -430,11 +430,42 @@ export type PlacedUnit = {
   level: number;
   x: number;
   y: number;
+  facing: number;
+  life: number;
+  mana: number;
+  attributes: [number, number, number] | null;
+  building: boolean;
+  random: boolean;
   inventory: (string | null)[];
   drops: DropsView;
 };
 
-export type PlacedList = { units: PlacedUnit[]; error: string | null };
+export type PlayerChoice = { number: number; name: string };
+
+export type PlacedList = {
+  units: PlacedUnit[];
+  players: PlayerChoice[];
+  error: string | null;
+  scriptProblem: string | null;
+};
+
+export type PlacementEdit = {
+  x?: number;
+  y?: number;
+  facing?: number;
+  player?: number;
+  life?: number;
+  mana?: number;
+  level?: number;
+  attributes?: [number, number, number];
+};
+
+export type MapView = {
+  bounds: [number, number, number, number];
+  width: number;
+  height: number;
+  image: string;
+};
 
 export type TierItem = { item: string; weight: number };
 
@@ -520,6 +551,7 @@ export type MapInfoView = {
   lua: boolean;
   properties: PropertiesView;
   weather: WeatherChoice[];
+  scriptProblem: string | null;
 };
 
 export type ConstantView = {

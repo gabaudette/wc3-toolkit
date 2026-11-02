@@ -1116,3 +1116,564 @@ fn imported_art_decodes() -> TestResult {
     assert!(models > 0 && textures > 0, "no map imports art");
     Ok(())
 }
+
+struct GameKinds<'a> {
+    db: &'a UnitDatabase,
+    items: &'a UnitDatabase,
+    abilities: &'a AbilityDatabase,
+    units: MapUnits,
+}
+
+impl wc3_map::script::UnitKinds for GameKinds<'_> {
+    fn is_building(&self, id: FourCC) -> bool {
+        self.units.kind(self.db, id) == Some(wc3_data::meta::ObjectKind::Building)
+    }
+
+    fn is_hero(&self, id: FourCC) -> bool {
+        self.units.kind(self.db, id) == Some(wc3_data::meta::ObjectKind::Hero)
+    }
+
+    fn is_item(&self, id: FourCC) -> bool {
+        self.items.contains(&id.to_string())
+            || (!self.db.contains(&id.to_string()) && self.units.base_of(self.db, id).is_none())
+    }
+
+    fn is_gold_mine(&self, id: FourCC) -> bool {
+        let Some(field) = self.db.field("uabi") else {
+            return false;
+        };
+        let base = self.units.base_of(self.db, id).unwrap_or(id);
+
+        self.units
+            .raw_value(self.db, id, field, ArtMode::Sd)
+            .or_else(|| self.db.raw_value(&base.to_string(), field, ArtMode::Sd))
+            .is_some_and(|abilities| abilities.split(',').any(|a| a.trim() == "Agld"))
+    }
+
+    fn team_color(&self, id: FourCC) -> Option<i32> {
+        let field = self.db.field("utco")?;
+        let base = self.units.base_of(self.db, id).unwrap_or(id);
+
+        self.units
+            .raw_value(self.db, id, field, ArtMode::Sd)
+            .or_else(|| self.db.raw_value(&base.to_string(), field, ArtMode::Sd))
+            .and_then(|v| v.trim().parse().ok())
+            .filter(|c: &i32| *c >= 0)
+    }
+
+    fn autocast_orders(&self, ability: FourCC) -> Option<(String, String)> {
+        let code = ability.to_string();
+        let order = |name: &str| {
+            let field = self
+                .abilities
+                .fields()
+                .iter()
+                .find(|f| f.field.eq_ignore_ascii_case(name))?;
+
+            self.abilities
+                .raw_value(&code, field, 1, ArtMode::Sd)
+                .filter(|order| !order.is_empty())
+        };
+
+        Some((order("Orderon")?, order("Orderoff")?))
+    }
+}
+
+const PERCENT: usize = 100;
+// Share of maps whose generated script parts match the World Editor's
+// exactly; the rest are refused at load, so this only guards regressions.
+const UNIT_SCRIPT_MATCH: usize = 90;
+const SETUP_SCRIPT_MATCH: usize = 98;
+
+/// The user's maps plus the game's own, copied out of its storage.
+fn script_maps() -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
+    let mut maps = Vec::new();
+
+    find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
+    let storage = casc::Storage::open(&env_dir(GAME_DIR_VAR)?)?;
+    let game_maps = std::env::temp_dir().join("wc3-toolkit-script-maps");
+
+    std::fs::create_dir_all(&game_maps)?;
+    for (n, entry) in storage.list("*.w3x")?.iter().enumerate() {
+        if let Ok(bytes) = storage.read(&entry.name) {
+            let path = game_maps.join(format!("{n}.w3x"));
+
+            std::fs::write(&path, bytes)?;
+            maps.push(path);
+        }
+    }
+
+    Ok(maps)
+}
+
+fn map_script(
+    map: &Map,
+) -> Result<Option<(wc3_map::script::Language, String)>, Box<dyn std::error::Error>> {
+    use wc3_map::script::{self, Language};
+
+    let jass = match map.read_file(script::JASS_FILES[0])? {
+        Some(text) => Some(text),
+        None => map.read_file(script::JASS_FILES[1])?,
+    };
+    let found = match (map.read_file(script::LUA_FILE)?, jass) {
+        (Some(lua), _) => Some((Language::Lua, lua)),
+        (None, Some(jass)) => Some((Language::Jass, jass)),
+        _ => None,
+    };
+
+    Ok(found.map(|(language, bytes)| {
+        (
+            language,
+            String::from_utf8_lossy(&bytes).replace("\r\n", "\n"),
+        )
+    }))
+}
+
+#[test]
+#[ignore = "needs maps and an install (WC3_MAPS_DIR, WC3_GAME_DIR)"]
+fn generated_setup_matches_the_world_editor() -> TestResult {
+    use wc3_map::info::MapInfo;
+    use wc3_map::setup::{self, SetupSection};
+    use wc3_map::terrain::Terrain;
+
+    let report_path = std::env::var_os("WC3_SCRIPT_REPORT").map(PathBuf::from);
+    let mut report = String::new();
+    let (mut same, mut checked) = (0, 0);
+
+    for path in &script_maps()? {
+        let Ok(map) = Map::open(path) else {
+            continue;
+        };
+        let Ok(Some((language, text))) = map_script(&map) else {
+            continue;
+        };
+        let Ok(Some(info)) = MapInfo::load(&map) else {
+            continue;
+        };
+        let Some(properties) = info.properties() else {
+            continue;
+        };
+        let bounds = Terrain::load(&map).ok().flatten().map(|t| t.bounds());
+        let section = SetupSection { properties, bounds };
+
+        checked += 1;
+        match setup::rewrite(language, &text, &section) {
+            Ok(rewritten) if rewritten == text => same += 1,
+            Ok(rewritten) => {
+                let old: Vec<&str> = text.lines().collect();
+                let new: Vec<&str> = rewritten.lines().collect();
+                let at = old
+                    .iter()
+                    .zip(&new)
+                    .position(|(a, b)| a != b)
+                    .unwrap_or(old.len().min(new.len()));
+                let window = |lines: &[&str]| {
+                    lines[at.saturating_sub(2)..(at + 4).min(lines.len())].join("\n")
+                };
+
+                report.push_str(&format!(
+                    "== {}\n-- world editor\n{}\n-- generated\n{}\n",
+                    path.display(),
+                    window(&old),
+                    window(&new)
+                ));
+            }
+            Err(e) => report.push_str(&format!("== {}\n!! {e}\n", path.display())),
+        }
+    }
+
+    report.insert_str(0, &format!("{same}/{checked} maps identical\n"));
+    if let Some(path) = report_path {
+        std::fs::write(path, &report)?;
+    }
+
+    assert!(checked > 0, "no maps checked");
+    assert!(
+        same * PERCENT >= checked * SETUP_SCRIPT_MATCH,
+        "{}",
+        report.lines().next().unwrap_or_default()
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs maps and an install (WC3_MAPS_DIR, WC3_GAME_DIR)"]
+fn generated_unit_functions_match_the_world_editor() -> TestResult {
+    use wc3_map::info::MapInfo;
+    use wc3_map::script::{self, UnitSection};
+
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let db = UnitDatabase::load(&files)?;
+    let items = UnitDatabase::load_items(&files)?;
+    let abilities = AbilityDatabase::load(&files)?;
+    let maps = script_maps()?;
+    let report_path = std::env::var_os("WC3_SCRIPT_REPORT").map(PathBuf::from);
+    let mut report = String::new();
+    let (mut same, mut total, mut maps_same, mut maps_checked) = (0, 0, 0, 0);
+
+    for path in &maps {
+        let Ok(map) = Map::open(path) else {
+            continue;
+        };
+        let Some((language, text)) = map_script(&map)? else {
+            continue;
+        };
+        let Ok(Some(placements)) = UnitPlacements::load(&map) else {
+            continue;
+        };
+        let Ok(units) = MapUnits::load(&map) else {
+            continue;
+        };
+        let info = MapInfo::load(&map).ok().flatten();
+        let tables = info
+            .as_ref()
+            .map(|i| i.tables().to_vec())
+            .unwrap_or_default();
+        let kinds = GameKinds {
+            db: &db,
+            items: &items,
+            abilities: &abilities,
+            units,
+        };
+        let section = UnitSection {
+            placements: &placements,
+            original: Some(&placements),
+            tables: &tables,
+            kinds: &kinds,
+        };
+        let Ok(generated) = script::unit_functions(language, &text, &section) else {
+            continue;
+        };
+        let existing = script::existing_unit_functions(language, &text);
+        let mut map_ok = existing.len() == generated.len();
+
+        maps_checked += 1;
+        for (name, original) in &existing {
+            total += 1;
+            match generated.iter().find(|(n, _)| n == name) {
+                Some((_, text)) if text == original => same += 1,
+                Some((_, text)) => {
+                    map_ok = false;
+                    if report.len() < 400_000 {
+                        let line = original
+                            .lines()
+                            .zip(text.lines())
+                            .position(|(a, b)| a != b)
+                            .unwrap_or_else(|| original.lines().count().min(text.lines().count()));
+
+                        report.push_str(&format!(
+                            "== {} {name} line {line}\n-- world editor:\n{}\n-- generated:\n{}\n",
+                            path.display(),
+                            original
+                                .lines()
+                                .skip(line.saturating_sub(2))
+                                .take(6)
+                                .collect::<Vec<_>>()
+                                .join("\n"),
+                            text.lines()
+                                .skip(line.saturating_sub(2))
+                                .take(6)
+                                .collect::<Vec<_>>()
+                                .join("\n"),
+                        ));
+                    }
+                }
+                None => {
+                    map_ok = false;
+                    report.push_str(&format!("== {} {name} not generated\n", path.display()));
+                }
+            }
+        }
+
+        for (name, _) in &generated {
+            if !existing.iter().any(|(n, _)| n == name) {
+                map_ok = false;
+                report.push_str(&format!(
+                    "== {} {name} generated but not in the script\n",
+                    path.display()
+                ));
+            }
+        }
+
+        if map_ok {
+            maps_same += 1;
+        }
+    }
+
+    report.insert_str(
+        0,
+        &format!("{same}/{total} functions, {maps_same}/{maps_checked} maps identical\n"),
+    );
+    if let Some(path) = report_path {
+        std::fs::write(path, &report)?;
+    }
+
+    assert!(maps_checked > 0, "no maps with scripts");
+    assert!(
+        maps_same * PERCENT >= maps_checked * UNIT_SCRIPT_MATCH,
+        "{}",
+        report.lines().next().unwrap_or_default()
+    );
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs maps and an install (WC3_MAPS_DIR, WC3_GAME_DIR)"]
+fn edited_placements_rewrite_the_unit_script() -> TestResult {
+    use std::collections::HashMap;
+
+    use wc3_map::info::MapInfo;
+    use wc3_map::placements::{DropChance, Drops};
+    use wc3_map::script::{self, Language, UnitSection};
+
+    let files = GameFiles::open(&env_dir(GAME_DIR_VAR)?, GameOptions::default())?;
+    let db = UnitDatabase::load(&files)?;
+    let items = UnitDatabase::load_items(&files)?;
+    let abilities = AbilityDatabase::load(&files)?;
+    let mut maps = Vec::new();
+    let mut checked = HashMap::new();
+
+    find_maps(&env_dir(MAPS_DIR_VAR)?, &mut maps)?;
+    for path in &maps {
+        let map = Map::open(path)?;
+        let (language, bytes) = match (
+            map.read_file(script::LUA_FILE)?,
+            map.read_file(script::JASS_FILES[0])?,
+        ) {
+            (Some(lua), _) => (Language::Lua, lua),
+            (None, Some(jass)) => (Language::Jass, jass),
+            _ => continue,
+        };
+
+        if checked
+            .get(&(language == Language::Lua))
+            .copied()
+            .unwrap_or(0)
+            >= 3
+        {
+            continue;
+        }
+
+        let text = String::from_utf8_lossy(&bytes).replace("\r\n", "\n");
+        let (Ok(Some(original)), Ok(units)) = (UnitPlacements::load(&map), MapUnits::load(&map))
+        else {
+            continue;
+        };
+        let tables = MapInfo::load(&map)?
+            .map(|i| i.tables().to_vec())
+            .unwrap_or_default();
+        let kinds = GameKinds {
+            db: &db,
+            items: &items,
+            abilities: &abilities,
+            units,
+        };
+        let unchanged = UnitSection {
+            placements: &original,
+            original: Some(&original),
+            tables: &tables,
+            kinds: &kinds,
+        };
+        let Ok(regenerated) = script::unit_functions(language, &text, &unchanged) else {
+            continue;
+        };
+
+        if regenerated != script::existing_unit_functions(language, &text) {
+            continue;
+        }
+
+        let editable = |u: &wc3_map::placements::Placement| {
+            u.id != FourCC(*b"sloc")
+                && u.id.0[1..] != *b"DNR"
+                && !items.contains(&u.id.to_string())
+                && !text.contains(&format!("gg_unit_{}_{:04}", u.id, u.creation_number))
+        };
+        let Some(first) = original.units().iter().position(editable) else {
+            continue;
+        };
+        let mut edited = original.clone();
+        let moved_x = original.units()[first].x + 128.0;
+
+        edited.unit_mut(first)?.x = moved_x;
+        edited.unit_mut(first)?.life = 50;
+        edited.set_drops(
+            first,
+            Drops::Sets(vec![vec![DropChance {
+                item: FourCC(*b"phea"),
+                chance: 100,
+            }]]),
+        )?;
+        if let Some(last) = edited
+            .units()
+            .iter()
+            .rposition(editable)
+            .filter(|i| *i != first)
+        {
+            edited.remove(last)?;
+        }
+
+        edited.add(FourCC(*b"hfoo"), 0, 0.0, 0.0, 0.0);
+
+        let section = UnitSection {
+            placements: &edited,
+            original: Some(&original),
+            tables: &tables,
+            kinds: &kinds,
+        };
+        let generated = script::unit_functions(language, &text, &section)?;
+        let rewritten = script::splice_units(language, &text, &generated)?;
+        let moved = format!("{moved_x:.1}");
+
+        assert!(
+            rewritten.contains(&moved),
+            "{}: moved unit missing",
+            path.display()
+        );
+        assert!(
+            rewritten.contains("hfoo"),
+            "{}: added footman missing",
+            path.display()
+        );
+        assert!(
+            rewritten.contains("0.50 * life"),
+            "{}: life missing",
+            path.display()
+        );
+        assert_eq!(
+            rewritten.matches("CreateAllUnits").count(),
+            2,
+            "{}: CreateAllUnits is not defined and called once each",
+            path.display()
+        );
+        if language == Language::Lua {
+            full_moon::parse_fallible(&rewritten, full_moon::LuaVersion::lua53())
+                .into_result()
+                .map_err(|e| format!("{}: {e:?}", path.display()))?;
+        }
+
+        let again = UnitSection {
+            placements: &edited,
+            original: Some(&edited),
+            tables: &tables,
+            kinds: &kinds,
+        };
+
+        assert_eq!(
+            script::unit_functions(language, &rewritten, &again)?,
+            script::existing_unit_functions(language, &rewritten),
+            "{}: the rewritten script does not reproduce itself",
+            path.display()
+        );
+        *checked.entry(language == Language::Lua).or_insert(0) += 1;
+    }
+
+    assert_eq!(checked.get(&true), Some(&3), "too few Lua maps");
+    assert_eq!(checked.get(&false), Some(&3), "too few JASS maps");
+    Ok(())
+}
+
+#[test]
+#[ignore = "needs maps and an install (WC3_MAPS_DIR, WC3_GAME_DIR)"]
+fn edited_properties_rewrite_the_setup_script() -> TestResult {
+    use wc3_map::info::{Force, MapInfo};
+    use wc3_map::script::Language;
+    use wc3_map::setup::{self, SetupSection};
+    use wc3_map::terrain::Terrain;
+
+    const TERRAIN_FOG: u32 = 0x2000;
+    const WATER_TINTING: u32 = 0x1_0000;
+    const CUSTOM_FORCES: u32 = 0x0040;
+    const ALLIED: u32 = 0x01;
+
+    let mut checked = [0, 0];
+
+    for path in &script_maps()? {
+        let Ok(map) = Map::open(path) else {
+            continue;
+        };
+        let Ok(Some((language, text))) = map_script(&map) else {
+            continue;
+        };
+        let Ok(Some(info)) = MapInfo::load(&map) else {
+            continue;
+        };
+        let Some(original) = info.properties() else {
+            continue;
+        };
+        let bounds = Terrain::load(&map).ok().flatten().map(|t| t.bounds());
+        let slot = usize::from(language == Language::Lua);
+
+        if checked[slot] >= 3
+            || original.players.len() < 2
+            || !setup::reproduces(
+                language,
+                &text,
+                &SetupSection {
+                    properties: original,
+                    bounds,
+                },
+            )
+        {
+            continue;
+        }
+
+        let mut edited = original.clone();
+
+        edited.flags |= TERRAIN_FOG | WATER_TINTING | CUSTOM_FORCES;
+        edited.weather = FourCC(*b"RAlr");
+        edited.water_color = [0x40, 0x80, 0xc0, 0xff];
+        edited.sound_environment = "cave".to_owned();
+        edited.players[0].race = 2;
+        edited.forces = vec![Force {
+            flags: ALLIED,
+            players: edited
+                .players
+                .iter()
+                .fold(0, |mask, p| mask | (1 << p.number)),
+            name: "Everyone".to_owned(),
+        }];
+
+        let section = SetupSection {
+            properties: &edited,
+            bounds,
+        };
+        let rewritten = setup::rewrite(language, &text, &section)?;
+        let first = edited.players[0].number;
+        let second = edited.players[1].number;
+
+        for expected in [
+            "SetTerrainFog",
+            "SetWaterBaseColor",
+            "AddWeatherEffect",
+            "RAlr",
+            "RACE_PREF_ORC",
+            "NewSoundEnvironment(\"cave\")",
+            "InitCustomTeams",
+            &format!("SetPlayerAllianceStateAllyBJ(Player({first}), Player({second}), true)"),
+        ] {
+            let found = rewritten.contains(expected)
+                || rewritten
+                    .replace("( ", "(")
+                    .replace(" )", ")")
+                    .contains(expected);
+
+            assert!(found, "{}: {expected} missing", path.display());
+        }
+
+        if language == Language::Lua {
+            full_moon::parse_fallible(&rewritten, full_moon::LuaVersion::lua53())
+                .into_result()
+                .map_err(|e| format!("{}: {e:?}", path.display()))?;
+        }
+
+        assert!(
+            setup::reproduces(language, &rewritten, &section),
+            "{}: the rewritten script does not reproduce itself",
+            path.display()
+        );
+        checked[slot] += 1;
+    }
+
+    assert_eq!(checked, [3, 3], "too few maps checked (JASS, Lua)");
+    Ok(())
+}

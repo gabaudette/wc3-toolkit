@@ -1,5 +1,5 @@
-import { Plus, XClose } from "@untitledui/icons";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AlertCircle, Plus, XClose } from "@untitledui/icons";
+import { type KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import { confirm } from "../dialogs";
 import {
@@ -18,17 +18,23 @@ import type {
   ItemChoice,
   ItemTableList,
   ItemTableView,
+  MapView,
   PlacedList,
   PlacedUnit,
+  PlacementEdit,
+  PlayerChoice,
+  UnitItem,
 } from "../types";
 import { classes, counted } from "../ui";
 import { Button } from "./Button";
 import { Chip } from "./Chip";
-import { GameText } from "./GameText";
+import { GameText, plainGameText } from "./GameText";
 import { ItemPicker } from "./ItemPicker";
 import { CascadeEditor, DropSetsEditor, type PickItem } from "./LootEditors";
+import { PlacedMap, type Placing, placementKey, playerColor } from "./PlacedMap";
 import { Select } from "./Select";
 import { UnitIcon } from "./UnitIcon";
+import { UnitPicker } from "./UnitPicker";
 
 type Mode = "units" | "tables";
 
@@ -36,12 +42,16 @@ type Picking = { title: string; random: boolean; then: (code: string) => void };
 
 type PlacedPaneProps = {
   editable: boolean;
+  units: UnitItem[];
   onMapChanged: () => void;
+  onOpenUnit: (id: string) => void;
   onError: (message: string | null) => void;
 };
 
 const NEW_TABLE_NAME = "Item table";
 const NEW_CASCADE_NAME = "Loot";
+const DEFAULT_STAT = -1;
+const ATTRIBUTES = ["Strength", "Agility", "Intelligence"] as const;
 const STARTER_TIERS = [
   { name: "Legendary", chance: 2, items: [] },
   { name: "Epic", chance: 5, items: [] },
@@ -63,7 +73,21 @@ function dropsSummary(drops: DropsView, tables: ItemTableView[]): string {
   return "";
 }
 
-export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps) {
+function optional(value: number): number | null {
+  if (value < 0) {
+    return null;
+  }
+
+  return value;
+}
+
+export function PlacedPane({
+  editable,
+  units: unitTypes,
+  onMapChanged,
+  onOpenUnit,
+  onError,
+}: PlacedPaneProps) {
   const [mode, setMode] = useState<Mode>("units");
   const [placed, setPlaced] = useState<PlacedList | null>(null);
   const [tables, setTables] = useState<ItemTableList | null>(null);
@@ -74,6 +98,11 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
   const [query, setQuery] = useState("");
   const [heroesOnly, setHeroesOnly] = useState(false);
   const [withDrops, setWithDrops] = useState(false);
+  const [view, setView] = useState<MapView | null>(null);
+  const [viewError, setViewError] = useState<string | null>(null);
+  const [choosingUnit, setChoosingUnit] = useState(false);
+  const [placing, setPlacing] = useState<Placing | null>(null);
+  const [owner, setOwner] = useState(0);
   const queue = useRef<Promise<void>>(Promise.resolve());
 
   const reloadUnits = useCallback(() => {
@@ -92,6 +121,7 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
     reloadUnits();
     reloadTables();
     void settle(api.itemChoices(), setChoices, onError);
+    void settle(api.mapView(), setView, setViewError);
   }, [editable, reloadUnits, reloadTables, onError]);
 
   const choiceMap = useMemo(() => new Map(choices.map((c) => [c.id, c])), [choices]);
@@ -112,6 +142,14 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
       );
   }, [units, query, heroesOnly, withDrops]);
   const unit = units.find((u) => u.index === selectedUnit);
+  const players = placed?.players ?? [];
+
+  useEffect(() => {
+    if (selectedUnit !== null) {
+      document.getElementById(`placed-${selectedUnit}`)?.scrollIntoView({ block: "nearest" });
+    }
+  }, [selectedUnit]);
+
   const table = tableList.find((t) => t.number === selectedTable);
 
   function run(work: () => Promise<unknown>, after: () => void) {
@@ -142,6 +180,95 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
       () => {
         reloadUnits();
         reloadTables();
+      },
+    );
+  }
+
+  function editUnit(index: number, edit: PlacementEdit) {
+    run(() => settle(api.editPlacedUnit(index, edit), () => onError(null), onError), reloadUnits);
+  }
+
+  function pickOnMap(index: number) {
+    setSelectedUnit(index);
+    document
+      .getElementById(`placed-${index}`)
+      ?.querySelector("button")
+      ?.focus({ preventScroll: true });
+  }
+
+  function unitKey(event: KeyboardEvent, target: PlacedUnit) {
+    if (!view || target.index !== selectedUnit) {
+      return;
+    }
+
+    const action = placementKey(event, target, view);
+
+    if (!action) {
+      return;
+    }
+
+    event.preventDefault();
+
+    if (action === "remove") {
+      void removeUnit(target.index);
+      return;
+    }
+
+    editUnit(target.index, action);
+  }
+
+  function placeUnit(x: number, y: number) {
+    if (!placing) {
+      return;
+    }
+
+    const id = placing.id;
+
+    run(
+      () =>
+        settle(
+          api.addPlacedUnit(id, owner, x, y),
+          (index) => {
+            onError(null);
+            setSelectedUnit(index);
+          },
+          onError,
+        ),
+      reloadUnits,
+    );
+  }
+
+  async function removeUnit(index: number) {
+    const target = units.find((u) => u.index === index);
+
+    if (!target) {
+      return;
+    }
+
+    const sure = await confirm(
+      `Remove ${plainGameText(target.name)} (${target.playerName}) from the map?`,
+      {
+        title: "Remove placed unit",
+        kind: "warning",
+        okLabel: "Remove unit",
+        cancelLabel: "Keep it",
+      },
+    );
+
+    if (!sure.ok) {
+      onError(sure.error);
+      return;
+    }
+
+    if (!sure.value) {
+      return;
+    }
+
+    run(
+      () => settle(api.removePlacedUnit(index), () => onError(null), onError),
+      () => {
+        setSelectedUnit(null);
+        reloadUnits();
       },
     );
   }
@@ -218,7 +345,7 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
   if (!editable) {
     return (
       <p className="m-auto text-muted">
-        Open a map to edit its placed heroes' items and what its units drop.
+        Open a map to place units and edit what they carry and drop.
       </p>
     );
   }
@@ -262,7 +389,8 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
                 <Chip label="With drops" on={withDrops} onPress={() => setWithDrops(!withDrops)} />
               </div>
               <p className="text-xs text-faint">
-                {counted(shownUnits.length, "placed unit")} shown
+                {counted(shownUnits.length, "placed unit")} shown. On the picked unit: arrow keys
+                move it (Shift: farther), [ and ] turn it, Delete removes it.
               </p>
             </>
           )}
@@ -298,10 +426,11 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
         {mode === "units" && (
           <ul aria-label="Placed units" className="min-h-0 flex-1 overflow-y-auto">
             {shownUnits.map((u) => (
-              <li key={u.index}>
+              <li key={u.index} id={`placed-${u.index}`}>
                 <button
                   type="button"
                   onClick={() => setSelectedUnit(u.index)}
+                  onKeyDown={(e) => unitKey(e, u)}
                   aria-current={selectedUnit === u.index}
                   className={classes(
                     "flex w-full items-center gap-2 px-3 py-1.5 text-left hover:bg-surface-2",
@@ -309,6 +438,11 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
                       "bg-surface-2 shadow-[inset_2px_0_0_var(--color-glow)]",
                   )}
                 >
+                  <span
+                    className="size-2.5 shrink-0 rounded-full border border-ink"
+                    style={{ backgroundColor: playerColor(u.player) }}
+                    aria-hidden="true"
+                  />
                   <UnitIcon path={u.icon} size="small" />
                   <span className="flex min-w-0 flex-1 flex-col">
                     <span className="truncate">
@@ -358,37 +492,119 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
         )}
       </aside>
 
-      <section className="frame flex min-h-0 min-w-0 flex-1 flex-col bg-surface-1">
-        {mode === "units" && unit && (
-          <UnitLoot
-            key={unit.index}
-            unit={unit}
-            tables={tableList}
-            choices={choiceMap}
-            onPickItem={pickItem}
-            onInventory={(items) => setInventory(unit, items)}
-            onDrops={(drops) => setDrops(unit, drops)}
-            onShowTables={() => setMode("tables")}
-          />
-        )}
-        {mode === "tables" && table && (
-          <TableLoot
-            key={table.number}
-            table={table}
-            choices={choiceMap}
-            onPickItem={pickItem(true)}
-            onSave={(name, sets, tiers) => saveTable(table.number, name, sets, tiers)}
-            onRemove={() => removeTable(table)}
-          />
-        )}
-        {((mode === "units" && !unit) || (mode === "tables" && !table)) && (
-          <p className="m-auto max-w-md text-center text-muted">
-            {mode === "units" &&
-              "Choose a placed unit to give a hero items or to choose what the unit drops when it dies."}
-            {mode === "tables" && "Choose an item table, or make one with the buttons on the left."}
-          </p>
-        )}
-      </section>
+      {mode === "units" && (
+        <section
+          aria-label="Map"
+          className="frame flex min-h-0 min-w-0 flex-1 flex-col bg-surface-1"
+        >
+          <div className="flex flex-wrap items-end gap-2 border-b border-line px-3 py-2">
+            {!placing && (
+              <Button
+                primary
+                disabled={placed?.error !== null}
+                onPress={() => setChoosingUnit(true)}
+              >
+                <span className="flex items-center gap-1.5">
+                  <Plus className="size-4" aria-hidden="true" />
+                  Add unit
+                </span>
+              </Button>
+            )}
+            {placing && <Button onPress={() => setPlacing(null)}>Stop placing</Button>}
+            <div className="w-56">
+              <Select
+                label="Owner of new units"
+                value={String(owner)}
+                onChange={(value) => setOwner(Number(value))}
+                options={players.map((p) => ({ value: String(p.number), label: p.name }))}
+              />
+            </div>
+          </div>
+          {placed?.scriptProblem && (
+            <p className="flex items-start gap-2 border-b border-line bg-well px-3 py-2 text-sm text-muted">
+              <AlertCircle className="mt-0.5 size-4 shrink-0 text-gold" aria-hidden="true" />
+              {placed.scriptProblem}
+            </p>
+          )}
+          {view && (
+            <PlacedMap
+              view={view}
+              units={shownUnits}
+              selected={selectedUnit}
+              placing={placing}
+              onSelect={pickOnMap}
+              onMove={(index, x, y) => editUnit(index, { x, y })}
+              onTurn={(index, facing) => editUnit(index, { facing })}
+              onPlace={placeUnit}
+              onCancelPlace={() => setPlacing(null)}
+            />
+          )}
+          {!view && (
+            <p className="m-auto max-w-md text-center text-muted">
+              {viewError ?? "Drawing the map…"}
+            </p>
+          )}
+        </section>
+      )}
+
+      {mode === "units" && (
+        <aside
+          aria-label="Selected placed unit"
+          className="panel flex min-h-0 w-96 shrink-0 flex-col rounded-[3px] bg-surface-1"
+        >
+          {unit && (
+            <UnitLoot
+              key={unit.index}
+              unit={unit}
+              players={players}
+              tables={tableList}
+              choices={choiceMap}
+              onPickItem={pickItem}
+              onEdit={(edit) => editUnit(unit.index, edit)}
+              onRemove={() => removeUnit(unit.index)}
+              onOpenUnit={() => onOpenUnit(unit.id)}
+              onInventory={(items) => setInventory(unit, items)}
+              onDrops={(drops) => setDrops(unit, drops)}
+              onShowTables={() => setMode("tables")}
+            />
+          )}
+          {!unit && (
+            <p className="m-auto max-w-xs p-4 text-center text-muted">
+              Pick a unit on the map or in the list to change it, or add one with Add unit.
+            </p>
+          )}
+        </aside>
+      )}
+
+      {mode === "tables" && (
+        <section className="frame flex min-h-0 min-w-0 flex-1 flex-col bg-surface-1">
+          {table && (
+            <TableLoot
+              key={table.number}
+              table={table}
+              choices={choiceMap}
+              onPickItem={pickItem(true)}
+              onSave={(name, sets, tiers) => saveTable(table.number, name, sets, tiers)}
+              onRemove={() => removeTable(table)}
+            />
+          )}
+          {!table && (
+            <p className="m-auto max-w-md text-center text-muted">
+              Choose an item table, or make one with the buttons on the left.
+            </p>
+          )}
+        </section>
+      )}
+
+      <UnitPicker
+        open={choosingUnit}
+        units={unitTypes}
+        onPick={(picked) => {
+          setChoosingUnit(false);
+          setPlacing({ id: picked.id, name: picked.name });
+        }}
+        onClose={() => setChoosingUnit(false)}
+      />
 
       <ItemPicker
         open={picking !== null}
@@ -407,9 +623,13 @@ export function PlacedPane({ editable, onMapChanged, onError }: PlacedPaneProps)
 
 type UnitLootProps = {
   unit: PlacedUnit;
+  players: PlayerChoice[];
   tables: ItemTableView[];
   choices: Map<string, ItemChoice>;
   onPickItem: (random: boolean) => PickItem;
+  onEdit: (edit: PlacementEdit) => void;
+  onRemove: () => void;
+  onOpenUnit: () => void;
   onInventory: (items: (string | null)[]) => void;
   onDrops: (drops: DropsView) => void;
   onShowTables: () => void;
@@ -417,9 +637,13 @@ type UnitLootProps = {
 
 function UnitLoot({
   unit,
+  players,
   tables,
   choices,
   onPickItem,
+  onEdit,
+  onRemove,
+  onOpenUnit,
   onInventory,
   onDrops,
   onShowTables,
@@ -460,20 +684,36 @@ function UnitLoot({
 
   return (
     <>
-      <header className="flex items-center gap-3 border-b border-line px-5 py-3">
-        <UnitIcon path={unit.icon} size="large" />
-        <div className="min-w-0">
-          <h2 className="truncate font-display text-3xl font-bold text-gold-bright">
-            <GameText text={unit.name} singleLine />
-          </h2>
-          <p className="truncate font-mono text-xs text-faint">
-            {unit.id} · {unit.playerName}
-            {unit.hero && ` · level ${unit.level}`} · at ({Math.round(unit.x)}, {Math.round(unit.y)}
-            )
-          </p>
+      <header className="flex flex-col gap-3 border-b border-line px-4 py-3">
+        <div className="flex items-center gap-3">
+          <UnitIcon path={unit.icon} size="large" />
+          <div className="min-w-0">
+            <h2 className="truncate font-display text-2xl font-bold text-gold-bright">
+              <GameText text={unit.name} singleLine />
+            </h2>
+            <p className="truncate font-mono text-xs text-faint">
+              {unit.id} · {unit.playerName}
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {!unit.random && <Button onPress={onOpenUnit}>Open unit type</Button>}
+          {!unit.random && <Button onPress={onRemove}>Remove from map</Button>}
         </div>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4">
+        <section aria-labelledby="placed-placement" className="flex flex-col gap-2">
+          <h3 id="placed-placement" className="font-semibold text-gold-bright">
+            Placement
+          </h3>
+          {unit.random && (
+            <p className="text-sm text-faint">
+              A random unit: the game picks one when the map starts. Change it in the World Editor.
+            </p>
+          )}
+          {!unit.random && <PlacementFields unit={unit} players={players} onEdit={onEdit} />}
+        </section>
+
         <section aria-labelledby="placed-inventory" className="flex flex-col gap-2">
           <h3 id="placed-inventory" className="font-semibold text-gold-bright">
             Inventory
@@ -558,6 +798,156 @@ function UnitLoot({
         </section>
       </div>
     </>
+  );
+}
+
+type PlacementFieldsProps = {
+  unit: PlacedUnit;
+  players: PlayerChoice[];
+  onEdit: (edit: PlacementEdit) => void;
+};
+
+function PlacementFields({ unit, players, onEdit }: PlacementFieldsProps) {
+  const attributes = unit.attributes ?? [0, 0, 0];
+
+  function setAttribute(at: number, value: number | null) {
+    const next: [number, number, number] = [...attributes];
+
+    next[at] = value ?? 0;
+    onEdit({ attributes: next });
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-x-3 gap-y-2">
+      <div className="col-span-2">
+        <Select
+          label="Owner"
+          value={String(unit.player)}
+          onChange={(value) => onEdit({ player: Number(value) })}
+          options={players.map((p) => ({ value: String(p.number), label: p.name }))}
+        />
+      </div>
+      <NumberField
+        label="X"
+        value={Math.round(unit.x)}
+        onCommit={(x) => onEdit({ x: x ?? unit.x, y: unit.y })}
+      />
+      <NumberField
+        label="Y"
+        value={Math.round(unit.y)}
+        onCommit={(y) => onEdit({ x: unit.x, y: y ?? unit.y })}
+      />
+      <NumberField
+        label="Facing (degrees)"
+        value={Math.round(unit.facing)}
+        min={0}
+        max={359}
+        onCommit={(facing) => onEdit({ facing: facing ?? 0 })}
+      />
+      <NumberField
+        label="Hit points (%)"
+        value={optional(unit.life)}
+        placeholder="100"
+        min={1}
+        max={100}
+        onCommit={(life) => onEdit({ life: life ?? DEFAULT_STAT })}
+      />
+      <NumberField
+        label="Mana"
+        value={optional(unit.mana)}
+        placeholder="Normal"
+        min={0}
+        onCommit={(mana) => onEdit({ mana: mana ?? DEFAULT_STAT })}
+      />
+      {unit.hero && (
+        <NumberField
+          label="Hero level"
+          value={unit.level}
+          min={1}
+          onCommit={(level) => onEdit({ level: level ?? 1 })}
+        />
+      )}
+      {unit.hero &&
+        ATTRIBUTES.map((name, at) => (
+          <NumberField
+            key={name}
+            label={name}
+            value={optional(attributes[at] || DEFAULT_STAT)}
+            placeholder="Normal"
+            min={1}
+            onCommit={(value) => setAttribute(at, value)}
+          />
+        ))}
+      <p className="col-span-2 text-xs text-faint">
+        Leave hit points, mana or attributes empty to keep the unit's normal values.
+      </p>
+    </div>
+  );
+}
+
+type NumberFieldProps = {
+  label: string;
+  value: number | null;
+  placeholder?: string;
+  min?: number;
+  max?: number;
+  onCommit: (value: number | null) => void;
+};
+
+function textOf(value: number | null): string {
+  if (value === null) {
+    return "";
+  }
+
+  return String(value);
+}
+
+function NumberField({ label, value, placeholder, min, max, onCommit }: NumberFieldProps) {
+  const [text, setText] = useState(textOf(value));
+
+  useEffect(() => setText(textOf(value)), [value]);
+
+  function commit() {
+    const trimmed = text.trim();
+
+    if (trimmed === textOf(value)) {
+      return;
+    }
+
+    if (!trimmed) {
+      onCommit(null);
+      return;
+    }
+
+    const number = Number(trimmed);
+
+    if (!Number.isFinite(number)) {
+      setText(textOf(value));
+      return;
+    }
+
+    onCommit(Math.round(number));
+  }
+
+  return (
+    <label className="flex flex-col gap-1 text-sm text-muted">
+      {label}
+      <input
+        type="number"
+        value={text}
+        placeholder={placeholder}
+        min={min}
+        max={max}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            commit();
+          }
+        }}
+        className="rounded-[3px] border border-field bg-well px-2.5 py-1.5 text-ink outline-none focus:border-focus"
+      />
+    </label>
   );
 }
 
