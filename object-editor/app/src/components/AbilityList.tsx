@@ -1,5 +1,5 @@
 import { Stars02 } from "@untitledui/icons";
-import { use, useEffect, useMemo, useState } from "react";
+import { memo, use, useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { settle } from "../result";
 import type { AbilitySummary, SearchHit } from "../types";
@@ -55,13 +55,7 @@ function originOf(ability: AbilitySummary): Origin {
   return "game";
 }
 
-export function AbilityList({
-  abilities,
-  selected,
-  onSelect,
-  onError,
-  onNewSpell,
-}: AbilityListProps) {
+function AbilityListView({ abilities, selected, onSelect, onError, onNewSpell }: AbilityListProps) {
   const [query, setQuery] = useState("");
   const [hits, setHits] = useState<SearchHit[] | null>(null);
   const [kinds, setKinds] = useState<Kind[]>(["hero", "unit", "item"]);
@@ -242,3 +236,5 @@ export function AbilityList({
     </aside>
   );
 }
+
+export const AbilityList = memo(AbilityListView);

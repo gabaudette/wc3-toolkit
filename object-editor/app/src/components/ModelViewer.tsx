@@ -294,6 +294,7 @@ function ModelPreview({ path, onRestored }: ModelViewerProps & { onRestored: () 
   );
   const [missingTextures, setMissingTextures] = useState(0);
   const turningRef = useRef(turning);
+  const onScreenRef = useRef(true);
 
   turningRef.current = turning;
 
@@ -312,12 +313,26 @@ function ModelPreview({ path, onRestored }: ModelViewerProps & { onRestored: () 
       setStatus({ kind: "error", message: "The 3D preview stopped. It restarts on its own." });
     };
 
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        onScreenRef.current = entry.isIntersecting;
+      }
+
+      if (onScreenRef.current && canvas.parentElement !== holder) {
+        holder.prepend(canvas);
+      }
+    });
+
+    observer.observe(holder);
     canvas.addEventListener("webglcontextlost", lost);
     canvas.addEventListener("webglcontextrestored", onRestored);
     return () => {
+      observer.disconnect();
       canvas.removeEventListener("webglcontextlost", lost);
       canvas.removeEventListener("webglcontextrestored", onRestored);
-      canvas.remove();
+      if (canvas.parentElement === holder) {
+        canvas.remove();
+      }
     };
   }, [onRestored]);
 
@@ -400,6 +415,12 @@ function ModelPreview({ path, onRestored }: ModelViewerProps & { onRestored: () 
       const draw = (now: number) => {
         const delta = now - last;
         last = now;
+
+        if (!onScreenRef.current) {
+          frame = window.requestAnimationFrame(draw);
+          return;
+        }
+
         const v = view.current;
         if (turningRef.current && !v.dragging) {
           v.yaw += (AUTO_TURN_SPEED * delta) / MS_PER_SECOND;
