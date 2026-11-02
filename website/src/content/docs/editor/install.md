@@ -31,9 +31,9 @@ On the first launch, connect your installation:
 
 <figure class="app-screenshot">
   <a href="../../screenshots/load-game.png">
-    <img src="../../screenshots/load-game.png" alt="Tinkerbench’s startup screen showing the Warcraft III folder, Browse, the HD art option and Load game data." width="600" height="420" loading="lazy" />
+    <img src="../../screenshots/load-game.png" alt="First-launch Tinkerbench setup with the detected Warcraft III folder, HD art checkbox, Load game data and Prompt for an AI assistant buttons." width="600" height="480" loading="lazy" />
   </a>
-  <figcaption>The first startup step connects your local game installation. Select the screenshot to see it at full size.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption>On the first launch, connect the game installation before opening a map.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 The [visual tour](../visual-tour/#2-open-a-map) shows the next screen and its map-opening options.

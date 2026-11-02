@@ -18,9 +18,12 @@ so you can ask for a plan and code suited to these tools.
 4. Choose **Copy prompt**, then paste into your assistant's chat. If the clipboard is
    unavailable, select and copy the prompt text by hand.
 
-<!-- Screenshot placeholder: Editor with Prompt for an AI assistant dialog open; a goal
-entered, Prompt scrolled to My map so far for an open Lua map, and Copy prompt visible.
-Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/assistant-prompt.png">
+    <img src="../../screenshots/assistant-prompt.png" alt="Prompt for an AI assistant dialog with a cooperative Sunwell-defense goal, the open Lua map&#x27;s player, force, object and import summary, and Copy prompt." width="1062" height="623" loading="lazy" />
+  </a>
+  <figcaption>The copied prompt combines your goal with a summary of the open map; it does not include every object&#x27;s values or your scripts.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## What it includes
 

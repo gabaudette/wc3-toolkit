@@ -22,9 +22,12 @@ instead; CSV and JSON are data exports.
 5. Optionally enable **Remove color codes from text**, then choose **Export…** and a
    destination. CSV for several types asks for a folder; one type or JSON asks for a file.
 
-<!-- Screenshot placeholder: Units tab with a custom unit selected and Export objects dialog
-open; show Objects, From this map, CSV Format, Cells hold and Remove color codes from text.
-Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/objects-export.png">
+    <img src="../../screenshots/objects-export.png" alt="Export objects dialog selecting Sunwell Warden, custom objects only, CSV, editor-formatted values and the Remove color codes checkbox." width="678" height="463" loading="lazy" />
+  </a>
+  <figcaption>Choose the object scope, map filter and CSV cell values before selecting a destination.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 Without an open map, exports use the installation's game objects. With a map, choosing only
 changed objects filters the object list; each exported object still contains all applicable

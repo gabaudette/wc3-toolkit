@@ -25,17 +25,20 @@ For help choosing, [compare Armor Type, Defense Type and Defense Base](../../ref
 
 ## Checkboxes and option chips
 
-Fields with several allowed options, such as **Targets Allowed**, **Targeted As** and
-**Classification**, show wrapping chips. Select a chip to toggle that option. Checked
+Fields with several allowed options, such as **Targets Allowed** and **Targeted as**,
+show wrapping chips. Select a chip to toggle that option. Checked
 options are gold; a gold dot marks an option that differs from the game's value. Ordinary
 on/off fields use a gold checkbox with a check mark.
 
 Drop-downs use the app's styling for both the field and the open menu; keyboard focus has
 a light ring, and a focused text box has a light edge.
 
-<!-- Screenshot placeholder: Units tab with Classification and Targeted As option chips
-visible, one changed option's gold dot and a focused field; show a styled drop-down open.
-Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/objects-options.png">
+    <img src="../../screenshots/objects-options.png" alt="Training construct&#x27;s changed fields, with Targeted as checkbox chips, a gold dot on Mechanical and the Unit Classification dropdown open." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>Targeted as uses wrapping chips; the gold dot marks Mechanical as changed. Unit Classification currently uses a dropdown.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## Damage and bounty dice
 
@@ -53,9 +56,12 @@ of being saved. Correct the draft, then press Enter or leave the field to commit
 These calculations were source-reviewed; the example's damage and bounty outcomes are
 **not yet confirmed in game**.
 
-<!-- Screenshot placeholder: Units tab, hero damage dice expanded with min/max/average,
-base + dice + primary attribute breakdown and the per-attack qualifier visible; include bounty
-if it fits. Use an app-screenshot figure, descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/objects-dice.png">
+    <img src="../../screenshots/objects-dice.png" alt="Sunwell Warden&#x27;s damage fields showing 10 base plus two six-sided dice and 22 Strength, for 34 to 44 damage with an average of 39." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>The hero&#x27;s level-1 damage preview adds 10 base, two six-sided dice and 22 from Strength: 34–44, average 39.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## Ability levels
 
@@ -77,9 +83,12 @@ cannot fill. For an unfilled placeholder, check the object ID and column.
 placeholders, including the `,%` suffix for percentages. Correct warnings in the source
 text, then check the preview again; the **In game** label is a preview, not a play-test result.
 
-<!-- Screenshot placeholder: Abilities tab, tooltip text being edited with a malformed color
-or unfilled placeholder warning and Formatting help expanded. Use an app-screenshot figure,
-descriptive alt text and an Image subject to change. notice. -->
+<figure class="app-screenshot">
+  <a href="../../screenshots/objects-formatting.png">
+    <img src="../../screenshots/objects-formatting.png" alt="Sunwell Light&#x27;s tooltip source and preview with Formatting help expanded, an incomplete color code, an unmatched reset and an unresolved placeholder." width="1440" height="900" loading="lazy" />
+  </a>
+  <figcaption>Formatting help stays beside the text; the preview lists the color, reset and placeholder problems in this deliberately incorrect example.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 The model viewer and icons read imported map assets first, then the installation. A missing preview can mean the referenced file is absent from the installation or imports.
 
