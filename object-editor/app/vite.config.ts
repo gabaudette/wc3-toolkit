@@ -12,8 +12,13 @@ export default defineConfig({
     port: DEV_PORT,
     strictPort: true,
     fs: {
-      // The "What's new" dialog bundles CHANGELOG.md from the repository root.
-      allow: [searchForWorkspaceRoot(process.cwd()), "../../CHANGELOG.md"],
+      // The "What's new" dialog bundles CHANGELOG.md and the assistant prompt bundles
+      // docs/assistant-prompt.md, both from the repository root.
+      allow: [
+        searchForWorkspaceRoot(process.cwd()),
+        "../../CHANGELOG.md",
+        "../../docs/assistant-prompt.md",
+      ],
     },
     watch: {
       ignored: ["**/src-tauri/**"],

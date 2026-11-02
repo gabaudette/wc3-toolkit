@@ -21,6 +21,7 @@ import { classes, MAP_FILTERS, MAP_PATH_KEY, remembered, replaceField } from "..
 import { AbilitiesPane } from "./AbilitiesPane";
 import { AppVersion } from "./AppVersion";
 import { AssetsPane } from "./AssetsPane";
+import { AssistantPromptDialog } from "./AssistantPromptDialog";
 import { Button } from "./Button";
 import { CommandPalette, type PaletteCommand } from "./CommandPalette";
 import { ExportDialog } from "./ExportDialog";
@@ -126,7 +127,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   const [clashes, setClashes] = useState<HotkeyClash[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [dialog, setDialog] = useState<"share" | "import" | "search" | null>(null);
+  const [dialog, setDialog] = useState<"share" | "import" | "search" | "assistant" | null>(null);
   const [exportScope, setExportScope] = useState<ExportScope | null>(null);
   const [tab, setTab] = useState<Tab>("units");
   const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
@@ -307,6 +308,12 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   }
 
   commands.push({
+    id: "assistant",
+    label: "Prompt for an AI assistant…",
+    run: () => setDialog("assistant"),
+  });
+
+  commands.push({
     id: "export",
     label: "Export objects…",
     run: () => setExportScope({ type: null, shown: [], selected: null }),
@@ -481,6 +488,7 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
         onClose={() => setExportScope(null)}
         onError={setError}
       />
+      <AssistantPromptDialog open={dialog === "assistant"} onClose={() => setDialog(null)} />
       <ShareDialog
         open={dialog === "share"}
         units={customUnits}

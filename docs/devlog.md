@@ -4,6 +4,23 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · AI assistant prompt (AGE-65)
+
+- `docs/assistant-prompt.md` is the prompt, bundled with `?raw` like the changelog (added to
+  Vite's `fs.allow`). `assistantPrompt.ts` fills `{{goal}}` and `{{map}}`; `assistant.rs`
+  summarizes the open map: script language, players, forces (only the map's players: the
+  World Editor stores "every player" as a full bit mask), custom and changed objects per type,
+  placements and imports. A `wc3map` test checks that every `wc3map` command the prompt names
+  is in its usage text.
+- Trial: the filled prompt with a Dota 2 style goal went to a separate assistant with nothing
+  else. Its answer had a 12-step plan, each step marked World Editor, Tinkerbench or Lua,
+  12 object specs created in an order that matches the ID rule the prompt states, and 8 Lua
+  modules registered with `Dev.OnStart`. All 8 passed the harness (`wc3map <map> lua`, Lua 5.3
+  check) and built a `[DEV]` copy. They follow the prompt's rules: timers, `GetRandomInt`,
+  only `ipairs`, `GetLocalPlayer` only for display. One mistake came from the prompt: it set
+  up 12 players in the Map tab, which only edits the players a map has. The prompt now says
+  players are added in the World Editor.
+
 ## 2026-11-02 · Tooltip checks and damage dice (AGE-28)
 
 - `fieldGroups.ts`: `rollStats` (each die rolls 1 to sides evenly, so a roll averages
