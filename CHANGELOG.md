@@ -8,6 +8,11 @@ under "What's new".
 
 ### Added
 
+- Tinkerbench opens straight into the editor: it loads the game data you used last time and
+  reopens your last map, with no clicks. Press Escape or "Stop and choose" while it loads to
+  pick another map. If the folder or the map cannot be opened, the setup screen says why.
+  Turn it off with "At start, load this game data and reopen the last map", and use
+  "Change game folder…" in the command palette to switch folders.
 - "Prompt for an AI assistant…" (on the setup screen and in the command palette) gives a
   prompt to paste into Claude, ChatGPT or another assistant. It explains Tinkerbench, what
   stays in the World Editor and the Lua harness, includes the map you describe and a summary

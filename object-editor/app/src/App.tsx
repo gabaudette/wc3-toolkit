@@ -10,10 +10,20 @@ type Ready = {
 
 export function App() {
   const [ready, setReady] = useState<Ready | null>(null);
+  const [automatic, setAutomatic] = useState(true);
 
   if (!ready) {
-    return <SetupScreen onReady={(game, map) => setReady({ game, map })} />;
+    return <SetupScreen automatic={automatic} onReady={(game, map) => setReady({ game, map })} />;
   }
 
-  return <EditorScreen game={ready.game} initialMap={ready.map} />;
+  return (
+    <EditorScreen
+      game={ready.game}
+      initialMap={ready.map}
+      onChangeGame={() => {
+        setAutomatic(false);
+        setReady(null);
+      }}
+    />
+  );
 }

@@ -4,6 +4,21 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · Open straight into the editor (AGE-66)
+
+- Measured before changing anything: loading the game data takes 0.6 s (release build, the
+  user's Proton install). Opening the CASC storage is 0.3 s; units 70 ms, abilities 100 ms,
+  everything else 5-17 ms each, the field guides 1 ms. A cache of the parsed data would save
+  at most about 0.3 s, so there is none. The cost was the clicks, not the wait.
+- `SetupScreen` starts in an automatic mode when the app launches, a folder loaded before
+  and the setting (`wc3-object-editor.autoOpen`, on unless turned off) allows it. It loads the
+  remembered folder and HD choice, then reopens the remembered map, and only that one. The
+  editor appears about 0.6 s after the window. Escape or "Stop and choose" during loading
+  stops before the map opens. A failed load or map open falls back to the setup screen with
+  a plain message and the details.
+- "Change game folder…" in the command palette asks about unsaved changes, then returns to
+  the setup screen without the automatic mode.
+
 ## 2026-11-02 · AI assistant prompt (AGE-65)
 
 - `docs/assistant-prompt.md` is the prompt, bundled with `?raw` like the changelog (added to

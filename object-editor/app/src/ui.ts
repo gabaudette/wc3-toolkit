@@ -108,6 +108,7 @@ export function fileSize(bytes: number): string {
 export const GAME_DIR_KEY = "wc3-object-editor.gameDir";
 export const MAP_PATH_KEY = "wc3-object-editor.mapPath";
 export const HD_KEY = "wc3-object-editor.hd";
+export const AUTO_OPEN_KEY = "wc3-object-editor.autoOpen";
 
 export function replaceField(detail: UnitDetail, updated: Field): UnitDetail {
   return {
