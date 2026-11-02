@@ -20,10 +20,11 @@ The Windows installer is unsigned. Windows may show **Windows protected your PC*
 
 ## Connect the game
 
+On the first launch, connect your installation:
 1. Start Tinkerbench.
-2. Under **Warcraft III folder**, choose **Browse…**.
+2. Under **1. Warcraft III folder**, choose **Browse…**.
 3. Select the installation directory containing `Data/` and `.build.info`. A Maps folder is not a game installation.
-4. Choose whether to use **HD (Reforged) art values and icons**, then select **Load game data**.
+4. Choose whether to enable **Use HD (Reforged) art values and icons**, then select **Load game data**.
 5. Wait for the unit count to confirm the game data loaded and the **2. Map** section to appear.
 6. Choose **Open a map…** to open a copy of a `.w3m` or `.w3x` map, or **Browse game data only**
    to inspect objects read-only.
@@ -36,6 +37,16 @@ The Windows installer is unsigned. Windows may show **Windows protected your PC*
 </figure>
 
 The [visual tour](../visual-tour/#2-open-a-map) shows the next screen and its map-opening options.
+
+Later launches load the last game folder and art choice, then open the last map directly.
+While game data is loading, press Escape or choose **Stop and choose** to pick another map.
+If there is no remembered map, setup stays open after loading the game data.
+
+To always choose at startup, clear **At start, load this game data and reopen the last map**
+under **2. Map** on the setup screen. From the editor, **Ctrl K → Change game folder…**
+returns to setup, where you can change that setting, the folder or the art choice.
+If automatic loading fails, setup displays the reason; see
+[automatic-opening troubleshooting](../troubleshooting/#automatic-opening-returns-to-setup).
 
 On Linux with Proton, choose the Warcraft III directory inside the game’s Proton prefix. The directory name and location depend on how you installed it.
 

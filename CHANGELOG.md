@@ -8,6 +8,9 @@ under "What's new".
 
 ### Added
 
+- The documentation covers Interface designs and their Lua functions, placed units and loot,
+  map settings and gameplay constants, imported assets, CSV/JSON exports and AI assistant
+  prompts, with updated startup, field-editing and troubleshooting guides.
 - Tinkerbench opens straight into the editor: it loads the game data you used last time and
   reopens your last map, with no clicks. Press Escape or "Stop and choose" while it loads to
   pick another map. If the folder or the map cannot be opened, the setup screen says why.

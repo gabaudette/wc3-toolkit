@@ -1,7 +1,7 @@
 ---
 
 title: "Visual tour"
-description: "A screenshot guide to Tinkerbench: load the game, open a map, find objects, edit fields and ability levels, and save your work."
+description: "Tour Tinkerbench's startup, object fields, map tools, interface designs, saving and sharing."
 ---
 
 Get to know the workbench before [editing your first map](../first-map/). These are screenshots
@@ -12,10 +12,14 @@ If you have not installed Tinkerbench yet, start with [installation](../install/
 
 ## 1. Load the game
 
-When Tinkerbench starts, it asks for your Warcraft III installation. Choose **Browse…** under
+On the first launch, Tinkerbench asks for your Warcraft III installation. Choose **Browse…** under
 **1. Warcraft III folder**, then select the game directory containing `Data/` and `.build.info`. You can also
 type or paste the folder’s path. Tinkerbench may already fill it in from detection or your
 previous session.
+
+<!-- Screenshot placeholder (refresh shared load-game.png, also used by Install Tinkerbench):
+first-launch setup with game folder and HD choice, Load game data and Prompt for an AI assistant….
+Keep the app-screenshot figure, descriptive alt text and Image subject to change. notice. -->
 
 <figure class="app-screenshot">
   <a href="../../screenshots/load-game.png">
@@ -29,10 +33,23 @@ Enable **Use HD (Reforged) art values and icons** if you want HD art, then selec
 The path in these screenshots is a local Linux/Proton installation; choose your own game
 folder. Your Maps folder is a separate location.
 
+On later launches, Tinkerbench loads that folder and art choice, then reopens the last map
+directly. While game data loads, **Stop and choose** or Escape stops before the map opens.
+With no remembered map, it stays on setup. If loading fails, setup shows the reason.
+
+<!-- Screenshot placeholder: automatic startup while game data is loading, with Stop and
+choose and the Escape hint visible. Use an app-screenshot figure, descriptive alt text and
+an Image subject to change. notice. -->
+
 ## 2. Open a map
 
 After the game data loads, choose **Open a map…** and select a copy of a `.w3m` or `.w3x`
 map. If you previously opened a map, **Reopen** offers that file directly.
+
+<!-- Screenshot placeholder (refresh shared open-map.png, also used by Your first map):
+setup after loading game data, with Reopen, Open a map…, Browse game data only, the checked
+At start, load this game data and reopen the last map setting, and the AI prompt action.
+Keep the app-screenshot figure, descriptive alt text and Image subject to change. notice. -->
 
 <figure class="app-screenshot">
   <a href="../../screenshots/open-map.png">
@@ -44,6 +61,10 @@ map. If you previously opened a map, **Reopen** offers that file directly.
 **Browse game data only** opens the workbench without a map. You can inspect objects, fields
 and previews, but editing requires an open map. Use **Open map…** in the workbench’s top bar
 when you are ready.
+
+Clear **At start, load this game data and reopen the last map** on setup to choose manually
+each time. From the workbench, **Ctrl K → Change game folder…** returns to setup after
+handling any unsaved changes.
 
 Close the map in the World Editor before saving changes from Tinkerbench. For a small test
 map to follow along with, see [your first map](../first-map/).
@@ -57,13 +78,16 @@ map to follow along with, see [your first map](../first-map/).
   <figcaption>The Paladin’s page brings its identity, values, model and field help into one view.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
-| Area            | What you can do                                                                                           |
-| --------------- | --------------------------------------------------------------------------------------------------------- |
-| Top bar         | See the open map, search across objects and commands, import, share and save.                             |
-| Object tabs     | Switch between units, abilities, items, upgrades, buffs, destructables and doodads.                       |
-| Left column     | Search the current object type and use its filter chips. Expand the game-object group when it is folded.  |
-| Center column   | Check the selected object’s raw code and summary, then browse or filter its grouped fields.               |
-| Right inspector | Read the selected field’s explanation, limits and base value. Objects with models also have a 3D preview. |
+| Area            | What you can do                                                                                                                       |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Top bar         | See the open map, search across objects and commands, import, share and save.                                                         |
+| Object tabs     | Switch between units, abilities, items, upgrades, buffs, destructables and doodads.                                                   |
+| Map tools       | Edit [Placed units](../placed-units/), [Map settings](../map-settings/), [Interface designs](../interface/) and [Assets](../assets/). |
+| Left column     | Search the current object type and use its filter chips. Expand the game-object group when it is folded.                              |
+| Center column   | Check the selected object’s raw code and summary, then browse or filter its grouped fields.                                           |
+| Right inspector | Read the selected field’s explanation, limits and base value. Objects with models also have a 3D preview.                             |
+
+Tabs keep their search, filters, list and selected object when you return, making switching faster.
 
 For a separate unit type, select a base object and choose **New unit based on this**. The new
 object gets its own raw code. Editing a game object directly changes that type wherever your
@@ -142,6 +166,9 @@ To move custom units to another map, choose **Share…** in the top bar. Share c
 object data; `.w3obj` bundles can carry imported models, textures and icons too. The receiving
 map uses **Import…**. See [sharing objects](../sharing/) for the full workflow and dependency
 handling.
+
+For spreadsheets or tools, use [Export objects as CSV or JSON](../exporting/).
+[Work with an AI assistant](../ai-assistant/) explains the copyable prompt and map summary.
 
 Ready to try it? [Edit your first map](../first-map/), or browse the
 [object field reference](../../reference/fields/) when you need a field’s exact meaning.

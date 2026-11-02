@@ -4,6 +4,26 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · Document the expanded editor (PR #78)
+
+- Added six authored Starlight guides for Interface designs, placed units and loot, map
+  settings/constants, assets, object exports and the AI assistant prompt. Added sidebar
+  entries and glossary definitions, preserving existing glossary anchors.
+- Checked controls against the React components and every Interface API against the Rust
+  Lua generators. Distinguished design JSON, generated Lua and the development map copy;
+  explained cascade rounding and the guarded map-script rewrite with its World Editor fallback.
+- Updated installation, first-map, visual tour, object editing and troubleshooting for
+  automatic startup, option chips, text diagnostics, dice calculations and the failure log.
+- Added screenshot placeholder comments with concrete capture setups; retained existing real
+  captures without adding artwork. Gameplay examples remain explicitly unconfirmed in game.
+- Source review found the bundled AI prompt incorrectly generalizes dialog APIs to all
+  designs; tracked separately as AGE-67. AGE-68 tracks the 22 screenshot captures/refreshes,
+  and AGE-69 tracks in-game verification; neither is established by a documentation build.
+- Validation: sequential website test (119 passed), generate, check (zero errors, warnings
+  or hints), build (6,617 pages) and check:links all passed. A local production preview
+  checked all 13 affected pages at 1440 px and 390 px, including 494 heading-anchor
+  references, image loading and page overflow; inspected the Interface guide at both widths.
+
 ## 2026-11-02 · Keep visited tabs alive
 
 - Every tab but Units was mounted only while shown (`{tab === "map" && <MapPane/>}`), so each
