@@ -4,6 +4,20 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · Correct Interface APIs in the assistant prompt (PR #79, AGE-67)
+
+- Replaced the dialog-only API summary in `docs/assistant-prompt.md` with per-kind examples
+  checked against `interface.rs` and its multiboard, leaderboard and timer generators. The
+  prompt now distinguishes display calls, multiboard cells, leaderboard scores and timer
+  controls, and identifies exact row/column names and player handles.
+- Explained callback arguments (the clicking player for dialogs, none for timer expiry),
+  dot calls, and initialization after the generated modules' `Dev.OnStart` callbacks. Kept
+  custom logic separate from files Tinkerbench overwrites. No generator or UI changes.
+- Validation: frontend lint/type check, all 67 frontend tests, the CLI prompt-command test
+  and the production build passed; confirmed the corrected text is bundled. Vite's 500 kB
+  chunk warning also occurs in a clean snapshot of main (1,013.46 kB entry chunk); AGE-70
+  tracks splitting that bundle without raising or suppressing the limit.
+
 ## 2026-11-02 · Document the expanded editor (PR #78)
 
 - Added six authored Starlight guides for Interface designs, placed units and loot, map
