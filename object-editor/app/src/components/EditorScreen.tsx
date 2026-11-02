@@ -106,6 +106,7 @@ const NO_PLAIN_SELECTION: Record<Catalog, string | null> = {
 type EditorScreenProps = {
   game: GameSummary;
   initialMap: MapSummary | null;
+  onChangeGame: () => void;
 };
 
 async function confirmDiscard(map: MapSummary): Promise<boolean> {
@@ -119,7 +120,7 @@ async function confirmDiscard(map: MapSummary): Promise<boolean> {
   return answer.ok && answer.value;
 }
 
-export function EditorScreen({ game, initialMap }: EditorScreenProps) {
+export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenProps) {
   const [map, setMap] = useState(initialMap);
   const [units, setUnits] = useState<UnitItem[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -252,6 +253,14 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
     setError(null);
   }, []);
 
+  async function changeGame() {
+    if (map?.unsaved && !(await confirmDiscard(map))) {
+      return;
+    }
+
+    onChangeGame();
+  }
+
   async function openOtherMap() {
     if (map?.unsaved && !(await confirmDiscard(map))) {
       return;
@@ -306,6 +315,12 @@ export function EditorScreen({ game, initialMap }: EditorScreenProps) {
   if (map && customUnits.length > 0) {
     commands.push({ id: "share", label: "Share units…", run: () => setDialog("share") });
   }
+
+  commands.push({
+    id: "change-game",
+    label: "Change game folder…",
+    run: () => void changeGame(),
+  });
 
   commands.push({
     id: "assistant",

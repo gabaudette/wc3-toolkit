@@ -1,25 +1,103 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../api";
 import { choosePath } from "../dialogs";
 import { whenOk } from "../result";
 import type { GameSummary, MapSummary } from "../types";
-import { GAME_DIR_KEY, HD_KEY, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
+import { AUTO_OPEN_KEY, GAME_DIR_KEY, HD_KEY, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
 import { AppVersion } from "./AppVersion";
 import { AssistantPromptDialog } from "./AssistantPromptDialog";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 
 type SetupScreenProps = {
+  automatic: boolean;
   onReady: (game: GameSummary, map: MapSummary | null) => void;
 };
 
-export function SetupScreen({ onReady }: SetupScreenProps) {
+type Stage = { kind: "game"; dir: string } | { kind: "map"; path: string };
+
+function fileName(path: string): string {
+  return path.split(/[\\/]/).pop() ?? path;
+}
+
+function autoOpenOn(): boolean {
+  return remembered.get(AUTO_OPEN_KEY) !== "false";
+}
+
+function firstStage(automatic: boolean): Stage | null {
+  const dir = remembered.get(GAME_DIR_KEY);
+
+  if (!automatic || !dir || !autoOpenOn()) {
+    return null;
+  }
+
+  return { kind: "game", dir };
+}
+
+function Opening({ stage, onStop }: { stage: Stage; onStop: () => void }) {
+  return (
+    <main className="mx-auto flex h-full max-w-xl flex-col justify-center px-6">
+      <div className="frame flex flex-col gap-4 bg-surface-1 p-8">
+        <h1 className="flex items-baseline gap-3 font-display text-4xl font-bold text-gold">
+          Tinkerbench
+          <AppVersion />
+        </h1>
+        <p role="status" className="text-muted">
+          {stage.kind === "game" && (
+            <>
+              Loading the game data from{" "}
+              <span className="font-mono text-xs break-all">{stage.dir}</span>…
+            </>
+          )}
+          {stage.kind === "map" && `Opening ${fileName(stage.path)}…`}
+        </p>
+        {stage.kind === "game" && (
+          <div className="flex items-center gap-3">
+            <Button onPress={onStop}>Stop and choose</Button>
+            <span className="text-sm text-faint">or press Escape</span>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
+
+export function SetupScreen({ automatic, onReady }: SetupScreenProps) {
   const [dir, setDir] = useState(remembered.get(GAME_DIR_KEY) ?? "");
   const [hd, setHd] = useState(remembered.get(HD_KEY) === "true");
   const [game, setGame] = useState<GameSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assistant, setAssistant] = useState(false);
+  const [autoOpen, setAutoOpen] = useState(autoOpenOn);
+  const [stage, setStage] = useState<Stage | null>(() => firstStage(automatic));
+  const stopped = useRef(false);
+  const started = useRef(false);
+
+  useEffect(() => {
+    if (stage?.kind !== "game") {
+      return;
+    }
+
+    function stopOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        stopped.current = true;
+        setStage(null);
+      }
+    }
+
+    window.addEventListener("keydown", stopOnEscape);
+    return () => window.removeEventListener("keydown", stopOnEscape);
+  }, [stage]);
+
+  useEffect(() => {
+    if (started.current || stage?.kind !== "game") {
+      return;
+    }
+
+    started.current = true;
+    void openAutomatically(stage.dir);
+  });
 
   useEffect(() => {
     if (dir) {
@@ -62,6 +140,44 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
     setGame(summary.value);
   }
 
+  async function openAutomatically(gameDir: string) {
+    const summary = await api.openGame(gameDir, hd);
+
+    if (!summary.ok) {
+      setError(
+        `Tinkerbench could not load the game data from ${gameDir}: ${summary.error} Check the folder and load it again.`,
+      );
+      setStage(null);
+      return;
+    }
+
+    setGame(summary.value);
+    const mapPath = remembered.get(MAP_PATH_KEY);
+
+    if (stopped.current || !mapPath) {
+      setStage(null);
+      return;
+    }
+
+    setStage({ kind: "map", path: mapPath });
+    const map = await api.openMap(mapPath);
+
+    if (!map.ok) {
+      setError(
+        `Tinkerbench could not reopen ${fileName(mapPath)}. It may have been moved, renamed or deleted, or another program may have it open. Details: ${map.error}`,
+      );
+      setStage(null);
+      return;
+    }
+
+    onReady(summary.value, map.value);
+  }
+
+  function chooseAutoOpen(on: boolean) {
+    setAutoOpen(on);
+    remembered.set(AUTO_OPEN_KEY, String(on));
+  }
+
   async function openMap(path: string, summary: GameSummary) {
     setBusy(true);
     setError(null);
@@ -97,6 +213,18 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
   }
 
   const lastMap = remembered.get(MAP_PATH_KEY);
+
+  if (stage) {
+    return (
+      <Opening
+        stage={stage}
+        onStop={() => {
+          stopped.current = true;
+          setStage(null);
+        }}
+      />
+    );
+  }
 
   return (
     <main className="mx-auto flex h-full max-w-xl flex-col justify-center px-6">
@@ -151,7 +279,7 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
             <div className="flex flex-wrap gap-2">
               {lastMap && (
                 <Button primary disabled={busy} onPress={() => openMap(lastMap, game)}>
-                  Reopen {lastMap.split(/[\\/]/).pop()}
+                  Reopen {fileName(lastMap)}
                 </Button>
               )}
               <Button disabled={busy} onPress={() => browseMap(game)}>
@@ -161,13 +289,16 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
                 Browse game data only
               </Button>
             </div>
+            <Checkbox isSelected={autoOpen} onChange={chooseAutoOpen}>
+              At start, load this game data and reopen the last map
+            </Checkbox>
           </section>
         )}
 
         {error && (
           <p
             role="alert"
-            className="rounded-[3px] border border-danger/40 bg-danger/10 px-3 py-2 text-danger"
+            className="rounded-[3px] border border-danger/40 bg-danger/10 px-3 py-2 text-danger [overflow-wrap:anywhere]"
           >
             {error}
           </p>
