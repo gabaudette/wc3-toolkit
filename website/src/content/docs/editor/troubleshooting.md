@@ -1,7 +1,7 @@
 ---
 
 title: "Troubleshooting"
-description: "Fix game-folder detection, loading, read-only editing, map saving, missing models and icons, and import problems in Tinkerbench."
+description: "Fix startup, editing, saving, script-rewrite and artwork problems, and find the log for a bug report."
 ---
 
 Start with the symptom you see. These checks follow the current editor’s behavior; a preview
@@ -12,13 +12,16 @@ trying changes.
 | ---------------------------------------------------------- | ------------------------------------------------------------------------- |
 | The game folder is blank or points to another installation | [Game-folder detection](#the-game-folder-is-not-detected)                 |
 | Load game data fails, or the Map section never appears     | [Loading game data](#the-game-data-will-not-load)                         |
+| Automatic startup returns to setup                         | [Automatic opening](#automatic-opening-returns-to-setup)                  |
 | Fields cannot be edited, or Save is unavailable            | [Read-only browsing and pending edits](#i-cannot-edit-or-save-fields)     |
 | A unit, object or field seems to have disappeared          | [Search and filters](#my-unit-or-field-is-missing)                        |
 | A map cannot be opened or reopened                         | [Opening a map](#my-map-will-not-open)                                    |
 | Save reports an error                                      | [Saving a map](#saving-the-map-fails)                                     |
 | Changes disappear or do not show in game                   | [Checking the saved result](#my-changes-disappear-or-do-not-show-in-game) |
+| A tab says its script parts cannot be rewritten            | [Script rewriting](#a-tab-cannot-rewrite-the-map-script)                  |
 | A model, texture or icon is missing                        | [Artwork and rendering](#a-model-or-icon-is-missing)                      |
 | An imported object loses its artwork or changes raw code   | [Import previews](#an-import-loses-artwork-or-changes-raw-codes)          |
+| You need the log file for a bug report                     | [Find the log](#find-the-log-file)                                        |
 
 ## The game folder is not detected
 
@@ -52,6 +55,24 @@ A folder passing those two checks does not guarantee its game data is complete o
 If loading still fails, include the exact file or table named in the error when reporting it.
 
 **Next:** [Installation guide](../install/), or [report the unresolved error](#report-an-unresolved-problem).
+
+## Automatic opening returns to setup
+
+**Symptom:** A later launch tries to load the last game folder or map, then shows setup
+with an error. Tinkerbench falls back here so you can choose another path.
+1. Read the full error. A game-data failure names the folder; check it still contains
+   `Data/` and `.build.info`, then choose **Load game data** again.
+2. If reopening the map failed, check whether it moved, was renamed or deleted, or is open
+   in another program. Use **Open a map…** to choose its current path or another map.
+3. To choose manually on future launches, clear **At start, load this game data and reopen
+   the last map** under **2. Map**. To stop an automatic load in progress, use Escape or
+   **Stop and choose** while game data loads.
+
+The first launch still asks for the game folder. With no remembered map, an automatic
+game-data load stays on setup; that alone is not an error. To change folders from the
+editor, use **Ctrl K → Change game folder…**.
+
+**Next:** [Connect the game](../install/#connect-the-game) or [opening a map](#my-map-will-not-open).
 
 ## I cannot edit or save fields
 
@@ -144,6 +165,28 @@ in-game result separately. They help distinguish a saving problem from gameplay 
 **Next:** [The Footman walkthrough](../first-map/) and
 [game objects versus custom objects](../objects/#game-objects-and-custom-objects).
 
+## A tab cannot rewrite the map script
+
+**Symptom:** **Placed units** says Tinkerbench cannot rewrite the unit script exactly as
+the World Editor does, or **Map** says this about the player and environment script.
+
+The map holds both data and generated script. Tinkerbench rewrites those script parts only
+when it can reproduce the original parts exactly from the loaded data. A warning means
+the data can still be saved, but the affected script parts need a World Editor save before
+the changes take effect in game.
+1. Save your edits in Tinkerbench and check that the **unsaved** marker clears.
+2. Open that saved map in the World Editor, then save it there to regenerate its script.
+3. Close the map in the World Editor before editing it again in Tinkerbench. Reopen it in
+   Tinkerbench if you need to refresh the script check, and test the saved map in game.
+
+The **Placed units** warning covers placements, inventories, drops and item tables. The
+**Map** warning covers players, forces, fog, weather, water and sound. It does not say that
+an object-field edit or a gameplay constant failed to save. Do not fix this by hand-editing
+the generated map script; the World Editor rewrites it.
+
+**Next:** [Placed units and loot](../placed-units/#save-and-test) or
+[map settings](../map-settings/#save-and-verify-the-result).
+
 ## A model or icon is missing
 
 **Symptom:** A preview says **No model**, an icon is a plain square, a model has missing
@@ -156,8 +199,8 @@ textures, or the inspector shows a rendering error.
 3. Compare with a standard game object. If that works but your imported object does not,
    start with the imported model, texture and icon paths. A **“texture(s) could not be
    loaded”** message means the model may still display with missing textures.
-4. To compare SD and HD art, save your changes, restart Tinkerbench and change **Use HD
-   (Reforged) art values and icons** before **Load game data**. The editor tries alternate
+4. To compare SD and HD art, save your changes, use **Ctrl K → Change game folder…**, and
+   change **Use HD (Reforged) art values and icons** before **Load game data**. The editor tries alternate
    game-art layers when art is missing; this does not guarantee every requested asset exists.
 
 **“WebGL is not available in this window.”** and **“Could not show this model…”** are renderer
@@ -194,6 +237,23 @@ replaced it.
 [missing assets](../sharing/#missing-assets) and
 [import discovery limits](../../formats/imports/#protected-maps).
 
+## Find the log file
+
+Tinkerbench records failures in `tinkerbench.log`. Attach it with the full error and steps
+when reporting a problem.
+
+| System  | Log file                                                              |
+| ------- | --------------------------------------------------------------------- |
+| Linux   | `~/.local/share/io.github.gabaudette.wc3toolkit/logs/tinkerbench.log` |
+| Windows | `%LOCALAPPDATA%\io.github.gabaudette.wc3toolkit\logs\tinkerbench.log` |
+
+Linux uses the local data folder, so a configured `XDG_DATA_HOME` can change the first part
+of that path. When the log exceeds 1 MB, the next start sets it aside as
+`tinkerbench.previous.log`; include that file too if it covers the failure.
+
+If a file or folder chooser itself fails, the editor reports that failure. Copy that
+message and attach the log; cancelling a chooser is a different outcome.
+
 ## Report an unresolved problem
 
 After trying the relevant checks, [search existing issues](https://github.com/gabaudette/wc3-toolkit/issues)
@@ -218,5 +278,6 @@ Does a standard game object or small test map work?:
 
 Attach a screenshot when it helps show the symptom. Use a minimal test map you have
 permission to share; do not upload your game installation or extracted game files.
+Include [the log file](#find-the-log-file) when reporting a failure.
 The [bug-report guide](../../contributing/#report-a-useful-bug) explains what makes a report
 actionable.

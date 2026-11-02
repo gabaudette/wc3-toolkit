@@ -1,6 +1,6 @@
 ---
 title: "Map-making glossary"
-description: "Definitions and examples for raw codes, base and custom objects, fields, dependencies, handles, natives, Blizzard helpers, JASS, Lua and map-file terms."
+description: "Definitions for objects, placed units, loot tables, interface designs, gameplay constants, imported files and scripting terms."
 tableOfContents:
   maxHeadingLevel: 2
 ---
@@ -9,7 +9,7 @@ Use this glossary when a field explanation or scripting example introduces an un
 term. Each definition links to a guide or reference for the next step. The entries follow
 the terminology used by the project's existing guides and supported map formats.
 
-Jump to [A–C](#ac), [D–H](#dh), [J–P](#jp) or [R–T](#rt). Every term heading has its own link,
+Jump to [A–C](#ac), [D–H](#dh), [I](#i), [J–P](#jp) or [R–T](#rt). Every term heading has its own link,
 so you can share a definition directly. To search this page from anywhere on the site, use
 **Ctrl K** (or **⌘ K**) and choose **Guides** under **Search in**.
 
@@ -74,6 +74,14 @@ In Lua, pass the function value, such as `OnTimerExpired`, or an inline function
 </section>
 
 See the complete [callback examples](../../scripting/languages/#callbacks).
+
+### Cascade
+
+An [item table](#item-table) authored as ordered rarity tiers. A tier rolls only after
+earlier tiers miss; the first hit chooses one item by weight. Tinkerbench shows exact
+calculated chances and the whole percentages stored as one World Editor item set, and
+keeps the tier definitions in `<map> Loot.json` beside the map.
+See [building a cascade](../../editor/placed-units/#build-a-cascade-of-rarity-tiers).
 
 ### Constant
 
@@ -165,6 +173,13 @@ can browse these objects read-only without a map. In an open map, changes to a g
 are stored as map overrides. This term does not mean a particular Footman standing on the
 map; that is a [placed instance](#placed-instance). See [game objects and custom objects](../../editor/objects/#game-objects-and-custom-objects).
 
+### Gameplay constant
+
+A map-wide gameplay setting, such as attribute bonuses, experience or the attack-versus-defense
+damage table. It differs from an individual object field and from a named scripting
+[constant](#constant). The map stores changed constants in `war3mapMisc.txt`.
+See [gameplay constants](../../editor/map-settings/#change-gameplay-constants).
+
 ### Handle
 
 An engine value referring to a runtime object, such as a unit, timer, group, trigger or
@@ -175,6 +190,22 @@ before releasing an engine resource.
 
 For a concrete example, [compare coordinates and location handles](../common-confusions/#coordinates-versus-location-handles).
 
+## I
+
+### Imported file
+
+A file added to the map archive, such as a custom model, texture or icon, with a path used
+by object fields or other map content. Models can require textures at specific paths.
+An imported file is separate from the custom object that uses it. See
+[importing and managing assets](../../editor/assets/).
+
+### Item table
+
+A named drop definition shared by placed units in a map. A plain table contains item sets;
+each set rolls at most one item, with any unused chance dropping nothing. A
+[cascade](#cascade) is another way to author a table in Tinkerbench. See
+[shared item tables](../../editor/placed-units/#share-an-item-table).
+
 ## J–P
 
 ### JASS
@@ -183,6 +214,13 @@ One of Warcraft III's map scripting languages. Its declarations explicitly name 
 and return types, and its callback syntax uses `function CallbackName`. The JASS view in the
 [API reference](../api/) shows declarations from the recorded script snapshot.
 See [scripting basics](../../scripting/languages/) for complete usage examples.
+
+### Leaderboard
+
+An interface board ranking player or named rows by one numeric value. Tinkerbench supports
+player rows and up to four rows of your own; Lua updates the scores. Compare
+[multiboard](#multiboard), which has several columns, and see
+[leaderboard designs](../../editor/interface/#make-a-leaderboard).
 
 ### Lua
 
@@ -204,6 +242,12 @@ The container holding a map's named files. In the **MPQ** maps handled by this t
 object changes, strings, scripts and imported assets are separate archive members. A map
 file such as `.w3x` is not the same thing as a `.w3obj` bundle. See
 [object-data files](../../formats/object-data/#files-and-object-kinds) and [imports and protected maps](../../formats/imports/).
+
+### Multiboard
+
+An interface table with several columns and rows, often used for player scores, kills and
+deaths. Cells can have text, color and icons. Rows can be fixed or repeated for each player;
+Lua updates cells by row and column. See [multiboard designs](../../editor/interface/#make-a-multiboard).
 
 ### Native
 
@@ -240,10 +284,17 @@ and the [stored level/column layout](../../formats/object-data/#versions-and-lev
 
 ### Placed instance
 
-One particular copy of an object type on a map, such as one of several Footmen placed in
-the World Editor. Tinkerbench edits object-type data; terrain and placement remain World
-Editor work. At runtime, a unit handle refers to an individual unit, including units created
-by scripts. See [what the editor saves](../../editor/first-map/#what-the-editor-saves) and [object type](#object-type).
+One particular copy of an object type on a map, such as one of several Footmen. Tinkerbench
+edits placed units as well as object types; terrain, doodad and destructable placement
+remain World Editor work. At runtime, a unit handle refers to an individual unit, including
+units created by scripts. See [placed unit](#placed-unit),
+[what the editor saves](../../editor/first-map/#what-the-editor-saves) and [object type](#object-type).
+
+### Placed unit
+
+A unit instance saved at a position in the map, with its own owner, facing and starting
+settings. Several placed units can share one object type while carrying different hero
+inventories or using different drops. See [Placed units and loot](../../editor/placed-units/).
 
 ## R–T
 
@@ -284,6 +335,12 @@ The map's **WTS** file, `war3map.wts`, which maps numeric IDs to text. An object
 can store a token such as `TRIGSTR_007`; entry `7` supplies its displayed text. This is a text
 reference, not an object's raw code. Transfers must resolve source text and allocate destination
 entries rather than blindly copying the token. See [map strings](../../formats/strings/).
+
+### Timer window
+
+An interface window displaying a timer's title and remaining time. Tinkerbench designs its
+length, repeat behavior and optional Lua callback; showing or hiding the window is separate
+from starting or stopping its timer. See [timer-window designs](../../editor/interface/#make-a-timer-window).
 
 ### Tooltip placeholder
 

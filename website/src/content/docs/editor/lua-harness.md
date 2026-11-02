@@ -10,6 +10,11 @@ The [spell wizard’s generated-Lua path](../../guides/custom-spell/#add-scripte
 can write a spell module and build this copy from inside Tinkerbench. The commands below
 also work with modules you write yourself.
 
+The [Interface tab](../interface/#save-and-build-the-lua) also writes modules and builds a
+test copy for dialogs, multiboards, leaderboards and timers. Keep their generated files
+separate from your own callbacks. For a plan and module-writing context to paste into an
+assistant, use [the AI assistant prompt](../ai-assistant/).
+
 ## Prepare the map
 
 Use a map configured for Lua scripting in the World Editor. Save it before running the command. A JASS map without `war3map.lua` cannot use this harness.

@@ -4,16 +4,20 @@ title: "Your first map"
 description: "Change a unit, save the map, and verify the result in game."
 ---
 
-For this first pass, change an existing unit’s maximum life. Tinkerbench edits object data; use the World Editor for terrain, placement and triggers.
+For this first pass, change an existing unit’s maximum life. Tinkerbench edits object data
+and [placed units](../placed-units/); use the World Editor to prepare this example's terrain
+and starting player.
 
 ## Prepare a small test map
 
 1. In the World Editor, create a map and place a Footman for a player you can control.
 2. Save it as a separate test map. Close the map in the World Editor before saving changes from Tinkerbench.
-3. Start Tinkerbench, choose your Warcraft III folder and select **Load game data**. See
-   [connect the game](../install/#connect-the-game) if this is your first start.
-4. Under **2. Map**, choose **Open a map…**, then select your test map. If you are already in
-   the workbench, use **Open map…** in its top bar instead.
+3. Start Tinkerbench. On the first launch, choose your Warcraft III folder and select
+   **Load game data**; see [connect the game](../install/#connect-the-game). Later launches
+   load the last folder and reopen the last map directly.
+4. If setup is showing, choose **Open a map…** under **2. Map** and select your test map.
+   If the workbench opened another map, use **Open map…** in its top bar. You can also press
+   Escape or **Stop and choose** while game data loads to stay on setup.
 
 <figure class="app-screenshot">
   <a href="../../screenshots/open-map.png">
@@ -40,7 +44,18 @@ Reopen the saved map in the World Editor and test it in Warcraft III. The Footma
 
 ## What the editor saves
 
-Tinkerbench writes object changes and the map’s string table. It does not become your terrain or trigger editor. Avoid keeping the same map open in two editors: a later save can overwrite the other tool’s work.
+Tinkerbench writes object changes and the map’s string table, [imported files](../assets/),
+[map properties and constants](../map-settings/), and [placed units and loot](../placed-units/).
+For placed units and map setup, it also updates the relevant generated script when it can
+reproduce the World Editor's parts exactly. If a tab reports that it cannot, open and save
+the result in the World Editor before testing in game.
+
+[Interface designs](../interface/) and cascade tiers also have files beside the map:
+`<map> UI.json` and `<map> Loot.json`. Keep them with your source map; Interface Lua is
+built separately into a development copy.
+
+Use the World Editor for terrain and GUI triggers. Avoid keeping the same map open in two
+editors: a later save can overwrite the other tool's work.
 
 If [saving fails](../troubleshooting/#saving-the-map-fails) or
 [the result differs in game](../troubleshooting/#my-changes-disappear-or-do-not-show-in-game),
