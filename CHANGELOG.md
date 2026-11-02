@@ -196,6 +196,8 @@ under "What's new".
 
 ### Fixed
 
+- The AI assistant prompt now gives the correct Lua functions for dialogs, multiboards,
+  leaderboards and timer windows, including the arguments passed to button and timer callbacks.
 - Weather chosen in the Map tab was saved in the wrong place in maps from the current World
   Editor, and fog and water colors showed with red and blue swapped.
 - Lists of units, items and abilities hold no more than the game allows, as in the World

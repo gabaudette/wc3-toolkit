@@ -44,8 +44,8 @@ Its tabs:
   World Editor), forces (add and remove them; allied, allied victory, shared vision and
   control) and gameplay constants.
 - **Interface**: dialogs, multiboards, leaderboards and timer windows designed visually.
-  Each becomes a Lua module, `ui_<name>.lua`, written to my modules folder; my code shows them
-  with `UI.<Name>.Show(player)`, `.Hide(player)` and `.ShowAll()`.
+  Each becomes a Lua module, `ui_<name>.lua`, written to my modules folder. Each design kind
+  exposes different functions, listed below.
 - **Assets**: import models, textures and icons (text `.mdl` models are converted to `.mdx`)
   and see which objects use each file; "Create a unit from this model".
 - **Share and Import**: share codes (`W3OBJ1:…`) and bundle files (`.w3obj`) move custom
@@ -55,6 +55,39 @@ Its tabs:
 
 Tinkerbench does not edit terrain, regions or triggers, and it does not write Lua for my own
 game logic: that is the harness.
+
+## The generated Interface Lua
+
+Use the `UI.<Name>` shown by Tinkerbench's **Show Lua**, replacing the example design names
+below with my actual ones. Use dot calls, not colon calls.
+
+- **Dialog**: `UI.Difficulty.Show(player)`, `UI.Difficulty.Hide(player)` and
+  `UI.Difficulty.ShowAll()`. A button set to run a Lua function calls my named global
+  function with the player who clicked, for example `function OnHardMode(player)`.
+- **Multiboard**: `UI.Scoreboard.Show()`, `UI.Scoreboard.Hide()` and
+  `UI.Scoreboard.Minimize(true)` (use `false` to expand). Update a cell with
+  `UI.Scoreboard.SetValue(player, "Kills", 5)`, or use
+  `UI.Scoreboard.SetValue("Header", "Kills", "Kills")` for a fixed row. Also available:
+  `UI.Scoreboard.SetColor(row, column, "00ff00")` (`nil` for white) and
+  `UI.Scoreboard.SetIcon(row, column, path)` (`nil` for no icon). The row is a player handle
+  for a per-player row or a fixed row's name; the column is its exact name.
+- **Leaderboard**: `UI.Kills.Show()` and `UI.Kills.Hide()`. Update scores with
+  `UI.Kills.SetValue(player, 5)` or `UI.Kills.AddValue(player, 1)`; read them with
+  `UI.Kills.GetValue(player)`. Each score function also accepts an own row's exact name
+  instead of a player, for example `UI.Kills.AddValue("Alliance", 1)`. Updating a score
+  reapplies the designed order.
+- **Timer window**: `UI.NextWave.Start()` uses the designed duration;
+  `UI.NextWave.Start(30)` starts or restarts with 30 seconds. `UI.NextWave.Stop()` pauses the
+  timer and hides its window. `UI.NextWave.Show()` and `UI.NextWave.Hide()` change only the
+  window's visibility; `UI.NextWave.Remaining()` returns seconds left. On expiry, the
+  generated module calls my named global function with no arguments, for example
+  `function SpawnWave()`. A repeating timer calls it each time it expires.
+
+Only dialogs have `ShowAll()` or take a player argument for `Show` and `Hide`. Keep my
+callbacks and game logic in separate files: Tinkerbench rewrites its generated modules.
+I must define the named callbacks in my own modules; missing callbacks do nothing.
+The generated modules create their game handles through `Dev.OnStart`; use them from later
+game events or from a startup callback registered after theirs, in a file sorted after `ui_*.lua`.
 
 ## The Lua harness
 
