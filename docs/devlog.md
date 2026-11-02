@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-11-02 · Illustrate the expanded editor guides (AGE-68)
+## 2026-11-02 · Illustrate the expanded editor guides (PR #80, AGE-68)
 
 - Replaced all 22 screenshot placeholders with actual desktop captures: 22 new PNGs and
   refreshed startup panels shared by installation, first-map and visual-tour pages. Added
