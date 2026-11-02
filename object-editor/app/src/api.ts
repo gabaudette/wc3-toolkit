@@ -5,6 +5,7 @@ import type {
   AbilityDetail,
   AbilitySummary,
   AssetList,
+  AssistantContext,
   Catalog,
   ConstantsView,
   Design,
@@ -142,6 +143,7 @@ export const api = {
   createLeveled: (catalog: LeveledCatalog, base: string) =>
     call<UnitItem>("create_leveled", { catalog, base }),
   saveMap: () => call<MapSummary>("save_map"),
+  assistantContext: () => call<AssistantContext>("assistant_context"),
   shareCode: (ids: string[]) => call<SharePreview>("share_code", { ids }),
   saveBundle: (ids: string[], path: string) => call<void>("save_bundle", { ids, path }),
   mapCustomUnits: (path: string) => call<UnitItem[]>("map_custom_units", { path }),

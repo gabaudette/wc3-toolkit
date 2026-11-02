@@ -5,6 +5,7 @@ import { whenOk } from "../result";
 import type { GameSummary, MapSummary } from "../types";
 import { GAME_DIR_KEY, HD_KEY, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
 import { AppVersion } from "./AppVersion";
+import { AssistantPromptDialog } from "./AssistantPromptDialog";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 
@@ -18,6 +19,7 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
   const [game, setGame] = useState<GameSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assistant, setAssistant] = useState(false);
 
   useEffect(() => {
     if (dir) {
@@ -170,7 +172,12 @@ export function SetupScreen({ onReady }: SetupScreenProps) {
             {error}
           </p>
         )}
+
+        <div className="border-t border-line pt-3">
+          <Button onPress={() => setAssistant(true)}>Prompt for an AI assistant…</Button>
+        </div>
       </div>
+      <AssistantPromptDialog open={assistant} onClose={() => setAssistant(false)} />
     </main>
   );
 }

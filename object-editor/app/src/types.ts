@@ -604,3 +604,17 @@ export type ExportRequest = {
 };
 
 export type ExportResult = { objects: number; files: string[] };
+
+export type ObjectCount = { kind: string; custom: number; changed: number };
+
+export type MapContext = {
+  name: string;
+  script: string | null;
+  players: string[];
+  forces: string[];
+  objects: ObjectCount[];
+  placed: number;
+  importedFiles: number;
+};
+
+export type AssistantContext = { balance: string | null; map: MapContext | null };

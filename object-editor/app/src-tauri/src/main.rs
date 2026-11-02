@@ -2,6 +2,7 @@
 
 mod abilities;
 mod assets;
+mod assistant;
 mod commands;
 mod export;
 mod hotkeys;
@@ -54,6 +55,7 @@ fn main() -> ExitCode {
             commands::reset_field,
             commands::create_unit,
             commands::save_map,
+            assistant::assistant_context,
             export::export_objects,
             spells::spell_kinds,
             spells::discard_spell,

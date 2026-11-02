@@ -390,3 +390,40 @@ fn main() -> ExitCode {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::USAGE;
+
+    const ASSISTANT_PROMPT: &str = include_str!("../../../../../docs/assistant-prompt.md");
+    const COMMAND_INDENT: &str = "  ";
+
+    fn commands() -> Vec<&'static str> {
+        USAGE
+            .lines()
+            .skip_while(|line| *line != "commands:")
+            .filter(|line| {
+                line.starts_with(COMMAND_INDENT) && !line[COMMAND_INDENT.len()..].starts_with(' ')
+            })
+            .filter_map(|line| line.split_whitespace().next())
+            .collect()
+    }
+
+    #[test]
+    fn the_assistant_prompt_names_only_real_commands() {
+        let known = commands();
+        let used: Vec<&str> = ASSISTANT_PROMPT
+            .match_indices("wc3map ")
+            .filter_map(|(at, _)| ASSISTANT_PROMPT[at..].split_whitespace().nth(2))
+            .map(|word| word.trim_matches('`'))
+            .collect();
+
+        assert!(!used.is_empty(), "the prompt shows no wc3map command");
+        for command in used {
+            assert!(
+                known.contains(&command),
+                "the prompt names an unknown command: {command}"
+            );
+        }
+    }
+}

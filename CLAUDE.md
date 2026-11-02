@@ -59,7 +59,9 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   real-time priority, whose CPU limit SIGKILLed the app; the only platform-specific module).
   `api.ts`/`types.ts` mirror the Rust types. Run with `bun run tauri dev` from `app/`.
   The look ("Arcane": tokens, type, components, accessibility and copy rules) is in
-  `docs/design.md`; follow it for every screen.
+  `docs/design.md`; follow it for every screen. `docs/assistant-prompt.md` is the prompt the
+  app copies for AI assistants (`assistant.rs` summarizes the open map for it): keep it true
+  to the app and the harness when either changes.
 - `map/src/` — example Lua modules for the harness (`wc3map <map> lua <dir>`, implemented in
   `crates/wc3-map/src/lua.rs`): appends the modules plus a `Dev.OnStart` loader and a `main()`
   hook to the editor's `war3map.lua` in a `<map>_dev.w3m` copy named `[DEV] ...`, after

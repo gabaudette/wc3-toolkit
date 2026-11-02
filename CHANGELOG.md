@@ -8,6 +8,11 @@ under "What's new".
 
 ### Added
 
+- "Prompt for an AI assistant…" (on the setup screen and in the command palette) gives a
+  prompt to paste into Claude, ChatGPT or another assistant. It explains Tinkerbench, what
+  stays in the World Editor and the Lua harness, includes the map you describe and a summary
+  of the open map, and asks for a build plan, object specs with field IDs, ready Lua modules
+  and how to test them.
 - Damage and bounty dice show the minimum, maximum and average, and how they add up: the base,
   the dice roll and, for heroes, the primary attribute's bonus (using the map's damage per
   attribute point). The result follows the numbers as you type, and a value a field does not
