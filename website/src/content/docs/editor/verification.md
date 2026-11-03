@@ -10,7 +10,7 @@ They do not establish that every map, model or generated script works.
 
 ## Test environment and method
 
-The AGE-69 run on **November 2, 2026** used Warcraft III **3.0.1.24371 x86_64** and
+The play test on **November 2, 2026** used Warcraft III **3.0.1.24371 x86_64** and
 Tinkerbench revision **`7ad04d88ba517beb71f30af6cf30c1c4a513d8e1`**. The game and World
 Editor ran through Steam GE-Proton11-7 on Linux Mint, with an NVIDIA RTX 3060. Tests used
 a small World Editor Lua map, one human and one computer player, and locally imported
@@ -24,7 +24,7 @@ recorded arguments to environment and multiboard natives while forwarding the or
 calls. Melee starting units, AI and automatic victory were disabled for the fixture.
 Native arguments alone do not establish that an effect rendered correctly.
 
-The [recorded runtime checks](https://github.com/gabaudette/wc3-toolkit/blob/main/docs/verification/age69-runtime.txt)
+The [recorded runtime checks](https://github.com/gabaudette/wc3-toolkit/blob/main/docs/verification/editor-runtime-2026-11-02.txt)
 retain the test's own result strings. Game maps, extracted scripts and standalone artwork
 are not distributed with this record. Custom IDs below identify this fixture; another map
 can assign different IDs.
@@ -80,8 +80,7 @@ Reusing the old filename within the earlier game process had shown the previous 
 Restart the game and use a distinct test-copy filename when checking changed constants
 or loading screens if results appear stale.
 
-The final loading screen displayed the saved title **AGE-69 custom loading title**,
-subtitle **Saved by Tinkerbench** and descriptive text. The selected imported Knight model
+The final loading screen displayed the saved title, subtitle and descriptive text. The selected imported Knight model
 did not replace the stock loading art; custom loading-model behavior remains unconfirmed.
 Prologue and campaign behavior were not exercised.
 
@@ -138,49 +137,56 @@ Player/Kills/Deaths Scoreboard with a fixed row and one row per playing player; 
 leaderboard with player rows and a Waves row; and the repeating Next wave timer with a
 three-second duration. Callback functions were `OnHardMode(player)` and `SpawnWave()`.
 
-The unchanged generated modules exposed a startup failure: dialog messages were blank,
-the timer displayed the default **Remaining** title, and the leaderboard had zero rows
-and an empty label. Its Lua score values changed, but that did not populate the game board.
-This is tracked in [AGE-72](https://linear.app/age-studio/issue/AGE-72/initialize-interface-game-ui-after-loading-so-labels-and-leaderboard).
+An earlier run created the designs during map initialization: messages and the timer title
+were lost, and the leaderboard was empty. The updated harness runs startup callbacks in
+registration order on the first game timer tick after loading. **Rebuild your development
+copy with the updated Tinkerbench or command-line tool** to apply that change.
+
+The startup follow-up on **November 3, 2026**, using the same game build and environment,
+confirmed the opening Difficulty message, the initially hidden Details message on first
+show, the **Next wave** timer title, and all three leaderboard rows. Waves at 10 sorted
+above the human's 6; adding 10 moved the human's 16 to the top. These updates ran directly
+in a startup callback registered after the generated designs, with no extra construction
+or consumer delay. The [startup runtime checks](https://github.com/gabaudette/wc3-toolkit/blob/main/docs/verification/interface-startup-runtime.txt)
+record 17 passing assertions and identify the tested harness source.
 
 <figure class="app-screenshot">
   <a href="../../screenshots/verification-interface-startup.png">
-    <img src="../../screenshots/verification-interface-startup.png" alt="Unchanged generated Interface output in Warcraft III: dialog buttons without their message, an empty leaderboard and a timer titled Remaining." width="1452" height="938" loading="lazy" />
+    <img src="../../screenshots/verification-interface-startup.png" alt="Warcraft III showing the Difficulty dialog's Choose a difficulty message, the Next wave timer title and a three-row leaderboard with scores 16, 10 and 0." width="1452" height="938" loading="lazy" />
   </a>
-  <figcaption>The normal generated output loses the designed message, timer title and leaderboard rows during startup.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption>The rebuilt test copy retains the initial message, timer title and leaderboard rows.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
-Other checks on the unchanged modules passed.
+The multiboard was inspected with the leaderboard hidden. Its fixed row showed blue
+**Slain** text, the human's Kills cell showed green **5**, and both displayed the imported
+Knight icon. Player names retained their colors; the computer row and remaining values
+were present. Show, hide and minimize operations also passed.
 
-Dialog hotkey **H** invoked `OnHardMode` with player 0 and the expected triggering
-player. **A** and **B** navigated between Difficulty and Details.
-
-The multiboard created one fixed and two playing-player rows. Fixed/player `SetValue`
-calls, color-wrapped text and imported icon paths reached the real game natives.
-Show, hide and minimize operations changed native state. The overlapping leaderboard
-prevented a complete visual check of the cells.
+<figure class="app-screenshot">
+  <a href="../../screenshots/verification-multiboard.png">
+    <img src="../../screenshots/verification-multiboard.png" alt="The running map's Sunwell defense multiboard with fixed and player rows, blue Slain text, a green score of 5 and imported Knight icons." width="1452" height="938" loading="lazy" />
+  </a>
+  <figcaption>Hiding the leaderboard exposes the multiboard's text, colors and imported icons for inspection.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 The three-second repeating timer invoked `SpawnWave` at least twice without arguments.
 Hide kept the countdown running; show restored the window; stop paused and hid it;
 `Start(30)` restarted it with the requested duration and showed it.
 
-A **diagnostic control** deferred the generated initialization callbacks by 0.2 seconds
-without changing the generated module bodies. Its first dialog messages, timer title and
-three leaderboard rows appeared. In that control, Waves at 10 sorted above the human's 6;
-adding 10 moved the human's 16 to the top. This isolates the startup timing problem; it
-does not establish that the unchanged generator is fixed or prescribe a supported workaround.
+Clicking Hard invoked `OnHardMode` with player 0 and the expected triggering player.
+Clicking Back navigated from Details to Difficulty. This follow-up used mouse activation;
+it did not independently reconfirm keyboard hotkeys. The previous play test exercised
+hotkeys and navigation, but imported callbacks still need their own game check.
 
-Repeated navigation still lost the dialog message in the delayed control, although its
-button continued to work. [AGE-73](https://linear.app/age-studio/issue/AGE-73/restore-a-generated-dialogs-message-when-it-is-shown-again)
-tracks restoring the message whenever a dialog is shown again. Design transfer was
-checked through save/readback and generated names, but imported callbacks were not
-independently established in game.
+**A reused dialog can still lose its message.** Returning from Details showed Difficulty's
+buttons without its original message. The startup fix does not resolve repeated display.
+Design transfer was checked through save/readback and generated names, rather than full
+independent execution of imported designs.
 
 ## Remaining checks
 
-[AGE-74](https://linear.app/age-studio/issue/AGE-74/complete-remaining-editor-play-test-coverage-after-age-69)
-tracks rendered multiboard cells, repeated and imported dialogs after the fixes, tooltip
-rendering, a suitable custom loading model, prologue, visible water tint, audible sound,
+Remaining checks cover repeated and imported dialogs, keyboard activation after rebuilding,
+tooltip rendering, a suitable custom loading model, prologue, visible water tint, audible sound,
 JASS maps, additional asset workflows and multiple clients. Keep those limits explicit
 when using the [Interface](../interface/), [Map](../map-settings/), [Assets](../assets/)
 and [Objects](../objects/) guides.

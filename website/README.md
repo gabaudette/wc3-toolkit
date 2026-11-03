@@ -32,6 +32,8 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
 ## Author content
 
 - `src/content/docs/`: editor guides, tutorials, language introduction and map format notes.
+  Published pages never include task IDs or task-tracker links. Describe behavior,
+  known problems and verification limits directly; keep tracking in Linear and the devlog.
   The troubleshooting hub in `editor/troubleshooting.md` follows the current setup, field,
   save and import flows and preview messages. Recheck its advice when those controls or
   errors change; a source-level check does not establish in-game behavior.
@@ -91,7 +93,7 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   automatic-loading screen before it finishes; do not simulate it or change the app's UI.
   Set up Sunwell Warden with 10 base damage, two six-sided dice and 22 Strength (34–44,
   average 39), and a Training construct with Mechanical selected under Targeted as. Unit
-  Classification currently uses a dropdown (AGE-71), not chips. Give Sunwell Light an
+  Classification currently uses a dropdown, not chips. Give Sunwell Light an
   intentionally incomplete color code, unmatched reset and unresolved placeholder, and open
   Formatting help. For Creep rewards, use 0.2%, 5% and 100% tiers so the warning and rounded
   chances are visible. Set a custom force and fog/weather/water settings, and edit the
@@ -106,22 +108,26 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   should select the custom hero as CSV; the assistant prompt should include a goal and the
   open-map summary. Capture dialogs with margins around their actual bounds and keep their
   true dimensions in the markup. These captures establish editor behavior and generated
-  output. The later AGE-69 play tests are recorded in `editor/verification.md`; keep its
+  output. The later play tests are recorded in `editor/verification.md`; keep its
   observed results, known failures and remaining limits separate from desktop previews.
-- `src/content/docs/editor/verification.md` records the AGE-69 play tests on game build
+- `src/content/docs/editor/verification.md` records the initial play tests on game build
   3.0.1.24371 and editor revision `7ad04d8`. Refresh `verification-fallback.png`,
   `verification-imported-model.png` and `verification-interface-startup.png` only from
-  real game runs (1452 × 938). Reproduce the tabled placement, loot and constant setups
+  real game runs (1452 × 938). `verification-multiboard.png` shows the rendered cell checks
+  after the startup fix. Reproduce the tabled placement, loot and constant setups
   through Tinkerbench on a disposable World Editor Lua map with two slots and starting
   locations. Save, reopen and inspect the stored data, then build generated modules and
   project-authored runtime assertions through the Lua harness. Inspect native arguments
   and visible output separately. Test a normal save and a script-rewrite refusal followed
   by a World Editor save; use a fresh game process and distinct map filename when checking
   changed constants/loading text. Preserve the distinction between unchanged output and
-  the diagnostic 0.2-second initialization delay. Retain the test's own result strings in
-  `../docs/verification/age69-runtime.txt`, without the game's Preload wrapper or scripts.
-  Do not remove unconfirmed notices for AGE-72/73 failures or AGE-74 coverage without new
-  evidence. Never add test maps, extracted scripts or standalone artwork.
+  the earlier diagnostic initialization delay; the current startup check uses the harness
+  directly, with a consumer registered after the generated designs. Retain the test's own
+  result strings in `../docs/verification/editor-runtime-2026-11-02.txt` and
+  `../docs/verification/interface-startup-runtime.txt`, without the game's Preload wrapper
+  or scripts.
+  Do not remove unconfirmed notices for remaining failures or untested behavior without
+  new evidence. Never add test maps, extracted scripts or standalone artwork.
 - `../object-editor/crates/wc3-data/data/*-fields.toml`: project-authored field explanations,
   shared with the editor. Every guide ID gets a page, including IDs absent from the snapshot.
 - `data/fields.toml`: display names, types, limits, choices and applicability extracted from

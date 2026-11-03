@@ -36,7 +36,11 @@ Dev.OnStart(function()
 end)
 ```
 
-`Dev.OnStart` registers work to run after the editor’s `main()`. The timer delays the text until after the loading screen. The `Dev` helper exists only in maps built by this harness.
+`Dev.OnStart` registers work for the first game timer tick after map initialization and the
+loading screen. Callbacks run in registration order: placed units and GUI triggers already
+exist, and generated Interface designs initialize before callbacks registered after them.
+The example adds a further one-second delay before showing its text. The `Dev` helper
+exists only in maps built by this harness.
 
 ## Build the development copy
 

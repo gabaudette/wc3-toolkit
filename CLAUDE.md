@@ -67,6 +67,9 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   hook to the editor's `war3map.lua` in a `<map>_dev.w3m` copy named `[DEV] ...`, after
   checking every file as Lua 5.3 with `full_moon`.
 
+Published website pages never mention task IDs or link to internal task trackers. Describe
+behavior, known problems and test limits directly; keep tracking in Linear and the devlog.
+
 Every pull request adds an entry to `CHANGELOG.md` (user-facing, shown in the app under
 "What's new"; performance-only or technical-only work is just "Performance improvements." or
 "Internal improvements.") and to `docs/devlog.md` (technical details); see `CONTRIBUTING.md`.

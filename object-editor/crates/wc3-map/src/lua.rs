@@ -7,7 +7,8 @@
 //! them after the editor's `main()`. The copy's name gets a `[DEV]` prefix so it
 //! stands out in the game's map list.
 //!
-//! Modules register start functions with `Dev.OnStart(fn)`.
+//! Modules register start functions with `Dev.OnStart(fn)`. They run in registration
+//! order on the first game timer tick, after map initialization has finished.
 
 use std::path::{Path, PathBuf};
 
@@ -30,12 +31,17 @@ end
 ";
 
 const HOOK: &str = "
--- ===== wc3-toolkit: run modules after the editor's main() =====
+-- ===== wc3-toolkit: run modules after map initialization =====
 do
     local editor_main = main
     function main()
         editor_main()
-        for _, fn in ipairs(Dev.starters) do fn() end
+        -- UI labels and leaderboard rows created during loading are discarded by the game.
+        local timer = CreateTimer()
+        TimerStart(timer, 0.0, false, function()
+            DestroyTimer(timer)
+            for _, fn in ipairs(Dev.starters) do fn() end
+        end)
     end
 end
 ";
@@ -245,6 +251,71 @@ mod tests {
 
         assert!(order.windows(2).all(|w| w[0] < w[1]), "{order:?}");
         assert!(check_syntax("script", &script).is_ok());
+    }
+
+    #[test]
+    fn starters_wait_for_gameplay_and_keep_registration_order() {
+        let lua = mlua::Lua::new();
+
+        lua.load(
+            r#"
+            assert(_VERSION == "Lua 5.3")
+            loading = true
+            events = {}
+            function CreateTimer() return {} end
+            function TimerStart(timer, seconds, repeats, callback)
+                assert(seconds == 0 and not repeats)
+                pendingTimer = timer
+                pendingCallback = callback
+            end
+            function DestroyTimer(timer)
+                assert(timer == pendingTimer)
+                timer.destroyed = true
+            end
+            function main()
+                table.insert(events, "editor")
+            end
+            "#,
+        )
+        .exec()
+        .unwrap();
+
+        let script = build_script(
+            "",
+            &[
+                module(
+                    "ui_board.lua",
+                    r#"Dev.OnStart(function()
+                        assert(not loading, "UI must be created after loading")
+                        assert(pendingTimer.destroyed, "release the startup timer first")
+                        board = { score = 0 }
+                        table.insert(events, "board")
+                    end)"#,
+                ),
+                module(
+                    "zz_game.lua",
+                    r#"Dev.OnStart(function()
+                        board.score = 5
+                        table.insert(events, "consumer")
+                    end)"#,
+                ),
+            ],
+        );
+
+        lua.load(&script).exec().unwrap();
+        lua.load(
+            r#"
+            main()
+            assert(table.concat(events, ",") == "editor")
+            assert(board == nil)
+            loading = false
+            pendingCallback()
+            assert(table.concat(events, ",") == "editor,board,consumer")
+            assert(board.score == 5)
+            "#,
+        )
+        .exec()
+        .unwrap();
     }
 
     #[test]

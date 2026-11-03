@@ -1,4 +1,4 @@
-AGE-69: project-authored runtime result strings
+Editor verification: project-authored runtime result strings
 2026-11-02; Warcraft III 3.0.1.24371 x86_64; Tinkerbench 7ad04d8
 
 These are extracted test strings, without game-generated wrapper code.

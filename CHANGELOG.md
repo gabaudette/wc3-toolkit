@@ -201,6 +201,10 @@ under "What's new".
 
 ### Fixed
 
+- Interface designs initialize after the loading screen, keeping their initial dialog messages,
+  timer titles and leaderboard rows. Rebuild existing test copies to apply the fix.
+- Published documentation describes behavior and test limits without internal task IDs
+  or task-tracker links.
 - The AI assistant prompt now gives the correct Lua functions for dialogs, multiboards,
   leaderboards and timer windows, including the arguments passed to button and timer callbacks.
 - Weather chosen in the Map tab was saved in the wrong place in maps from the current World
