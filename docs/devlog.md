@@ -9,8 +9,8 @@ single line. Every pull request adds an entry here and to the changelog.
 - 0.1.0 was tagged (`795c416`) and built as a draft but never published; `main` is 152 commits
   past it. Rather than move a pushed tag, the first public release is 0.2.0: the version in
   `object-editor/Cargo.toml` and `app/package.json`, and `## Unreleased` became
-  `## 0.2.0 - 2026-11-03`. The stale 0.1.0 draft release is to be deleted by hand; its tag
-  stays as history.
+  `## 0.2.0 - 2026-11-03`. The stale 0.1.0 draft release was deleted; its tag stays as
+  history.
 - The changelog section was edited for people coming from 0.1.0: the big features first, the
   documentation entries folded into one, and the fixes and changes to features that are new in
   this release (Map tab weather, Interface dialogs, spell wizard closing, ...) left out, since
