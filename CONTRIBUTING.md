@@ -142,7 +142,14 @@ installers and the version shown in the editor all read it). To release:
 3. The Release workflow checks that the tag matches the version, builds the Windows
    installer (NSIS) and the Linux packages (`.deb`, AppImage), and attaches them to a
    **draft** release.
-4. Install and try them on Windows and Linux, then publish the draft on GitHub.
+4. Install and try them on Windows and Linux, fill in "Tested with" in the draft's notes with
+   what you actually tried (systems, package types, game build, SD or HD), then publish the
+   draft on GitHub.
+
+The installers ship `LICENSE` and `src-tauri/THIRD-PARTY-NOTICES.txt`, the licenses of every
+library they contain. After changing dependencies (`Cargo.lock`, `bun.lock` or the vendored C
+libraries), run `bun run notices` in `object-editor/app` and commit the result; CI fails while
+the file is out of date.
 
 The Windows installer is not signed: Windows shows a SmartScreen warning ("Windows protected
 your PC") until a code signing certificate is added. The install notes explain how to get past
