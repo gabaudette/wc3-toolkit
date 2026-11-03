@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-11-03 · Restore messages when dialogs are shown again (AGE-73)
+## 2026-11-03 · Restore messages when dialogs are shown again (PR #83, AGE-73)
 
 - Moved generated `DialogSetMessage` calls from construction into the shared display
   helper, immediately before showing. Show, ShowAll and cross-dialog navigation restore
@@ -27,6 +27,13 @@ single line. Every pull request adds an entry here and to the changelog.
 - Updated the Interface guide, verification record and capture instructions without task
   IDs or tracker links in published content. Test maps, scripts and standalone game art
   stayed outside the repository.
+- Validation: rustfmt, Clippy, blank-line checks and workspace tests (136 passed, 54
+  existing real-data tests ignored) passed. The website's sequential test (120 passed),
+  generate, check (zero errors, warnings or hints), build (6,618 pages) and check:links
+  passed. Production browser checks covered 15 pages at 1440 px and 390 px, six verification
+  figures, 546 heading-anchor references, navigation and Lua/JASS switching, with no
+  overflow, broken images or task references. The frontend build passed with the existing
+  bundle-size warning tracked by AGE-70.
 
 ## 2026-11-03 · Initialize Interface designs after loading (PR #82, AGE-72)
 

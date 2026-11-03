@@ -1,7 +1,7 @@
 Dialog message verification: project-authored runtime result strings
 2026-11-03
 Warcraft III 3.0.1.24371 x86_64; Linux Mint / GE-Proton11-7
-Source base: 136e786f8755bb432685fdaa190707aac0668604 with the revised dialog generator
+Source revision: 4fb5b627c3bfc4810fb4b81f4c85e1de5af75929
 Generator source SHA256: aa497527d709647d6fff68e19914399233ab89098c07cb3350d6b4425cc798a8
 ui_difficulty.lua SHA256: 40068df727a26ff96be401b4a35c83a8750af753e84da2ffca89b3f54a13017c
 ui_details.lua SHA256: 40d44ed4f44a8d60b6dd3e72c4dd9d920a8f9d9120d1a9cb87d4a9762b4b785e
