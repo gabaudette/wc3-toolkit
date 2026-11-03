@@ -98,8 +98,9 @@ type FlagsPopoverProps = {
 };
 
 const POPOVER_GAP = 4;
+const WINDOW_MARGIN = 8;
 
-type Placement = { right: number } & ({ top: number } | { bottom: number });
+type Placement = { right: number; maxHeight: number } & ({ top: number } | { bottom: number });
 
 const HALF = 2;
 const CHOICE_LIST = '[role="listbox"]';
@@ -116,12 +117,21 @@ function FlagsPopover({ anchor, label, onKey, onCommit, children }: FlagsPopover
     }
 
     const { clientWidth, clientHeight } = document.documentElement;
-    const right = clientWidth - cell.right;
+    const width = panel.current?.offsetWidth ?? 0;
+    const right = Math.min(clientWidth - cell.right, clientWidth - width - WINDOW_MARGIN);
 
     if (cell.bottom > clientHeight / HALF) {
-      setPlacement({ right, bottom: clientHeight - cell.top + POPOVER_GAP });
+      setPlacement({
+        right,
+        bottom: clientHeight - cell.top + POPOVER_GAP,
+        maxHeight: cell.top - POPOVER_GAP - WINDOW_MARGIN,
+      });
     } else {
-      setPlacement({ right, top: cell.bottom + POPOVER_GAP });
+      setPlacement({
+        right,
+        top: cell.bottom + POPOVER_GAP,
+        maxHeight: clientHeight - cell.bottom - POPOVER_GAP - WINDOW_MARGIN,
+      });
     }
   }, [anchor]);
 
@@ -147,7 +157,7 @@ function FlagsPopover({ anchor, label, onKey, onCommit, children }: FlagsPopover
         }
       }}
       style={placement ?? undefined}
-      className="fixed z-30 w-[32rem] max-w-[calc(100vw-2rem)] rounded-[3px] border border-line bg-surface-1 p-2 text-left shadow-lg"
+      className="fixed z-30 w-[42rem] max-w-[calc(100vw-2rem)] overflow-y-auto rounded-[3px] border border-line bg-surface-1 p-2 text-left shadow-lg"
     >
       {children}
       <p className="mt-1.5 text-xs text-faint">Enter applies, Esc cancels.</p>

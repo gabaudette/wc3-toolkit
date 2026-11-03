@@ -167,6 +167,11 @@ under "What's new".
 
 ### Changed
 
+- Fields with many options get more room and a tidier layout: options line up in columns in
+  a framed area under the field, and target lists (Targets Allowed, Targeted As) are grouped
+  by owner, kind and state. The game value column shows how many options are on. The
+  per-level target editor of abilities is wider and stays inside the window, scrolling when
+  there is not enough room.
 - Coming back to a tab is instant: it keeps its list, icons, search, filters and the object
   you had open instead of loading them again. A tab reloads only when something changed in
   another tab since you last looked at it, so it never shows outdated data. Switching between

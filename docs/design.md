@@ -76,8 +76,9 @@ would also need a CSP change.
 - **Checkboxes** (`Checkbox`): a 16 px box with a `field` edge in a `well`; on, it fills with
   `gold` and shows a dark check, so the state reads by shape, not only color. Its label is
   part of the target (24 px tall). Fields with many options (targets, classification,
-  pathing) are a `CheckboxGroup` of chips that wrap (`CheckChip`, in `FlagsInput`), under the
-  row when there are more than four: off is `muted` text on a `field` edge; on is gold
+  pathing) are a `CheckboxGroup` of chips in equal columns (`CheckChip`, in `FlagsInput`),
+  in a framed area under the row when there are more than four; target lists are grouped
+  under Owner, Kind and State headings: off is `muted` text on a `field` edge; on is gold
   (`gold-soft` fill, `gold` edge, `gold-bright` semibold text) with a checked box. Here gold
   means "on"; an option that differs from the base gets a gold dot after its label. Tab moves
   between options and Space toggles; read-only groups stay focusable.

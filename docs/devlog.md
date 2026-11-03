@@ -4,6 +4,23 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-03 · Lay out option fields in grouped columns
+
+- `FlagsInput` lays its chips in an `auto-fill` grid (`minmax(9.5rem, 1fr)`), so options line
+  up in columns instead of wrapping raggedly; in `FieldRow` the wide flag fields (more than
+  four options) sit in a framed area. Their game value column shows the count on in the base
+  value, since the full list was cut off there anyway; the changed dots still mark each
+  option that differs.
+- `choiceGroups` (`flags.ts`) splits `targetList` options into Owner, Kind and State, the
+  rest (`none`, anything unknown) last under Other. Other value types keep one group in game
+  order: the next largest, `unitClass`, has 13 options and reads fine in columns.
+- The groups are react-aria `Group`s labelled by their heading. A `fieldset` with a `legend`
+  was tried first: WebKitGTK reserved extra space for the legend (about 30 px a group), even
+  floated.
+- The ability level table's flag popover is 42rem wide (four columns), clamped to the window
+  on the left, and gets a `maxHeight` for the room above or below its cell, scrolling past it;
+  grouping made the target list about 560 px tall.
+
 ## 2026-11-03 · Restore messages when dialogs are shown again (PR #83, AGE-73)
 
 - Moved generated `DialogSetMessage` calls from construction into the shared display
