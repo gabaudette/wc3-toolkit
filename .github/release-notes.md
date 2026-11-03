@@ -32,7 +32,6 @@ distribution, package type, game build and SD/HD mode actually exercised. -->
 
 ## Known limitations
 
-- Unit Classification takes a single choice, while the game allows several.
 - Placed units and Map tab changes reach the game only when Tinkerbench can rewrite the map
   script's World Editor parts exactly; otherwise the tab says so, and saving the map in the
   World Editor applies them. This was tested on Lua maps, not yet on JASS maps.

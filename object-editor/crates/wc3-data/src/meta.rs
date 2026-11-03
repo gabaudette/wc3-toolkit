@@ -32,6 +32,14 @@ const NUMBER_CHOICE_TYPES: &[&str] = &[
     "fullFlags",
 ];
 
+/// Value types holding a comma list (`tilesetList`, `targetList`, `abilityList`).
+const LIST_SUFFIX: &str = "List";
+
+/// Choice types that hold comma lists although their names do not end in
+/// `List`: classifications (`TownHall,Mechanical`) and the pathing types a
+/// building's placement prevents or requires.
+const OTHER_LIST_TYPES: &[&str] = &["unitClass", "pathingListPrevent", "pathingListRequire"];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ObjectKind {
     Hero,
@@ -109,6 +117,11 @@ impl FieldMeta {
 
     pub fn is_bit_flags(&self) -> bool {
         BIT_FLAG_TYPES.contains(&self.value_type.as_str())
+    }
+
+    pub fn is_list(&self) -> bool {
+        self.value_type.ends_with(LIST_SUFFIX)
+            || OTHER_LIST_TYPES.contains(&self.value_type.as_str())
     }
 
     /// Whether maps store the value as an integer: numbers, booleans, bit
@@ -212,6 +225,34 @@ mod tests {
         assert_eq!(fields[0].index, None);
         assert!(fields[0].applies_to(ObjectKind::Hero));
         assert!(!fields[0].applies_to(ObjectKind::Item));
+    }
+
+    fn field_of_type(value_type: &str) -> FieldMeta {
+        let text = format!(
+            "ID;P\nC;X1;Y1;K\"ID\"\nC;X2;K\"field\"\nC;X3;K\"slk\"\nC;X4;K\"index\"\n\
+             C;X5;K\"type\"\nC;X1;Y2;K\"utyp\"\nC;X2;K\"type\"\nC;X3;K\"UnitBalance\"\n\
+             C;X4;K-1\nC;X5;K\"{value_type}\"\n"
+        );
+
+        parse_metadata(&Slk::parse(&text).unwrap())
+            .unwrap()
+            .remove(0)
+    }
+
+    #[test]
+    fn lists_include_classifications_and_pathing() {
+        for list in [
+            "targetList",
+            "abilityList",
+            "unitClass",
+            "pathingListPrevent",
+        ] {
+            assert!(field_of_type(list).is_list(), "{list}");
+        }
+
+        for single in ["attackType", "itemClass", "unitRace", "string"] {
+            assert!(!field_of_type(single).is_list(), "{single}");
+        }
     }
 
     #[test]

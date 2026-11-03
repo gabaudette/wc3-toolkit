@@ -92,8 +92,8 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   disposable Lua map with a Footman, a level-3 Paladin and one player. Capture the real
   automatic-loading screen before it finishes; do not simulate it or change the app's UI.
   Set up Sunwell Warden with 10 base damage, two six-sided dice and 22 Strength (34–44,
-  average 39), and a Training construct with Mechanical selected under Targeted as. Unit
-  Classification currently uses a dropdown, not chips. Give Sunwell Light an
+  average 39), and a Training construct with Mechanical checked under Unit Classification
+  and Targeted as, the classification's information shown. Give Sunwell Light an
   intentionally incomplete color code, unmatched reset and unresolved placeholder, and open
   Formatting help. For Creep rewards, use 0.2%, 5% and 100% tiers so the warning and rounded
   chances are visible. Set a custom force and fog/weather/water settings, and edit the

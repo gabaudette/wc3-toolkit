@@ -4,6 +4,25 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-03 · Unit Classification as option chips (AGE-71)
+
+- `build_field` (`view.rs`) gave a choice field chips only when its value type ended in
+  `List`; `unitClass` fell through to the single-choice select. A scan of the game's unit and
+  item tables found comma lists in only three choice fields: Targets Allowed (`targetList`),
+  splash targets (`targetList`) and Classification (`unitClass`, 74 units, e.g. the Castle's
+  `TownHall,Mechanical`). The pathing types (`pathingListPrevent`/`Require`) hold single
+  values in the game data but are lists in the World Editor.
+- `FieldMeta::is_list` (`wc3-data::meta`) now says which types are lists: the `List` suffix
+  plus those three; `build_field` uses it. Values are matched without case and unknown items
+  are kept when toggling, as for target lists, so the game's capitalized values load as is.
+- Checked in the app on a scratch copy of the test map: the Dragonhawk Rider with Undead and
+  Mechanical saved as `Mechanical, Undead` (read back with `wc3map unit`), reopened with both
+  chips on, and reset left the field empty in the saved map; the Human Frigate shows the
+  game's Mechanical, and the Farm's placement fields show Buildable.
+- The object-editing guide's options screenshot showed the Classification drop-down; it is
+  recaptured with the chips (and the grouped targets), and the release notes template drops
+  the limitation.
+
 ## 2026-11-03 · Split the frontend bundle (AGE-70)
 
 - The production build was one 1,013 kB chunk, over Vite's 500 kB warning. Measured with a

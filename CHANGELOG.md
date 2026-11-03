@@ -10,6 +10,13 @@ under "What's new".
 
 - Performance improvements.
 
+### Fixed
+
+- Unit Classification takes several choices, as in the game and the World Editor (a building
+  can be both a Town Hall and Mechanical): its options are chips instead of a single-choice
+  drop-down. So are the Placement Requires and Placement Prevented By pathing fields of
+  buildings.
+
 ## 0.2.0 - 2026-11-03
 
 ### Added
