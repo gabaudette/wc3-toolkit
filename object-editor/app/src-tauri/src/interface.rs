@@ -401,6 +401,7 @@ do
 
     local function display(player, show)
         if dialog ~= nil then
+            if show then DialogSetMessage(dialog, {title}) end
             DialogDisplay(player, dialog, show)
         end
     end
@@ -422,7 +423,6 @@ do
 
     local function create()
         dialog = DialogCreate()
-        DialogSetMessage(dialog, {title})
 {buttons}
         local trigger = CreateTrigger()
         TriggerRegisterDialogEvent(trigger, dialog)
@@ -771,6 +771,64 @@ mod tests {
             "{code}"
         );
         assert!(code.contains("UI.Difficulty.ShowAll()"), "{code}");
+    }
+
+    #[test]
+    fn dialog_messages_survive_repeated_shows_and_navigation() {
+        let mut main = dialog(
+            "a",
+            "Difficulty",
+            vec![
+                button("Normal", "N", ButtonAction::Close),
+                button(
+                    "About",
+                    "A",
+                    ButtonAction::ShowDialog {
+                        dialog: "b".to_owned(),
+                    },
+                ),
+                button(
+                    "Hard",
+                    "H",
+                    ButtonAction::RunFunction {
+                        function: "OnHardMode".to_owned(),
+                    },
+                ),
+            ],
+        );
+        let mut other = dialog(
+            "b",
+            "Details",
+            vec![button(
+                "Back",
+                "B",
+                ButtonAction::ShowDialog {
+                    dialog: "a".to_owned(),
+                },
+            )],
+        );
+
+        main.show_at_start = false;
+        main.title.push_str("\nNext line");
+        other.show_at_start = false;
+        other.title = "More \"details\"".to_owned();
+        other.title_color = None;
+        let designs = vec![Design::Dialog(main.clone()), Design::Dialog(other.clone())];
+        let lua = mlua::Lua::new();
+
+        lua.load(include_str!("interface/dialog_test.lua"))
+            .exec()
+            .unwrap();
+
+        for (_, code) in modules(&designs, "test UI.json").unwrap() {
+            lua.load(&code).exec().unwrap();
+        }
+
+        let expected =
+            lua.create_sequence_from([title_text(&main).unwrap(), title_text(&other).unwrap()]);
+
+        lua.globals().set("expected", expected.unwrap()).unwrap();
+        lua.load("verify_dialogs()").exec().unwrap();
     }
 
     #[test]

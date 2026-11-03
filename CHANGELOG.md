@@ -201,6 +201,9 @@ under "What's new".
 
 ### Fixed
 
+- Interface dialogs keep their designed message when shown again, including after Back
+  navigation or Hide/Show. Rewrite their Lua and rebuild the test copy to apply the fix.
+
 - Interface designs initialize after the loading screen, keeping their initial dialog messages,
   timer titles and leaderboard rows. Rebuild existing test copies to apply the fix.
 - Published documentation describes behavior and test limits without internal task IDs

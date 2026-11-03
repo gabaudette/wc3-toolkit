@@ -4,6 +4,30 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-03 · Restore messages when dialogs are shown again (AGE-73)
+
+- Moved generated `DialogSetMessage` calls from construction into the shared display
+  helper, immediately before showing. Show, ShowAll and cross-dialog navigation restore
+  the configured text/color every time; Hide leaves it alone. Dialog and button handles,
+  callbacks and startup timing remain unchanged. Existing designs need their modules
+  regenerated and their development copy rebuilt in the updated editor.
+- Reused the vendored Lua 5.3 test runtime as an app dev dependency. An execution test
+  clears messages between displays and checks repeated Show/Hide, three About/Back cycles,
+  Close and player callbacks, quoted/newline text, color and plain messages, and ShowAll
+  filtering for two human slots, a computer and an empty slot. It fails against the old
+  generator and passes with the fix; no test runtime is shipped in the app.
+- The isolated app exported five modules for a disposable Lua map. Played the unchanged
+  harness on Warcraft III 3.0.1.24371 through GE-Proton11-7: three About/Back cycles,
+  direct Hide/Show, two ShowAll calls and direct Details.Show retained white/cyan messages.
+  Normal still closed and Hard preserved its player argument. All 41 runtime checks
+  passed across 13 displays using the same two dialogs and buttons. Captured both dialogs
+  after the third round trip and recorded only our result strings, source and module
+  hashes. Mouse activation was used; imported designs, hotkeys and multiple clients
+  remain unconfirmed in this follow-up.
+- Updated the Interface guide, verification record and capture instructions without task
+  IDs or tracker links in published content. Test maps, scripts and standalone game art
+  stayed outside the repository.
+
 ## 2026-11-03 · Initialize Interface designs after loading (PR #82, AGE-72)
 
 - Changed the Lua harness to dispatch all `Dev.OnStart` callbacks together on its first

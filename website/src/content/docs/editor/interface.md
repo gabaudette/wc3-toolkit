@@ -15,10 +15,10 @@ from the modules added by the [Lua harness](../lua-harness/).
 
 :::note[Verification]
 The [recorded play test](../verification/#interface-results-and-known-failures) confirmed
-initial dialog messages, board titles and rows, multiboard text/colors/icons, a player
-callback and timer controls on one Lua map. Rebuild existing development copies with the
-updated harness to apply the startup fix. Showing a dialog again can still lose its message;
-multiplayer behavior remains unconfirmed. Read the results and limits before relying on
+initial and repeated dialog messages, board titles and rows, multiboard text/colors/icons,
+a player callback and timer controls on one Lua map. After updating Tinkerbench, choose
+**Save and build test copy** to regenerate the design modules and development map.
+Multiplayer behavior remains unconfirmed. Read the results and limits before relying on
 the designs in your map.
 :::
 
