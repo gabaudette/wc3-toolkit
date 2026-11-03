@@ -78,6 +78,7 @@ and choose **Preview**. **Export…** copies the game file to disk; images also 
 **Export as PNG…**. Game files are for your own use; do not add extracted Blizzard assets
 to this repository or distribute them with documentation examples.
 
-These workflows were checked against the source. A successful import and desktop preview
-do not confirm how the model or texture renders in Warcraft III: the examples here are
-**not yet confirmed in game**. Save and test the same map in game.
+The [recorded play test](../verification/#imported-artwork-and-text) confirmed the imported
+Knight model, texture and icon on a unit created from that model, after saving and reopening
+the same map. That result covers one import set. Other models, formats and asset-management
+operations remain **not yet confirmed in game**; save and test your own map.

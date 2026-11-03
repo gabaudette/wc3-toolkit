@@ -53,8 +53,11 @@ See [gameplay constants](../map-settings/#change-gameplay-constants) to change t
 
 A fraction in a whole-number field or an out-of-range value gets an explanation instead
 of being saved. Correct the draft, then press Enter or leave the field to commit it.
-These calculations were source-reviewed; the example's damage and bounty outcomes are
-**not yet confirmed in game**.
+The [recorded play test](../verification/#map-settings-constants-and-dice) matched the
+illustrated level-1 range of 34–44 after resetting the primary-attribute override and starting
+a fresh game process. With that constant explicitly set to 2, five attacks stayed within
+56–66; ten bounty awards with base 25 and two six-sided dice stayed within 27–37.
+These samples check the ranges, not the roll distribution or empirical average.
 
 <figure class="app-screenshot">
   <a href="../../screenshots/objects-dice.png">

@@ -14,9 +14,11 @@ Saving the designs and building their Lua are separate steps: the playable inter
 from the modules added by the [Lua harness](../lua-harness/).
 
 :::note[Verification]
-These instructions and Lua signatures were checked against the editor and its generators.
-The previews and generated code do not establish game behavior. The designs and examples
-on this page are **not yet confirmed in game**.
+The [recorded play test](../verification/#interface-results-and-known-failures) confirmed
+hotkeys, a player callback, navigation, multiboard native updates and timer controls on one
+Lua map. It also found startup failures: blank dialog messages, missing leaderboard rows
+and a default timer title; repeated dialogs can lose their message. Those bugs remain open.
+Read the results and limits before relying on the designs in a playable map.
 :::
 
 ## Make a dialog

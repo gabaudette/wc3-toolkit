@@ -184,6 +184,9 @@ The **Placed units** warning covers placements, inventories, drops and item tabl
 an object-field edit or a gameplay constant failed to save. Do not fix this by hand-editing
 the generated map script; the World Editor rewrites it.
 
+The [recorded Lua-map fallback test](../verification/#world-editor-fallback) exercised this
+sequence and confirmed the new values in game. JASS fallback still needs a separate play test.
+
 **Next:** [Placed units and loot](../placed-units/#save-and-test) or
 [map settings](../map-settings/#save-and-verify-the-result).
 
