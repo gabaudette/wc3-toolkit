@@ -13,7 +13,6 @@ use wc3_map::units::{MapUnit, MapUnits};
 const CATEGORY_ORDER: &[&str] = &[
     "stats", "combat", "abil", "text", "art", "move", "path", "sound", "tech", "editor", "data",
 ];
-const ENUM_LIST_SUFFIX: &str = "List";
 const TEXT_CATEGORY: &str = "text";
 const ATTRIBUTES: [(&str, &str); 3] = [("STR", "ustr"), ("AGI", "uagi"), ("INT", "uint")];
 const LONG_TEXT_FIELDS: &[&str] = &["utub", "upro", "ides", "aub1", "auu1", "arut"];
@@ -578,7 +577,7 @@ pub fn build_field(
     value: FieldValue,
 ) -> Field {
     let options = db.enum_values(&field.value_type).unwrap_or_default();
-    let is_list = field.value_type.ends_with(ENUM_LIST_SUFFIX);
+    let is_list = field.is_list();
 
     let control = match field.value_type.as_str() {
         "bool" => "bool",

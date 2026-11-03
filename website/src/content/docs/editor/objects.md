@@ -25,19 +25,21 @@ For help choosing, [compare Armor Type, Defense Type and Defense Base](../../ref
 
 ## Checkboxes and option chips
 
-Fields with several allowed options, such as **Targets Allowed** and **Targeted as**,
-show wrapping chips. Select a chip to toggle that option. Checked
-options are gold; a gold dot marks an option that differs from the game's value. Ordinary
-on/off fields use a gold checkbox with a check mark.
+Fields with several allowed options, such as **Targets Allowed**, **Targeted as**,
+**Unit Classification** and a building's placement pathing, show their options as chips in
+columns under the field; target lists group them by owner, kind and state. Select a chip to
+toggle that option. Checked options are gold; a gold dot marks an option that differs from
+the game's value, and the game value column counts how many are on. Ordinary on/off fields
+use a gold checkbox with a check mark.
 
 Drop-downs use the app's styling for both the field and the open menu; keyboard focus has
 a light ring, and a focused text box has a light edge.
 
 <figure class="app-screenshot">
   <a href="../../screenshots/objects-options.png">
-    <img src="../../screenshots/objects-options.png" alt="Training construct&#x27;s changed fields, with Targeted as checkbox chips, a gold dot on Mechanical and the Unit Classification dropdown open." width="1440" height="900" loading="lazy" />
+    <img src="../../screenshots/objects-options.png" alt="Training construct&#x27;s changed fields: Unit Classification chips with Mechanical checked and marked changed, and Targeted as chips grouped under Owner and Kind." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Targeted as uses wrapping chips; the gold dot marks Mechanical as changed. Unit Classification currently uses a dropdown.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption>Unit Classification and Targeted as use option chips; the gold dot marks Mechanical as changed.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
 ## Damage and bounty dice
