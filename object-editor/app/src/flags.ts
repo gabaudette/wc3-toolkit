@@ -79,3 +79,62 @@ export function withListItem(raw: string, choice: Choice, on: boolean): string {
 
   return others.join(LIST_SEPARATOR);
 }
+
+export type ChoiceGroup = { label: string | null; choices: Choice[] };
+
+const TARGET_LIST = "targetList";
+
+const TARGET_GROUPS = [
+  {
+    label: "Owner",
+    values: ["self", "notself", "player", "allies", "friend", "enemies", "neutral"],
+  },
+  {
+    label: "Kind",
+    values: [
+      "air",
+      "ground",
+      "structure",
+      "hero",
+      "nonhero",
+      "ward",
+      "item",
+      "tree",
+      "debris",
+      "wall",
+      "bridge",
+      "decoration",
+      "terrain",
+    ],
+  },
+  {
+    label: "State",
+    values: [
+      "alive",
+      "dead",
+      "vulnerable",
+      "invulnerable",
+      "organic",
+      "mechanical",
+      "sapper",
+      "nonsapper",
+      "ancient",
+      "nonancient",
+    ],
+  },
+];
+
+export function choiceGroups(valueType: string, options: Choice[]): ChoiceGroup[] {
+  if (valueType !== TARGET_LIST) {
+    return [{ label: null, choices: options }];
+  }
+
+  const grouped = TARGET_GROUPS.flatMap((group) => group.values);
+  const groups = TARGET_GROUPS.map(({ label, values }) => ({
+    label,
+    choices: values.flatMap((value) => options.filter((choice) => choice.value === value)),
+  }));
+  const rest = options.filter((choice) => !grouped.includes(choice.value));
+
+  return [...groups, { label: "Other", choices: rest }].filter((group) => group.choices.length > 0);
+}

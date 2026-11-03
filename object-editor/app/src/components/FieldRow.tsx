@@ -58,16 +58,26 @@ function useDraft(field: Field, onChange: (value: string) => void) {
   return { draft, setDraft, commit, commitText };
 }
 
-function flagCount(field: Field): string {
-  const on = field.options.filter((choice) => {
+function countOn(field: Field, raw: string): number {
+  return field.options.filter((choice) => {
     if (field.control === "flags") {
-      return hasBit(field.raw, choice);
+      return hasBit(raw, choice);
     }
 
-    return inList(field.raw, choice);
+    return inList(raw, choice);
   }).length;
+}
 
-  return `${on} of ${field.options.length} on`;
+function flagCount(field: Field): string {
+  return `${countOn(field, field.raw)} of ${field.options.length} on`;
+}
+
+function BaseValue({ field }: { field: Field }) {
+  if (wideFlags(field)) {
+    return <>{countOn(field, field.baseRaw)} on</>;
+  }
+
+  return <GameText text={field.base} singleLine />;
 }
 
 function abilityCount(raw: string): string {
@@ -323,7 +333,7 @@ export function FieldRow({ field, editable, onChange, onReset, onInspect }: Fiel
       </div>
       <Editor field={field} editable={editable} onChange={onChange} />
       <span className="truncate pt-1.5 text-sm text-faint" title={plainGameText(field.base)}>
-        <GameText text={field.base} singleLine />
+        <BaseValue field={field} />
       </span>
       {field.modified && editable && (
         <button
@@ -341,7 +351,7 @@ export function FieldRow({ field, editable, onChange, onReset, onInspect }: Fiel
         <AbilityField field={field} editable={editable} onChange={onChange} />
       )}
       {wideFlags(field) && (
-        <div className="col-span-4 mb-1.5">
+        <div className="col-span-4 mt-1 mb-2 rounded-[3px] border border-line/60 p-2">
           <FlagsInput
             field={field}
             raw={field.raw}

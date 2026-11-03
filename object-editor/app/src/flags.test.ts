@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { hasBit, inList, withBit, withListItem } from "./flags";
+import { choiceGroups, hasBit, inList, withBit, withListItem } from "./flags";
 
 const choice = (value: string, aliases: string[] = []) => ({ value, label: value, aliases });
 
@@ -34,5 +34,29 @@ describe("choice lists", () => {
     expect(withListItem("air,enem", choice("ground"), true)).toBe("air,enem,ground");
     expect(withListItem("air,enem,ground", choice("air"), false)).toBe("enem,ground");
     expect(withListItem("", choice("air"), true)).toBe("air");
+  });
+});
+
+describe("choice groups", () => {
+  const labels = (groups: ReturnType<typeof choiceGroups>) =>
+    groups.map((group) => [group.label, group.choices.map((c) => c.value)]);
+
+  test("targets are grouped by owner, kind and state, the rest last", () => {
+    const options = ["air", "alive", "allies", "none", "enemies", "dead", "ground"].map((v) =>
+      choice(v),
+    );
+
+    expect(labels(choiceGroups("targetList", options))).toEqual([
+      ["Owner", ["allies", "enemies"]],
+      ["Kind", ["air", "ground"]],
+      ["State", ["alive", "dead"]],
+      ["Other", ["none"]],
+    ]);
+  });
+
+  test("other fields keep one group in their order", () => {
+    const options = [choice("giant"), choice("undead")];
+
+    expect(labels(choiceGroups("unitClass", options))).toEqual([[null, ["giant", "undead"]]]);
   });
 });
