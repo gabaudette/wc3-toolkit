@@ -4,6 +4,12 @@ What changed in Tinkerbench, for the people who use it. Performance and internal
 one line here; the details are in the [devlog](docs/devlog.md). Tinkerbench shows this file
 under "What's new".
 
+## Unreleased
+
+### Changed
+
+- Performance improvements.
+
 ## 0.2.0 - 2026-11-03
 
 ### Added

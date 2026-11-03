@@ -1,5 +1,4 @@
-import { generateMDX, parseMDL } from "war3-model";
-import { attemptSync, type Result } from "./result";
+import { attempt, type Result } from "./result";
 import type { AssetKind, AssetUseKind, TextureStatusKind } from "./types";
 
 const MODEL_EXTENSIONS = ["mdx", "mdl"];
@@ -85,8 +84,12 @@ function base64(bytes: Uint8Array): string {
   return btoa(parts.join(""));
 }
 
-export function mdxFromMdl(text: string): Result<string> {
-  return attemptSync(() => base64(new Uint8Array(generateMDX(parseMDL(text)))));
+export function mdxFromMdl(text: string): Promise<Result<string>> {
+  return attempt(async () => {
+    const { generateMDX, parseMDL } = await import("war3-model");
+
+    return base64(new Uint8Array(generateMDX(parseMDL(text))));
+  });
 }
 
 export function samePath(a: string, b: string): boolean {

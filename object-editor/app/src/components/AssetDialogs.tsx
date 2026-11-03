@@ -7,7 +7,7 @@ import { classes, PNG_FILTERS } from "../ui";
 import { Button } from "./Button";
 import { DialogShell } from "./DialogShell";
 import { GameText, plainGameText } from "./GameText";
-import { ModelViewer } from "./ModelViewer";
+import { LazyModelViewer } from "./LazyModelViewer";
 import { Select } from "./Select";
 import { UnitIcon } from "./UnitIcon";
 
@@ -274,7 +274,7 @@ export function ExportGameFileDialog({ open, onClose }: ExportGameFileDialogProp
           className="mx-auto max-h-64 max-w-full rounded-[3px] border border-line bg-well"
         />
       )}
-      {shown && assetKind(shown) !== "image" && <ModelViewer path={shown} />}
+      {shown && assetKind(shown) !== "image" && <LazyModelViewer path={shown} />}
       <div className="flex flex-wrap gap-2">
         <Button primary disabled={!trimmed} onPress={() => save(false)}>
           Export…

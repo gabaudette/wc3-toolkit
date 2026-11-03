@@ -33,8 +33,8 @@ describe("asset paths", () => {
 });
 
 describe("text models", () => {
-  test("convert to binary models", () => {
-    const converted = mdxFromMdl(
+  test("convert to binary models", async () => {
+    const converted = await mdxFromMdl(
       [
         "Version {",
         "\tFormatVersion 800,",
@@ -54,7 +54,7 @@ describe("text models", () => {
     }
   });
 
-  test("report what they cannot read", () => {
-    expect(mdxFromMdl("Model {").ok).toBe(false);
+  test("report what they cannot read", async () => {
+    expect((await mdxFromMdl("Model {")).ok).toBe(false);
   });
 });
