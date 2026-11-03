@@ -35,9 +35,13 @@
     "publisher": "wc3-toolkit contributors",
     "copyright": "Copyright (c) 2026 Gabriel Audette and wc3-toolkit contributors. MIT License.",
     "license": "MIT",
+    "resources": {
+      "../../../LICENSE": "LICENSE",
+      "THIRD-PARTY-NOTICES.txt": "THIRD-PARTY-NOTICES.txt"
+    },
     "category": "DeveloperTool",
-    "shortDescription": "Object Editor for Warcraft III Reforged maps",
-    "longDescription": "Tinkerbench is an external replacement for the World Editor's Object Editor: edits units, abilities, items and upgrades in Warcraft III Reforged maps, reading game data from your own install.",
+    "shortDescription": "Map workbench for Warcraft III Reforged",
+    "longDescription": "Tinkerbench is an open-source workbench for Warcraft III Reforged maps: it replaces the World Editor's Object Editor for every object type and edits placed units and loot, map settings and gameplay constants, imported assets and in-game interface designs, reading game data from your own install.",
     "homepage": "https://github.com/gabaudette/wc3-toolkit",
     "icon": [
       "icons/32x32.png",

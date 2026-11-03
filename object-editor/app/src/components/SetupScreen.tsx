@@ -235,7 +235,7 @@ export function SetupScreen({ automatic, onReady }: SetupScreenProps) {
             <AppVersion />
           </h1>
           <p className="mt-1 text-muted">
-            An Object Editor for Warcraft III Reforged maps. It reads the game data from your own
+            A workbench for Warcraft III Reforged maps. It reads the game data from your own
             Warcraft III install; nothing is uploaded anywhere.
           </p>
         </header>

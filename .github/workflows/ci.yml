@@ -97,3 +97,9 @@ jobs:
       - name: Test
         working-directory: object-editor
         run: cargo test ${{ matrix.crates }}
+
+      # The installers ship this file; it must list the dependencies of this commit.
+      - name: Check the third-party notices are current
+        if: matrix.app
+        working-directory: object-editor/app
+        run: bun run notices --check

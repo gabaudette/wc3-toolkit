@@ -2,7 +2,8 @@
 
 Open-source tools for Warcraft III: Reforged map creation.
 
-> **Status: early development.** Nothing here is ready for everyday use yet.
+> **Status: early release.** Tinkerbench 0.2.0 is the first public release. Work on copies
+> of your maps and keep backups.
 
 Read the **[Tinkerbench field guide](https://tinkerbench-docs.vercel.app)** for installation,
 first-map tutorials, JASS/Lua API declarations and the object field reference.
@@ -10,10 +11,11 @@ The documentation source and local build instructions are in [website/](website/
 
 ## Tools
 
-### Tinkerbench, the Object Editor (`object-editor/`, in progress)
+### Tinkerbench, the map workbench (`object-editor/`)
 
-An external replacement for the World Editor's Object Editor, built with Rust and Tauri. It
-reads and writes the same object data as the World Editor.
+A companion to the World Editor, built with Rust and Tauri: it replaces the Object Editor and
+edits the rest of a map's data around the terrain and triggers. It reads and writes the same
+map files as the World Editor.
 
 [![Tinkerbench showing the Paladin, searchable objects, grouped fields, a 3D model and field explanations.](website/public/screenshots/unit-editor.png)](https://tinkerbench-docs.vercel.app/editor/visual-tour/)
 
@@ -27,7 +29,12 @@ Find an object, understand a field, and see the result in one workbench:
 - ability cards showing icon, tooltip and per-level values wherever an ability is referenced;
 - live tooltip preview with color codes;
 - a 3D model viewer;
-- share codes and bundle files to copy objects between maps, with what they depend on.
+- share codes and bundle files to copy objects between maps, with what they depend on;
+- a spell wizard that builds a new spell, its buff and its button, and gives it to units;
+- placed units on a map view, with hero items, drops and item tables;
+- the map's settings, players, forces and gameplay constants;
+- imported models and textures, and in-game dialogs, multiboards, leaderboards and timers;
+- CSV and JSON export for spreadsheets, wikis and other tools.
 
 [Take the visual tour](https://tinkerbench-docs.vercel.app/editor/visual-tour/) for a screenshot
 walkthrough, from object search to editing ability levels.

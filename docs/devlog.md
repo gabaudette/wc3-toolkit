@@ -4,6 +4,32 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-03 · Prepare the 0.2.0 release (AGE-30)
+
+- 0.1.0 was tagged (`795c416`) and built as a draft but never published; `main` is 152 commits
+  past it. Rather than move a pushed tag, the first public release is 0.2.0: the version in
+  `object-editor/Cargo.toml` and `app/package.json`, and `## Unreleased` became
+  `## 0.2.0 - 2026-11-03`. The stale 0.1.0 draft release was deleted; its tag stays as
+  history.
+- The changelog section was edited for people coming from 0.1.0: the big features first, the
+  documentation entries folded into one, and the fixes and changes to features that are new in
+  this release (Map tab weather, Interface dialogs, spell wizard closing, ...) left out, since
+  nobody had those bugs.
+- `.github/release-notes.md`, the package descriptions in `tauri.conf.json` and the README
+  described only units, abilities, items and upgrades. They now describe the whole tool, and the
+  notes carry known limitations from the in-game test record and a "Tested with" section to
+  fill in from the draft's install tests.
+- Third-party notices: StormLib and CascLib (MIT), the zlib, bzip2, LZMA and LibTom code they
+  compile, a few hundred Rust crates and the bundled npm packages (fonts under the OFL) all
+  ask for their license text to travel with binaries. `scripts/third-party-notices.ts` builds
+  `src-tauri/THIRD-PARTY-NOTICES.txt` from `cargo metadata` (normal dependencies of the app
+  crate, every platform), `node_modules` (the app's `dependencies`, followed transitively) and
+  the vendored sources, one section per distinct license text with the components it covers;
+  components that ship no license file are listed with their declared license and repository.
+  bzip2 1.0.5's license is not in StormLib's copy, so it is kept in `scripts/notices/` (from
+  upstream). The installers carry the file and `LICENSE` as resources, and CI's Windows job
+  runs `bun run notices --check`.
+
 ## 2026-11-03 · Lay out option fields in grouped columns
 
 - `FlagsInput` lays its chips in an `auto-fill` grid (`minmax(9.5rem, 1fr)`), so options line

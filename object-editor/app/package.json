@@ -1,7 +1,7 @@
 {
   "name": "wc3-object-editor",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,6 +9,7 @@
     "check": "bun run lint && tsc --noEmit",
     "lint": "biome check --error-on-warnings .",
     "lint:fix": "biome check --write .",
+    "notices": "bun scripts/third-party-notices.ts",
     "prepare": "lefthook install",
     "tauri": "tauri",
     "test": "bun test"

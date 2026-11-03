@@ -4,103 +4,16 @@ What changed in Tinkerbench, for the people who use it. Performance and internal
 one line here; the details are in the [devlog](docs/devlog.md). Tinkerbench shows this file
 under "What's new".
 
-## Unreleased
+## 0.2.0 - 2026-11-03
 
 ### Added
 
-- The documentation records in-game checks for placed units, loot, map settings, imported
-  artwork and damage dice, with known Interface failures and remaining test limits.
-
-- The expanded editor guides now include real application screenshots for startup, fields,
-  Interface designs, placed units and loot, map settings, assets, exports and AI prompts.
-- The documentation covers Interface designs and their Lua functions, placed units and loot,
-  map settings and gameplay constants, imported assets, CSV/JSON exports and AI assistant
-  prompts, with updated startup, field-editing and troubleshooting guides.
-- Tinkerbench opens straight into the editor: it loads the game data you used last time and
-  reopens your last map, with no clicks. Press Escape or "Stop and choose" while it loads to
-  pick another map. If the folder or the map cannot be opened, the setup screen says why.
-  Turn it off with "At start, load this game data and reopen the last map", and use
-  "Change game folder…" in the command palette to switch folders.
-- "Prompt for an AI assistant…" (on the setup screen and in the command palette) gives a
-  prompt to paste into Claude, ChatGPT or another assistant. It explains Tinkerbench, what
-  stays in the World Editor and the Lua harness, includes the map you describe and a summary
-  of the open map, and asks for a build plan, object specs with field IDs, ready Lua modules
-  and how to test them.
-- Damage and bounty dice show the minimum, maximum and average, and how they add up: the base,
-  the dice roll and, for heroes, the primary attribute's bonus (using the map's damage per
-  attribute point). The result follows the numbers as you type, and a value a field does not
-  take (a fraction, or out of its range) is explained instead of saved.
-- Text previews point out mistakes: a color code without its 8 digits, `|r` with no color to
-  end, a color left open, an unknown `|` code, an unclosed or malformed placeholder, and
-  placeholders Tinkerbench cannot fill. "Formatting help" in the preview lists the codes.
-- Export objects as CSV or JSON for spreadsheets, wiki pages and other tools. "Export…" above
-  any object list exports what the list shows, the open object, all objects of the type, or
-  every type; "Export objects…" in the command palette too. Every field comes with its value
-  as stored and as the editor shows it (choices by name, tooltip numbers filled in), with the
-  map's changes and, if you like, only what the map adds or changes, or only its custom
-  objects, without color codes.
-  CSV gives a column per field and per level; the JSON format is documented for tool makers.
-  `wc3map` exports the same way from the command line.
-- A map view in the Placed units tab, drawn from the map's terrain. Zoom and pan, pick a unit
-  on the map or in the list, drag it to move it and turn it by its handle, or use the arrow
-  keys and [ ] on the picked unit. Add units of any type for any player by clicking the map,
-  remove them, and change their owner, position, facing, hit points, mana, and a hero's level
-  and attributes. "Open unit type" goes to the unit's page.
-- Changes in the Placed units and Map tabs now take effect in game. On save, Tinkerbench
-  rewrites the parts of the map script the World Editor writes from them: unit creation,
-  drops and item tables, players, forces, fog, weather, water tint and sound. It does this
-  only when it can write those parts exactly as the World Editor did (nearly every map);
-  otherwise the tab says so, and saving the map in the World Editor applies the changes.
-- A Map tab for the map's own settings. Edit its name, author, description and suggested
-  players, the loading screen and prologue texts, map options, terrain fog, weather and water
-  tint, the players (name, controller, race, fixed start) and the forces (name, members,
-  alliance and shared vision or control).
-- Gameplay constants with a plain explanation for every one of them: what it does in game, its
-  unit and an example. Search them, show only the ones the map changed, see the game's value
-  next to each, and reset any. The damage table is a grid of attack types against defense
-  types. Like the World Editor, only the constants you change are stored in the map.
-- A Placed units tab for the units placed on the map. Give a placed hero the items it
-  starts with, picking them by icon and name from the game's items and the map's own, with
-  search and class and level filters. Choose what each unit drops when it dies: nothing, one
-  of the map's item tables, or its own item sets (one item per set, by chance, or a random
-  item of a class and level). Item tables can be cascades: tiers roll from the rarest
-  (Legendary 2%, then Epic 5%, ...) until one hits, then pick one of its items by weight.
-  Tinkerbench shows each item's exact chance and the whole percent the World Editor gets,
-  warns when an item rounds to 0%, and keeps the tiers in "<map> Loot.json" beside the map.
-- An Assets tab for the files imported into a map. Import models and textures, single files
-  or a whole folder (text `.mdl` models are converted to `.mdx`), choose the path each one
-  gets in the map, and see which textures a model needs and whether the map or the game has
-  them. Preview models with their textures and images, see which objects use each file,
-  rename a file (the fields that use it follow), replace or remove it, and export it, with
-  PNG for images. "Create a unit from this model" makes a custom unit from a base unit you
-  pick, with the model and an imported icon. "Export a game file…" copies a model, texture or
-  icon out of the game for your own use. Imports go into the map when you save it.
-- Reuse Interface designs in other maps. "Export…" saves chosen designs as a design file
-  (.w3ui) with the dialogs their buttons show and the icons imported into the map that they
-  use; "Import…" in another map's Interface tab adds them, numbering any name the map already
-  has ("Scoreboard 2") and adding the icons it lacks. The windows also list the Lua functions
-  the designs call. "Duplicate" copies a design as a starting point for a similar one.
-- Leaderboards and timers in the Interface tab. A leaderboard ranks a row for each player
-  (their name in their color) and up to four rows of your own, such as teams, highest or
-  lowest first; from Lua, `UI.Kills.AddValue(player, 1)`. A timer counts down with a title
-  ("Next wave 1:30"), can start with the game, start over each time and run a Lua function
-  you name when the time runs out. Both have a live preview.
-- Multiboards in the Interface tab: a titled board in the top right corner, like a
-  scoreboard. Set its columns and widths, fixed rows or a row for each player (with the
-  player's name in their color), and each cell's text, color and icon, one cell or a whole row
-  or column at a time; the preview shows it as the game does. From Lua, one line updates a
-  cell: `UI.Scoreboard.SetValue(player, "Kills", 5)`.
-- Downloadable Sunwell Warden hero and Wayfarer Draught item starters, with import
-  instructions, a merchant dependency example and raw-code collision guidance.
-- Illustrated hero and item walkthroughs, with attribute growth, existing game abilities,
-  a three-charge healing potion and in-game progression and inventory checks.
-- Illustrated spell-wizard walkthrough: create a three-level hero spell, choose its buff
-  and button, assign it to a hero, and build a generated-Lua spell in a separate test copy.
-- An Interface tab for in-game UI, starting with dialogs: a message in the color you pick and
-  buttons with hotkeys (their letter shown in gold, as the game does), each closing the
-  dialog, showing another one or running a Lua function you name. The preview shows the
-  dialog at the game's proportions. "Save and build test copy" writes the Lua and builds a
-  "[DEV]" copy of the map to play. Designs are saved next to the map in "<map> UI.json".
+- Buffs tab: browse, search, edit and create custom buffs and effects, with a chip per race.
+- Destructables tab: trees, gates, crates and rocks, with a chip per category and their model
+  in the inspector.
+- Doodads tab: props, plants, rocks and lights, with a chip per category, their model in the
+  inspector, and the tint of every model variation side by side. Every object type of the
+  World Editor's Object Editor can now be edited.
 - Spell wizard: "New spell" in the Abilities tab asks what the spell should do (damage, heal,
   stun, summon, aura and 9 more), suggests game abilities to start from and why, then sets its
   name, levels, targets, range, cooldown, mana, its own values and tooltips in one table, with
@@ -124,46 +37,90 @@ under "What's new".
   away) and Arc Bolt (bounces between enemies). Set their values per level, and Tinkerbench
   writes the Lua code into a folder of your choice, then saves the map and builds a "[DEV]"
   test copy with it, ready to play. The map must use Lua.
-- Contextual documentation problem links that open a GitHub draft with the page, API or
-  field identifier and selected example language.
-- Visual scripting lifecycles for timers, groups and locations, with six responsive diagrams,
-  accessible text explanations and five expandable examples that follow the Lua/JASS toggle.
-- Comparisons for Armor Type versus Defense Type, removing versus killing units, and
-  coordinates versus location handles, with decision tables, cleanup notes and linked examples.
-- A linked map-making glossary with 33 definitions, examples and reference links, including
-  raw codes, custom objects, dependencies, handles, natives and Blizzard helpers.
-- Website search filters for guides, APIs and object fields, with result-type labels and
-  improved discovery of practical guides alongside exact symbol and raw-code lookups.
-
-- A “Which field do I change?” guide mapping 19 common goals to object tabs, field labels,
-  raw codes and companion settings, linked from the homepage, field reference and editing guide.
-- Practical explanations for 26 common APIs, with parameter and return notes, ownership and
-  cleanup guidance, common mistakes, related links and paired JASS/Lua examples. A new
-  practical guide index and topic links make the curated pages easier to find.
-
-- Troubleshooting hub for loading game data, editing and saving maps, missing previews and
-  import problems, with checks by symptom and a bug-report template.
-- Tinkerbench copyright footer throughout the documentation, with contributor attribution
-  and a link to the MIT license.
-- Contributing section on the documentation website, with bug-report guidance, local editor
-  setup, documentation authoring and validation instructions.
-- API reference organized into 22 topics, with category pages, declaration counts and links
-  from each symbol back to its topic. The complete alphabetical index is still available.
-- Screenshot tour of the Tinkerbench application, from loading game data and opening a map
-  to editing and sharing objects, with a preview on the documentation homepage and in the README.
-  Each screenshot notes that the image is subject to change.
-- Documentation cookbook with 43 JASS/Lua code recipes, and a global language toggle that
-  remembers your choice across examples and explanations, with language-neutral navigation.
-- Code snippet theme picker in the documentation, with six color themes and a remembered
-  choice across pages.
-- [Documentation website](https://tinkerbench-docs.vercel.app): editor guides, JASS and Lua API declarations, and a searchable
-  reference for object fields.
-- Buffs tab: browse, search, edit and create custom buffs and effects, with a chip per race.
-- Destructables tab: trees, gates, crates and rocks, with a chip per category and their model
-  in the inspector.
-- Doodads tab: props, plants, rocks and lights, with a chip per category, their model in the
-  inspector, and the tint of every model variation side by side. Every object type of the
-  World Editor's Object Editor can now be edited.
+- An Interface tab for in-game UI, starting with dialogs: a message in the color you pick and
+  buttons with hotkeys (their letter shown in gold, as the game does), each closing the
+  dialog, showing another one or running a Lua function you name. The preview shows the
+  dialog at the game's proportions. "Save and build test copy" writes the Lua and builds a
+  "[DEV]" copy of the map to play. Designs are saved next to the map in "<map> UI.json".
+- Multiboards in the Interface tab: a titled board in the top right corner, like a
+  scoreboard. Set its columns and widths, fixed rows or a row for each player (with the
+  player's name in their color), and each cell's text, color and icon, one cell or a whole row
+  or column at a time; the preview shows it as the game does. From Lua, one line updates a
+  cell: `UI.Scoreboard.SetValue(player, "Kills", 5)`.
+- Leaderboards and timers in the Interface tab. A leaderboard ranks a row for each player
+  (their name in their color) and up to four rows of your own, such as teams, highest or
+  lowest first; from Lua, `UI.Kills.AddValue(player, 1)`. A timer counts down with a title
+  ("Next wave 1:30"), can start with the game, start over each time and run a Lua function
+  you name when the time runs out. Both have a live preview.
+- Reuse Interface designs in other maps. "Export…" saves chosen designs as a design file
+  (.w3ui) with the dialogs their buttons show and the icons imported into the map that they
+  use; "Import…" in another map's Interface tab adds them, numbering any name the map already
+  has ("Scoreboard 2") and adding the icons it lacks. The windows also list the Lua functions
+  the designs call. "Duplicate" copies a design as a starting point for a similar one.
+- A Placed units tab for the units placed on the map. Give a placed hero the items it
+  starts with, picking them by icon and name from the game's items and the map's own, with
+  search and class and level filters. Choose what each unit drops when it dies: nothing, one
+  of the map's item tables, or its own item sets (one item per set, by chance, or a random
+  item of a class and level). Item tables can be cascades: tiers roll from the rarest
+  (Legendary 2%, then Epic 5%, ...) until one hits, then pick one of its items by weight.
+  Tinkerbench shows each item's exact chance and the whole percent the World Editor gets,
+  warns when an item rounds to 0%, and keeps the tiers in "<map> Loot.json" beside the map.
+- A map view in the Placed units tab, drawn from the map's terrain. Zoom and pan, pick a unit
+  on the map or in the list, drag it to move it and turn it by its handle, or use the arrow
+  keys and [ ] on the picked unit. Add units of any type for any player by clicking the map,
+  remove them, and change their owner, position, facing, hit points, mana, and a hero's level
+  and attributes. "Open unit type" goes to the unit's page.
+- A Map tab for the map's own settings. Edit its name, author, description and suggested
+  players, the loading screen and prologue texts, map options, terrain fog, weather and water
+  tint, the players (name, controller, race, fixed start) and the forces (name, members,
+  alliance and shared vision or control).
+- Gameplay constants with a plain explanation for every one of them: what it does in game, its
+  unit and an example. Search them, show only the ones the map changed, see the game's value
+  next to each, and reset any. The damage table is a grid of attack types against defense
+  types. Like the World Editor, only the constants you change are stored in the map.
+- Changes in the Placed units and Map tabs now take effect in game. On save, Tinkerbench
+  rewrites the parts of the map script the World Editor writes from them: unit creation,
+  drops and item tables, players, forces, fog, weather, water tint and sound. It does this
+  only when it can write those parts exactly as the World Editor did (nearly every map);
+  otherwise the tab says so, and saving the map in the World Editor applies the changes.
+- An Assets tab for the files imported into a map. Import models and textures, single files
+  or a whole folder (text `.mdl` models are converted to `.mdx`), choose the path each one
+  gets in the map, and see which textures a model needs and whether the map or the game has
+  them. Preview models with their textures and images, see which objects use each file,
+  rename a file (the fields that use it follow), replace or remove it, and export it, with
+  PNG for images. "Create a unit from this model" makes a custom unit from a base unit you
+  pick, with the model and an imported icon. "Export a game file…" copies a model, texture or
+  icon out of the game for your own use. Imports go into the map when you save it.
+- Export objects as CSV or JSON for spreadsheets, wiki pages and other tools. "Export…" above
+  any object list exports what the list shows, the open object, all objects of the type, or
+  every type; "Export objects…" in the command palette too. Every field comes with its value
+  as stored and as the editor shows it (choices by name, tooltip numbers filled in), with the
+  map's changes and, if you like, only what the map adds or changes, or only its custom
+  objects, without color codes.
+  CSV gives a column per field and per level; the JSON format is documented for tool makers.
+  `wc3map` exports the same way from the command line.
+- Text previews point out mistakes: a color code without its 8 digits, `|r` with no color to
+  end, a color left open, an unknown `|` code, an unclosed or malformed placeholder, and
+  placeholders Tinkerbench cannot fill. "Formatting help" in the preview lists the codes.
+- Damage and bounty dice show the minimum, maximum and average, and how they add up: the base,
+  the dice roll and, for heroes, the primary attribute's bonus (using the map's damage per
+  attribute point). The result follows the numbers as you type, and a value a field does not
+  take (a fraction, or out of its range) is explained instead of saved.
+- "Prompt for an AI assistant…" (on the setup screen and in the command palette) gives a
+  prompt to paste into Claude, ChatGPT or another assistant. It explains Tinkerbench, what
+  stays in the World Editor and the Lua harness, includes the map you describe and a summary
+  of the open map, and asks for a build plan, object specs with field IDs, ready Lua modules
+  and how to test them.
+- Tinkerbench opens straight into the editor: it loads the game data you used last time and
+  reopens your last map, with no clicks. Press Escape or "Stop and choose" while it loads to
+  pick another map. If the folder or the map cannot be opened, the setup screen says why.
+  Turn it off with "At start, load this game data and reopen the last map", and use
+  "Change game folder…" in the command palette to switch folders.
+- A documentation website, the [Tinkerbench field guide](https://tinkerbench-docs.vercel.app):
+  a screenshot tour and a guide for every tab, illustrated hero, item and spell walkthroughs
+  with downloadable starters, a "Which field do I change?" guide, a searchable reference for
+  object fields, JASS and Lua API declarations organized by topic, 43 code recipes, a
+  glossary, comparisons of commonly confused concepts and a troubleshooting hub.
 
 ### Changed
 
@@ -183,21 +140,11 @@ under "What's new".
   folder now says so when the dialog itself fails, instead of doing nothing.
 - Drop-down menus are drawn in the app's own style, closed and open, instead of the system's
   grey buttons and menus.
-- New checkboxes everywhere: a gold box with a check mark when on. Fields with many options,
-  like Targets Allowed, Targeted As or Classification, show them as chips that wrap across the
-  row, so even 31 options take about four lines; checked ones are gold, and a gold dot marks
-  an option that differs from the game value.
+- New checkboxes everywhere: a gold box with a check mark when on.
 - Keyboard focus is a light ring instead of a teal one, and a focused text box gets a light
   edge, so focus no longer clashes with the gold.
-- The spell wizard no longer closes, and throws the spell away, when clicking outside it.
 - Dialogs open near the top of the window and stay there while their content grows or
   shrinks, so buttons no longer move under the pointer.
-- Documentation navbar title is now “Tinkerbench”. Theme, code-theme and search controls use
-  a subtle focus underline instead of a blue outer outline. The homepage’s early-development
-  notice appears in an inline warning callout.
-- Screenshot change notices are centered and muted beneath their images.
-- Documentation uses the app icon as its PNG favicon.
-- External links in the documentation open in a new tab.
 - Destructables and doodads show the World Editor's icon for their category (Props, Bridges,
   Water, ...) in lists, on their page and in search, since the game gives them no icon.
 - Names with Warcraft color codes show in color everywhere: lists, page titles, search,
@@ -206,27 +153,13 @@ under "What's new".
 
 ### Fixed
 
-- Interface dialogs keep their designed message when shown again, including after Back
-  navigation or Hide/Show. Rewrite their Lua and rebuild the test copy to apply the fix.
-
-- Interface designs initialize after the loading screen, keeping their initial dialog messages,
-  timer titles and leaderboard rows. Rebuild existing test copies to apply the fix.
-- Published documentation describes behavior and test limits without internal task IDs
-  or task-tracker links.
-- The AI assistant prompt now gives the correct Lua functions for dialogs, multiboards,
-  leaderboards and timer windows, including the arguments passed to button and timer callbacks.
-- Weather chosen in the Map tab was saved in the wrong place in maps from the current World
-  Editor, and fog and water colors showed with red and blue swapped.
 - Lists of units, items and abilities hold no more than the game allows, as in the World
   Editor: 12 items or units sold, made or upgraded to, 4 item abilities, 5 hero abilities.
-- "Give to units" no longer gives a hero a sixth hero spell, which the game leaves out of the
-  learn menu: it explains the limit of five and which spells the hero already has.
 - Ability, upgrade and doodad pages no longer keep redrawing in the background while open,
   which used processor time for nothing.
 - Tooltip previews now update as soon as a value they show changes, not only when the text
   itself is edited.
 - Long game texts, like tooltips, showed quote marks around their value when edited.
-- Destructables available in several tilesets only showed the first one.
 - Textures and icons imported into a map as `.tga` files now show.
 - The model preview now shows the newer campaign units, such as Roderick, the Scarlet
   Crusade and the Forsaken, and a few cinematic doodads. Models the game does not have say
