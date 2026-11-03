@@ -15,10 +15,11 @@ from the modules added by the [Lua harness](../lua-harness/).
 
 :::note[Verification]
 The [recorded play test](../verification/#interface-results-and-known-failures) confirmed
-hotkeys, a player callback, navigation, multiboard native updates and timer controls on one
-Lua map. It also found startup failures: blank dialog messages, missing leaderboard rows
-and a default timer title; repeated dialogs can lose their message. Those bugs remain open.
-Read the results and limits before relying on the designs in a playable map.
+initial dialog messages, board titles and rows, multiboard text/colors/icons, a player
+callback and timer controls on one Lua map. Rebuild existing development copies with the
+updated harness to apply the startup fix. Showing a dialog again can still lose its message;
+multiplayer behavior remains unconfirmed. Read the results and limits before relying on
+the designs in your map.
 :::
 
 ## Make a dialog

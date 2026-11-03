@@ -72,6 +72,8 @@ game assets out of the repository.
 - Explain setup and cleanup for scripting examples. Keep JASS and Lua recipes equivalent;
   the global language toggle should switch both code and language-specific explanations.
 - Mark behavior that has not been confirmed in game instead of presenting it as verified.
+- Keep task IDs and task-tracker links out of published pages. Describe behavior, known
+  problems and remaining checks directly; keep tracking in development records.
 - Use real application captures for UI guides, with descriptive alt text and captions.
   Reuse existing screenshot files when showing the same view. Add “Image subject to change.”
   below each screenshot, using the existing screenshot markup.

@@ -101,9 +101,11 @@ It checks every file as Lua 5.3, appends the modules in file name order after th
 Editor's script, and saves `<map>_dev.w3x` (or `.w3m`) named `[DEV] …` in the game's map list.
 Never edit `war3map.lua` itself: the World Editor rewrites it on every save.
 
-A module registers what it does at start with `Dev.OnStart(fn)`. These functions run after
-the World Editor's `main()`: placed units exist and GUI triggers are set up. A module looks
-like this:
+A module registers what it does at start with `Dev.OnStart(fn)`. These functions run in
+registration order on the first game timer tick after map initialization and the loading
+screen: placed units exist and GUI triggers are set up. Register UI consumers after the
+generated designs' callbacks, rather than adding independent initialization timers. A module
+looks like this:
 
 ```lua
 -- Creep waves for the three lanes.

@@ -4,6 +4,35 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-03 · Initialize Interface designs after loading (PR #82, AGE-72)
+
+- Changed the Lua harness to dispatch all `Dev.OnStart` callbacks together on its first
+  zero-duration timer tick after map initialization, preserving registration order and
+  destroying the temporary timer before callbacks. The generated modules stay unchanged;
+  later startup consumers can still use initialized designs without independent delays.
+  Existing development copies must be rebuilt with the updated harness.
+- Added a Lua 5.3 execution regression using a vendored test-only runtime. It fails with
+  the former synchronous hook and passes with the new one, checking initialization phase,
+  callback order, consumer access and timer cleanup. The runtime is not an app dependency.
+- Played the rebuilt disposable Lua map on Warcraft III 3.0.1.24371 through GE-Proton11-7.
+  Source revision `1f08cac` is identified in the evidence alongside its harness hash.
+  Confirmed first dialog messages, timer title, leaderboard rows/native sorting, rendered
+  multiboard text/colors/imported icons and timer controls. All 17 runtime assertions
+  passed. Mouse-activated navigation and the player callback worked; keyboard activation
+  was not independently reconfirmed. Reused dialog messages remain broken (AGE-73).
+- Removed task IDs and tracker links from published pages and the design study, per the
+  user's documentation rule. Added authoring guidance and a guard covering published
+  Markdown, HTML and Astro sources. Renamed the older evidence record to a neutral URL;
+  updated current verification results, captures, harness guide and assistant context.
+  The site describes behavior and limits directly; tracking stays in development records.
+- Validation: rustfmt, Clippy and the workspace tests (135 passed, 54 existing real-data
+  tests ignored), plus the blank-line check, passed. The website's sequential test (120
+  passed), generate, check (zero errors, warnings or hints), build (6,618 pages) and link
+  check passed. Production browser checks covered 15 pages at 1440 px and 390 px, 544
+  heading-anchor references, all four verification figures, navigation and Lua/JASS
+  switching, with no overflow, broken images or task references. The frontend build
+  passed with the existing bundle-size warning tracked by AGE-70.
+
 ## 2026-11-02 · Record editor play tests (PR #81, AGE-69)
 
 - Added a linked in-game verification record for Warcraft III 3.0.1.24371 x86_64 at
