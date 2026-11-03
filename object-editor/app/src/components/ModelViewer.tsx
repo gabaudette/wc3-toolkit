@@ -16,7 +16,7 @@ import { Select } from "./Select";
 
 type Model = ReturnType<typeof parseMDX>;
 
-type ModelViewerProps = {
+export type ModelViewerProps = {
   /** The unit's model path as stored in its data, e.g. `units\human\Footman\Footman`. */
   path: string | null;
 };

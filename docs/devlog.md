@@ -4,6 +4,23 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-03 · Split the frontend bundle (AGE-70)
+
+- The production build was one 1,013 kB chunk, over Vite's 500 kB warning. Measured with a
+  throwaway build that put each package in its own chunk: `war3-model` 251 kB, `react-dom`
+  207 kB, react-aria 218 kB (with `react-aria-components`), the app's own code about 300 kB.
+- `war3-model` and `gl-matrix` only serve the 3D preview and `.mdl` conversion, so they load on
+  demand: `LazyModelViewer` wraps `ModelViewer` in `lazy` + `Suspense` (its fallback is the
+  viewer's own "Loading model…" box, so nothing moves), and `mdxFromMdl` imports `war3-model`
+  when called and became async.
+- React and react-aria get their own chunks (`build.rolldownOptions.output.codeSplitting`
+  groups in `vite.config.ts`). The warning limit is unchanged.
+- After: `index` 318 kB, `react` 219 kB, `react-aria` 215 kB and `rolldown-runtime` load at
+  start (about 752 kB instead of 1,013 kB); `war3-model` 251 kB and `ModelViewer` 12 kB load
+  with the first preview. Checked in the production build: startup reopening the last map, the
+  Paladin's preview, a game model in "Export a game file…", the Units preview coming back
+  after that dialog, and "What's new".
+
 ## 2026-11-03 · Prepare the 0.2.0 release (AGE-30)
 
 - 0.1.0 was tagged (`795c416`) and built as a draft but never published; `main` is 152 commits

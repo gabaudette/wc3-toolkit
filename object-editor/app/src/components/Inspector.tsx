@@ -3,7 +3,7 @@ import type { Field, HotkeyClash } from "../types";
 import { Button } from "./Button";
 import { rangeText } from "./FieldRow";
 import { GameText, plainGameText } from "./GameText";
-import { ModelViewer } from "./ModelViewer";
+import { LazyModelViewer } from "./LazyModelViewer";
 
 type InspectorProps = {
   modelPath?: string | null;
@@ -101,7 +101,7 @@ export function Inspector({
       aria-label="Inspector"
       className="panel flex w-80 shrink-0 flex-col gap-3 overflow-y-auto rounded-[3px] bg-surface-1 p-3"
     >
-      {modelPath !== undefined && <ModelViewer path={modelPath} />}
+      {modelPath !== undefined && <LazyModelViewer path={modelPath} />}
 
       <section aria-label="Selected field" className="rounded-[3px] border border-line bg-well p-3">
         {field && (

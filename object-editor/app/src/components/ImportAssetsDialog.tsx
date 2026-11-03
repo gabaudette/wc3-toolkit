@@ -32,7 +32,7 @@ async function request(row: Row): Promise<Result<ImportRequest>> {
     return text;
   }
 
-  const converted = mdxFromMdl(text.value);
+  const converted = await mdxFromMdl(text.value);
 
   if (!converted.ok) {
     return failed(`Cannot convert ${row.diskPath}: ${converted.error}`);

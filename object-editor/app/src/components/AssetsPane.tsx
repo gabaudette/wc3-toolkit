@@ -17,7 +17,7 @@ import { CreateUnitDialog, ExportGameFileDialog } from "./AssetDialogs";
 import { Button } from "./Button";
 import { GameText } from "./GameText";
 import { ImportAssetsDialog, type ImportPlan } from "./ImportAssetsDialog";
-import { ModelViewer } from "./ModelViewer";
+import { LazyModelViewer } from "./LazyModelViewer";
 
 const KIND_LABELS: Record<AssetItem["kind"], string> = {
   model: "Model",
@@ -420,7 +420,7 @@ function AssetDetail({
         </p>
       </header>
       <div className="flex min-h-0 max-w-4xl flex-1 flex-col gap-4 overflow-y-auto p-5">
-        {asset.kind === "model" && <ModelViewer key={revision} path={asset.path} />}
+        {asset.kind === "model" && <LazyModelViewer key={revision} path={asset.path} />}
         {asset.kind === "image" && (
           <img
             key={revision}
