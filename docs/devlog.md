@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-11-02 · Record editor play tests (AGE-69)
+## 2026-11-02 · Record editor play tests (PR #81, AGE-69)
 
 - Added a linked in-game verification record for Warcraft III 3.0.1.24371 x86_64 at
   editor revision `7ad04d8`, using disposable Lua maps on GE-Proton11-7/Linux Mint.
@@ -23,6 +23,11 @@ single line. Every pull request adds an entry here and to the changelog.
   labels and leaderboard rows/order, but did not fix repeated messages; it is clearly
   separated from unchanged product output. AGE-74 tracks remaining visual, JASS and
   multiplayer coverage. No editor implementation changed.
+- Validation: sequential website test (119 passed), generate, check (zero errors, warnings
+  or hints), build (6,618 pages) and check:links passed. Production browser checks passed
+  on 14 pages at 1440 px and 390 px without overflow or broken images, including 528
+  heading-anchor references, mobile navigation and Lua/JASS switching. All three new figures
+  passed dimensions, full-size link, alt text and centered change-notice checks.
 
 ## 2026-11-02 · Illustrate the expanded editor guides (PR #80, AGE-68)
 
