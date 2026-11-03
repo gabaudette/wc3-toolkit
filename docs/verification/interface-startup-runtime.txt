@@ -1,7 +1,7 @@
 Interface startup verification: project-authored runtime result strings
 2026-11-03
 Warcraft III 3.0.1.24371 x86_64; Linux Mint / GE-Proton11-7
-Source base: e29a0c8d1c79bc4587c1d07397c6ddeaaa4210c4 with the revised startup hook
+Source revision: 1f08cacaa01ff461f32772fd871253645cb2790b
 Harness source SHA256: ba6ba49e1500a56c02ee6a79f98f72c561fa657ee8ac4389164925960835f191
 
 Generated design modules were unchanged. Their Dev.OnStart callbacks and the later

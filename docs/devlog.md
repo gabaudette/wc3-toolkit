@@ -4,7 +4,7 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
-## 2026-11-03 · Initialize Interface designs after loading (AGE-72)
+## 2026-11-03 · Initialize Interface designs after loading (PR #82, AGE-72)
 
 - Changed the Lua harness to dispatch all `Dev.OnStart` callbacks together on its first
   zero-duration timer tick after map initialization, preserving registration order and
@@ -15,6 +15,7 @@ single line. Every pull request adds an entry here and to the changelog.
   the former synchronous hook and passes with the new one, checking initialization phase,
   callback order, consumer access and timer cleanup. The runtime is not an app dependency.
 - Played the rebuilt disposable Lua map on Warcraft III 3.0.1.24371 through GE-Proton11-7.
+  Source revision `1f08cac` is identified in the evidence alongside its harness hash.
   Confirmed first dialog messages, timer title, leaderboard rows/native sorting, rendered
   multiboard text/colors/imported icons and timer controls. All 17 runtime assertions
   passed. Mouse-activated navigation and the player callback worked; keyboard activation
