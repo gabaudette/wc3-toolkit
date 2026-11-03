@@ -24,5 +24,6 @@ workspace = true
 tauri-build = { version = "2", features = [] }
 
 [dev-dependencies]
+mlua = { version = "0.12", features = ["lua53", "vendored"] }
 mpq = { path = "../../crates/mpq" }
 tempfile = "3"

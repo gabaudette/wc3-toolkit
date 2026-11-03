@@ -1,0 +1,61 @@
+Dialog message verification: project-authored runtime result strings
+2026-11-03
+Warcraft III 3.0.1.24371 x86_64; Linux Mint / GE-Proton11-7
+Source revision: 4fb5b627c3bfc4810fb4b81f4c85e1de5af75929
+Generator source SHA256: aa497527d709647d6fff68e19914399233ab89098c07cb3350d6b4425cc798a8
+ui_difficulty.lua SHA256: 40068df727a26ff96be401b4a35c83a8750af753e84da2ffca89b3f54a13017c
+ui_details.lua SHA256: 40d44ed4f44a8d60b6dd3e72c4dd9d920a8f9d9120d1a9cb87d4a9762b4b785e
+
+The isolated editor exported these modules through write_ui_lua. The normal harness
+built a disposable Lua map with one human and one computer slot. Observers forwarded
+real native calls and checked a fresh configured message on every display; visual
+captures separately confirmed the white Difficulty and cyan Details text after three
+About/Back round trips, direct Hide/Show, two ShowAll calls and direct Details.Show.
+Normal closed the dialog and Hard retained the clicking-player callback. Dialog and
+button handles were reused throughout. All 41 checks passed across 13 displays.
+
+Only our result strings are retained here, without the game's Preload wrapper, maps
+or generated game scripts. Mouse activation was used; keyboard hotkeys, imported
+designs and multiple clients were not independently reconfirmed in this follow-up.
+
+PASS two dialogs created before consumer
+PASS fresh designed message for Difficulty display 1
+PASS fresh designed message for Details display 2
+PASS About navigates to Details
+PASS same dialog handles and buttons after action 1
+PASS fresh designed message for Difficulty display 3
+PASS Back restores Difficulty
+PASS same dialog handles and buttons after action 2
+PASS fresh designed message for Details display 4
+PASS About navigates to Details
+PASS same dialog handles and buttons after action 3
+PASS fresh designed message for Difficulty display 5
+PASS Back restores Difficulty
+PASS same dialog handles and buttons after action 4
+PASS fresh designed message for Details display 6
+PASS About navigates to Details
+PASS same dialog handles and buttons after action 5
+PASS fresh designed message for Difficulty display 7
+PASS Back restores Difficulty
+PASS same dialog handles and buttons after action 6
+PASS Hard callback keeps clicking player
+PASS same dialog handles and buttons after action 7
+PASS fresh designed message for Difficulty display 8
+PASS Hide leaves the designed message unchanged
+PASS fresh designed message for Difficulty display 9
+PASS Normal closes without another display
+PASS same dialog handles and buttons after action 8
+PASS fresh designed message for Difficulty display 10
+PASS ShowAll targets the playing human only
+PASS Normal closes without another display
+PASS same dialog handles and buttons after action 9
+PASS fresh designed message for Difficulty display 11
+PASS ShowAll targets the playing human only
+PASS Normal closes without another display
+PASS same dialog handles and buttons after action 10
+PASS fresh designed message for Details display 12
+PASS fresh designed message for Difficulty display 13
+PASS Back restores Difficulty
+PASS same dialog handles and buttons after action 11
+PASS Normal closes without another display
+PASS same dialog handles and buttons after action 12

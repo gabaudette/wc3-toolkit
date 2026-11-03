@@ -114,7 +114,11 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   3.0.1.24371 and editor revision `7ad04d8`. Refresh `verification-fallback.png`,
   `verification-imported-model.png` and `verification-interface-startup.png` only from
   real game runs (1452 × 938). `verification-multiboard.png` shows the rendered cell checks
-  after the startup fix. Reproduce the tabled placement, loot and constant setups
+  after the startup fix. The `verification-dialog-{details,back}.png` captures show the
+  third About/Back round trip after regenerating the dialog modules. Repeat three cycles,
+  direct Hide/Show and ShowAll, and check the preserved text/color, button handles and player
+  callback. Keep the same 1452 × 938 game-window dimensions and screenshot markup.
+  Reproduce the tabled placement, loot and constant setups
   through Tinkerbench on a disposable World Editor Lua map with two slots and starting
   locations. Save, reopen and inspect the stored data, then build generated modules and
   project-authored runtime assertions through the Lua harness. Inspect native arguments
@@ -124,7 +128,8 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   the earlier diagnostic initialization delay; the current startup check uses the harness
   directly, with a consumer registered after the generated designs. Retain the test's own
   result strings in `../docs/verification/editor-runtime-2026-11-02.txt` and
-  `../docs/verification/interface-startup-runtime.txt`, without the game's Preload wrapper
+  `../docs/verification/interface-startup-runtime.txt` and
+  `../docs/verification/dialog-message-runtime.txt`, without the game's Preload wrapper
   or scripts.
   Do not remove unconfirmed notices for remaining failures or untested behavior without
   new evidence. Never add test maps, extracted scripts or standalone artwork.

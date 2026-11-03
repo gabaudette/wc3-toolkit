@@ -178,14 +178,43 @@ Clicking Back navigated from Details to Difficulty. This follow-up used mouse ac
 it did not independently reconfirm keyboard hotkeys. The previous play test exercised
 hotkeys and navigation, but imported callbacks still need their own game check.
 
-**A reused dialog can still lose its message.** Returning from Details showed Difficulty's
-buttons without its original message. The startup fix does not resolve repeated display.
-Design transfer was checked through save/readback and generated names, rather than full
-independent execution of imported designs.
+### Repeated dialog messages
+
+The updated dialog modules restore **Message** whenever they show a dialog. A separate
+November 3 check used freshly generated designs from the updated editor and built a
+fresh development map with the normal harness, on the same game build and environment.
+Three About/Back round trips retained Difficulty's white **Choose a difficulty** message and Details' cyan
+**Work together to survive.** message. The same dialog and button handles were reused.
+
+<figure class="app-screenshot">
+  <a href="../../screenshots/verification-dialog-details.png">
+    <img src="../../screenshots/verification-dialog-details.png" alt="Warcraft III showing the cyan Work together to survive message and Back button on the third visit to Details." width="1452" height="938" loading="lazy" />
+  </a>
+  <figcaption>Details retains its configured message and color after repeated About/Back navigation.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
+
+<figure class="app-screenshot">
+  <a href="../../screenshots/verification-dialog-back.png">
+    <img src="../../screenshots/verification-dialog-back.png" alt="Warcraft III showing the restored Choose a difficulty message with Normal, Hard and About this map after the third Back action." width="1452" height="938" loading="lazy" />
+  </a>
+  <figcaption>Returning with Back restores Difficulty's message without rebuilding its buttons.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
+
+Direct `Hide`/`Show`, two `ShowAll()` calls and a later `Details.Show(player)` also retained
+the configured message. `ShowAll()` targeted the human slot and skipped the computer;
+Normal closed the dialog, and Hard still passed the clicking player to `OnHardMode`.
+The [dialog runtime checks](https://github.com/gabaudette/wc3-toolkit/blob/main/docs/verification/dialog-message-runtime.txt)
+record **41 passing checks across 13 displays** and identify the generated modules.
+These were mouse-activated, single-player checks. Design transfer was checked through
+save/readback and generated names, rather than full independent execution of imported designs.
+
+After updating Tinkerbench, choose **Save and build test copy** in **Interface** to
+regenerate the dialog modules as well as the map copy. Rebuilding with older `ui_*.lua`
+files retains the old display behavior.
 
 ## Remaining checks
 
-Remaining checks cover repeated and imported dialogs, keyboard activation after rebuilding,
+Remaining checks cover imported dialogs, keyboard activation after rebuilding,
 tooltip rendering, a suitable custom loading model, prologue, visible water tint, audible sound,
 JASS maps, additional asset workflows and multiple clients. Keep those limits explicit
 when using the [Interface](../interface/), [Map](../map-settings/), [Assets](../assets/)
