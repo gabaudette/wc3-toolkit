@@ -57,3 +57,6 @@ Build with the [Lua harness](../lua-harness/#build-the-development-copy) or **Sa
 test copy** in **Interface**, then play the `[DEV]` copy. A successful syntax check does not
 confirm object IDs, game API use, multiplayer behavior or the assistant's gameplay claims.
 Code produced from the prompt is **not yet confirmed in game** until you test it.
+
+See the [recorded editor play tests](../verification/) for concrete checked setups, Interface
+bugs and remaining limits. Those results do not extend to other assistant-produced modules.

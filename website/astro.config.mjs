@@ -84,6 +84,7 @@ export default defineConfig({
             { slug: "editor/exporting" },
             { slug: "editor/lua-harness" },
             { slug: "editor/ai-assistant" },
+            { slug: "editor/verification" },
           ],
         },
         { label: "Make something", items: [{ autogenerate: { directory: "guides" } }] },

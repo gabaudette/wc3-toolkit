@@ -96,7 +96,10 @@ If the tab says it cannot rewrite those parts, save in Tinkerbench, then open an
 the World Editor to apply those settings to the game script.
 See [script-rewrite troubleshooting](../troubleshooting/#a-tab-cannot-rewrite-the-map-script).
 
-These editing and save instructions were checked against the source. The settings used
-here are **not yet confirmed in game**; individual constant explanations also mark
-unconfirmed behavior. Test your loading screen, lobby teams, environment and changed rules
-in a separate map copy before relying on them.
+The [recorded play test](../verification/#map-settings-constants-and-dice) confirmed saved
+loading text, player/force state, visible rain, environment native arguments and representative
+damage constants on one Lua map. A [World Editor fallback](../verification/#world-editor-fallback)
+also applied edited position, fog and water arguments. Custom loading art, prologue, visible
+water tint, audible sound effects, JASS and multiple clients remain **not yet confirmed in
+game**. Individual constant explanations retain their own limits. Test your map separately;
+restart the game and use a new test-copy filename if constants or loading text appear stale.

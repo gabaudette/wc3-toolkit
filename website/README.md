@@ -106,7 +106,22 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   should select the custom hero as CSV; the assistant prompt should include a goal and the
   open-map summary. Capture dialogs with margins around their actual bounds and keep their
   true dimensions in the markup. These captures establish editor behavior and generated
-  output, not an in-game play test; retain the guides' unconfirmed-in-game notices (AGE-69).
+  output. The later AGE-69 play tests are recorded in `editor/verification.md`; keep its
+  observed results, known failures and remaining limits separate from desktop previews.
+- `src/content/docs/editor/verification.md` records the AGE-69 play tests on game build
+  3.0.1.24371 and editor revision `7ad04d8`. Refresh `verification-fallback.png`,
+  `verification-imported-model.png` and `verification-interface-startup.png` only from
+  real game runs (1452 × 938). Reproduce the tabled placement, loot and constant setups
+  through Tinkerbench on a disposable World Editor Lua map with two slots and starting
+  locations. Save, reopen and inspect the stored data, then build generated modules and
+  project-authored runtime assertions through the Lua harness. Inspect native arguments
+  and visible output separately. Test a normal save and a script-rewrite refusal followed
+  by a World Editor save; use a fresh game process and distinct map filename when checking
+  changed constants/loading text. Preserve the distinction between unchanged output and
+  the diagnostic 0.2-second initialization delay. Retain the test's own result strings in
+  `../docs/verification/age69-runtime.txt`, without the game's Preload wrapper or scripts.
+  Do not remove unconfirmed notices for AGE-72/73 failures or AGE-74 coverage without new
+  evidence. Never add test maps, extracted scripts or standalone artwork.
 - `../object-editor/crates/wc3-data/data/*-fields.toml`: project-authored field explanations,
   shared with the editor. Every guide ID gets a page, including IDs absent from the snapshot.
 - `data/fields.toml`: display names, types, limits, choices and applicability extracted from

@@ -1,0 +1,60 @@
+AGE-69: project-authored runtime result strings
+2026-11-02; Warcraft III 3.0.1.24371 x86_64; Tinkerbench 7ad04d8
+
+These are extracted test strings, without game-generated wrapper code.
+PASS names describe individual assertions, not overall feature acceptance.
+See website/src/content/docs/editor/verification.md for setups, diagnostic
+controls, visual failures and remaining limits. Normal-run dialog messages
+and timer titles failed visually even though their controls passed.
+
+Unchanged generated modules and normal save
+PASS placed position/owner/facing
+PASS hero level and explicit attributes
+PASS hero HP percent and absolute mana
+PASS starting inventory slots
+PASS added imported-model unit and removed unit
+PASS player controller/race and force membership
+PASS force alliance vision and control
+PASS saved water tint reaches native
+PASS saved fog/weather/sound reach natives
+PASS multiboard fixed and human/computer rows
+PASS fixed row SetValue reaches game
+PASS player row value/color reaches game
+PASS player row imported icon reaches game
+PASS fixed row color/icon reaches game
+PASS multiboard folds
+PASS multiboard hides
+PASS multiboard shows unfolded
+FAIL leaderboard values and descending order | rows 0 human -1 neutral -1
+FAIL leaderboard reorders after AddValue | value 16 index -1
+FAIL leaderboard initial label retained |
+PASS multiboard initial title retained | |cffffcc00Sunwell defense|r
+PASS leaderboard hides
+PASS leaderboard shows
+PASS repeating timer callback without player | count 2
+PASS timer hides without stopping
+PASS timer shows
+PASS timer stops and hides
+PASS timer starts with explicit duration
+PASS two own item sets drop independently
+PASS shared table drops from both units
+PASS flattened cascade drops one allowed item
+PASS Normal against Small multiplier 1.2 | 120.0 defense 0
+PASS damage dice data and primary attribute | base 54
+PASS five actual attacks fit 56-66 with satb 2 | 57.0
+PASS ten bounty awards fit 25 plus 2d6 | 28,36,34,28,31,33,32,29,33,29
+PASS original dialog H callback player/trigger
+PASS original dialog A/B navigation
+
+Fresh-process World Editor fallback
+PASS WE fallback applies edited position
+PASS WE fallback preserves owner/facing
+PASS WE fallback preserves level/attributes
+PASS WE fallback preserves HP/mana
+PASS WE fallback preserves starting items
+PASS WE fallback applies edited fog
+PASS WE fallback applies edited water tint
+PASS WE fallback preserves player/force setup
+PASS saved imported-model unit exists
+PASS corrected custom ability available
+PASS reset primary bonus restores guide damage

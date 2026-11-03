@@ -4,6 +4,26 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-02 · Record editor play tests (AGE-69)
+
+- Added a linked in-game verification record for Warcraft III 3.0.1.24371 x86_64 at
+  editor revision `7ad04d8`, using disposable Lua maps on GE-Proton11-7/Linux Mint.
+  Recorded setups, native observations, visible outcomes and limits; updated the
+  Interface, placements, map, assets, objects, assistant and troubleshooting guides.
+  Added three actual game captures and retained only our own runtime result strings.
+  Test maps, extracted game scripts and standalone assets stayed outside the repository.
+- Confirmed placement/hero/inventory edits, own/shared/cascade drops with saved whole
+  percentages, player/force state, rain, environment arguments, representative damage
+  constants, attack/bounty ranges and the imported Knight model/texture/icon. A custom
+  script correctly refused rewriting; a World Editor save regenerated it, and the final
+  fallback game run passed 11 assertions. A fresh process and unique map filename showed
+  reset damage of 34–44 and new loading text after same-filename runs showed stale values.
+- Filed AGE-72 for lost startup labels and leaderboard rows, and AGE-73 for messages lost
+  on repeated dialog display. A diagnostic 0.2-second initialization delay restored first
+  labels and leaderboard rows/order, but did not fix repeated messages; it is clearly
+  separated from unchanged product output. AGE-74 tracks remaining visual, JASS and
+  multiplayer coverage. No editor implementation changed.
+
 ## 2026-11-02 · Illustrate the expanded editor guides (PR #80, AGE-68)
 
 - Replaced all 22 screenshot placeholders with actual desktop captures: 22 new PNGs and

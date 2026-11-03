@@ -8,6 +8,9 @@ under "What's new".
 
 ### Added
 
+- The documentation records in-game checks for placed units, loot, map settings, imported
+  artwork and damage dice, with known Interface failures and remaining test limits.
+
 - The expanded editor guides now include real application screenshots for startup, fields,
   Interface designs, placed units and loot, map settings, assets, exports and AI prompts.
 - The documentation covers Interface designs and their Lua functions, placed units and loot,

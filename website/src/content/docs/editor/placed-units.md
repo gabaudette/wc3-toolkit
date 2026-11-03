@@ -112,8 +112,9 @@ This applies to Lua and JASS maps. If the tab says it cannot rewrite the unit sc
 in Tinkerbench, then open and save the map in the World Editor before playing.
 See [script-rewrite troubleshooting](../troubleshooting/#a-tab-cannot-rewrite-the-map-script).
 
-The controls and save path described here were checked against the source. Placement,
-starting inventory and drop outcomes in this guide are **not yet confirmed in game**.
-Test a separate copy: check unit ownership, position and hero inventory, then kill units
-with each drop setup. A few drops cannot establish a probability; compare the stored
-whole percentages as well as observed outcomes.
+The [recorded Lua-map play test](../verification/#placed-units-and-loot) confirmed position,
+owner, facing, hero level and attributes, life/mana, starting inventory, added/removed units,
+own item sets, shared tables and a flattened cascade. Both the normal rewrite and a
+[World Editor fallback](../verification/#world-editor-fallback) were exercised. JASS and
+multiplayer behavior remain unconfirmed. Test your own copy; a few drops cannot establish
+a probability, so compare stored whole percentages as well as observed outcomes.
