@@ -147,9 +147,26 @@ installers and the version shown in the editor all read it). To release:
    draft on GitHub.
 
 The installers ship `LICENSE` and `src-tauri/THIRD-PARTY-NOTICES.txt`, the licenses of every
-library they contain. After changing dependencies (`Cargo.lock`, `bun.lock` or the vendored C
-libraries), run `bun run notices` in `object-editor/app` and commit the result; CI fails while
-the file is out of date.
+library they contain; Tinkerbench Setup also shows `setup/THIRD-PARTY-NOTICES.txt`, which adds
+its own libraries. After changing dependencies (`Cargo.lock`, `bun.lock` or the vendored C
+libraries), run `bun run notices` in `object-editor/app` and commit both files; CI fails while
+either is out of date.
+
+### Tinkerbench Setup
+
+`object-editor/setup` is the install wizard (Rust and egui, so it runs before WebView2 or
+WebKitGTK is installed). It carries the app binary, named at build time:
+
+```sh
+cd object-editor/app && bun run tauri build --no-bundle
+cd .. && TINKERBENCH_PAYLOAD=target/release/tinkerbench cargo build --release -p tinkerbench-setup
+```
+
+Without `TINKERBENCH_PAYLOAD` the setup still builds and its pages run, but it has nothing to
+install. `--dry-run` shows the system-package command instead of running it, and `--uninstall`
+opens on removal. To try it without touching your own install on Linux, point `HOME`,
+`XDG_CONFIG_HOME`, `XDG_DATA_HOME` and `XDG_CACHE_HOME` at a temporary folder (link your Steam
+folder into it so the game is still found).
 
 The Windows installer is not signed: Windows shows a SmartScreen warning ("Windows protected
 your PC") until a code signing certificate is added. The install notes explain how to get past

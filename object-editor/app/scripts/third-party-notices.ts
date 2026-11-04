@@ -5,7 +5,9 @@ const APP = resolve(import.meta.dir, "..");
 const WORKSPACE = resolve(APP, "..");
 const VENDOR = join(WORKSPACE, "vendor");
 const OUTPUT = join(APP, "src-tauri", "THIRD-PARTY-NOTICES.txt");
+const SETUP_OUTPUT = join(WORKSPACE, "setup", "THIRD-PARTY-NOTICES.txt");
 const APP_CRATE = "wc3-object-editor";
+const SETUP_CRATE = "tinkerbench-setup";
 const LICENSE_FILE = /^(licen[cs]e|copying|notice|copyright|unlicense)/i;
 const LICENSE_DIR = /^licen[cs]es$/i;
 const RULE_WIDTH = 80;
@@ -79,11 +81,10 @@ function cargoMetadata(): CargoMetadata {
   return JSON.parse(result.stdout.toString());
 }
 
-function rustComponents(): Component[] {
-  const metadata = cargoMetadata();
+function rustComponents(metadata: CargoMetadata, crate: string): Component[] {
   const packages = new Map(metadata.packages.map((p) => [p.id, p]));
   const nodes = new Map(metadata.resolve.nodes.map((n) => [n.id, n]));
-  const root = metadata.packages.find((p) => p.name === APP_CRATE && p.source === null);
+  const root = metadata.packages.find((p) => p.name === crate && p.source === null);
   const shipped = new Set<string>();
   const queue: string[] = [];
 
@@ -268,7 +269,7 @@ function byLabel(a: string, b: string): number {
   return a.localeCompare(b, "en");
 }
 
-function notices(components: Component[]): string {
+function notices(product: string, components: Component[]): string {
   const byText = new Map<string, Set<string>>();
   const withoutText = new Set<string>();
 
@@ -297,27 +298,45 @@ function notices(components: Component[]): string {
   ].join("\n");
 
   return [
-    "Third-party software in Tinkerbench",
+    `Third-party software in ${product}`,
     "",
-    "Tinkerbench includes the software below. Each license text follows the list of components",
-    "it applies to. Tinkerbench itself is under the MIT License (LICENSE).",
+    `${product} includes the software below. Each license text follows the list of components`,
+    `it applies to. ${product} itself is under the MIT License (LICENSE).`,
     "",
     ...sections,
     untexted,
   ].join("\n");
 }
 
-const text = notices([...vendoredComponents(), ...rustComponents(), ...npmComponents()]);
+const metadata = cargoMetadata();
+const shared = [
+  ...vendoredComponents(),
+  ...rustComponents(metadata, APP_CRATE),
+  ...npmComponents(),
+];
+// The setup carries the app, so its notices cover the app's components too.
+const outputs = [
+  { path: OUTPUT, text: notices("Tinkerbench", shared) },
+  {
+    path: SETUP_OUTPUT,
+    text: notices("Tinkerbench Setup", [...shared, ...rustComponents(metadata, SETUP_CRATE)]),
+  },
+];
 
 if (process.argv.includes("--check")) {
-  const current = existsSync(OUTPUT) && read(OUTPUT) === text.trim();
+  const stale = outputs.filter(
+    ({ path, text }) => !(existsSync(path) && read(path) === text.trim()),
+  );
 
-  if (!current) {
-    process.stderr.write(
-      "src-tauri/THIRD-PARTY-NOTICES.txt is out of date: run `bun run notices` in object-editor/app.\n",
-    );
+  for (const { path } of stale) {
+    process.stderr.write(`${path} is out of date: run \`bun run notices\` in object-editor/app.\n`);
+  }
+
+  if (stale.length > 0) {
     process.exit(FAILURE);
   }
 } else {
-  writeFileSync(OUTPUT, text);
+  for (const { path, text } of outputs) {
+    writeFileSync(path, text);
+  }
 }

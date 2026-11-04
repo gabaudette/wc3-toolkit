@@ -1,0 +1,34 @@
+[package]
+name = "tinkerbench-setup"
+description = "Tinkerbench Setup: installs Tinkerbench and what it needs, and finds Warcraft III"
+edition.workspace = true
+version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+dirs = "7"
+eframe = { version = "0.37", default-features = false, features = [
+    "accesskit",
+    "default_fonts",
+    "glow",
+    "wayland",
+    "x11",
+] }
+flate2 = "1"
+rfd = "0.17"
+tempfile = "3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+wc3-install = { path = "../crates/wc3-install" }
+
+[target.'cfg(windows)'.dependencies]
+mslnk = "0.1"
+windows-registry = "0.5"
+
+[build-dependencies]
+flate2 = "1"
+
+[lints]
+workspace = true

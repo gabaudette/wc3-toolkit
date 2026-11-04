@@ -4,6 +4,58 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-04 · Tinkerbench Setup, the install wizard (AGE-75)
+
+- `object-editor/setup` (binary `tinkerbench-setup`): one wizard for Windows and Linux with
+  the same pages, as decided for AGE-30's release. eframe/egui 0.37 on `glow` with AccessKit,
+  `rfd` for folder pickers (the XDG portal on Linux, so no GTK either). The release binary
+  links only glibc and libstdc++, so it runs before WebKitGTK is installed.
+- **Payload:** `build.rs` deflates the app binary named in `TINKERBENCH_PAYLOAD` into
+  `OUT_DIR`; the setup embeds it with `LICENSE`, the app's notices and the hicolor icons. An
+  18.8 MB app makes a 26 MB setup. Without the variable the payload is empty and install says so.
+- **Pages:** welcome (update/repair or remove when `install.json` exists), license (MIT and the
+  notices, shown with `ScrollArea::show_rows` since the file is about 1 MB), install folder and
+  desktop shortcut, requirements, Warcraft III (`wc3_install::find_games` as a list, `check_game`
+  on a thread, HD only when HD art is installed), maps folder (a write check with a temporary
+  file), test maps (`<map> Lua` or one folder for all maps), install with its steps, finish
+  (launch). `--uninstall` opens on removal; `--dry-run` only shows the package command.
+- **Install** (`install.rs`, per user, no administrator rights): the binary is written beside
+  the old one and renamed over it, so a running Tinkerbench on Windows shows as "close it
+  first". Every file written goes in `install.json` (config folder, beside `setup.json`), and
+  removal deletes exactly those; "also remove settings" deletes the app's config, data and
+  cache folders named after its identifier. `setup.json` gets the game, HD, maps and Lua choices.
+- **Linux** (`platform.rs`): binary in `~/.local/share/tinkerbench`, a `tinkerbench` symlink in
+  `~/.local/bin`, the menu entry `io.github.gabaudette.wc3toolkit.desktop` (quoted `Exec`,
+  `StartupWMClass=tinkerbench`), five hicolor icon sizes, an optional desktop shortcut (from
+  `user-dirs.dirs`, else `~/Desktop`), then `update-desktop-database` and
+  `gtk-update-icon-cache` when present.
+- **Windows:** `%LOCALAPPDATA%\Programs\Tinkerbench`, Start menu and optional desktop `.lnk`
+  through `mslnk`. The Add/Remove Programs entry and installing WebView2 come next (AGE-75).
+- **Requirements:** on Linux, `ldd` on a copy of the app in the cache folder (`/tmp` can forbid
+  running programs) lists `not found` libraries. Every one comes with WebKitGTK, so the fix
+  installs that one package with `pkexec`, picking apt, dnf, pacman or zypper from
+  `/etc/os-release` `ID`/`ID_LIKE`; the terminal command is shown too. On Windows, the WebView2
+  client key's `pv` value.
+- **Look** (`theme.rs`): `docs/design.md`'s tokens. Nunito Sans 400/700 and Cormorant SC 700
+  are the app's `@fontsource` latin WOFF files unpacked to TTF (egui reads no WOFF), with
+  their OFL licenses in `setup/fonts`. Those fonts have no check mark, so success lines use
+  the glow colour instead. egui shows no keyboard focus on a filled button, so the setup draws
+  a 2 px ring around the focused control (`Context::read_response`).
+- **Notices:** `scripts/third-party-notices.ts` also writes `setup/THIRD-PARTY-NOTICES.txt`
+  (the app's components plus the setup's crates); `--check` covers both files.
+- Checked on Linux, in a temporary home linking the real Steam folder, with a payload built by
+  `tauri build --no-bundle`:
+  - **install:** every page by mouse and Next by keyboard; the game was found and read; the
+    binary was byte-identical; the files, symlink, menu entry and icons were written;
+    `setup.json` held the choices;
+  - **launch:** Finish started the installed app, which loaded the game with HD on without
+    its setup screen;
+  - **update:** offered and re-installed; the desktop shortcut was created;
+  - **removal:** with settings, it left only the system's `mimeinfo.cache`; without them,
+    only `setup.json`.
+  - **Not exercised:** the missing-library page, which needs a system without WebKitGTK (its
+    parsing and package choice have unit tests), and every Windows path.
+
 ## 2026-11-04 · Shared game detection for the app and Tinkerbench Setup (AGE-75)
 
 - First step of Tinkerbench Setup, the install wizard for Windows and Linux (AGE-75, under
