@@ -12,6 +12,9 @@ under "What's new".
 
 ### Fixed
 
+- The Lua folder you pick in the Interface tab stays after you edit the map in another tab;
+  it used to go back to the default, so a build could write its modules elsewhere. The
+  spell wizard uses the same folder, and opening another map starts from that map's own.
 - Unit Classification takes several choices, as in the game and the World Editor (a building
   can be both a Town Hall and Mechanical): its options are chips instead of a single-choice
   drop-down. So are the Placement Requires and Placement Prevented By pathing fields of
