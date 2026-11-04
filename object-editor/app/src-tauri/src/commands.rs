@@ -7,11 +7,12 @@ use tauri::State;
 use wc3_data::abilities::AbilityDatabase;
 use wc3_data::constants::ConstantsDatabase;
 use wc3_data::doodads::DoodadDatabase;
-use wc3_data::game::{ArtMode, GameFiles, GameOptions};
+use wc3_data::game::ArtMode;
 use wc3_data::guide::FieldGuide;
 use wc3_data::meta::FieldMeta;
 use wc3_data::units::UnitDatabase;
 use wc3_data::upgrades::UpgradeDatabase;
+use wc3_install::{FoundGame, SetupChoices};
 use wc3_map::abilities::MapAbilities;
 use wc3_map::units::MapUnits;
 use wc3_map::{FourCC, MapStrings, save_changes};
@@ -20,7 +21,6 @@ use crate::abilities::{AbilityCard, AbilityDetail, AbilitySummary, AbilityView};
 use crate::hotkeys::{self, Clash};
 use crate::interface;
 use crate::loot;
-use crate::platform;
 use crate::state::{AppState, NO_MAP, OpenMap, Session};
 use crate::sync;
 use crate::view::{DEFAULT_ATTRIBUTE_DAMAGE, Field, SearchHit, UnitDetail, UnitItem, View};
@@ -100,23 +100,67 @@ fn path_text(path: &Path) -> String {
     path.to_string_lossy().into_owned()
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GameChoice {
+    pub dir: String,
+    pub source: &'static str,
+    pub version: Option<String>,
+    pub maps_dir: Option<String>,
+}
+
+impl From<FoundGame> for GameChoice {
+    fn from(game: FoundGame) -> Self {
+        Self {
+            dir: path_text(&game.dir),
+            source: game.source.label(),
+            version: game.version,
+            maps_dir: game.maps_dir.as_deref().map(path_text),
+        }
+    }
+}
+
+/// Every Warcraft III install found, the most likely first.
 #[tauri::command]
-pub fn detect_game_dir() -> Option<String> {
-    platform::detect_game_dir().map(|p| path_text(&p))
+pub fn find_games() -> Vec<GameChoice> {
+    wc3_install::find_games()
+        .into_iter()
+        .map(GameChoice::from)
+        .collect()
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SetupChoicesView {
+    pub game_dir: String,
+    pub hd: bool,
+}
+
+/// What Tinkerbench Setup chose, for the first launch after installing.
+#[tauri::command]
+pub fn setup_choices() -> Result<Option<SetupChoicesView>, String> {
+    let choices = SetupChoices::load().map_err(|e| e.to_string())?;
+
+    Ok(choices.map(|c| SetupChoicesView {
+        game_dir: path_text(&c.game_dir),
+        hd: c.hd,
+    }))
+}
+
+/// The maps folder Tinkerbench Setup chose for this install, or the one found beside it.
+fn maps_dir_for(dir: &Path) -> Option<PathBuf> {
+    SetupChoices::load()
+        .ok()
+        .flatten()
+        .filter(|c| c.game_dir == dir)
+        .and_then(|c| c.maps_dir)
+        .or_else(|| wc3_install::maps_dir(dir))
 }
 
 #[tauri::command]
 pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<GameSummary, String> {
     let dir = PathBuf::from(dir);
-
-    if !platform::is_game_dir(&dir) {
-        return Err(format!(
-            "{} is not a Warcraft III folder (it has no Data folder).",
-            dir.display()
-        ));
-    }
-
-    let files = GameFiles::open(&dir, GameOptions::default()).map_err(|e| e.to_string())?;
+    let files = wc3_install::open_game_files(&dir).map_err(|e| e.to_string())?;
     let db = UnitDatabase::load(&files).map_err(|e| e.to_string())?;
     let guide = FieldGuide::units().map_err(|e| e.to_string())?;
     let abilities = AbilityDatabase::load(&files).map_err(|e| e.to_string())?;
@@ -137,7 +181,7 @@ pub fn open_game(state: State<'_, AppState>, dir: String, hd: bool) -> Result<Ga
     let summary = GameSummary {
         dir: path_text(&dir),
         units: db.ids().len(),
-        maps_dir: platform::maps_dir(&dir).map(|p| path_text(&p)),
+        maps_dir: maps_dir_for(&dir).map(|p| path_text(&p)),
     };
 
     let mode = if hd { ArtMode::Hd } else { ArtMode::Sd };

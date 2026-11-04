@@ -8,6 +8,7 @@ use wc3_data::spells::{
     spell_templates as templates,
 };
 use wc3_data::strings::plain_text;
+use wc3_install::SetupChoices;
 use wc3_map::lua::{build_dev_map, check_syntax, default_output};
 
 use wc3_map::FourCC;
@@ -568,8 +569,18 @@ pub fn write_triggered_spell_lua(
     })
 }
 
+/// The folder Tinkerbench Setup chose for every map's Lua modules, or `<map> Lua`
+/// beside the open map.
 #[tauri::command]
 pub fn default_lua_folder(state: State<'_, AppState>) -> Result<Option<String>, String> {
+    let shared = SetupChoices::load()
+        .map_err(|e| e.to_string())?
+        .and_then(|c| c.lua_folder);
+
+    if let Some(folder) = shared {
+        return Ok(Some(folder.display().to_string()));
+    }
+
     state.with(|session| {
         Ok(session.map.as_ref().map(|map| {
             let stem = map.path.file_stem().unwrap_or_default().to_string_lossy();

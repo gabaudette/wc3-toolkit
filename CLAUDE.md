@@ -16,6 +16,11 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   (`cargo run --release -p wc3-data --bin wc3data -- unit Hpal`). It also has the map formats:
   `objects` (all Object Editor files, v1–v3, byte-exact round trip) and `strings` (`war3map.wts`).
   `crates/mpq` reads/writes map archives via the vendored StormLib (built with CMake).
+  `crates/wc3-install` is shared by the app and Tinkerbench Setup: `find_games` (Battle.net
+  registry and every drive on Windows; on Linux the Wine prefixes of every Steam library,
+  Heroic, Bottles, Lutris and `~/.wine`), `check_game` (plain-language reasons the data will
+  not read) and `SetupChoices` (`setup.json` in the app's config folder, which the app reads on
+  its first launch: game folder, HD, maps folder, one Lua folder for all maps).
   `crates/wc3-map` opens maps, saves through a temp copy (`save_files`), and `units::MapUnits`
   applies a map's unit changes over the game data and edits them; `abilities::MapAbilities`
   does the same for abilities (per level), `items::MapItems` for items and
@@ -55,8 +60,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   kept in `<map> UI.json` beside the map, and the Lua modules they become; `.w3ui` design files carry them and their imported icons between maps), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
   the open map's imported file first, then the game's; they read game files outside the
   session lock, since `casc::Storage` is `Sync`, and textures decode at most 512 px),
-  `platform.rs` (install/maps folder detection, and on Linux keeping WebKitGTK's threads off
-  real-time priority, whose CPU limit SIGKILLed the app; the only platform-specific module).
+  `platform.rs` (on Linux, keeping WebKitGTK's threads off real-time priority, whose CPU
+  limit SIGKILLed the app; the app's only platform-specific module).
   `api.ts`/`types.ts` mirror the Rust types. Run with `bun run tauri dev` from `app/`.
   The look ("Arcane": tokens, type, components, accessibility and copy rules) is in
   `docs/design.md`; follow it for every screen. `docs/assistant-prompt.md` is the prompt the

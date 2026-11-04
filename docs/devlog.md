@@ -4,6 +4,41 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-04 · Shared game detection for the app and Tinkerbench Setup (AGE-75)
+
+- First step of Tinkerbench Setup, the install wizard for Windows and Linux (AGE-75, under
+  AGE-30). The setup and the app must find the game the same way, so detection moves from
+  the app's `platform.rs` into a new crate, `crates/wc3-install`; `platform.rs` keeps only the
+  WebKitGTK thread-priority fix.
+- `find_games` returns every install, not just the best one, with its source, its version
+  (the active row's `Version` column of `.build.info`) and its maps folder, ranked as before:
+  a maps folder first, then the newest `.build.info`.
+  - **Linux:** every library in each Steam install's `steamapps/libraryfolders.vdf`
+    (`~/.local/share/Steam`, `~/.steam/*`, Flatpak), then Heroic, Bottles (native and
+    Flatpak), Lutris (`~/Games`) and `~/.wine`. Prefixes are found by a bounded search for
+    `drive_c`, without following symbolic links. Duplicates through those links are dropped
+    by canonical path.
+  - **Windows:** Blizzard's `InstallPath` and the Uninstall key's `InstallLocation` (HKLM
+    and HKCU, through `windows-registry`), then `Program Files (x86)`, `Program Files`,
+    `Games` and the top folder of drives C to Z. The registry names are unconfirmed on a
+    Reforged install; the drive scan covers the default locations either way.
+  - Outside a prefix the maps folder now comes from `dirs::document_dir`, so a Documents
+    folder moved to OneDrive is found.
+- `check_game` opens the data and reads a unit table, the editor's text and an HD icon
+  (`GameFiles::read_hd`, new); `open_game_files` gives the app the same plain-language
+  errors (`GameProblem`). The old "not a Warcraft III folder" message named only `Data`.
+- `SetupChoices` is `setup.json` in the app's config folder (`dirs::config_dir()` plus the
+  Tauri identifier, the folder Tauri itself uses). With nothing remembered, the setup screen
+  seeds the game folder and HD choice from it and loads automatically; `open_game` takes its
+  maps folder; `default_lua_folder` returns its shared Lua folder when one was chosen.
+- The setup screen lists the installs as a react-aria `RadioGroup` when there are several.
+- Checked: unit tests over fake Steam (second library), Heroic, Bottles, Lutris and Wine
+  layouts, `.build.info` and `setup.json` parsing; the ignored real-install tests pass on the
+  Proton install (found with version and maps folder, HD art read). In the app, with a
+  temporary home holding the real Steam folder and a fake Lutris install: both listed, Steam
+  first; choosing the fake one gave the new error; a `setup.json` made the first launch load
+  the game with HD on and set the Interface tab's Lua folder.
+
 ## 2026-11-03 · Keep the chosen Lua folder (PR #89)
 
 - Since tabs stay alive, a hidden tab whose map changed elsewhere remounts when shown again

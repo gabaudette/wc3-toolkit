@@ -8,6 +8,9 @@ under "What's new".
 
 ### Added
 
+- When Tinkerbench finds several Warcraft III installations, the setup screen lists them
+  with where each came from and its game version, so you can choose yours. It now also looks
+  in every Steam library, Heroic, Bottles and Lutris on Linux, and on every drive on Windows.
 - The in-game verification page records more checks: custom loading-screen models, a
   script rewrite on a JASS map, a colored ability tooltip, and an imported Interface design
   with keyboard hotkeys. The Map guide says which loading-screen models work.
@@ -18,6 +21,8 @@ under "What's new".
 
 ### Fixed
 
+- When a folder is not a Warcraft III installation, the message says both files it looks for
+  and that a Maps folder is not the game.
 - The Lua folder you pick in the Interface tab stays after you edit the map in another tab;
   it used to go back to the default, so a build could write its modules elsewhere. The
   spell wizard uses the same folder, and opening another map starts from that map's own.

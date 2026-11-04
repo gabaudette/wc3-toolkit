@@ -100,6 +100,20 @@ export type SearchHit = {
   reason: string;
 };
 
+/** A Warcraft III install found on this computer. */
+export type GameChoice = {
+  dir: string;
+  source: string;
+  version: string | null;
+  mapsDir: string | null;
+};
+
+/** What Tinkerbench Setup chose, read on the first launch after installing. */
+export type SetupChoices = {
+  gameDir: string;
+  hd: boolean;
+};
+
 export type GameSummary = {
   dir: string;
   units: number;
