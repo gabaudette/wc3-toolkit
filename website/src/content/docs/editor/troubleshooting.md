@@ -35,7 +35,8 @@ trying changes.
 3. **Tinkerbench does not open after installing:** run Tinkerbench Setup again and look at its
    **Requirements** page. On Linux, Tinkerbench needs WebKitGTK; **Install it** adds it through
    your package manager, or run the command it shows in a terminal. On Windows, it needs the
-   Microsoft Edge WebView2 Runtime; the page links to Microsoft's download when it is missing.
+   Microsoft Edge WebView2 Runtime; **Install it** downloads it from Microsoft, which needs an
+   internet connection, and the page also links to Microsoft's download.
 4. If it still does not open, [find the log file](#find-the-log-file) and
    [report the problem](#report-an-unresolved-problem).
 

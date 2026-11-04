@@ -40,6 +40,9 @@ pub enum InstallError {
         source: std::io::Error,
     },
     #[cfg(windows)]
+    #[error("Cannot write the Add/Remove Programs entry ({key}): {message}")]
+    Registry { key: String, message: String },
+    #[cfg(windows)]
     #[error("Cannot create the shortcut {}: {message}", .path.display())]
     Shortcut { path: PathBuf, message: String },
     #[error("{} is not an install record the setup can read: {source}", .path.display())]
@@ -181,7 +184,17 @@ pub fn install(plan: &Plan, report: &mut dyn FnMut(&str)) -> Result<InstallRecor
 /// Removes what the record lists. With `remove_settings`, also the app's
 /// settings, browser data and logs.
 pub fn uninstall(record: &InstallRecord, remove_settings: bool) -> Result<(), InstallError> {
+    let running = std::env::current_exe()
+        .and_then(|exe| exe.canonicalize())
+        .ok();
+    let mut running_in_record = None;
+
     for file in &record.files {
+        if running.is_some() && file.canonicalize().ok() == running {
+            running_in_record = Some(file);
+            continue;
+        }
+
         match std::fs::remove_file(file) {
             Err(e) if e.kind() != ErrorKind::NotFound => {
                 return Err(io_error("remove", file)(e));
@@ -212,7 +225,13 @@ pub fn uninstall(record: &InstallRecord, remove_settings: bool) -> Result<(), In
         }
     }
 
+    platform::unregister()?;
     platform::refresh_menus();
+
+    if let Some(file) = running_in_record {
+        platform::remove_after_exit(file, &record.dir);
+    }
+
     Ok(())
 }
 

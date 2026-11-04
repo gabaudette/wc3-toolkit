@@ -9,10 +9,11 @@ under "What's new".
 ### Added
 
 - Tinkerbench Setup, for Windows and Linux, installs Tinkerbench for your user, with no
-  administrator rights. It checks what Tinkerbench needs from the system and on Linux installs
-  WebKitGTK if it is missing, then finds your Warcraft III install, your Maps folder and where
-  test maps keep their Lua files. Tinkerbench then opens straight on your game. Run the setup
-  again to update or remove Tinkerbench.
+  administrator rights. It checks what Tinkerbench needs from the system and installs it if it
+  is missing (WebView2 on Windows, WebKitGTK on Linux), then finds your Warcraft III install,
+  your Maps folder and where test maps keep their Lua files. Tinkerbench then opens straight on
+  your game. Run the setup again to update or remove Tinkerbench; on Windows it is also listed
+  under installed apps.
 - When Tinkerbench finds several Warcraft III installations, the setup screen lists them
   with where each came from and its game version, so you can choose yours. It now also looks
   in every Steam library, Heroic, Bottles and Lutris on Linux, and on every drive on Windows.

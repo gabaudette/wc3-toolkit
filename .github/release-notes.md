@@ -47,7 +47,5 @@ distribution, package type, game build and SD/HD mode actually exercised. -->
 - Nothing has been tested with several players in one game yet.
 - The game's own campaign loading screens cannot be chosen in the Map tab: a typed campaign
   path shows only the race crest. Imported loading-screen models work.
-- On Windows, a missing WebView2 runtime is not installed by the setup yet: it links to
-  Microsoft's download. Windows 10 and 11 usually have it already.
 
 Report problems at https://github.com/gabaudette/wc3-toolkit/issues.

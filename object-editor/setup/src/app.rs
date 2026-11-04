@@ -11,7 +11,7 @@ use wc3_install::{FoundGame, GameCheck, SetupChoices, check_game, find_games};
 
 use crate::install::{self, InstallRecord, Plan};
 use crate::payload;
-use crate::requirements::{self, Requirements};
+use crate::requirements::{self, Requirements, WEBVIEW2_DOWNLOAD};
 use crate::theme;
 
 const STEPS_WIDTH: f32 = 210.0;
@@ -24,7 +24,6 @@ const FRAME_INSET: f32 = 3.0;
 /// The keyboard focus ring, drawn around the focused control (WCAG 2.4.7).
 const FOCUS_GAP: f32 = 2.0;
 const FOCUS_WIDTH: f32 = 2.0;
-const WEBVIEW2_DOWNLOAD: &str = "https://developer.microsoft.com/microsoft-edge/webview2/";
 const SHARED_LUA_FOLDER: &str = "Tinkerbench Lua";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -599,10 +598,7 @@ impl SetupApp {
 
                 match fix {
                     Some(fix) => {
-                        ui.label(format!(
-                            "The setup can install {}. Your system asks for your password first.",
-                            fix.summary
-                        ));
+                        ui.label(fix.explanation());
 
                         let ctx = ui.ctx().clone();
 
@@ -616,8 +612,20 @@ impl SetupApp {
                             self.fix = Job::start(&ctx, move || fix.apply(dry_run));
                         }
 
-                        ui.label(theme::muted("Or run this in a terminal, then check again:"));
-                        ui.label(theme::path(&fix.for_terminal()));
+                        match fix.for_terminal() {
+                            Some(command) => {
+                                ui.label(theme::muted(
+                                    "Or run this in a terminal, then check again:",
+                                ));
+                                ui.label(theme::path(&command));
+                            }
+                            None => {
+                                ui.label(theme::muted(
+                                    "Or install it from Microsoft, then check again:",
+                                ));
+                                ui.hyperlink(WEBVIEW2_DOWNLOAD);
+                            }
+                        }
                     }
                     None if cfg!(windows) => {
                         ui.label("Install the WebView2 Runtime from Microsoft, then check again:");
