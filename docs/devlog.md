@@ -38,6 +38,22 @@ single line. Every pull request adds an entry here and to the changelog.
   temporary home holding the real Steam folder and a fake Lutris install: both listed, Steam
   first; choosing the fake one gave the new error; a `setup.json` made the first launch load
   the game with HD on and set the Interface tab's Lua folder.
+## 2026-11-04 · Link the C runtime statically on Windows (AGE-75)
+
+- The Rust MSVC target links the C runtime as DLLs by default: `VCRUNTIME140.dll` comes from
+  the Visual C++ redistributable, which the NSIS installer never installed (it installs only
+  WebView2), so a Windows computer without it could not start the app. Tinkerbench
+  Setup (AGE-75) would have had to install it; linking it in removes that requirement.
+- `object-editor/.cargo/config.toml` sets `-C target-feature=+crt-static` for
+  `x86_64-pc-windows-msvc`. The bundled C libraries follow without changes: `cc` (CascLib,
+  the shim, mlua's Lua) reads the target feature and compiles with `/MT`, and `cmake` passes
+  `cc`'s flags into StormLib's `CMAKE_<LANG>_FLAGS_RELEASE`. StormLib's
+  `cmake_minimum_required(3.10)` leaves policy CMP0091 off, so those flags pick the runtime.
+- CI's Windows job builds the app and fails if `dumpbin /dependents` lists `VCRUNTIME` or
+  `MSVCP`. The first run also refused `api-ms-win-crt-*`: the binary still imports those,
+  from code built against the dynamic Universal CRT, but the UCRT is part of Windows 10 and
+  later, which Tauri 2 requires, so they need no redistributable. Linux builds are unchanged
+  (the setting is target-specific).
 
 ## 2026-11-03 · Keep the chosen Lua folder (PR #89)
 
