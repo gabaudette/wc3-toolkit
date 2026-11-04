@@ -43,7 +43,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `CascLibRAD.lib`); MSVC rejects `strncpy` and similar CRT functions as deprecated, and the
   shim builds with warnings as errors. The C runtime is linked statically (`+crt-static` in
   `object-editor/.cargo/config.toml`, followed by `cc` and `cmake`), so the app needs no
-  Visual C++ redistributable; CI checks the binary imports none of its DLLs.
+  Visual C++ redistributable; CI checks the binary imports no `VCRUNTIME`/`MSVCP` DLL (the
+  Universal CRT's `api-ms-win-crt-*` are part of Windows 10+).
 - `object-editor/app/` — the Tauri 2 editor, named **Tinkerbench** (gnome icon in
   `src-tauri/icons/app-icon.png`; `bun run tauri icon` makes the other sizes): React 19 + TypeScript + Vite + Tailwind 4 +
   react-aria-components, Bun, Biome with the AGE baseline plus the React domain. Rust side in

@@ -100,7 +100,8 @@ jobs:
 
       # The C runtime is linked statically (object-editor/.cargo/config.toml): a
       # Windows computer without the Visual C++ redistributable must still start
-      # the app, so the binary may not import the runtime's DLLs.
+      # the app, so the binary may not import its DLLs (VCRUNTIME, MSVCP). The
+      # Universal CRT (api-ms-win-crt-*) is part of Windows 10 and later.
       - name: Check the app does not need the Visual C++ runtime
         if: runner.os == 'Windows'
         working-directory: object-editor
@@ -111,8 +112,8 @@ jobs:
           $dumpbin = & $vswhere -latest -find "VC\Tools\MSVC\**\bin\Hostx64\x64\dumpbin.exe" | Select-Object -First 1
           $dependents = & $dumpbin /dependents target\debug\wc3-object-editor.exe
           $dependents
-          if ($dependents -match 'VCRUNTIME|MSVCP|ucrtbase|api-ms-win-crt') {
-            throw 'wc3-object-editor.exe imports the Visual C++ runtime.'
+          if ($dependents -match 'VCRUNTIME|MSVCP') {
+            throw 'wc3-object-editor.exe imports the Visual C++ redistributable.'
           }
 
       # The installers ship this file; it must list the dependencies of this commit.
