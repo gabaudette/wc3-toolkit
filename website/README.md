@@ -118,6 +118,10 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   third About/Back round trip after regenerating the dialog modules. Repeat three cycles,
   direct Hide/Show and ShowAll, and check the preserved text/color, button handles and player
   callback. Keep the same 1452 × 938 game-window dimensions and screenshot markup.
+  `verification-sunwell-tooltip.png` hovers the Warden's Sunwell Light in a copy of the
+  fallback map without its `PauseUnit` call. `verification-imported-dialog.png` shows the
+  H hotkey's callback message in an imported, renamed dialog; blur the BattleTag number in
+  any capture that shows a player name with it.
   Reproduce the tabled placement, loot and constant setups
   through Tinkerbench on a disposable World Editor Lua map with two slots and starting
   locations. Save, reopen and inspect the stored data, then build generated modules and
