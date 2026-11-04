@@ -36,8 +36,8 @@ pages, in order:
    - On Linux, **Install it** installs WebKitGTK with your distribution's package manager
      (apt, dnf, pacman or zypper) after asking for your password; the setup also shows the
      command, to run in a terminal instead.
-   - On Windows, a missing WebView2 comes with a link to Microsoft's download. Windows 10 and
-     11 usually have it already.
+   - On Windows, **Install it** downloads the WebView2 Runtime from Microsoft and installs it;
+     the page also links to Microsoft's download. Windows 10 and 11 usually have it already.
 4. **Warcraft III**: the installs the setup found, with where each came from and its game
    version. Pick yours, or choose **Browse…** and select the folder that contains `Data/` and
    `.build.info`. The setup reads the game data to check it, and offers **Use HD (Reforged) art
@@ -64,7 +64,8 @@ menu or, on Linux, as the `tinkerbench` command.
 Run Tinkerbench Setup again. When Tinkerbench is installed, its first page offers **Update or
 repair it, keeping your choices** or **Remove it**. Removal deletes what the setup installed;
 tick **Also remove Tinkerbench's settings and saved data** to remove those too. Your maps are
-never touched.
+never touched. On Windows, Tinkerbench is also listed under **Settings → Apps → Installed apps**,
+where **Uninstall** opens the same removal.
 
 <figure class="app-screenshot">
   <a href="../../screenshots/setup-welcome.png">

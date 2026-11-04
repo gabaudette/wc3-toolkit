@@ -1,6 +1,7 @@
 //! Embeds the Tinkerbench binary the setup installs. Release builds name it in
 //! `TINKERBENCH_PAYLOAD`; without it the payload is empty, so the setup's pages
 //! can still be built and tried, and installing says there is nothing to install.
+//! On Windows it also gives the setup the app's icon.
 
 use std::error::Error;
 use std::io::Write;
@@ -11,6 +12,7 @@ use flate2::write::DeflateEncoder;
 
 const PAYLOAD_VAR: &str = "TINKERBENCH_PAYLOAD";
 const PAYLOAD_FILE: &str = "payload.deflate";
+const WINDOWS_ICON: &str = "../app/src-tauri/icons/icon.ico";
 
 fn main() -> Result<(), Box<dyn Error>> {
     println!("cargo:rerun-if-env-changed={PAYLOAD_VAR}");
@@ -32,5 +34,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     std::fs::write(out.join(PAYLOAD_FILE), compressed)?;
+
+    if std::env::var("CARGO_CFG_TARGET_OS").is_ok_and(|os| os == "windows") {
+        println!("cargo:rerun-if-changed={WINDOWS_ICON}");
+        winresource::WindowsResource::new()
+            .set_icon(WINDOWS_ICON)
+            .compile()?;
+    }
+
     Ok(())
 }

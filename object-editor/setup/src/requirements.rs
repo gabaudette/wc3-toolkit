@@ -3,6 +3,9 @@
 
 use std::process::Command;
 
+/// Where Microsoft offers the WebView2 Runtime, for installing it by hand.
+pub const WEBVIEW2_DOWNLOAD: &str = "https://developer.microsoft.com/microsoft-edge/webview2/";
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Requirements {
     Ready,
@@ -16,50 +19,80 @@ pub enum Requirements {
     Unknown(String),
 }
 
-/// A command run as administrator.
+/// How the setup can install what is missing.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Fix {
-    pub summary: String,
-    pub command: Vec<String>,
+pub enum Fix {
+    /// System packages, installed as administrator through `pkexec`.
+    Packages {
+        summary: String,
+        command: Vec<String>,
+    },
+    /// Microsoft's WebView2 bootstrapper, downloaded and run silently.
+    #[cfg(windows)]
+    WebView2,
 }
 
 impl Fix {
-    /// The command for a terminal, for when the setup cannot run it.
-    pub fn for_terminal(&self) -> String {
-        format!("sudo {}", self.command.join(" "))
+    /// What the setup offers to do, for the Install it button.
+    pub fn explanation(&self) -> String {
+        match self {
+            Self::Packages { summary, .. } => format!(
+                "The setup can install {summary}. Your system asks for your password first."
+            ),
+            #[cfg(windows)]
+            Self::WebView2 => {
+                "The setup can download the WebView2 Runtime from Microsoft and install it."
+                    .to_owned()
+            }
+        }
     }
 
-    /// Asks for the administrator password in a system dialog (`pkexec`), then
-    /// runs the command. In a dry run, only says what it would run.
+    /// The command for a terminal, for when the setup cannot run it.
+    pub fn for_terminal(&self) -> Option<String> {
+        match self {
+            Self::Packages { command, .. } => Some(format!("sudo {}", command.join(" "))),
+            #[cfg(windows)]
+            Self::WebView2 => None,
+        }
+    }
+
+    /// Installs what is missing. In a dry run, only says what it would do.
     pub fn apply(&self, dry_run: bool) -> Result<String, String> {
-        if dry_run {
-            return Ok(format!(
-                "Dry run: would run pkexec {}",
-                self.command.join(" ")
-            ));
+        match self {
+            Self::Packages { command, .. } => install_packages(command, dry_run),
+            #[cfg(windows)]
+            Self::WebView2 => windows::install_webview2(dry_run),
         }
+    }
+}
 
-        let output = Command::new("pkexec")
-            .args(&self.command)
-            .output()
-            .map_err(|e| {
-                format!(
-                    "Could not ask for the administrator password ({e}). Run this in a terminal instead: {}",
-                    self.for_terminal()
-                )
-            })?;
-        let log = String::from_utf8_lossy(&output.stdout).into_owned()
-            + &String::from_utf8_lossy(&output.stderr);
+/// Asks for the administrator password in a system dialog (`pkexec`), then
+/// runs the command.
+fn install_packages(command: &[String], dry_run: bool) -> Result<String, String> {
+    if dry_run {
+        return Ok(format!("Dry run: would run pkexec {}", command.join(" ")));
+    }
 
-        if output.status.success() {
-            Ok(log)
-        } else {
-            Err(format!(
-                "The install did not finish ({}). {}",
-                output.status,
-                log.lines().last().unwrap_or_default()
-            ))
-        }
+    let output = Command::new("pkexec")
+        .args(command)
+        .output()
+        .map_err(|e| {
+            format!(
+                "Could not ask for the administrator password ({e}). Run this in a terminal instead: sudo {}",
+                command.join(" ")
+            )
+        })?;
+    let log = String::from_utf8_lossy(&output.stdout).into_owned()
+        + &String::from_utf8_lossy(&output.stderr);
+
+    if output.status.success() {
+        Ok(log)
+    } else {
+        Err(format!(
+            "The install did not finish ({}). {}",
+            output.status,
+            log.lines().last().unwrap_or_default()
+        ))
     }
 }
 
@@ -137,7 +170,7 @@ mod linux_packages {
             ),
         };
 
-        Fix {
+        Fix::Packages {
             summary: summary.to_owned(),
             command: command.iter().map(|s| (*s).to_owned()).collect(),
         }
@@ -218,7 +251,10 @@ mod unix {
 
 #[cfg(windows)]
 mod windows {
-    use super::Requirements;
+    use std::os::windows::process::CommandExt;
+    use std::process::Command;
+
+    use super::{Fix, Requirements, WEBVIEW2_DOWNLOAD};
 
     /// The WebView2 runtime's client key; `pv` holds its version once installed.
     const WEBVIEW2_KEYS: &[&str] = &[
@@ -227,6 +263,12 @@ mod windows {
     ];
     const VERSION_VALUE: &str = "pv";
     const NO_VERSION: &str = "0.0.0.0";
+    /// Microsoft's Evergreen bootstrapper, which downloads and installs the
+    /// current runtime; the link Microsoft documents for redistributing it.
+    const BOOTSTRAPPER_URL: &str = "https://go.microsoft.com/fwlink/p/?LinkId=2124703";
+    const BOOTSTRAPPER: &str = "MicrosoftEdgeWebview2Setup.exe";
+    /// `CREATE_NO_WINDOW`: curl is a console program, and the setup has no console.
+    const NO_WINDOW: u32 = 0x0800_0000;
 
     pub fn check() -> Requirements {
         let installed = [
@@ -247,8 +289,56 @@ mod windows {
         } else {
             Requirements::Missing {
                 missing: vec!["Microsoft Edge WebView2 Runtime".to_owned()],
-                fix: None,
+                fix: Some(Fix::WebView2),
             }
+        }
+    }
+
+    /// Downloads the bootstrapper with the `curl.exe` Windows 10 and 11 include,
+    /// then runs it silently, as Tauri's own installers do.
+    pub fn install_webview2(dry_run: bool) -> Result<String, String> {
+        if dry_run {
+            return Ok(format!(
+                "Dry run: would download {BOOTSTRAPPER_URL} and run it with /silent /install"
+            ));
+        }
+
+        let manual = format!("Install it from Microsoft instead: {WEBVIEW2_DOWNLOAD}");
+        let dir = tempfile::tempdir()
+            .map_err(|e| format!("Cannot make a download folder ({e}). {manual}"))?;
+        let bootstrapper = dir.path().join(BOOTSTRAPPER);
+        let download = Command::new("curl.exe")
+            .args([
+                "--fail",
+                "--location",
+                "--silent",
+                "--show-error",
+                "--output",
+            ])
+            .arg(&bootstrapper)
+            .arg(BOOTSTRAPPER_URL)
+            .creation_flags(NO_WINDOW)
+            .output()
+            .map_err(|e| format!("Cannot download WebView2 ({e}). {manual}"))?;
+
+        if !download.status.success() {
+            return Err(format!(
+                "Cannot download WebView2: {}. Check your internet connection, or {manual}",
+                String::from_utf8_lossy(&download.stderr).trim()
+            ));
+        }
+
+        let status = Command::new(&bootstrapper)
+            .args(["/silent", "/install"])
+            .status()
+            .map_err(|e| format!("Cannot start the WebView2 installer ({e}). {manual}"))?;
+
+        if status.success() {
+            Ok("WebView2 is installed.".to_owned())
+        } else {
+            Err(format!(
+                "The WebView2 installer stopped ({status}). {manual}"
+            ))
         }
     }
 }
@@ -287,13 +377,18 @@ mod tests {
 
     #[test]
     fn fixes_install_webkit_with_the_right_tool() {
-        let fix = webkit_fix(Family::Debian);
-
-        assert_eq!(fix.command[0], "sh");
-        assert!(fix.command[2].contains("apt-get install -y libwebkit2gtk-4.1-0"));
         assert_eq!(
-            webkit_fix(Family::Arch).for_terminal(),
-            "sudo pacman -S --needed --noconfirm webkit2gtk-4.1"
+            webkit_fix(Family::Debian).for_terminal().as_deref(),
+            Some("sudo sh -c apt-get update && apt-get install -y libwebkit2gtk-4.1-0")
+        );
+        assert!(
+            webkit_fix(Family::Fedora)
+                .explanation()
+                .contains("webkit2gtk4.1")
+        );
+        assert_eq!(
+            webkit_fix(Family::Arch).for_terminal().as_deref(),
+            Some("sudo pacman -S --needed --noconfirm webkit2gtk-4.1")
         );
     }
 }

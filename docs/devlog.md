@@ -4,6 +4,33 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-04 · Tinkerbench Setup on Windows: WebView2 and installed apps (AGE-75)
+
+- **WebView2:** `Fix` became an enum. `Packages` is the Linux `pkexec` command; `WebView2` is
+  Windows only. On Windows, a missing runtime (no `pv` under the EdgeUpdate client key)
+  offers **Install it**: Microsoft's Evergreen bootstrapper is downloaded from its documented
+  fwlink with the `curl.exe` Windows 10 and 11 ship, into a temporary folder, and run with
+  `/silent /install`, as Tauri's own installers do; then the requirement is checked again.
+  The download link stays as the manual route. Console programs get `CREATE_NO_WINDOW`, since
+  the setup has no console.
+- **Installed apps:**
+  - the setup copies itself into the install folder as `Uninstall Tinkerbench.exe`, unless it
+    already is that copy, so an update run from it does not copy over itself;
+  - it then writes `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\io.github.gabaudette.wc3toolkit`:
+    display name and version, publisher, icon, location, `UninstallString` with
+    `--uninstall`, `NoModify`/`NoRepair`, and `EstimatedSize` from the recorded files. Per
+    user, so no administrator rights;
+  - the values are built by `uninstall_entry::values`, which a test checks on any system;
+  - removal deletes the key, and skips the running uninstaller, which Windows cannot delete:
+    `cmd` deletes it and the then-empty folder a moment after the setup exits.
+- **Icon:** `build.rs` gives the setup the app's `icon.ico` through `winresource` when building
+  for Windows.
+- **Docs:** the install guide, troubleshooting, the release notes (the WebView2 limitation is
+  gone) and the 0.3.0 changelog entry.
+- **Checked:** `cargo lint` and the setup's tests on Linux. All the Windows code is cfg'd and
+  only compiles in CI's Windows job; running it needs a real Windows machine, which is part of
+  the AGE-30 Windows test.
+
 ## 2026-11-04 · Prepare the 0.3.0 release with Tinkerbench Setup (AGE-75)
 
 - The first public release is 0.3.0, a preview (the criteria for 1.0 are in AGE-76). The
