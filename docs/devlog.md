@@ -4,6 +4,15 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-04 · First launch in the tutorials after the setup (AGE-75)
+
+- A check of the live site after the 0.3.0 release found the install guide and troubleshooting
+  deployed, but two pages still said every first launch asks for the Warcraft III folder:
+  `editor/first-map.md` (step 3) and `editor/visual-tour.md` (section 1). After Tinkerbench Setup
+  the app loads the game from `setup.json`, so they now start from that case and keep the folder
+  steps for `.deb` and AppImage installs and a moved game. The visual tour's `load-game.png` still
+  shows the setup screen, which those installs see.
+
 ## 2026-11-04 · Tinkerbench Setup on Windows: WebView2 and installed apps (AGE-75)
 
 - **WebView2:** `Fix` became an enum. `Packages` is the Linux `pkexec` command; `WebView2` is

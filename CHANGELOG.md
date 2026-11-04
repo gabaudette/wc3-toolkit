@@ -4,6 +4,13 @@ What changed in Tinkerbench, for the people who use it. Performance and internal
 one line here; the details are in the [devlog](docs/devlog.md). Tinkerbench shows this file
 under "What's new".
 
+## Unreleased
+
+### Fixed
+
+- The first-map tutorial and the visual tour now say that Tinkerbench Setup connects the game,
+  so the first launch skips the Warcraft III folder step.
+
 ## 0.3.0 - 2026-11-04
 
 ### Added
