@@ -6,6 +6,12 @@ under "What's new".
 
 ## Unreleased
 
+### Added
+
+- The in-game verification page records more checks: custom loading-screen models, a
+  script rewrite on a JASS map, a colored ability tooltip, and an imported Interface design
+  with keyboard hotkeys. The Map guide says which loading-screen models work.
+
 ### Changed
 
 - Performance improvements.

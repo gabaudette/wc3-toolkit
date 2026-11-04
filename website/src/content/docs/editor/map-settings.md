@@ -17,8 +17,9 @@ add player slots.
 **Loading screen and prologue** has separate **Loading screen** and **Prologue** sections,
 each with **Title**, **Subtitle**, **Text** and **Model**. An imported loading-screen model
 can use a path such as `war3mapImported\LoadingScreen.mdx`; an empty loading-screen model
-keeps the default. Use [Assets](../assets/) to import the file. Most standalone maps leave
-the prologue empty.
+keeps the default. Use [Assets](../assets/) to import the file. Pick a model made as a
+loading screen: a unit model, or a typed path to one of the game's campaign backgrounds,
+shows only the race crest in game. Most standalone maps leave the prologue empty.
 
 **Options** lists the map's option checkboxes. Review them individually before changing a
 map you did not create.
@@ -99,7 +100,9 @@ See [script-rewrite troubleshooting](../troubleshooting/#a-tab-cannot-rewrite-th
 The [recorded play test](../verification/#map-settings-constants-and-dice) confirmed saved
 loading text, player/force state, visible rain, environment native arguments and representative
 damage constants on one Lua map. A [World Editor fallback](../verification/#world-editor-fallback)
-also applied edited position, fog and water arguments. Custom loading art, prologue, visible
-water tint, audible sound effects, JASS and multiple clients remain **not yet confirmed in
-game**. Individual constant explanations retain their own limits. Test your map separately;
+also applied edited position, fog and water arguments. Later checks confirmed an
+[imported loading-screen model](../verification/#map-settings-constants-and-dice) and the
+[script rewrite on a JASS map](../verification/#jass-maps). The game's campaign loading
+screens, prologue, visible water tint, audible sound effects and multiple clients remain
+**not yet confirmed in game**. Individual constant explanations retain their own limits. Test your map separately;
 restart the game and use a new test-copy filename if constants or loading text appear stale.

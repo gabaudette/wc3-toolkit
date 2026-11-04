@@ -29,6 +29,12 @@ retain the test's own result strings. Game maps, extracted scripts and standalon
 are not distributed with this record. Custom IDs below identify this fixture; another map
 can assign different IDs.
 
+Follow-up checks on **November 3, 2026** used the same game build and environment with
+Tinkerbench revision **`64b79a2992eaf6525925f3a9c7eb4b8c25069af2`** (version 0.2.0 plus
+later fixes). They covered loading-screen models, a JASS map, the Sunwell Light tooltip and
+an imported Interface design with keyboard hotkeys. These were visual, single-player checks
+on disposable copies; each section below says which.
+
 ## Placed units and loot
 
 The normal save path passed the following live checks before combat could change the values:
@@ -81,8 +87,17 @@ Restart the game and use a distinct test-copy filename when checking changed con
 or loading screens if results appear stale.
 
 The final loading screen displayed the saved title, subtitle and descriptive text. The selected imported Knight model
-did not replace the stock loading art; custom loading-model behavior remains unconfirmed.
-Prologue and campaign behavior were not exercised.
+did not replace the stock loading art.
+
+The November 3 follow-up explained why: the Knight is a unit model, not a loading screen.
+The World Editor's own save of the same settings (an imported file, with a race crest)
+also showed only the crest. A real loading-screen model and its texture, imported through
+[Assets](../assets/) and chosen as the loading-screen model in the Map tab, displayed in
+game after saving in Tinkerbench. Typing a game campaign background path, such as
+`UI\Glues\Loading\Backgrounds\Campaigns\BarrensBackground.mdl`, showed only the crest,
+whether or not the model was also imported into the map. The World Editor stores its
+campaign screens as a preset, which Tinkerbench does not offer. Prologue behavior was not
+exercised.
 
 ## World Editor fallback
 
@@ -106,9 +121,18 @@ when the World Editor asked during its save.
   <figcaption>The fresh game run applies the regenerated map script and shows the reset damage range.<span class="screenshot-notice">Image subject to change.</span></figcaption>
 </figure>
 
-This establishes the fallback on this Lua map. JASS rewrite and fallback behavior still
-need a separate play test. Follow [script-rewrite troubleshooting](../troubleshooting/#a-tab-cannot-rewrite-the-map-script)
+This establishes the fallback on this Lua map. Follow [script-rewrite troubleshooting](../troubleshooting/#a-tab-cannot-rewrite-the-map-script)
 when either tab reports the warning.
+
+### JASS maps
+
+On November 3 a small World Editor JASS map, with no custom script, passed both rewrite
+checks. Tinkerbench placed a level 4 Paladin carrying Crown of Kings +5 in its first slot,
+set player 1 to Orc and turned on fixed player settings. The saved `war3map.j` gained the
+player's unit creation function, with the hero level and the inventory item, and the race
+preference became Orc, not selectable. In game the lobby showed Orc without a race choice,
+and the Paladin started at level 4 with +5 on every attribute. The fallback on a JASS map
+whose script cannot be rewritten still needs a separate play test.
 
 ## Imported artwork and text
 
@@ -126,9 +150,21 @@ validate every format, texture dependency or rename/replace/remove operation in 
 
 Sunwell Light (`A000`, based on `AHhb`) was corrected to a valid colored tooltip with
 `<A000,DataA1>` and a line break; its healing data was 250. The game accepted the custom
-ability, but the tooltip was not inspected on the paused fixture hero. Its formatting and
-placeholder rendering remain **not yet confirmed in game**. Desktop warning checks alone
-do not verify how malformed text renders in Warcraft III.
+ability, but the tooltip was not inspected on the paused fixture hero.
+
+On November 3 a copy of the same game map, with only the pause removed, showed the tooltip
+on the Warden's command card. The body rendered **Restores 250 life.** in green, then a line
+break and **Ready for verification.**, so the color code, `|n` and the placeholder all
+worked. The first line still read **Holy Light - [Level 1]**: only the ability's **Name**
+had been changed, and the game takes that line from **Tooltip - Normal**. Desktop warning
+checks alone do not verify how malformed text renders in Warcraft III.
+
+<figure class="app-screenshot">
+  <a href="../../screenshots/verification-sunwell-tooltip.png">
+    <img src="../../screenshots/verification-sunwell-tooltip.png" alt="The Sunwell Warden's ability tooltip in Warcraft III: the title Holy Light, Level 1, then Restores 250 life in green and Ready for verification on the next line." width="1452" height="938" loading="lazy" />
+  </a>
+  <figcaption>The extended tooltip's color, line break and placeholder render in game; the title comes from Tooltip - Normal.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
 
 ## Interface results and known failures
 
@@ -175,8 +211,7 @@ Hide kept the countdown running; show restored the window; stop paused and hid i
 
 Clicking Hard invoked `OnHardMode` with player 0 and the expected triggering player.
 Clicking Back navigated from Details to Difficulty. This follow-up used mouse activation;
-it did not independently reconfirm keyboard hotkeys. The previous play test exercised
-hotkeys and navigation, but imported callbacks still need their own game check.
+[Imported designs and hotkeys](#imported-designs-and-hotkeys) covers the keyboard.
 
 ### Repeated dialog messages
 
@@ -205,18 +240,39 @@ the configured message. `ShowAll()` targeted the human slot and skipped the comp
 Normal closed the dialog, and Hard still passed the clicking player to `OnHardMode`.
 The [dialog runtime checks](https://github.com/gabaudette/wc3-toolkit/blob/main/docs/verification/dialog-message-runtime.txt)
 record **41 passing checks across 13 displays** and identify the generated modules.
-These were mouse-activated, single-player checks. Design transfer was checked through
-save/readback and generated names, rather than full independent execution of imported designs.
+These were mouse-activated, single-player checks.
 
 After updating Tinkerbench, choose **Save and build test copy** in **Interface** to
 regenerate the dialog modules as well as the map copy. Rebuilding with older `ui_*.lua`
 files retains the old display behavior.
 
+### Imported designs and hotkeys
+
+On November 3 the Difficulty and Details dialogs were exported as a design file from one
+copy of the test map and imported in the **Interface** tab of another copy that already had
+a dialog named Difficulty. The import renamed the incoming dialog **Difficulty 2**
+(`UI.Difficulty2`) and pointed Details' **Back** button at it. **Save and build test copy**,
+with a Lua folder that also held an `OnHardMode(player)` function, built the development
+copy with four modules.
+
+In game, Difficulty 2 opened at start, and the map's own Difficulty dialog stayed hidden.
+With the pointer away from the dialog, pressing **A** opened Details with its cyan message,
+**B** returned to Difficulty 2, and **H** ran `OnHardMode` for player 0. The Victory screen
+in the capture comes from the melee rules of a test map without an opponent. Normal's **N**
+key and multiple clients were not checked.
+
+<figure class="app-screenshot">
+  <a href="../../screenshots/verification-imported-dialog.png">
+    <img src="../../screenshots/verification-imported-dialog.png" alt="Warcraft III after pressing H in the imported dialog: the red message OnHardMode ran for the player, player 0, click 1, beside the melee Victory screen." width="1452" height="938" loading="lazy" />
+  </a>
+  <figcaption>The H hotkey of the imported, renamed dialog runs the map's own callback.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+</figure>
+
 ## Remaining checks
 
-Remaining checks cover imported dialogs, keyboard activation after rebuilding,
-tooltip rendering, a suitable custom loading model, prologue, visible water tint, audible sound,
-JASS maps, additional asset workflows and multiple clients. Keep those limits explicit
+Remaining checks cover the game's campaign loading screens, prologue, visible water tint,
+audible sound, the fallback on JASS maps, additional asset workflows and multiple clients.
+Keep those limits explicit
 when using the [Interface](../interface/), [Map](../map-settings/), [Assets](../assets/)
 and [Objects](../objects/) guides.
 
