@@ -50,6 +50,17 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `object-editor/.cargo/config.toml`, followed by `cc` and `cmake`), so the app needs no
   Visual C++ redistributable; CI checks the binary imports no `VCRUNTIME`/`MSVCP` DLL (the
   Universal CRT's `api-ms-win-crt-*` are part of Windows 10+).
+- `object-editor/setup/` — **Tinkerbench Setup**, the install wizard for Windows and Linux
+  (Rust + eframe/egui on `glow`: no web engine, so it can install WebView2 or WebKitGTK before
+  the app runs). `build.rs` embeds the app binary named in `TINKERBENCH_PAYLOAD`
+  (deflate-compressed; empty without it). Pages in `app.rs` (welcome, license, install folder,
+  requirements, game, maps folder, test maps, install, finish; update and removal when
+  `install.json` exists); `install.rs` installs per user and records every file written in
+  `install.json` beside `setup.json`; `platform.rs` adds the menu entry, icons, `tinkerbench`
+  command and desktop shortcut on Linux, Start menu and desktop `.lnk` on Windows;
+  `requirements.rs` runs `ldd` on the app and installs WebKitGTK with `pkexec` and the
+  distribution's package manager (Windows: the WebView2 registry key). `theme.rs` follows
+  `docs/design.md` with fonts converted from the app's `@fontsource` files (`setup/fonts`).
 - `object-editor/app/` — the Tauri 2 editor, named **Tinkerbench** (gnome icon in
   `src-tauri/icons/app-icon.png`; `bun run tauri icon` makes the other sizes): React 19 + TypeScript + Vite + Tailwind 4 +
   react-aria-components, Bun, Biome with the AGE baseline plus the React domain. Rust side in

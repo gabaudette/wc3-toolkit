@@ -17,6 +17,7 @@ under "What's new".
 
 ### Changed
 
+- Internal improvements.
 - Performance improvements.
 
 ### Fixed
