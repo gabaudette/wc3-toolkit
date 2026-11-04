@@ -18,6 +18,7 @@ import { ExportDesignsDialog, ImportDesignsDialog } from "./DesignTransferDialog
 import { DialogEditor } from "./DialogEditor";
 import { GameText } from "./GameText";
 import { LeaderboardEditor } from "./LeaderboardEditor";
+import { useLuaFolder } from "./luaFolder";
 import { MultiboardEditor } from "./MultiboardEditor";
 import { clock, TimerWindowEditor } from "./TimerWindowEditor";
 
@@ -453,7 +454,7 @@ type LuaBarProps = {
 };
 
 function LuaBar({ selected, designs, flush, onSaved }: LuaBarProps) {
-  const [folder, setFolder] = useState("");
+  const { folder, setFolder } = useLuaFolder();
   const [showCode, setShowCode] = useState(false);
   const [code, setCode] = useState<{ text: string; error: boolean }>({ text: "", error: false });
   const [busy, setBusy] = useState(false);
@@ -462,7 +463,7 @@ function LuaBar({ selected, designs, flush, onSaved }: LuaBarProps) {
 
   useEffect(() => {
     void whenOk(api.defaultLuaFolder(), (dir) => setFolder((current) => current || dir || ""));
-  }, []);
+  }, [setFolder]);
 
   useEffect(() => {
     if (!showCode || !selected || designs.length === 0) {

@@ -4,6 +4,20 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-03 · Keep the chosen Lua folder (PR #89)
+
+- Since tabs stay alive, a hidden tab whose map changed elsewhere remounts when shown again
+  (`paneKey` in `EditorScreen`). The Interface tab's `LuaBar` kept its folder in local
+  state, so editing the map name in the Map tab put it back to `default_lua_folder`, and the
+  next "Save and build test copy" wrote the `ui_*.lua` modules there. Found while checking an
+  imported design in game.
+- The folder now lives in `EditorScreen` and reaches `LuaBar` and the spell wizard through
+  `LuaFolderContext` (`components/luaFolder.ts`); `useLuaFolder` falls back to local state
+  outside the provider. Opening a map clears it, so each map starts from its own `<map> Lua`
+  folder, which both consumers fill in as before.
+- Checked in the app on a scratch map: a typed folder survived a Map tab edit, the build
+  wrote the three dialog modules into it, and opening another map showed that map's default.
+  The spell wizard's code step was not walked through.
 ## 2026-11-03 · Record the remaining in-game checks (PR #88, AGE-74)
 
 - Same game build and environment as AGE-69, Tinkerbench at `64b79a2`, single player,

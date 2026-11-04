@@ -29,6 +29,7 @@ import { ExportContext, type ExportScope } from "./exportObjects";
 import { ImportDialog } from "./ImportDialog";
 import { InterfacePane } from "./InterfacePane";
 import { LeveledPane } from "./LeveledPane";
+import { LuaFolderContext } from "./luaFolder";
 import { MapPane } from "./MapPane";
 import { OpenAbilityContext } from "./openAbility";
 import { PlacedPane } from "./PlacedPane";
@@ -201,6 +202,11 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
   const [saving, setSaving] = useState(false);
   const [dialog, setDialog] = useState<"share" | "import" | "search" | "assistant" | null>(null);
   const [exportScope, setExportScope] = useState<ExportScope | null>(null);
+  const [luaFolder, setLuaFolder] = useState("");
+  const sharedLuaFolder = useMemo(
+    () => ({ folder: luaFolder, setFolder: setLuaFolder }),
+    [luaFolder],
+  );
   const [tab, setTab] = useState<Tab>("units");
   const [visited, setVisited] = useState<Tab[]>(["units"]);
   const [changes, setChanges] = useState(0);
@@ -404,6 +410,7 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
     }
 
     setMap(opened.value);
+    setLuaFolder("");
     remembered.set(MAP_PATH_KEY, path);
     setSelected(null);
     setDetail(null);
@@ -641,139 +648,141 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
       />
 
       <ExportContext value={setExportScope}>
-        <main className="grid min-h-0 flex-1 grid-cols-1 grid-rows-1 overflow-hidden">
-          {visited.includes("abilities") && (
-            <TabPanel shown={tab === "abilities"}>
-              <AbilitiesPane
-                key={paneKey("abilities")}
-                editable={editable}
-                selected={selectedAbility}
-                onSelect={setSelectedAbility}
-                onMapChanged={refreshMap}
-                onUnitsChanged={refreshUnits}
-                onError={setError}
-              />
-            </TabPanel>
-          )}
-
-          {visited.includes("interface") && (
-            <TabPanel shown={tab === "interface"}>
-              <InterfacePane
-                key={paneKey("interface")}
-                editable={editable}
-                mapPath={map?.path ?? null}
-                onMapChanged={refreshMap}
-                onError={setError}
-              />
-            </TabPanel>
-          )}
-
-          {visited.includes("map") && (
-            <TabPanel shown={tab === "map"}>
-              <MapPane
-                key={paneKey("map")}
-                editable={editable}
-                onMapChanged={refreshMap}
-                onError={setError}
-              />
-            </TabPanel>
-          )}
-
-          {visited.includes("placed") && (
-            <TabPanel shown={tab === "placed"}>
-              <PlacedPane
-                key={paneKey("placed")}
-                editable={editable}
-                units={units}
-                onMapChanged={refreshMap}
-                onOpenUnit={openUnit}
-                onError={setError}
-              />
-            </TabPanel>
-          )}
-
-          {visited.includes("assets") && (
-            <TabPanel shown={tab === "assets"}>
-              <AssetsPane
-                key={paneKey("assets")}
-                editable={editable}
-                mapPath={map?.path ?? null}
-                unsaved={map?.unsaved ?? false}
-                units={units}
-                onMapChanged={refreshMap}
-                onUnitCreated={unitCreated}
-                onOpenUse={openUse}
-                onError={setError}
-              />
-            </TabPanel>
-          )}
-
-          {LEVELED_TABS.filter(({ catalog }) => visited.includes(catalog)).map(
-            ({ catalog, list }) => (
-              <TabPanel key={catalog} shown={tab === catalog}>
-                <LeveledPane
-                  key={paneKey(catalog)}
-                  catalog={catalog}
-                  list={list}
+        <LuaFolderContext value={sharedLuaFolder}>
+          <main className="grid min-h-0 flex-1 grid-cols-1 grid-rows-1 overflow-hidden">
+            {visited.includes("abilities") && (
+              <TabPanel shown={tab === "abilities"}>
+                <AbilitiesPane
+                  key={paneKey("abilities")}
                   editable={editable}
-                  selected={selectedLeveled[catalog]}
-                  onSelect={selectLeveled.get(catalog) ?? ignoreSelection}
+                  selected={selectedAbility}
+                  onSelect={setSelectedAbility}
+                  onMapChanged={refreshMap}
+                  onUnitsChanged={refreshUnits}
+                  onError={setError}
+                />
+              </TabPanel>
+            )}
+
+            {visited.includes("interface") && (
+              <TabPanel shown={tab === "interface"}>
+                <InterfacePane
+                  key={paneKey("interface")}
+                  editable={editable}
+                  mapPath={map?.path ?? null}
                   onMapChanged={refreshMap}
                   onError={setError}
                 />
               </TabPanel>
-            ),
-          )}
+            )}
 
-          {PLAIN_TABS.filter(({ catalog }) => visited.includes(catalog)).map(
-            ({ catalog, list }) => (
-              <TabPanel key={catalog} shown={tab === catalog}>
-                <PlainPane
-                  key={paneKey(catalog)}
-                  catalog={catalog}
-                  list={list}
+            {visited.includes("map") && (
+              <TabPanel shown={tab === "map"}>
+                <MapPane
+                  key={paneKey("map")}
                   editable={editable}
-                  selected={selectedPlain[catalog]}
-                  onSelect={selectPlain.get(catalog) ?? ignoreSelection}
                   onMapChanged={refreshMap}
                   onError={setError}
                 />
               </TabPanel>
-            ),
-          )}
+            )}
 
-          <TabPanel shown={tab === "units"}>
-            <div className="flex min-h-0 flex-1 gap-2.5">
-              <UnitList
-                config={UNIT_LIST}
-                units={units}
-                selected={selected}
-                onSelect={setSelected}
-                onError={setError}
-              />
-              {detail && (
-                <OpenAbilityContext value={openAbility}>
-                  <UnitPage
-                    key={detail.item.id}
-                    detail={detail}
-                    clashes={clashes}
+            {visited.includes("placed") && (
+              <TabPanel shown={tab === "placed"}>
+                <PlacedPane
+                  key={paneKey("placed")}
+                  editable={editable}
+                  units={units}
+                  onMapChanged={refreshMap}
+                  onOpenUnit={openUnit}
+                  onError={setError}
+                />
+              </TabPanel>
+            )}
+
+            {visited.includes("assets") && (
+              <TabPanel shown={tab === "assets"}>
+                <AssetsPane
+                  key={paneKey("assets")}
+                  editable={editable}
+                  mapPath={map?.path ?? null}
+                  unsaved={map?.unsaved ?? false}
+                  units={units}
+                  onMapChanged={refreshMap}
+                  onUnitCreated={unitCreated}
+                  onOpenUse={openUse}
+                  onError={setError}
+                />
+              </TabPanel>
+            )}
+
+            {LEVELED_TABS.filter(({ catalog }) => visited.includes(catalog)).map(
+              ({ catalog, list }) => (
+                <TabPanel key={catalog} shown={tab === catalog}>
+                  <LeveledPane
+                    key={paneKey(catalog)}
+                    catalog={catalog}
+                    list={list}
                     editable={editable}
-                    onChange={(field, value) =>
-                      applyField(api.setField(detail.item.id, field, value))
-                    }
-                    onReset={(field) => applyField(api.resetField(detail.item.id, field))}
-                    onCreateCopy={createCopy}
+                    selected={selectedLeveled[catalog]}
+                    onSelect={selectLeveled.get(catalog) ?? ignoreSelection}
+                    onMapChanged={refreshMap}
+                    onError={setError}
                   />
-                </OpenAbilityContext>
-              )}
-              {!detail && (
-                <p className="m-auto text-muted">
-                  Pick a unit on the left. {game.units} game units loaded.
-                </p>
-              )}
-            </div>
-          </TabPanel>
-        </main>
+                </TabPanel>
+              ),
+            )}
+
+            {PLAIN_TABS.filter(({ catalog }) => visited.includes(catalog)).map(
+              ({ catalog, list }) => (
+                <TabPanel key={catalog} shown={tab === catalog}>
+                  <PlainPane
+                    key={paneKey(catalog)}
+                    catalog={catalog}
+                    list={list}
+                    editable={editable}
+                    selected={selectedPlain[catalog]}
+                    onSelect={selectPlain.get(catalog) ?? ignoreSelection}
+                    onMapChanged={refreshMap}
+                    onError={setError}
+                  />
+                </TabPanel>
+              ),
+            )}
+
+            <TabPanel shown={tab === "units"}>
+              <div className="flex min-h-0 flex-1 gap-2.5">
+                <UnitList
+                  config={UNIT_LIST}
+                  units={units}
+                  selected={selected}
+                  onSelect={setSelected}
+                  onError={setError}
+                />
+                {detail && (
+                  <OpenAbilityContext value={openAbility}>
+                    <UnitPage
+                      key={detail.item.id}
+                      detail={detail}
+                      clashes={clashes}
+                      editable={editable}
+                      onChange={(field, value) =>
+                        applyField(api.setField(detail.item.id, field, value))
+                      }
+                      onReset={(field) => applyField(api.resetField(detail.item.id, field))}
+                      onCreateCopy={createCopy}
+                    />
+                  </OpenAbilityContext>
+                )}
+                {!detail && (
+                  <p className="m-auto text-muted">
+                    Pick a unit on the left. {game.units} game units loaded.
+                  </p>
+                )}
+              </div>
+            </TabPanel>
+          </main>
+        </LuaFolderContext>
       </ExportContext>
     </div>
   );

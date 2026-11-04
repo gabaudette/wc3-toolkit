@@ -22,6 +22,7 @@ import { DialogShell } from "./DialogShell";
 import { GameText } from "./GameText";
 import { LevelTable } from "./LevelTable";
 import { LevelText } from "./LevelText";
+import { useLuaFolder } from "./luaFolder";
 import { type BuffChoice, SpellBuffStep } from "./SpellBuffStep";
 import { SpellButtonStep } from "./SpellButtonStep";
 import { CodeStep, defaultValues, EffectStep, TemplateChoices, TestStep } from "./SpellTriggered";
@@ -226,7 +227,7 @@ export function SpellWizard({
   const [templates, setTemplates] = useState<SpellTemplate[]>([]);
   const [template, setTemplate] = useState<SpellTemplate | null>(null);
   const [values, setValues] = useState<TemplateValues>({});
-  const [folder, setFolder] = useState("");
+  const { folder, setFolder } = useLuaFolder();
   const [source, setSource] = useState("");
   const [modulePath, setModulePath] = useState("");
   const [busy, setBusy] = useState(false);
