@@ -1,5 +1,6 @@
-# Builds the installers when a version tag (v0.2.0) is pushed and attaches
-# them to a draft GitHub Release. Try them, then publish the release by hand.
+# Builds Tinkerbench Setup for Windows and Linux, and the Linux .deb and
+# AppImage, when a version tag (v0.3.0) is pushed, and attaches them to a draft
+# GitHub Release. Try them, then publish the release by hand.
 name: Release
 
 on:
@@ -84,9 +85,38 @@ jobs:
         with:
           workspaces: object-editor
 
-      # Builds the frontend, then the installers (NSIS on Windows, .deb and
-      # AppImage on Linux), and uploads them to the draft release.
-      - name: Build and upload the installers
+      # The app without installers: Tinkerbench Setup carries this binary. Built
+      # before the Linux packages, whose bundler patches the binary it packs.
+      - name: Build the app
+        working-directory: object-editor/app
+        run: bun run tauri build --no-bundle
+
+      - name: Build Tinkerbench Setup
+        shell: bash
+        working-directory: object-editor
+        run: |
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            binary=tinkerbench.exe
+            asset="Tinkerbench-Setup-${GITHUB_REF_NAME#v}-windows-x64.exe"
+          else
+            binary=tinkerbench
+            asset="Tinkerbench-Setup-${GITHUB_REF_NAME#v}-linux-x64"
+          fi
+          cp "target/release/$binary" "$RUNNER_TEMP/$binary"
+          TINKERBENCH_PAYLOAD="$RUNNER_TEMP/$binary" cargo build --release -p tinkerbench-setup
+          cp "target/release/tinkerbench-setup${binary#tinkerbench}" "$RUNNER_TEMP/$asset"
+          echo "SETUP_ASSET=$RUNNER_TEMP/$asset" >> "$GITHUB_ENV"
+
+      - name: Upload Tinkerbench Setup
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" "$SETUP_ASSET"
+
+      # The .deb and AppImage, for people who prefer their package manager or no
+      # installer at all.
+      - name: Build and upload the Linux packages
+        if: runner.os == 'Linux'
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ github.token }}

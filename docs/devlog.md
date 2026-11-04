@@ -4,6 +4,34 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-04 · Prepare the 0.3.0 release with Tinkerbench Setup (AGE-75)
+
+- The first public release is 0.3.0, a preview (the criteria for 1.0 are in AGE-76). The
+  `v0.2.0` tag and its draft release were never published, so `CHANGELOG.md` folds the
+  `Unreleased` and `0.2.0` sections into one `0.3.0 - 2026-11-04` section, with the setup first
+  and one "Performance improvements." and one "Internal improvements." line under Changed.
+  Version 0.3.0 in `object-editor/Cargo.toml`, `app/package.json` and `Cargo.lock`
+  (`cargo update --workspace`).
+- **`release.yml`:** both runners build the app with `tauri build --no-bundle` first, copy the
+  binary to `$RUNNER_TEMP`, build `tinkerbench-setup` with it as `TINKERBENCH_PAYLOAD`, and
+  upload `Tinkerbench-Setup-<version>-windows-x64.exe` and `Tinkerbench-Setup-<version>-linux-x64`
+  with `gh release upload`. Then, on Linux only, `tauri-action` builds and uploads the `.deb` and
+  AppImage as before. The setup is built first because the bundler patches the binary it packs
+  with its bundle type. The NSIS target and its `bundle.windows` settings are gone from
+  `tauri.conf.json`; nothing was ever installed with them.
+- **Docs:**
+  - the install guide is rewritten around the setup's pages, with update and removal, the
+    `.deb` and AppImage as alternatives, and two captures of the setup;
+  - the old "Connect the game" steps stay as the fallback;
+  - troubleshooting gains "Tinkerbench does not start" (the Linux run permission, SmartScreen,
+    WebKitGTK and WebView2);
+  - the release notes, `README.md` and `CONTRIBUTING.md` describe the setup;
+  - the release notes' limitations are updated: the JASS rewrite now works but its fallback is
+    untested; campaign loading screens; WebView2 is only linked to, not installed.
+- **Checked:** the workflow's setup step ran locally with CI's variables, and the
+  `cargo update` lock change. The release workflow itself runs only on a tag. The Windows
+  half (the `.exe` names, `gh` under Git Bash) is first exercised by the real tag.
+
 ## 2026-11-04 · Tinkerbench Setup, the install wizard (AGE-75)
 
 - `object-editor/setup` (binary `tinkerbench-setup`): one wizard for Windows and Linux with

@@ -731,7 +731,7 @@ dependencies = [
 
 [[package]]
 name = "casc"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cc",
  "thiserror 2.0.21",
@@ -3089,7 +3089,7 @@ dependencies = [
 
 [[package]]
 name = "mpq"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "cmake",
  "tempfile",
@@ -5427,7 +5427,7 @@ dependencies = [
 
 [[package]]
 name = "tinkerbench-setup"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "dirs",
  "eframe",
@@ -6104,7 +6104,7 @@ dependencies = [
 
 [[package]]
 name = "wc3-data"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "casc",
  "jpeg-decoder",
@@ -6117,7 +6117,7 @@ dependencies = [
 
 [[package]]
 name = "wc3-install"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "dirs",
  "serde",
@@ -6130,7 +6130,7 @@ dependencies = [
 
 [[package]]
 name = "wc3-map"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "base64 0.22.1",
  "casc",
@@ -6147,7 +6147,7 @@ dependencies = [
 
 [[package]]
 name = "wc3-object-editor"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "base64 0.22.1",
  "dirs",
