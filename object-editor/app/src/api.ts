@@ -14,6 +14,7 @@ import type {
   ExportRequest,
   ExportResult,
   Field,
+  GameChoice,
   GameSummary,
   HotkeyClash,
   IconChoice,
@@ -32,6 +33,7 @@ import type {
   PlacementEdit,
   PropertiesView,
   SearchHit,
+  SetupChoices,
   SharePreview,
   SpellFit,
   SpellKind,
@@ -67,7 +69,8 @@ export function iconUrl(gamePath: string): string {
 }
 
 export const api = {
-  detectGameDir: () => call<string | null>("detect_game_dir"),
+  findGames: () => call<GameChoice[]>("find_games"),
+  setupChoices: () => call<SetupChoices | null>("setup_choices"),
   openGame: (dir: string, hd: boolean) => call<GameSummary>("open_game", { dir, hd }),
   openMap: (path: string) => call<MapSummary>("open_map", { path }),
   mapStatus: () => call<MapSummary>("map_status"),

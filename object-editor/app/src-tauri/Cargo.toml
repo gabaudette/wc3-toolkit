@@ -15,6 +15,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 time = { version = "0.3", features = ["formatting"] }
 wc3-data = { path = "../../crates/wc3-data" }
+wc3-install = { path = "../../crates/wc3-install" }
 wc3-map = { path = "../../crates/wc3-map" }
 
 [lints]

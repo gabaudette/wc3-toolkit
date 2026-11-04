@@ -27,12 +27,20 @@ trying changes.
 
 **Symptom:** **1. Warcraft III folder** is empty, or the filled-in path belongs to a different
 installation.
-1. Choose **Browse…** and select the Warcraft III installation directory. It must contain
-   both **`Data/`** and **`.build.info`**. Show hidden files in your file browser if needed.
+
+Tinkerbench looks in these places:
+- **Windows:** the folders Battle.net records, and `Program Files (x86)`, `Program Files`,
+  `Games` and the top folder of every drive.
+- **Linux:** the Wine prefixes of every Steam library (Proton), Heroic, Bottles, Lutris
+  (`~/Games`) and `~/.wine`.
+
+When it finds several installations, **Found on this computer** lists each with where it
+came from and its game version; choose the one you play.
+1. If yours is missing, choose **Browse…** and select the Warcraft III installation
+   directory. It must contain both **`Data/`** and **`.build.info`**. Show hidden files in
+   your file browser if needed.
 2. Do not select the Maps folder or only the game executable. On Linux with Wine or Proton,
    choose the installation inside the prefix that contains your game.
-3. If you have several installations or prefixes, check the selected path yourself.
-   Detection searches common locations; it does not search every possible install path.
 
 Choose the art mode, then **Load game data**. If detection still finds nothing but manually
 selecting the folder works, you can continue using that folder.
@@ -46,8 +54,7 @@ selecting the folder works, you can continue using that folder.
 1. Selecting a folder does not load it: choose **Load game data** and wait for the loaded
    unit count. The Map section appears only after the game data finishes loading.
 2. For **“is not a Warcraft III folder”**, check both `Data/` and `.build.info` in the selected
-   directory. The current error mentions a missing Data folder even when `.build.info` is
-   the missing marker.
+   directory.
 3. If both are present, check that the game installation has finished installing or updating
    and that your user can read it. Record the complete error before retrying.
 

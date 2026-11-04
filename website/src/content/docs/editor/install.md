@@ -22,11 +22,13 @@ The Windows installer is unsigned. Windows may show **Windows protected your PC*
 
 On the first launch, connect your installation:
 1. Start Tinkerbench.
-2. Under **1. Warcraft III folder**, choose **Browse…**.
-3. Select the installation directory containing `Data/` and `.build.info`. A Maps folder is not a game installation.
-4. Choose whether to enable **Use HD (Reforged) art values and icons**, then select **Load game data**.
-5. Wait for the unit count to confirm the game data loaded and the **2. Map** section to appear.
-6. Choose **Open a map…** to open a copy of a `.w3m` or `.w3x` map, or **Browse game data only**
+2. Under **1. Warcraft III folder**, check the folder Tinkerbench found. When it finds several
+   installations, choose yours under **Found on this computer**. Otherwise choose **Browse…**
+   and select the installation directory containing `Data/` and `.build.info`. A Maps folder
+   is not a game installation.
+3. Choose whether to enable **Use HD (Reforged) art values and icons**, then select **Load game data**.
+4. Wait for the unit count to confirm the game data loaded and the **2. Map** section to appear.
+5. Choose **Open a map…** to open a copy of a `.w3m` or `.w3x` map, or **Browse game data only**
    to inspect objects read-only.
 
 <figure class="app-screenshot">

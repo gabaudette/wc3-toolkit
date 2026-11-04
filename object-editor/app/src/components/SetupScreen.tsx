@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from "react";
+import { Radio, RadioGroup } from "react-aria-components";
 import { api } from "../api";
 import { choosePath } from "../dialogs";
 import { whenOk } from "../result";
-import type { GameSummary, MapSummary } from "../types";
-import { AUTO_OPEN_KEY, GAME_DIR_KEY, HD_KEY, MAP_FILTERS, MAP_PATH_KEY, remembered } from "../ui";
+import type { GameChoice, GameSummary, MapSummary } from "../types";
+import {
+  AUTO_OPEN_KEY,
+  classes,
+  GAME_DIR_KEY,
+  HD_KEY,
+  MAP_FILTERS,
+  MAP_PATH_KEY,
+  remembered,
+} from "../ui";
 import { AppVersion } from "./AppVersion";
 import { AssistantPromptDialog } from "./AssistantPromptDialog";
 import { Button } from "./Button";
@@ -62,10 +71,48 @@ function Opening({ stage, onStop }: { stage: Stage; onStop: () => void }) {
   );
 }
 
+type GameListProps = {
+  games: GameChoice[];
+  dir: string;
+  onChoose: (dir: string) => void;
+};
+
+function GameList({ games, dir, onChoose }: GameListProps) {
+  return (
+    <RadioGroup
+      value={dir}
+      onChange={onChoose}
+      aria-label="Warcraft III installs found"
+      className="flex flex-col gap-1.5"
+    >
+      <span className="text-sm text-muted">Found on this computer:</span>
+      {games.map((game) => (
+        <Radio
+          key={game.dir}
+          value={game.dir}
+          className={classes(
+            "flex cursor-default flex-col gap-0.5 rounded-[3px] border border-line bg-well px-3 py-2 outline-none",
+            "data-[hovered]:border-field data-[selected]:border-gold",
+            "data-[focus-visible]:outline-2 data-[focus-visible]:outline-solid data-[focus-visible]:outline-offset-2 data-[focus-visible]:outline-focus",
+          )}
+        >
+          <span className="text-ink">
+            {game.source}
+            {game.version && <span className="text-muted"> · version {game.version}</span>}
+            {!game.mapsDir && <span className="text-faint"> · no Maps folder yet</span>}
+          </span>
+          <span className="font-mono text-xs break-all text-faint">{game.dir}</span>
+        </Radio>
+      ))}
+    </RadioGroup>
+  );
+}
+
 export function SetupScreen({ automatic, onReady }: SetupScreenProps) {
   const [dir, setDir] = useState(remembered.get(GAME_DIR_KEY) ?? "");
   const [hd, setHd] = useState(remembered.get(HD_KEY) === "true");
   const [game, setGame] = useState<GameSummary | null>(null);
+  const [games, setGames] = useState<GameChoice[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assistant, setAssistant] = useState(false);
@@ -100,16 +147,32 @@ export function SetupScreen({ automatic, onReady }: SetupScreenProps) {
   });
 
   useEffect(() => {
-    if (dir) {
+    void whenOk(api.findGames(), (found) => {
+      setGames(found);
+      setDir((current) => current || found[0]?.dir || "");
+    });
+  }, []);
+
+  useEffect(() => {
+    if (remembered.get(GAME_DIR_KEY)) {
       return;
     }
 
-    void whenOk(api.detectGameDir(), (found) => {
-      if (found) {
-        setDir(found);
+    void whenOk(api.setupChoices(), (choices) => {
+      if (!choices) {
+        return;
+      }
+
+      remembered.set(GAME_DIR_KEY, choices.gameDir);
+      remembered.set(HD_KEY, String(choices.hd));
+      setDir(choices.gameDir);
+      setHd(choices.hd);
+
+      if (automatic && autoOpenOn()) {
+        setStage({ kind: "game", dir: choices.gameDir });
       }
     });
-  }, [dir]);
+  }, [automatic]);
 
   async function browseGame() {
     const picked = await choosePath({ directory: true, title: "Warcraft III folder" });
@@ -252,6 +315,7 @@ export function SetupScreen({ automatic, onReady }: SetupScreenProps) {
             />
             <Button onPress={browseGame}>Browse…</Button>
           </div>
+          {games.length > 1 && <GameList games={games} dir={dir} onChoose={setDir} />}
           <Checkbox isSelected={hd} onChange={setHd}>
             Use HD (Reforged) art values and icons
           </Checkbox>

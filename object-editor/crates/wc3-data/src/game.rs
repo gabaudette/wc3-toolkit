@@ -98,6 +98,13 @@ impl GameFiles {
         self.read_base(path)
     }
 
+    /// Reads a file from the HD art layer only, without falling back to SD art.
+    pub fn read_hd(&self, path: &str) -> Result<Option<Vec<u8>>> {
+        Ok(self
+            .storage
+            .read_optional(&format!("{ROOT}{HD_LAYER}{path}"))?)
+    }
+
     /// Reads an art file (icon, texture, model) for the given art mode. When that
     /// mode has no version of the file, the other mode's version is used: some
     /// art, such as several campaign icons, only exists in HD. Art found in

@@ -35,7 +35,8 @@ fn main() -> ExitCode {
         .register_asynchronous_uri_scheme_protocol(icons::TEXTURE_SCHEME, icons::handle_texture)
         .register_asynchronous_uri_scheme_protocol(icons::MODEL_SCHEME, icons::handle_model)
         .invoke_handler(tauri::generate_handler![
-            commands::detect_game_dir,
+            commands::find_games,
+            commands::setup_choices,
             commands::open_game,
             commands::open_map,
             commands::map_status,
