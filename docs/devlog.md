@@ -18,6 +18,32 @@ single line. Every pull request adds an entry here and to the changelog.
 - Checked in the app on a scratch map: a typed folder survived a Map tab edit, the build
   wrote the three dialog modules into it, and opening another map showed that map's default.
   The spell wizard's code step was not walked through.
+## 2026-11-03 · Record the remaining in-game checks (PR #88, AGE-74)
+
+- Same game build and environment as AGE-69, Tinkerbench at `64b79a2`, single player,
+  disposable copies only. Docs only; no editor code changed.
+- Loading screen: the AGE-69 failure was the model. The Knight is a unit model and shows
+  only the race crest, in a Tinkerbench save and in the World Editor's own save alike
+  (imported file: number -1, 2.0 source field 128). A real loading-screen model and its
+  texture, imported through Assets and set in the Map tab, displayed. A typed game campaign
+  path (`.mdl` or `.mdx`, imported or not) shows only the crest; trying the source field at
+  0, 1, 2, 8, 16, 32, 129 and 130 changed nothing. The World Editor's campaign choice is
+  number 0 with source 64 and an empty model; a campaign preset picker would be a feature.
+- JASS: a World Editor JASS map rewrote cleanly. `war3map.j` gained `CreateUnitsForPlayer0`
+  (`BlzCreateUnitWithSkin`, `SetHeroLevel`, `UnitAddItemToSlotById`) with its
+  `CreateAllUnits` call, `RACE_PREF_ORC` and `SetPlayerRaceSelectable(..., false)`; the
+  lobby and the level 4 Paladin with Crown of Kings matched in game.
+- Tooltip: the AGE-69 map with `PauseUnit(warden, true)` removed from its script showed
+  Sunwell Light's body with the color, `|n` and `<A000,DataA1>` = 250 rendered. Its title
+  stayed "Holy Light - [Level 1]" because only `anam` changed; the game reads `atp1`, as the
+  field guide already says.
+- Interface: two dialogs exported to `.w3ui` and imported into a map that already had a
+  Difficulty dialog came in as Difficulty 2 with Details' Back relinked; the built copy
+  opened it at start and the A, B and H hotkeys navigated and ran `OnHardMode(player)`.
+  The game caches a map's list name by file: a rebuilt `_dev` copy kept its old name until
+  copied to a new filename.
+- Added two captures (the tooltip, and the H hotkey's callback message with the BattleTag
+  number blurred) and updated the Map, Interface and troubleshooting guides' limits.
 
 ## 2026-11-03 · Unit Classification as option chips (AGE-71)
 
