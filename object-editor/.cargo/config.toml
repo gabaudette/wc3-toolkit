@@ -2,3 +2,9 @@
 [alias]
 lint = "clippy --workspace --all-targets -- -D warnings"
 fmt-check = "fmt --all -- --check"
+
+# The C runtime is linked into the program, so Windows needs no Visual C++
+# redistributable to start it. The cc and cmake crates follow this flag for the
+# bundled CascLib and StormLib.
+[target.x86_64-pc-windows-msvc]
+rustflags = ["-C", "target-feature=+crt-static"]

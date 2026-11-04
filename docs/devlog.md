@@ -4,6 +4,21 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-04 · Link the C runtime statically on Windows (AGE-75)
+
+- The Rust MSVC target links the C runtime as DLLs by default (`VCRUNTIME140.dll` and the
+  UCRT's `api-ms-win-crt-*`). The NSIS installer installs WebView2 but not the Visual C++
+  redistributable, so a Windows computer without it could not start the app. Tinkerbench
+  Setup (AGE-75) would have had to install it; linking it in removes that requirement.
+- `object-editor/.cargo/config.toml` sets `-C target-feature=+crt-static` for
+  `x86_64-pc-windows-msvc`. The bundled C libraries follow without changes: `cc` (CascLib,
+  the shim, mlua's Lua) reads the target feature and compiles with `/MT`, and `cmake` passes
+  `cc`'s flags into StormLib's `CMAKE_<LANG>_FLAGS_RELEASE`. StormLib's
+  `cmake_minimum_required(3.10)` leaves policy CMP0091 off, so those flags pick the runtime.
+- CI's Windows job builds the app and fails if `dumpbin /dependents` lists `VCRUNTIME`,
+  `MSVCP`, `ucrtbase` or `api-ms-win-crt`. Linux builds are unchanged (the setting is
+  target-specific).
+
 ## 2026-11-03 · Keep the chosen Lua folder (PR #89)
 
 - Since tabs stay alive, a hidden tab whose map changed elsewhere remounts when shown again

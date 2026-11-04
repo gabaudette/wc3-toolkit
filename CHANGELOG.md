@@ -18,6 +18,8 @@ under "What's new".
 
 ### Fixed
 
+- Tinkerbench starts on Windows computers that do not have the Visual C++ runtime
+  installed.
 - The Lua folder you pick in the Interface tab stays after you edit the map in another tab;
   it used to go back to the default, so a build could write its modules elsewhere. The
   spell wizard uses the same folder, and opening another map starts from that map's own.
