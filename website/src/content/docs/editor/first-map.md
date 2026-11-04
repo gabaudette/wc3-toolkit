@@ -12,9 +12,11 @@ and starting player.
 
 1. In the World Editor, create a map and place a Footman for a player you can control.
 2. Save it as a separate test map. Close the map in the World Editor before saving changes from Tinkerbench.
-3. Start Tinkerbench. On the first launch, choose your Warcraft III folder and select
-   **Load game data**; see [connect the game](../install/#connect-the-game). Later launches
-   load the last folder and reopen the last map directly.
+3. Start Tinkerbench. After [Tinkerbench Setup](../install/#run-the-setup), it loads your game
+   data on its own. After a `.deb` or AppImage install, choose your Warcraft III folder on the
+   first launch and select **Load game data**; see
+   [connect the game](../install/#connect-the-game). Later launches load the last folder and
+   reopen the last map directly.
 4. If setup is showing, choose **Open a map…** under **2. Map** and select your test map.
    If the workbench opened another map, use **Open map…** in its top bar. You can also press
    Escape or **Stop and choose** while game data loads to stay on setup.

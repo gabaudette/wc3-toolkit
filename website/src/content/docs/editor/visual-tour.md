@@ -12,10 +12,12 @@ If you have not installed Tinkerbench yet, start with [installation](../install/
 
 ## 1. Load the game
 
-On the first launch, Tinkerbench asks for your Warcraft III installation. Choose **Browse…** under
-**1. Warcraft III folder**, then select the game directory containing `Data/` and `.build.info`. You can also
-type or paste the folder’s path. Tinkerbench may already fill it in from detection or your
-previous session.
+After [Tinkerbench Setup](../install/#run-the-setup), Tinkerbench loads the game you chose there
+and goes on to **2. Map**. After a `.deb` or AppImage install, or when the game has moved, it asks
+for your Warcraft III installation. It may already fill in the folder from detection or your
+previous session, and lists the installations under **Found on this computer** when it finds
+several. Otherwise choose **Browse…** under **1. Warcraft III folder**, then select the game
+directory containing `Data/` and `.build.info`; you can also type or paste the folder’s path.
 
 <figure class="app-screenshot">
   <a href="../../screenshots/load-game.png">
