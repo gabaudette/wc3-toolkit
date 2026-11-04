@@ -57,9 +57,13 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   requirements, game, maps folder, test maps, install, finish; update and removal when
   `install.json` exists); `install.rs` installs per user and records every file written in
   `install.json` beside `setup.json`; `platform.rs` adds the menu entry, icons, `tinkerbench`
-  command and desktop shortcut on Linux, Start menu and desktop `.lnk` on Windows;
+  command and desktop shortcut on Linux; on Windows the Start menu and desktop `.lnk`, a copy
+  of the setup as `Uninstall Tinkerbench.exe` and the HKCU Add/Remove Programs entry running it
+  with `--uninstall` (a running uninstaller is deleted by `cmd` after it exits);
   `requirements.rs` runs `ldd` on the app and installs WebKitGTK with `pkexec` and the
-  distribution's package manager (Windows: the WebView2 registry key). `theme.rs` follows
+  distribution's package manager, and on Windows reads the WebView2 client key and installs
+  the runtime with Microsoft's bootstrapper, downloaded by the system's `curl.exe`. The setup
+  carries the app's icon on Windows (`winresource`). `theme.rs` follows
   `docs/design.md` with fonts converted from the app's `@fontsource` files (`setup/fonts`).
 - `object-editor/app/` — the Tauri 2 editor, named **Tinkerbench** (gnome icon in
   `src-tauri/icons/app-icon.png`; `bun run tauri icon` makes the other sizes): React 19 + TypeScript + Vite + Tailwind 4 +

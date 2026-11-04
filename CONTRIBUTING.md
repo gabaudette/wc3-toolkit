@@ -135,13 +135,13 @@ The version lives in one place: `version` in `object-editor/Cargo.toml` (the app
 installers and the version shown in the editor all read it). To release:
 
 1. Set the new version in `object-editor/Cargo.toml`, rename `## Unreleased` in
-   `CHANGELOG.md` to `## 0.2.0 - <date>`, add a devlog entry for the release, and commit them on
+   `CHANGELOG.md` to `## 0.3.0 - <date>`, add a devlog entry for the release, and commit them on
    `main`. The next change starts a new `## Unreleased` section (an empty one would show in the
    app).
-2. Tag that commit and push the tag: `git tag v0.2.0 && git push origin v0.2.0`.
-3. The Release workflow checks that the tag matches the version, builds the Windows
-   installer (NSIS) and the Linux packages (`.deb`, AppImage), and attaches them to a
-   **draft** release.
+2. Tag that commit and push the tag: `git tag v0.3.0 && git push origin v0.3.0`.
+3. The Release workflow checks that the tag matches the version, builds Tinkerbench Setup for
+   Windows and Linux (each carrying that system's app, built with `tauri build --no-bundle`)
+   and the Linux packages (`.deb`, AppImage), and attaches them to a **draft** release.
 4. Install and try them on Windows and Linux, fill in "Tested with" in the draft's notes with
    what you actually tried (systems, package types, game build, SD or HD), then publish the
    draft on GitHub.
@@ -168,8 +168,8 @@ opens on removal. To try it without touching your own install on Linux, point `H
 `XDG_CONFIG_HOME`, `XDG_DATA_HOME` and `XDG_CACHE_HOME` at a temporary folder (link your Steam
 folder into it so the game is still found).
 
-The Windows installer is not signed: Windows shows a SmartScreen warning ("Windows protected
-your PC") until a code signing certificate is added. The install notes explain how to get past
+Tinkerbench Setup is not signed on Windows: Windows shows a SmartScreen warning ("Windows
+protected your PC") until a code signing certificate is added. The install notes explain how to get past
 it. The release notes come from `.github/release-notes.md`.
 
 ## Commits

@@ -84,6 +84,11 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   stable when refreshing the UI. Screenshots show game art in context; do not export or add
   standalone game assets. The guide’s captions and alt text should match each refreshed image.
   Include “Image subject to change.” below every screenshot, including reused images.
+- The install guide's `setup-{welcome,game}.png` are Tinkerbench Setup's own window at its
+  default 820 × 600, from a release build of the setup with an app payload. Run it with
+  `HOME`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME` and `XDG_CACHE_HOME` in a temporary folder that
+  links the Steam folder, so it shows a first install and finds the game, and close it before
+  installing. `setup-game.png` is the Warcraft III page once the data check has passed.
 - The expanded editor guides use 24 captures: refreshed `load-game.png` and `open-map.png`,
   plus `auto-open.png`, `objects-{options,dice,formatting,export}.png`,
   `interface-{dialog,multiboard,style,leaderboard,timer,lua-build,export,import}.png`,

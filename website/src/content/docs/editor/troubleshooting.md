@@ -10,6 +10,7 @@ trying changes.
 
 | What is happening?                                         | Start here                                                                |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Tinkerbench or its setup does not start                    | [Starting Tinkerbench](#tinkerbench-does-not-start)                       |
 | The game folder is blank or points to another installation | [Game-folder detection](#the-game-folder-is-not-detected)                 |
 | Load game data fails, or the Map section never appears     | [Loading game data](#the-game-data-will-not-load)                         |
 | Automatic startup returns to setup                         | [Automatic opening](#automatic-opening-returns-to-setup)                  |
@@ -22,6 +23,24 @@ trying changes.
 | A model, texture or icon is missing                        | [Artwork and rendering](#a-model-or-icon-is-missing)                      |
 | An imported object loses its artwork or changes raw code   | [Import previews](#an-import-loses-artwork-or-changes-raw-codes)          |
 | You need the log file for a bug report                     | [Find the log](#find-the-log-file)                                        |
+
+## Tinkerbench does not start
+
+**Symptom:** Tinkerbench Setup or Tinkerbench itself does not open, or closes at once.
+1. **Linux, the setup does not open:** a downloaded file cannot run until you allow it. Turn on
+   **Allow executing file as program** in the file's **Properties**, or run
+   `chmod +x Tinkerbench-Setup-*-linux-x64`.
+2. **Windows, the setup is blocked:** **Windows protected your PC** appears because the setup is
+   not signed. For a file from this project's releases, choose **More info**, then **Run anyway**.
+3. **Tinkerbench does not open after installing:** run Tinkerbench Setup again and look at its
+   **Requirements** page. On Linux, Tinkerbench needs WebKitGTK; **Install it** adds it through
+   your package manager, or run the command it shows in a terminal. On Windows, it needs the
+   Microsoft Edge WebView2 Runtime; **Install it** downloads it from Microsoft, which needs an
+   internet connection, and the page also links to Microsoft's download.
+4. If it still does not open, [find the log file](#find-the-log-file) and
+   [report the problem](#report-an-unresolved-problem).
+
+**Next:** [Install Tinkerbench](../install/).
 
 ## The game folder is not detected
 

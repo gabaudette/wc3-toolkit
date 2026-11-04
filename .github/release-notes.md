@@ -9,16 +9,24 @@ Guides, tutorials and the field reference: https://tinkerbench-docs.vercel.app
 
 ## Install
 
-- **Windows:** download the `-setup.exe` file and run it. It installs for your user only, no
-  administrator rights needed. Windows may show "Windows protected your PC" because the
-  installer is not signed: click **More info**, then **Run anyway**.
-- **Linux (Debian, Ubuntu, Mint):** download the `.deb` file and install it with
-  `sudo apt install ./<file>.deb`.
-- **Linux (other):** download the `.AppImage` file, make it executable
-  (`chmod +x <file>.AppImage`) and run it.
+This is a preview release: work on copies of your maps, and close a map in the World Editor
+before saving it here.
 
-On first start, point Tinkerbench at your Warcraft III folder; after that it reopens your last
-map. Work on a copy of your map, and close it in the World Editor before saving it here.
+Download **Tinkerbench Setup** for your system and run it. It installs Tinkerbench for your
+user only, with no administrator rights, checks what Tinkerbench needs from the system, finds
+your Warcraft III install and Maps folder, and opens Tinkerbench straight on your game. Run it
+again to update or remove Tinkerbench.
+
+- **Windows 10 or 11:** `Tinkerbench-Setup-<version>-windows-x64.exe`. Windows may show
+  "Windows protected your PC" because the setup is not signed: click **More info**, then
+  **Run anyway**.
+- **Linux:** `Tinkerbench-Setup-<version>-linux-x64`. Allow it to run first (the file's
+  Properties, Permissions, "Allow executing file as program", or `chmod +x`), then open it. If
+  WebKitGTK is missing, the setup installs it through your package manager after asking for
+  your password.
+- **Linux packages:** the `.deb` (`sudo apt install ./<file>.deb`) and the `.AppImage`
+  (`chmod +x`, then run it) install only Tinkerbench; point it at your Warcraft III folder on
+  first start.
 
 ## What's new
 
@@ -34,10 +42,10 @@ distribution, package type, game build and SD/HD mode actually exercised. -->
 
 - Placed units and Map tab changes reach the game only when Tinkerbench can rewrite the map
   script's World Editor parts exactly; otherwise the tab says so, and saving the map in the
-  World Editor applies them. This was tested on Lua maps, not yet on JASS maps.
+  World Editor applies them. That fallback was tested on Lua maps, not yet on JASS maps.
 - Interface designs, triggered spells and the test harness write Lua, so they need a Lua map.
 - Nothing has been tested with several players in one game yet.
-- A custom loading screen model chosen in the Map tab did not replace the game's loading art in
-  testing.
+- The game's own campaign loading screens cannot be chosen in the Map tab: a typed campaign
+  path shows only the race crest. Imported loading-screen models work.
 
 Report problems at https://github.com/gabaudette/wc3-toolkit/issues.

@@ -4,40 +4,22 @@ What changed in Tinkerbench, for the people who use it. Performance and internal
 one line here; the details are in the [devlog](docs/devlog.md). Tinkerbench shows this file
 under "What's new".
 
-## Unreleased
+## 0.3.0 - 2026-11-04
 
 ### Added
 
+- Tinkerbench Setup, for Windows and Linux, installs Tinkerbench for your user, with no
+  administrator rights. It checks what Tinkerbench needs from the system and installs it if it
+  is missing (WebView2 on Windows, WebKitGTK on Linux), then finds your Warcraft III install,
+  your Maps folder and where test maps keep their Lua files. Tinkerbench then opens straight on
+  your game. Run the setup again to update or remove Tinkerbench; on Windows it is also listed
+  under installed apps.
 - When Tinkerbench finds several Warcraft III installations, the setup screen lists them
   with where each came from and its game version, so you can choose yours. It now also looks
   in every Steam library, Heroic, Bottles and Lutris on Linux, and on every drive on Windows.
 - The in-game verification page records more checks: custom loading-screen models, a
   script rewrite on a JASS map, a colored ability tooltip, and an imported Interface design
   with keyboard hotkeys. The Map guide says which loading-screen models work.
-
-### Changed
-
-- Internal improvements.
-- Performance improvements.
-
-### Fixed
-
-- When a folder is not a Warcraft III installation, the message says both files it looks for
-  and that a Maps folder is not the game.
-- Tinkerbench starts on Windows computers that do not have the Visual C++ runtime
-  installed.
-- The Lua folder you pick in the Interface tab stays after you edit the map in another tab;
-  it used to go back to the default, so a build could write its modules elsewhere. The
-  spell wizard uses the same folder, and opening another map starts from that map's own.
-- Unit Classification takes several choices, as in the game and the World Editor (a building
-  can be both a Town Hall and Mechanical): its options are chips instead of a single-choice
-  drop-down. So are the Placement Requires and Placement Prevented By pathing fields of
-  buildings.
-
-## 0.2.0 - 2026-11-03
-
-### Added
-
 - Buffs tab: browse, search, edit and create custom buffs and effects, with a chip per race.
 - Destructables tab: trees, gates, crates and rocks, with a chip per category and their model
   in the inspector.
@@ -180,9 +162,22 @@ under "What's new".
 - Names with Warcraft color codes show in color everywhere: lists, page titles, search,
   ability cards, sharing and import, and the base value column. Colors too dark to read on the
   editor's panels are lightened a little. Text you edit still shows the codes.
+- Performance improvements.
+- Internal improvements.
 
 ### Fixed
 
+- When a folder is not a Warcraft III installation, the message says both files it looks for
+  and that a Maps folder is not the game.
+- Tinkerbench starts on Windows computers that do not have the Visual C++ runtime
+  installed.
+- The Lua folder you pick in the Interface tab stays after you edit the map in another tab;
+  it used to go back to the default, so a build could write its modules elsewhere. The
+  spell wizard uses the same folder, and opening another map starts from that map's own.
+- Unit Classification takes several choices, as in the game and the World Editor (a building
+  can be both a Town Hall and Mechanical): its options are chips instead of a single-choice
+  drop-down. So are the Placement Requires and Placement Prevented By pathing fields of
+  buildings.
 - Lists of units, items and abilities hold no more than the game allows, as in the World
   Editor: 12 items or units sold, made or upgraded to, 4 item abilities, 5 hero abilities.
 - Ability, upgrade and doodad pages no longer keep redrawing in the background while open,
@@ -202,8 +197,6 @@ under "What's new".
   instead of staying blank.
 - Building from source no longer fails after the project folder moves, or when several copies
   of the project share one build folder.
-- Performance improvements.
-- Internal improvements.
 
 ## 0.1.0 - 2026-10-23
 

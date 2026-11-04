@@ -2,8 +2,8 @@
 
 Open-source tools for Warcraft III: Reforged map creation.
 
-> **Status: early release.** Tinkerbench 0.2.0 is the first public release. Work on copies
-> of your maps and keep backups.
+> **Status: preview.** Tinkerbench 0.3.0 is the first public release, a preview before 1.0.
+> Work on copies of your maps and keep backups.
 
 Read the **[Tinkerbench field guide](https://tinkerbench-docs.vercel.app)** for installation,
 first-map tutorials, JASS/Lua API declarations and the object field reference.
@@ -45,18 +45,18 @@ and doodads. See
 
 #### Install
 
-Download the latest version from the
-[Releases page](https://github.com/gabaudette/wc3-toolkit/releases):
+Download **Tinkerbench Setup** from the
+[Releases page](https://github.com/gabaudette/wc3-toolkit/releases) and run it. It installs
+Tinkerbench for your user only, installs what it needs from the system, finds your Warcraft III
+install and Maps folder, and opens Tinkerbench straight on your game. Run it again to update or
+remove Tinkerbench.
 
-- **Windows:** the `-setup.exe` file. It installs for your user only. The installer is not
-  signed yet, so Windows may show "Windows protected your PC": click **More info**, then
-  **Run anyway**.
-- **Linux (Debian, Ubuntu, Mint):** the `.deb` file, installed with
-  `sudo apt install ./<file>.deb`.
-- **Linux (other):** the `.AppImage` file: make it executable (`chmod +x <file>.AppImage`)
-  and run it.
-
-On first start, point the editor at your Warcraft III folder.
+- **Windows 10 or 11:** `Tinkerbench-Setup-<version>-windows-x64.exe`. It is not signed yet,
+  so Windows may show "Windows protected your PC": click **More info**, then **Run anyway**.
+- **Linux:** `Tinkerbench-Setup-<version>-linux-x64`. Allow it to run first (the file's
+  Properties, or `chmod +x`).
+- The `.deb` and `.AppImage` packages are there too; they install only Tinkerbench, so point
+  it at your Warcraft III folder on first start.
 
 #### Run from source
 
