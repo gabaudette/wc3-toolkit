@@ -52,7 +52,7 @@ pages, in order:
   <a href="../../screenshots/setup-game.png">
     <img src="../../screenshots/setup-game.png" alt="Tinkerbench Setup on its Warcraft III page: a Steam (Proton) install found with its game version, its folder, a confirmation that the game data reads, and the HD art checkbox." width="820" height="600" loading="lazy" />
   </a>
-  <figcaption>The setup lists the installs it finds and checks the game data before you continue.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The setup lists the installs it finds and checks the game data before you continue.</figcaption>
 </figure>
 
 Tinkerbench then opens straight on your game data, with your art choice and maps folder; the
@@ -71,7 +71,7 @@ where **Uninstall** opens the same removal.
   <a href="../../screenshots/setup-welcome.png">
     <img src="../../screenshots/setup-welcome.png" alt="Tinkerbench Setup's Welcome page, with the list of steps on the left: Welcome, License, Install folder, Requirements, Warcraft III, Maps folder, Test maps, Install and Finish." width="820" height="600" loading="lazy" />
   </a>
-  <figcaption>Each step of the setup is listed on the left; run it again later to update or remove Tinkerbench.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Each step of the setup is listed on the left; run it again later to update or remove Tinkerbench.</figcaption>
 </figure>
 
 ## Other Linux packages
@@ -102,7 +102,7 @@ Tinkerbench Setup connects the game for you. Tinkerbench's own setup screen does
   <a href="../../screenshots/load-game.png">
     <img src="../../screenshots/load-game.png" alt="First-launch Tinkerbench setup with the detected Warcraft III folder, HD art checkbox, Load game data and Prompt for an AI assistant buttons." width="600" height="480" loading="lazy" />
   </a>
-  <figcaption>On the first launch, connect the game installation before opening a map.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>On the first launch, connect the game installation before opening a map.</figcaption>
 </figure>
 
 The [visual tour](../visual-tour/#2-open-a-map) shows the next screen and its map-opening options.

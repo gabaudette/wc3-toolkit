@@ -4,6 +4,16 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-04 · Screenshot notice before the caption
+
+- Moved the screenshot notice to the start of each screenshot's `figcaption` across the
+  website, so it appears directly below the image and above the descriptive text in both
+  visual and reading order. Changed its spacing to a bottom margin and updated the authoring
+  guidance to keep new screenshots consistent.
+- Checked all 61 screenshots on 17 pages in Chrome at 1440 and 390 pixels; every notice renders
+  between its image and description without horizontal overflow. The 120 website tests,
+  generation, Biome/Astro checks, production build and local-link validation all pass.
+
 ## 2026-11-04 · First launch in the tutorials after the setup (AGE-75)
 
 - A check of the live site after the 0.3.0 release found the install guide and troubleshooting

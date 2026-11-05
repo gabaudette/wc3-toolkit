@@ -38,7 +38,7 @@ the designs in your map.
   <a href="../../screenshots/interface-dialog.png">
     <img src="../../screenshots/interface-dialog.png" alt="Difficulty dialog in the Interface tab, with a white message, Normal and Hard hotkeys, an OnHardMode callback and the live dialog preview." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Set the message, hotkeys and button actions beside the dialog preview; Hard calls OnHardMode with the clicking player.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Set the message, hotkeys and button actions beside the dialog preview; Hard calls OnHardMode with the clicking player.</figcaption>
 </figure>
 
 Your own module must define the named function. The generated action passes the player
@@ -72,14 +72,14 @@ with a click)**.
   <a href="../../screenshots/interface-multiboard.png">
     <img src="../../screenshots/interface-multiboard.png" alt="Scoreboard multiboard with Player, Kills and Deaths columns, a repeating player row and the live corner-board preview." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The multiboard&#x27;s fixed header and per-player row are edited in the same table, with a live preview above.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The multiboard&#x27;s fixed header and per-player row are edited in the same table, with a live preview above.</figcaption>
 </figure>
 
 <figure class="app-screenshot">
   <a href="../../screenshots/interface-style.png">
     <img src="../../screenshots/interface-style.png" alt="The Kills column selected for styling, showing multiboard cells, text-color swatches, No icon and the icon picker." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Scroll below the table to style the selected cell, row or column; here Style selects the whole Kills column.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Scroll below the table to style the selected cell, row or column; here Style selects the whole Kills column.</figcaption>
 </figure>
 
 For a design whose displayed Lua name is `Scoreboard`:
@@ -113,7 +113,7 @@ module creates them for playing slots, including computers.
   <a href="../../screenshots/interface-leaderboard.png">
     <img src="../../screenshots/interface-leaderboard.png" alt="Kills leaderboard with player rows starting at zero, a blue Waves row, Highest first order and the live ranking preview." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>A leaderboard combines player scores with named rows of your own and previews the selected order.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>A leaderboard combines player scores with named rows of your own and previews the selected order.</figcaption>
 </figure>
 
 For a design whose displayed Lua name is `Kills`:
@@ -144,7 +144,7 @@ no player argument is passed. A repeating timer calls it each time it expires.
   <a href="../../screenshots/interface-timer.png">
     <img src="../../screenshots/interface-timer.png" alt="Next wave timer design set to one minute thirty seconds, starting with the game, repeating and calling SpawnWave on expiry." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The timer preview reflects its title and length; the callback field names SpawnWave without arguments.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The timer preview reflects its title and length; the callback field names SpawnWave without arguments.</figcaption>
 </figure>
 
 For a design whose displayed Lua name is `NextWave`:
@@ -172,7 +172,7 @@ For a design whose displayed Lua name is `NextWave`:
   <a href="../../screenshots/interface-lua-build.png">
     <img src="../../screenshots/interface-lua-build.png" alt="Interface tab with Show Lua expanded, the Lua folder set to a temporary directory and a success message for five modules and Field guide_dev.w3m." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Save and build test copy wrote five generated modules and built the development map; this is a build result, not an in-game test.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Save and build test copy wrote five generated modules and built the development map; this is a build result, not an in-game test.</figcaption>
 </figure>
 
 Tinkerbench rewrites its generated modules on the next build. Keep your callbacks and game
@@ -197,14 +197,14 @@ To transfer designs:
   <a href="../../screenshots/interface-export.png">
     <img src="../../screenshots/interface-export.png" alt="Export designs with Difficulty and Scoreboard selected, Details brought along by Difficulty, an imported icon and the required OnHardMode callback." width="678" height="577" loading="lazy" />
   </a>
-  <figcaption>The export preview brings Details along because a Difficulty button shows it, and lists the imported icon and required callback.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The export preview brings Details along because a Difficulty button shows it, and lists the imported icon and required callback.</figcaption>
 </figure>
 
 <figure class="app-screenshot">
   <a href="../../screenshots/interface-import.png">
     <img src="../../screenshots/interface-import.png" alt="Import designs preview with Difficulty 2, Scoreboard 2 and Details 2 name conflicts, their Lua names, an existing imported icon and the OnHardMode requirement." width="678" height="410" loading="lazy" />
   </a>
-  <figcaption>The import preview numbers taken design names and shows the resulting Lua names before you add anything.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The import preview numbers taken design names and shows the resulting Lua names before you add anything.</figcaption>
 </figure>
 
 Existing designs remain. An imported design with a taken name receives a number, such as

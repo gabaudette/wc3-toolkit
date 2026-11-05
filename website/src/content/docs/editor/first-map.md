@@ -25,7 +25,7 @@ and starting player.
   <a href="../../screenshots/open-map.png">
     <img src="../../screenshots/open-map.png" alt="Tinkerbench setup after loading 928 units, offering Reopen Field guide.w3m, Open a map, read-only browsing and the checked automatic-startup setting." width="600" height="740" loading="lazy" />
   </a>
-  <figcaption>After game data loads, open a map or browse read-only; the checkbox controls later automatic launches.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>After game data loads, open a map or browse read-only; the checkbox controls later automatic launches.</figcaption>
 </figure>
 
 ## Change one field

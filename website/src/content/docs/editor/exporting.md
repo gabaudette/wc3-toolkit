@@ -26,7 +26,7 @@ instead; CSV and JSON are data exports.
   <a href="../../screenshots/objects-export.png">
     <img src="../../screenshots/objects-export.png" alt="Export objects dialog selecting Sunwell Warden, custom objects only, CSV, editor-formatted values and the Remove color codes checkbox." width="678" height="463" loading="lazy" />
   </a>
-  <figcaption>Choose the object scope, map filter and CSV cell values before selecting a destination.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Choose the object scope, map filter and CSV cell values before selecting a destination.</figcaption>
 </figure>
 
 Without an open map, exports use the installation's game objects. With a map, choosing only

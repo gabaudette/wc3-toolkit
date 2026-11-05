@@ -76,7 +76,7 @@ game assets out of the repository.
   problems and remaining checks directly; keep tracking in development records.
 - Use real application captures for UI guides, with descriptive alt text and captions.
   Reuse existing screenshot files when showing the same view. Add “Image subject to change.”
-  below each screenshot, using the existing screenshot markup.
+  below each screenshot and above its descriptive caption, using the existing screenshot markup.
 - Use relative links to site pages and assets so the guide also works under a subpath.
 
 For screenshot capture conventions and generator details, see the

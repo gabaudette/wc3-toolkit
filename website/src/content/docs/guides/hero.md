@@ -26,7 +26,7 @@ map in the World Editor before saving it from Tinkerbench. The screenshots use
   <a href="../../screenshots/tutorial-hero-base.png">
     <img src="../../screenshots/tutorial-hero-base.png" alt="Paladin Hpal selected in Units, with its base attributes, model preview and New unit based on this button." width="1440" height="900" />
   </a>
-  <figcaption>Start from the hero you want to inherit. The new custom object keeps its base’s unchanged fields.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Start from the hero you want to inherit. The new custom object keeps its base’s unchanged fields.</figcaption>
 </figure>
 
 Use a hero base for a hero. The new page should still say **Hero · Human**. Creating the
@@ -58,7 +58,7 @@ its earlier results hide the new object.
   <a href="../../screenshots/tutorial-hero-attributes.png">
     <img src="../../screenshots/tutorial-hero-attributes.png" alt="Custom Sunwell Warden H001 showing starting Strength 24, Agility 15, Intelligence 20 and per-level gains 2, 1, 3 with Changed only enabled." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Review both starting attributes and growth. The rightmost column shows the original Paladin values; gold marks the changes.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Review both starting attributes and growth. The rightmost column shows the original Paladin values; gold marks the changes.</figcaption>
 </figure>
 
 Keep the copied model and icon for this example and check that the model preview loads.
@@ -85,7 +85,7 @@ Turn **Changed only** off before reviewing inherited fields. Filter for `uhab` t
   <a href="../../screenshots/tutorial-hero-abilities.png">
     <img src="../../screenshots/tutorial-hero-abilities.png" alt="Sunwell Warden with the Hero ability list containing Holy Light, Divine Shield, Resurrection and Devotion Aura, each shown as an ability card." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The inherited hero list supplies the learnable spells. Use Details to inspect a card and review the Checks panel for hotkey clashes.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The inherited hero list supplies the learnable spells. Use Details to inspect a card and review the Checks panel for hotkey clashes.</figcaption>
 </figure>
 
 The **Hero** list (`uhab`) is separate from **Normal** (`uabi`). Keep **Inventory (Hero)**

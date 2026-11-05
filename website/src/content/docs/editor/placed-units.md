@@ -35,7 +35,7 @@ must be changed in the World Editor.
   <a href="../../screenshots/placed-map.png">
     <img src="../../screenshots/placed-map.png" alt="Paladin selected on the Placed units terrain view, with its rotation handle, matching list selection, owner, position, facing and hero settings." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Picking the level-3 Paladin links its terrain marker, list entry and placement fields; the handle turns that placement.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Picking the level-3 Paladin links its terrain marker, list entry and placement fields; the handle turns that placement.</figcaption>
 </figure>
 
 ## Give a hero starting items
@@ -49,7 +49,7 @@ Only heroes receive starting items here; other units can still have drops.
   <a href="../../screenshots/placed-inventory.png">
     <img src="../../screenshots/placed-inventory.png" alt="Inventory slot 1 item picker with item icons, names, raw codes, This map and Game filters, class chips and Any level." width="1062" height="601" loading="lazy" />
   </a>
-  <figcaption>A hero&#x27;s inventory slot opens the item picker, including map/game, class and level filters.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>A hero&#x27;s inventory slot opens the item picker, including map/game, class and level filters.</figcaption>
 </figure>
 
 ## Choose a unit's drops
@@ -93,7 +93,7 @@ calculated chance of 2.45%. Weight divides a tier's share; it is not a percent b
   <a href="../../screenshots/placed-cascade.png">
     <img src="../../screenshots/placed-cascade.png" alt="Creep rewards cascade with Legendary, Epic and Common tiers, weights, calculated-to-whole-percent chances and a warning that one entry rounds to zero." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The Legendary entry&#x27;s calculated 0.20% becomes 0%; the warning below the tiers explains that it will never drop from the stored table.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The Legendary entry&#x27;s calculated 0.20% becomes 0%; the warning below the tiers explains that it will never drop from the stored table.</figcaption>
 </figure>
 
 Each item shows its exact calculated chance followed by the whole percent the World Editor

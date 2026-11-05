@@ -24,7 +24,7 @@ saving from Tinkerbench. Map names and assigned raw codes in screenshots are exa
   <a href="../../screenshots/tutorial-item-base.png">
     <img src="../../screenshots/tutorial-item-base.png" alt="Potion of Healing phea selected in Items, with its icon, one charge, gold cost 150, treasure-chest model preview and New item based on this button." width="1440" height="900" />
   </a>
-  <figcaption>The potion supplies the inventory icon, ground model and healing ability. The chest preview is its ground model; the bottle is its icon.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The potion supplies the inventory icon, ground model and healing ability. The chest preview is its ground model; the bottle is its icon.</figcaption>
 </figure>
 
 Use the center **Filter fields** box to find each field by name or raw code. Enter a value,
@@ -41,7 +41,7 @@ then press **Enter** or leave the input to apply it.
   <a href="../../screenshots/tutorial-item-tooltip.png">
     <img src="../../screenshots/tutorial-item-tooltip.png" alt="Wayfarer Draught I000 with the extended tooltip Restores hit points when used. Contains 3 charges. and the matching in-game text preview." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Check the wording in the preview after leaving the text input. This copy has its own name and tooltips while retaining the base item’s artwork.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Check the wording in the preview after leaving the text input. This copy has its own name and tooltips while retaining the base item’s artwork.</figcaption>
 </figure>
 
 ## Choose its inventory behavior
@@ -64,7 +64,7 @@ while reviewing settings inherited from the base.
   <a href="../../screenshots/tutorial-item-behavior.png">
     <img src="../../screenshots/tutorial-item-behavior.png" alt="Wayfarer Draught with three charges in its summary and Stats showing automatic use False, Perishable True, Can Be Dropped True and Can Be Sold To Merchants True." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Picking this item up should keep it in the inventory. Each successful use spends a charge; Perishable removes it after the last one.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Picking this item up should keep it in the inventory. Each successful use spends a charge; Perishable removes it after the last one.</figcaption>
 </figure>
 
 **Can Be Sold To Merchants** governs selling the carried item back to a shop.
@@ -82,7 +82,7 @@ healing effect.
   <a href="../../screenshots/tutorial-item-ability.png">
     <img src="../../screenshots/tutorial-item-ability.png" alt="Wayfarer Draught I000 showing the retained Item Healing AIh1 ability card in the Abilities field, with its three-charge summary and saved map in the top bar." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The item keeps the game ability that performs the healing. Save the map after reviewing the item’s text, flags and ability.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The item keeps the game ability that performs the healing. Save the map after reviewing the item’s text, flags and ability.</figcaption>
 </figure>
 
 ## Test it

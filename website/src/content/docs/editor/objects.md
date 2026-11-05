@@ -39,7 +39,7 @@ a light ring, and a focused text box has a light edge.
   <a href="../../screenshots/objects-options.png">
     <img src="../../screenshots/objects-options.png" alt="Training construct&#x27;s changed fields: Unit Classification chips with Mechanical checked and marked changed, and Targeted as chips grouped under Owner and Kind." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Unit Classification and Targeted as use option chips; the gold dot marks Mechanical as changed.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Unit Classification and Targeted as use option chips; the gold dot marks Mechanical as changed.</figcaption>
 </figure>
 
 ## Damage and bounty dice
@@ -65,7 +65,7 @@ These samples check the ranges, not the roll distribution or empirical average.
   <a href="../../screenshots/objects-dice.png">
     <img src="../../screenshots/objects-dice.png" alt="Sunwell Warden&#x27;s damage fields showing 10 base plus two six-sided dice and 22 Strength, for 34 to 44 damage with an average of 39." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The hero&#x27;s level-1 damage preview adds 10 base, two six-sided dice and 22 from Strength: 34–44, average 39.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The hero&#x27;s level-1 damage preview adds 10 base, two six-sided dice and 22 from Strength: 34–44, average 39.</figcaption>
 </figure>
 
 ## Ability levels
@@ -92,7 +92,7 @@ text, then check the preview again; the **In game** label is a preview, not a pl
   <a href="../../screenshots/objects-formatting.png">
     <img src="../../screenshots/objects-formatting.png" alt="Sunwell Light&#x27;s tooltip source and preview with Formatting help expanded, an incomplete color code, an unmatched reset and an unresolved placeholder." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Formatting help stays beside the text; the preview lists the color, reset and placeholder problems in this deliberately incorrect example.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Formatting help stays beside the text; the preview lists the color, reset and placeholder problems in this deliberately incorrect example.</figcaption>
 </figure>
 
 The model viewer and icons read imported map assets first, then the installation. A missing preview can mean the referenced file is absent from the installation or imports.
