@@ -32,8 +32,8 @@
       "appimage"
     ],
     "publisher": "wc3-toolkit contributors",
-    "copyright": "Copyright (c) 2026 Gabriel Audette and wc3-toolkit contributors. MIT License.",
-    "license": "MIT",
+    "copyright": "Copyright (c) 2026 Gabriel Audette and wc3-toolkit contributors. GPL version 2 or later.",
+    "license": "GPL-2.0-or-later",
     "resources": {
       "../../../LICENSE": "LICENSE",
       "THIRD-PARTY-NOTICES.txt": "THIRD-PARTY-NOTICES.txt"

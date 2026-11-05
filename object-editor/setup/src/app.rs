@@ -857,7 +857,7 @@ impl SetupApp {
 
 fn license(ui: &mut egui::Ui) {
     ui.label(theme::heading("License"));
-    ui.label("Tinkerbench is free and open source, under the MIT License:");
+    ui.label("Tinkerbench is free and open source, under the GNU GPL version 2 or later:");
     ScrollArea::vertical()
         .id_salt("license")
         .max_height(LICENSE_HEIGHT)

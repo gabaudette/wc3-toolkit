@@ -26,7 +26,7 @@ or run `chmod +x Tinkerbench-Setup-*-linux-x64` in a terminal. Then open it.
 
 The setup installs Tinkerbench for your user only, so it needs no administrator rights. Its
 pages, in order:
-1. **Welcome** and **License**: Tinkerbench is free and open source, under the MIT License;
+1. **Welcome** and **License**: Tinkerbench is free and open source, under the GNU GPL version 2 or later;
    the setup also lists the open-source software it includes.
 2. **Install folder**: where Tinkerbench goes, by default `%LOCALAPPDATA%\Programs\Tinkerbench`
    on Windows and `~/.local/share/tinkerbench` on Linux. Tick **Add a shortcut on the desktop**

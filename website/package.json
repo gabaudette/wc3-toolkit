@@ -1,6 +1,7 @@
 {
   "name": "tinkerbench-docs",
   "private": true,
+  "license": "GPL-2.0-or-later",
   "type": "module",
   "scripts": {
     "dev": "bun run generate && astro dev",
