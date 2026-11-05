@@ -119,8 +119,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the checks every change must pass.
 
 ## License
 
-MIT, see [LICENSE](LICENSE). Bundled third-party code keeps its own license
-(`object-editor/vendor/CascLib`, MIT).
+GNU General Public License, version 2 or (at your option) any later version
+(`GPL-2.0-or-later`), see [LICENSE](LICENSE). Bundled third-party code keeps its own
+license; see the notices shipped with the app and setup. CascLib and StormLib remain MIT.
 
 Warcraft and Blizzard Entertainment are trademarks or registered trademarks of Blizzard
 Entertainment, Inc. This project is not affiliated with or endorsed by Blizzard Entertainment.

@@ -1,7 +1,7 @@
 Third-party software in Tinkerbench
 
 Tinkerbench includes the software below. Each license text follows the list of components
-it applies to. Tinkerbench itself is under the MIT License (LICENSE).
+it applies to. Tinkerbench itself is under the GNU GPL version 2 or later (LICENSE).
 
 ================================================================================
 @fontsource/cormorant-sc 5.3.0 (OFL-1.1)

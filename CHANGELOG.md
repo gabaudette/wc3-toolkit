@@ -6,6 +6,10 @@ under "What's new".
 
 ## Unreleased
 
+### Changed
+
+- Tinkerbench is now licensed under the GNU General Public License, version 2 or later.
+
 ### Fixed
 
 - Website screenshots now show “Image subject to change” above their descriptive captions.

@@ -4,6 +4,15 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-05 · GNU GPL version 2 or later
+
+- Replaced the project's MIT license with GNU GPL version 2 or later, retaining the project
+  copyright notice and including the full GPL v2 text. The explicit later-version option
+  permits combining the app with its Apache-2.0 dependencies under GPL v3.
+- Updated the Rust workspace, JavaScript package and Tauri bundle metadata, setup license
+  page, README, website footer and install guide. Regenerated both third-party notice files
+  with the new project license; bundled dependencies retain their own licenses.
+
 ## 2026-11-04 · Screenshot notice before the caption
 
 - Moved the screenshot notice to the start of each screenshot's `figcaption` across the

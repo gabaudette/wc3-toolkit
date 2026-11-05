@@ -301,7 +301,7 @@ function notices(product: string, components: Component[]): string {
     `Third-party software in ${product}`,
     "",
     `${product} includes the software below. Each license text follows the list of components`,
-    `it applies to. ${product} itself is under the MIT License (LICENSE).`,
+    `it applies to. ${product} itself is under the GNU GPL version 2 or later (LICENSE).`,
     "",
     ...sections,
     untexted,
