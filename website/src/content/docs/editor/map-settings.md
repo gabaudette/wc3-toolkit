@@ -37,7 +37,7 @@ Open **Fog, weather and water**:
   <a href="../../screenshots/map-environment.png">
     <img src="../../screenshots/map-environment.png" alt="Map tab&#x27;s Fog, weather and water section with terrain fog enabled, its Style menu open, Ashenvale rain selected and water tint enabled." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Fog style, weather and water tint are map settings; this capture shows the editor controls, not the in-game environment.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Fog style, weather and water tint are map settings; this capture shows the editor controls, not the in-game environment.</figcaption>
 </figure>
 
 ## Configure existing players and forces
@@ -60,7 +60,7 @@ and **Share advanced unit control** as needed.
   <a href="../../screenshots/map-forces.png">
     <img src="../../screenshots/map-forces.png" alt="Forces section with custom forces enabled, Alliance and Reserve forces, player membership and alliance, vision and unit-control checkboxes." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Player 1 belongs to Alliance; ticking that player under Reserve would move the membership to the other force.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Player 1 belongs to Alliance; ticking that player under Reserve would move the membership to the other force.</figcaption>
 </figure>
 
 ## Change gameplay constants
@@ -85,7 +85,7 @@ and [damage dice](../objects/#damage-and-bounty-dice).
   <a href="../../screenshots/map-constants.png">
     <img src="../../screenshots/map-constants.png" alt="Gameplay constants filtered to the damage bonus table, with attack rows, defense columns and an edited Normal-against-Small multiplier with Reset." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The damage table places attack types on rows and defense types on columns; the changed Normal-against-Small cell is 1.2.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The damage table places attack types on rows and defense types on columns; the changed Normal-against-Small cell is 1.2.</figcaption>
 </figure>
 
 ## Save and verify the result

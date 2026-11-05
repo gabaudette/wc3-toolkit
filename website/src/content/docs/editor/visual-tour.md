@@ -23,7 +23,7 @@ directory containing `Data/` and `.build.info`; you can also type or paste the f
   <a href="../../screenshots/load-game.png">
     <img src="../../screenshots/load-game.png" alt="First-launch Tinkerbench setup with the detected Warcraft III folder, HD art checkbox, Load game data and Prompt for an AI assistant buttons." width="600" height="480" loading="lazy" />
   </a>
-  <figcaption>On the first launch, connect the game installation before opening a map.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>On the first launch, connect the game installation before opening a map.</figcaption>
 </figure>
 
 Enable **Use HD (Reforged) art values and icons** if you want HD art, then select
@@ -39,7 +39,7 @@ With no remembered map, it stays on setup. If loading fails, setup shows the rea
   <a href="../../screenshots/auto-open.png">
     <img src="../../screenshots/auto-open.png" alt="Tinkerbench loading the remembered game folder, with Stop and choose and the Escape hint visible." width="600" height="400" loading="lazy" />
   </a>
-  <figcaption>During automatic loading, Stop and choose or Escape lets you choose another map.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>During automatic loading, Stop and choose or Escape lets you choose another map.</figcaption>
 </figure>
 
 ## 2. Open a map
@@ -51,7 +51,7 @@ map. If you previously opened a map, **Reopen** offers that file directly.
   <a href="../../screenshots/open-map.png">
     <img src="../../screenshots/open-map.png" alt="Tinkerbench setup after loading 928 units, offering Reopen Field guide.w3m, Open a map, read-only browsing and the checked automatic-startup setting." width="600" height="740" loading="lazy" />
   </a>
-  <figcaption>After game data loads, open a map or browse read-only; the checkbox controls later automatic launches.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>After game data loads, open a map or browse read-only; the checkbox controls later automatic launches.</figcaption>
 </figure>
 
 **Browse game data only** opens the workbench without a map. You can inspect objects, fields
@@ -71,7 +71,7 @@ map to follow along with, see [your first map](../first-map/).
   <a href="../../screenshots/unit-editor.png">
     <img src="../../screenshots/unit-editor.png" alt="Paladin selected in the Units tab, with object search on the left, stats and grouped fields in the center, and its model and hit point explanation in the inspector." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The Paladin’s page brings its identity, values, model and field help into one view.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The Paladin’s page brings its identity, values, model and field help into one view.</figcaption>
 </figure>
 
 | Area            | What you can do                                                                                                                       |
@@ -99,7 +99,7 @@ object types, so you can find an ability while browsing units.
   <a href="../../screenshots/object-search.png">
     <img src="../../screenshots/object-search.png" alt="The Ctrl K search overlay showing Holy Light ability results, their icons and raw codes above the unit editor." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Use the raw code on the right to distinguish objects with the same name.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Use the raw code on the right to distinguish objects with the same name.</figcaption>
 </figure>
 
 The left column’s search stays within the current tab. It also matches field values, which
@@ -115,7 +115,7 @@ beside **Hit Points Maximum (Base)** (`uhpm`) to read its explanation in the ins
   <a href="../../screenshots/field-inspector.png">
     <img src="../../screenshots/field-inspector.png" alt="The Paladin’s fields filtered to hit points, showing a base maximum of 100, regeneration fields, and an inspector explaining that heroes gain additional life from Strength." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The inspector explains why a hero’s base hit points are only part of its in-game life.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The inspector explains why a hero’s base hit points are only part of its in-game life.</figcaption>
 </figure>
 
 Change a value in the center column. The editor highlights overrides and keeps the inherited
@@ -136,7 +136,7 @@ resolved tooltip and puts per-level numbers in a table. Select the information b
   <a href="../../screenshots/ability-levels.png">
     <img src="../../screenshots/ability-levels.png" alt="Holy Light’s ability editor showing its colored tooltip, three level columns for mana cost, cooldown and cast range, and mana cost help in the inspector." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>Holy Light has three levels. Its tooltip preview and level table are visible together.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Holy Light has three levels. Its tooltip preview and level table are visible together.</figcaption>
 </figure>
 
 Use the table’s keyboard controls:

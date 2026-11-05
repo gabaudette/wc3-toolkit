@@ -83,7 +83,8 @@ the same checks and uploads a static site artifact. No Warcraft installation is 
   finish loading, and move the pointer away from the content before capturing. Keep filenames
   stable when refreshing the UI. Screenshots show game art in context; do not export or add
   standalone game assets. The guide’s captions and alt text should match each refreshed image.
-  Include “Image subject to change.” below every screenshot, including reused images.
+  Include “Image subject to change.” below every screenshot and above its descriptive caption,
+  including reused images.
 - The install guide's `setup-{welcome,game}.png` are Tinkerbench Setup's own window at its
   default 820 × 600, from a release build of the setup with an app payload. Run it with
   `HOME`, `XDG_CONFIG_HOME`, `XDG_DATA_HOME` and `XDG_CACHE_HOME` in a temporary folder that

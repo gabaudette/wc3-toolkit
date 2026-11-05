@@ -8,6 +8,7 @@ under "What's new".
 
 ### Fixed
 
+- Website screenshots now show “Image subject to change” above their descriptive captions.
 - The first-map tutorial and the visual tour now say that Tinkerbench Setup connects the game,
   so the first launch skips the Warcraft III folder step.
 

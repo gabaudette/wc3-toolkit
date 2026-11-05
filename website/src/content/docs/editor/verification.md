@@ -118,7 +118,7 @@ when the World Editor asked during its save.
   <a href="../../screenshots/verification-fallback.png">
     <img src="../../screenshots/verification-fallback.png" alt="Warcraft III showing eleven passing fallback checks, rain and fog, with the level-1 Sunwell Warden selected and 34–44 damage." width="1452" height="938" loading="lazy" />
   </a>
-  <figcaption>The fresh game run applies the regenerated map script and shows the reset damage range.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The fresh game run applies the regenerated map script and shows the reset damage range.</figcaption>
 </figure>
 
 This establishes the fallback on this Lua map. Follow [script-rewrite troubleshooting](../troubleshooting/#a-tab-cannot-rewrite-the-map-script)
@@ -145,7 +145,7 @@ validate every format, texture dependency or rename/replace/remove operation in 
   <a href="../../screenshots/verification-imported-model.png">
     <img src="../../screenshots/verification-imported-model.png" alt="Sunwell Knight selected in the running Warcraft III test map, with its textured mounted model, portrait and imported Knight icon." width="1452" height="938" loading="lazy" />
   </a>
-  <figcaption>The imported model and icon are visible in the saved map's game copy.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The imported model and icon are visible in the saved map's game copy.</figcaption>
 </figure>
 
 Sunwell Light (`A000`, based on `AHhb`) was corrected to a valid colored tooltip with
@@ -163,7 +163,7 @@ checks alone do not verify how malformed text renders in Warcraft III.
   <a href="../../screenshots/verification-sunwell-tooltip.png">
     <img src="../../screenshots/verification-sunwell-tooltip.png" alt="The Sunwell Warden's ability tooltip in Warcraft III: the title Holy Light, Level 1, then Restores 250 life in green and Ready for verification on the next line." width="1452" height="938" loading="lazy" />
   </a>
-  <figcaption>The extended tooltip's color, line break and placeholder render in game; the title comes from Tooltip - Normal.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The extended tooltip's color, line break and placeholder render in game; the title comes from Tooltip - Normal.</figcaption>
 </figure>
 
 ## Interface results and known failures
@@ -190,7 +190,7 @@ record 17 passing assertions and identify the tested harness source.
   <a href="../../screenshots/verification-interface-startup.png">
     <img src="../../screenshots/verification-interface-startup.png" alt="Warcraft III showing the Difficulty dialog's Choose a difficulty message, the Next wave timer title and a three-row leaderboard with scores 16, 10 and 0." width="1452" height="938" loading="lazy" />
   </a>
-  <figcaption>The rebuilt test copy retains the initial message, timer title and leaderboard rows.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The rebuilt test copy retains the initial message, timer title and leaderboard rows.</figcaption>
 </figure>
 
 The multiboard was inspected with the leaderboard hidden. Its fixed row showed blue
@@ -202,7 +202,7 @@ were present. Show, hide and minimize operations also passed.
   <a href="../../screenshots/verification-multiboard.png">
     <img src="../../screenshots/verification-multiboard.png" alt="The running map's Sunwell defense multiboard with fixed and player rows, blue Slain text, a green score of 5 and imported Knight icons." width="1452" height="938" loading="lazy" />
   </a>
-  <figcaption>Hiding the leaderboard exposes the multiboard's text, colors and imported icons for inspection.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Hiding the leaderboard exposes the multiboard's text, colors and imported icons for inspection.</figcaption>
 </figure>
 
 The three-second repeating timer invoked `SpawnWave` at least twice without arguments.
@@ -225,14 +225,14 @@ Three About/Back round trips retained Difficulty's white **Choose a difficulty**
   <a href="../../screenshots/verification-dialog-details.png">
     <img src="../../screenshots/verification-dialog-details.png" alt="Warcraft III showing the cyan Work together to survive message and Back button on the third visit to Details." width="1452" height="938" loading="lazy" />
   </a>
-  <figcaption>Details retains its configured message and color after repeated About/Back navigation.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Details retains its configured message and color after repeated About/Back navigation.</figcaption>
 </figure>
 
 <figure class="app-screenshot">
   <a href="../../screenshots/verification-dialog-back.png">
     <img src="../../screenshots/verification-dialog-back.png" alt="Warcraft III showing the restored Choose a difficulty message with Normal, Hard and About this map after the third Back action." width="1452" height="938" loading="lazy" />
   </a>
-  <figcaption>Returning with Back restores Difficulty's message without rebuilding its buttons.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Returning with Back restores Difficulty's message without rebuilding its buttons.</figcaption>
 </figure>
 
 Direct `Hide`/`Show`, two `ShowAll()` calls and a later `Details.Show(player)` also retained
@@ -265,7 +265,7 @@ key and multiple clients were not checked.
   <a href="../../screenshots/verification-imported-dialog.png">
     <img src="../../screenshots/verification-imported-dialog.png" alt="Warcraft III after pressing H in the imported dialog: the red message OnHardMode ran for the player, player 0, click 1, beside the melee Victory screen." width="1452" height="938" loading="lazy" />
   </a>
-  <figcaption>The H hotkey of the imported, renamed dialog runs the map's own callback.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The H hotkey of the imported, renamed dialog runs the map's own callback.</figcaption>
 </figure>
 
 ## Remaining checks

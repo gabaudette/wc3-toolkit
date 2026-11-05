@@ -50,7 +50,7 @@ The hero bundle contains **Sunwell Warden**, source raw code **`H000`**, based o
   <a href="../../screenshots/starter-hero-import.png">
     <img src="../../screenshots/starter-hero-import.png" alt="Bundle file preview for sunwell-warden-v1.w3obj showing one Sunwell Warden unit, reassigned from H000 to H002, and the Import 1 object button." width="680" height="370" />
   </a>
-  <figcaption>This destination already uses H000 and H001, so the preview assigns H002. Your assigned code can differ.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>This destination already uses H000 and H001, so the preview assigns H002. Your assigned code can differ.</figcaption>
 </figure>
 
 | Changed field                                                        | Value          |
@@ -120,7 +120,7 @@ point to **`I001`**. The existing `I000` is preserved. Inspect that field after 
   <a href="../../screenshots/starter-item-import.png">
     <img src="../../screenshots/starter-item-import.png" alt="Wayfarer Draught bundle preview showing Wayfarer Supplies n000 and Wayfarer Draught brought along as an item dependency, with I000 reassigned to I001 and Import 2 objects." width="680" height="410" loading="lazy" />
   </a>
-  <figcaption>The merchant brings its custom potion along. The item receives a free ID, and the shop's stock reference follows it.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The merchant brings its custom potion along. The item receives a free ID, and the shop's stock reference follows it.</figcaption>
 </figure>
 
 Use the IDs from **your preview** when placing objects or writing scripts. These examples

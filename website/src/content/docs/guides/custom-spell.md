@@ -36,7 +36,7 @@ also needs a map whose **Script Language** is **Lua**.
   <a href="../../screenshots/spell-base.png">
     <img src="../../screenshots/spell-base.png" alt="New spell: start from, with Storm Bolt, Firebolt and Death Coil suggestions and an explanation of each base ability." width="640" height="488" />
   </a>
-  <figcaption>Choose a base for its behavior. Storm Bolt brings both damage and stun; a new name or icon does not replace those effects.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Choose a base for its behavior. Storm Bolt brings both damage and stun; a new name or icon does not replace those effects.</figcaption>
 </figure>
 
 Choosing the base creates a draft custom ability. The original game ability stays unchanged.
@@ -64,7 +64,7 @@ spell-specific field belongs to its particular base ability.
   <a href="../../screenshots/spell-values.png">
     <img src="../../screenshots/spell-values.png" alt="Sunwell Bolt in the values step with three levels: cooldown 8, 7, 6; mana cost 50, 65, 80; damage 100, 175, 250." width="1024" height="765" loading="lazy" />
   </a>
-  <figcaption>Gold cells show values changed from the base. Keep all three columns consistent with the spell you intend to test.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Gold cells show values changed from the base. Keep all three columns consistent with the spell you intend to test.</figcaption>
 </figure>
 
 ### Check the live tooltip
@@ -78,7 +78,7 @@ a different code.
   <a href="../../screenshots/spell-tooltip.png">
     <img src="../../screenshots/spell-tooltip.png" alt="Sunwell Bolt extended tooltips with placeholders referring to A001 and previews resolving to 100, 175 and 250 damage." width="1024" height="765" loading="lazy" />
   </a>
-  <figcaption>The preview resolves the new spell’s placeholders. Editing tooltip text changes the explanation; the table controls the spell’s values.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The preview resolves the new spell’s placeholders. Editing tooltip text changes the explanation; the table controls the spell’s values.</figcaption>
 </figure>
 
 Choose **Next: buff** when the values and text agree.
@@ -95,7 +95,7 @@ The wizard wires the chosen buff into the spell at every level.
   <a href="../../screenshots/spell-buff.png">
     <img src="../../screenshots/spell-buff.png" alt="New spell: buff showing the custom Sunwell Bolt buff B000, its tooltip title, edited tooltip text and preview." width="640" height="765" loading="lazy" />
   </a>
-  <figcaption>The spell’s own buff has a separate name and tooltip. Its icon and art can be edited in the Buffs tab afterwards.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The spell’s own buff has a separate name and tooltip. Its icon and art can be edited in the Buffs tab afterwards.</figcaption>
 </figure>
 
 You can also keep the base buff or pick **Another buff**. A different buff’s label or art
@@ -114,7 +114,7 @@ Choose **Next: button**. For this example:
   <a href="../../screenshots/spell-button.png">
     <img src="../../screenshots/spell-button.png" alt="New spell: button with the Storm Bolt icon, hotkey B for cast and learn, and separate command-card and learn-menu grids." width="640" height="672" loading="lazy" />
   </a>
-  <figcaption>A hero spell has a cast button and a learn button. The chosen slots leave the test Paladin’s existing abilities and basic orders visible.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>A hero spell has a cast button and a learn button. The chosen slots leave the test Paladin’s existing abilities and basic orders visible.</figcaption>
 </figure>
 
 These positions fit the hero used here. The next step checks the actual unit’s other
@@ -132,7 +132,7 @@ abilities; resolve any hotkey or position warnings for your own hero.
   <a href="../../screenshots/spell-units.png">
     <img src="../../screenshots/spell-units.png" alt="Sunwell Bolt assigned to test_hero H000, with command-card and learn-menu previews and the option to take the spell away." width="1024" height="576" loading="lazy" />
   </a>
-  <figcaption>The hero learns this spell level by level. The assignment stays with the finished ability; the top-bar Save writes it to disk.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The hero learns this spell level by level. The assignment stays with the finished ability; the top-bar Save writes it to disk.</figcaption>
 </figure>
 
 A hero can learn at most **five** hero abilities. If it already has five, make room or use
@@ -179,7 +179,7 @@ of the documentation site’s Lua/JASS reading preference.
   <a href="../../screenshots/spell-triggered-effect.png">
     <img src="../../screenshots/spell-triggered-effect.png" alt="Attribute Strike effect step with Strength selected, damage 25, 50, 75, attribute multipliers 1, 2, 3 and a generated tooltip preview." width="1024" height="765" loading="lazy" />
   </a>
-  <figcaption>The template’s per-level values describe the Lua effect. Review its generated tooltip before moving to the button and unit steps.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The template’s per-level values describe the Lua effect. Review its generated tooltip before moving to the button and unit steps.</figcaption>
 </figure>
 
 Choose **Next: button** and use a free command-card and learn-menu position. On the test
@@ -197,7 +197,7 @@ actual raw code, so you do not need to replace IDs in the generated code.
   <a href="../../screenshots/spell-lua-code.png">
     <img src="../../screenshots/spell-lua-code.png" alt="New spell: Lua code showing the per-map module folder and Attribute Strike module with FourCC A001 and three levels of effect values." width="1024" height="534" loading="lazy" />
   </a>
-  <figcaption>Review the module and choose a folder on your own machine. Create spell writes the Lua file; the following step builds it into a playable copy.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Review the module and choose a folder on your own machine. Create spell writes the Lua file; the following step builds it into a playable copy.</figcaption>
 </figure>
 
 1. Choose **Create spell** to write the module. In this capture it is `attribute_strike_a001.lua`;
@@ -210,7 +210,7 @@ actual raw code, so you do not need to replace IDs in the generated code.
   <a href="../../screenshots/spell-test-copy.png">
     <img src="../../screenshots/spell-test-copy.png" alt="New spell: try it reporting a built triggered-workshop_dev.w3m containing attribute_strike_a001.lua, with Save and build test copy and Done controls." width="640" height="437" loading="lazy" />
   </a>
-  <figcaption>The build result identifies the map to play and the module included in it. Keep working on the source map and rebuild the copy after changes.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The build result identifies the map to play and the module included in it. Keep working on the source map and rebuild the copy after changes.</figcaption>
 </figure>
 
 Start the generated copy as a custom game in Warcraft III, learn the spell and cast it on

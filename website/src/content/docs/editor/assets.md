@@ -23,7 +23,7 @@ you save it; a preview alone does not save an import.
   <a href="../../screenshots/assets-import.png">
     <img src="../../screenshots/assets-import.png" alt="Import files preview for a Knight model folder, with editable map paths, text-model conversion, replacement notices and texture statuses for the import and game." width="1062" height="540" loading="lazy" />
   </a>
-  <figcaption>Review each map path before adding files. The text model is converted to MDX, and its textures are accounted for in the import or game.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>Review each map path before adding files. The text model is converted to MDX, and its textures are accounted for in the import or game.</figcaption>
 </figure>
 
 The import preview lets you correct paths before adding files. A model does not search
@@ -40,7 +40,7 @@ to the file. Select a use to open that object.
   <a href="../../screenshots/assets-model.png">
     <img src="../../screenshots/assets-model.png" alt="Imported Knight model selected in Assets, with a textured preview, management actions, Path in the map, texture dependencies and Sunwell Knight under Used by." width="1440" height="900" loading="lazy" />
   </a>
-  <figcaption>The selected model shows its texture paths and the Sunwell Knight object field that uses it.<span class="screenshot-notice">Image subject to change.</span></figcaption>
+  <figcaption><span class="screenshot-notice">Image subject to change.</span>The selected model shows its texture paths and the Sunwell Knight object field that uses it.</figcaption>
 </figure>
 
 | Control                            | Result                                                                                        |
