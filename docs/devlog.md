@@ -4,6 +4,31 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-11 · One object store for every object type (AGE-77)
+
+- `wc3-map` had four copies of the same store: `units.rs`, `plain.rs`, `leveled.rs` and
+  `abilities.rs` each held the two tables, the strings they added and the files the map had,
+  with nearly identical `find`, `modification`, `set`, `reset`, `create`, `files`, `entry_mut`
+  and `same_as_base` (about 800 lines alike). Found in the code-smell audit of 2026-11-10.
+- `store.rs` now holds them once. `ObjectStore` keeps the tables and edits them; `Slot` says
+  which stored changes belong to a field (any level for plain fields and fields without levels,
+  else that level) and how a new one is stored (no level, or a level and a data column);
+  `Found` is an object's two entries; `MapObject` replaces `MapUnit`, `MapAbility`,
+  `PlainObject` and `LeveledObject`.
+- `MapUnits` is `PlainObjects` with a `UNITS` kind (custom IDs take the base's first letter)
+  plus the string table. `MapAbilities` is `LeveledObjects` with an `ABILITIES` kind (per-level
+  fields store their data column) plus `code`, `fields` and `info`; `AbilityDatabase`
+  implements `LeveledData` for it. Public methods keep their signatures.
+- Small behavior changes from taking the most complete copy:
+  - unit files are written only when they have changes or the map had them, like other types
+    (before, an empty `war3map.w3u`/`war3mapSkin.w3u` was always written);
+  - a unit change to a custom unit missing from one table adds a custom entry there, as the
+    other types did (before, it added a game-unit change keyed on the custom ID);
+  - an ability whose name is set empty shows its ID, like upgrades and doodads;
+  - unit string comments use the name with editor strings resolved, like items.
+- Tests: the listing, removal, file and missing-entry tests move to `store.rs`. Unit, real-map
+  (135 maps) and real-install tests pass.
+
 ## 2026-11-11 · Test the map info and script rewrite in CI (AGE-78)
 
 - The code that can damage a map had no test CI runs: every real-map and real-install test is

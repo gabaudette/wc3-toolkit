@@ -1,5 +1,5 @@
 //! What the map code needs from a game database whose fields can have a value
-//! per level: upgrades (per research level) and doodads (per model variation).
+//! per level: abilities and upgrades (per level) and doodads (per model variation).
 
 use crate::game::ArtMode;
 use crate::meta::FieldMeta;
