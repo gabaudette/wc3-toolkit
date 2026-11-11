@@ -573,3 +573,262 @@ impl MapInfo {
         out
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const VERSIONS: [u32; 6] = [
+        TFT_VERSION,
+        GAME_VERSION_VERSION,
+        REFORGED_VERSION,
+        CAMERA_VERSION,
+        MIN_CAMERA_VERSION,
+        PATCH_2_VERSION,
+    ];
+    const OPTIONS: u32 = 0x2040;
+    const SOURCE_IMPORTED: u32 = 128;
+    const USER: u32 = 1;
+    const COMPUTER: u32 = 2;
+    const HUMAN: u32 = 1;
+    const ORC: u32 = 2;
+    /// What older editors left in a player's fixed-start field: it still fixes the start.
+    const LEFTOVER_TEXT: u32 = u32::from_le_bytes(*b"tool");
+    const FOG_EXTRA: [f32; 5] = [0.1, 0.2, 0.3, 0.4, 0.9];
+    const ALL_PLAYERS: u32 = 0b11;
+    const FORCE_FLAGS: u32 = 0x3;
+    const FILLER: u8 = 7;
+    const PRE_TFT_VERSION: u32 = 18;
+
+    fn put_f32(out: &mut Vec<u8>, value: f32) {
+        out.extend_from_slice(&value.to_le_bytes());
+    }
+
+    /// A `war3map.w3i` of the given version, with two players, a force and an
+    /// item table. Parts kept as bytes hold filler.
+    fn w3i(version: u32, hud_skins: bool) -> Vec<u8> {
+        let mut out = Vec::new();
+        let filler = |out: &mut Vec<u8>, n: usize| out.extend(std::iter::repeat_n(FILLER, n));
+
+        put_u32(&mut out, version);
+        filler(&mut out, VERSION_INFO_BYTES);
+        if version >= GAME_VERSION_VERSION {
+            filler(&mut out, GAME_VERSION_BYTES);
+        }
+
+        for value in ["Sunwell", "Me", "A map", "1-2"] {
+            put_text(&mut out, value);
+        }
+
+        filler(&mut out, BOUNDS_BYTES);
+        put_u32(&mut out, OPTIONS);
+        out.push(b'L');
+        out.extend_from_slice(&(-1i32).to_le_bytes());
+        if version >= PATCH_2_VERSION {
+            put_u32(&mut out, SOURCE_IMPORTED);
+        }
+
+        for value in ["Load.mdx", "Text", "Title", "Subtitle"] {
+            put_text(&mut out, value);
+        }
+
+        put_u32(&mut out, 0);
+        for value in ["", "Prologue", "Prologue title", "Prologue subtitle"] {
+            put_text(&mut out, value);
+        }
+
+        put_u32(&mut out, 1);
+        for value in [1000.0, 5000.0, 0.5] {
+            put_f32(&mut out, value);
+        }
+
+        out.extend_from_slice(&[10, 20, 30, 255]);
+        if version >= PATCH_2_VERSION {
+            for value in FOG_EXTRA {
+                put_f32(&mut out, value);
+            }
+
+            put_u32(&mut out, 1);
+        }
+
+        out.extend_from_slice(b"RAhr");
+        put_text(&mut out, "forest");
+        out.push(b'L');
+        out.extend_from_slice(&[200, 150, 100, 255]);
+        if version >= GAME_VERSION_VERSION {
+            put_u32(&mut out, LUA);
+        }
+
+        if version >= REFORGED_VERSION {
+            filler(&mut out, MODE_BYTES);
+        }
+
+        if version >= CAMERA_VERSION {
+            filler(&mut out, CAMERA_DISTANCE_BYTES);
+        }
+
+        if version >= MIN_CAMERA_VERSION {
+            filler(&mut out, MIN_CAMERA_BYTES);
+        }
+
+        if version >= PATCH_2_VERSION {
+            filler(&mut out, PATCH_2_WATER_BYTES);
+        }
+
+        put_u32(&mut out, 2);
+        for (number, controller, race, fixed, name) in [
+            (0, USER, HUMAN, FIXED_START, "Blue"),
+            (1, COMPUTER, ORC, LEFTOVER_TEXT, "Red"),
+        ] {
+            put_u32(&mut out, number);
+            put_u32(&mut out, controller);
+            put_u32(&mut out, race);
+            if hud_skins {
+                put_u32(&mut out, 0);
+            }
+
+            put_u32(&mut out, fixed);
+            put_text(&mut out, name);
+            put_f32(&mut out, -1216.0);
+            put_f32(&mut out, 576.0);
+            put_u32(&mut out, 0);
+            put_u32(&mut out, 0);
+            if version >= REFORGED_VERSION {
+                put_u32(&mut out, 0);
+                put_u32(&mut out, 0);
+            }
+        }
+
+        put_u32(&mut out, 1);
+        put_u32(&mut out, FORCE_FLAGS);
+        put_u32(&mut out, ALL_PLAYERS);
+        put_text(&mut out, "Force 1");
+        for _ in 0..3 {
+            put_u32(&mut out, 0);
+        }
+
+        put_u32(&mut out, 1);
+        put_u32(&mut out, 0);
+        put_text(&mut out, "Loot");
+        put_u32(&mut out, 1);
+        put_u32(&mut out, 1);
+        put_u32(&mut out, 100);
+        out.extend_from_slice(b"phea");
+        out
+    }
+
+    fn properties(info: &MapInfo) -> &Properties {
+        info.properties().unwrap()
+    }
+
+    #[test]
+    fn every_version_round_trips_byte_for_byte() {
+        for version in VERSIONS {
+            let bytes = w3i(version, version >= PATCH_2_VERSION);
+            let info = MapInfo::parse(&bytes).unwrap();
+            let p = properties(&info);
+
+            assert_eq!(info.to_bytes(), bytes, "version {version}");
+            assert_eq!(p.version(), version);
+            assert_eq!(p.name, "Sunwell");
+            assert_eq!(p.loading_screen.model, "Load.mdx");
+            assert_eq!(p.prologue.title, "Prologue title");
+            assert_eq!(p.weather, FourCC(*b"RAhr"));
+            assert_eq!(p.sound_environment, "forest");
+            assert_eq!(p.players.len(), 2);
+            assert_eq!(p.forces[0].name, "Force 1");
+            assert_eq!(info.tables()[0].sets[0][0].item, FourCC(*b"phea"));
+        }
+    }
+
+    #[test]
+    fn fields_are_read_from_the_versions_that_have_them() {
+        let read = |version| MapInfo::parse(&w3i(version, version >= PATCH_2_VERSION)).unwrap();
+        let tft = read(TFT_VERSION);
+        let reforged = read(REFORGED_VERSION);
+        let patch_2 = read(PATCH_2_VERSION);
+
+        assert!(!properties(&tft).uses_lua());
+        assert!(properties(&read(GAME_VERSION_VERSION)).uses_lua());
+        assert_eq!(properties(&tft).players[0].enemy_priorities(), None);
+        assert_eq!(
+            properties(&reforged).players[0].enemy_priorities(),
+            Some([0, 0])
+        );
+        assert_eq!(properties(&reforged).fog_extra(), None);
+        assert_eq!(
+            properties(&patch_2).fog_extra(),
+            Some(([0.1, 0.2, 0.3, 0.4], 0.9))
+        );
+        assert!(properties(&patch_2).fog_over_sky());
+        assert_eq!(properties(&patch_2).players[0].hud_skin(), Some(0));
+        assert_eq!(properties(&patch_2).players[1].start(), [-1216.0, 576.0]);
+    }
+
+    #[test]
+    fn patch_2_maps_without_hud_skins_still_read() {
+        let bytes = w3i(PATCH_2_VERSION, false);
+        let info = MapInfo::parse(&bytes).unwrap();
+
+        assert_eq!(info.to_bytes(), bytes);
+        assert_eq!(properties(&info).players[0].hud_skin(), None);
+        assert_eq!(properties(&info).players[1].name, "Red");
+    }
+
+    #[test]
+    fn a_fixed_start_keeps_its_field_until_it_changes() {
+        let mut info = MapInfo::parse(&w3i(PATCH_2_VERSION, true)).unwrap();
+
+        assert!(properties(&info).players[0].fixed_start);
+        assert!(
+            properties(&info).players[1].fixed_start,
+            "leftover text fixes the start"
+        );
+
+        let p = info.properties_mut().unwrap();
+
+        p.players[0].fixed_start = false;
+        p.players[1].race = HUMAN;
+
+        let freed = MapInfo::parse(&info.to_bytes()).unwrap();
+
+        assert!(!properties(&freed).players[0].fixed_start);
+        assert!(properties(&freed).players[1].fixed_start);
+        assert_eq!(properties(&freed).players[1].race, HUMAN);
+
+        let mut fixed = freed.clone();
+
+        fixed.properties_mut().unwrap().players[0].fixed_start = true;
+        assert!(properties(&MapInfo::parse(&fixed.to_bytes()).unwrap()).players[0].fixed_start);
+    }
+
+    #[test]
+    fn item_tables_change_and_older_maps_keep_their_bytes() {
+        let mut info = MapInfo::parse(&w3i(TFT_VERSION, false)).unwrap();
+        let table = ItemTable {
+            number: 3,
+            name: "Rare".to_owned(),
+            sets: vec![vec![DropChance {
+                item: FourCC(*b"ratf"),
+                chance: 25,
+            }]],
+        };
+
+        info.set_tables(vec![table.clone()]);
+        assert_eq!(
+            MapInfo::parse(&info.to_bytes()).unwrap().tables(),
+            std::slice::from_ref(&table)
+        );
+
+        let mut old = PRE_TFT_VERSION.to_le_bytes().to_vec();
+
+        old.extend_from_slice(b"anything at all");
+
+        let mut before_tft = MapInfo::parse(&old).unwrap();
+
+        assert!(before_tft.properties().is_none());
+        assert!(!before_tft.supports_tables());
+        before_tft.set_tables(vec![table]);
+        assert_eq!(before_tft.to_bytes(), old);
+    }
+}

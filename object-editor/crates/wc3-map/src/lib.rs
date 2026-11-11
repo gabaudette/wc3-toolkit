@@ -16,6 +16,7 @@ pub mod plain;
 pub mod references;
 pub mod script;
 pub mod setup;
+pub mod sync;
 pub mod terrain;
 pub mod transfer;
 pub mod units;

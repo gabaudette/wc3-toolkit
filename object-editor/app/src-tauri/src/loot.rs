@@ -420,7 +420,7 @@ fn placed_units(session: &Session) -> Result<PlacedList, String> {
             .collect(),
         error: None,
         script_problem: match &map.script {
-            Some(script) => script.units_problem.clone(),
+            Some(script) => crate::sync::units_problem(script),
             None => Some(NO_SCRIPT.to_owned()),
         },
     })
