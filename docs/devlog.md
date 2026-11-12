@@ -4,6 +4,19 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-12 · The pre-push hook accepts a shared changelog line
+
+- `scripts/check-logs.ts` refused every branch that did not change `CHANGELOG.md`. But a
+  technical-only pull request adds "Internal improvements." (or "Performance improvements.")
+  only when `## Unreleased` does not have it yet, so such a branch rightly leaves the changelog
+  alone. AGE-79 hit this after AGE-77 and AGE-78 had added the line, and had to push with
+  `--no-verify`.
+- The hook now also accepts an unchanged `CHANGELOG.md` when the `## Unreleased` section of
+  `origin/main`'s changelog already has one of those two lines (a whole item, not words inside a
+  longer one). The devlog entry is still required.
+- `scripts/changelog.ts` finds the section, with tests beside it. This branch is its own check:
+  it changes no changelog, since Unreleased already has "Internal improvements.".
+
 ## 2026-11-12 · Searches follow the list they search
 
 - `UnitList` (units, items, upgrades, buffs, destructables, doodads) ran its search only when
