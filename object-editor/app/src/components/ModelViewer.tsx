@@ -184,14 +184,15 @@ type ShaderProgram = {
 };
 
 type ShaderNames = Record<string, string>;
-type ShaderBuilder = {
-  initShaderProgram: (
-    vertex: string,
-    fragment: string,
-    attributes: ShaderNames,
-    uniforms: ShaderNames,
-  ) => ShaderProgram;
-};
+type BuildShader = (
+  vertex: string,
+  fragment: string,
+  attributes: ShaderNames,
+  uniforms: ShaderNames,
+) => ShaderProgram;
+
+/** war3-model's renderer method that builds a shader; it is private in its types. */
+const BUILD_SHADER = "initShaderProgram";
 
 /**
  * Lets the renderer build shaders whose uniforms the driver dropped. For HD
@@ -205,11 +206,14 @@ function allowMissingUniforms(
   renderer: ModelRenderer,
   gl: WebGL2RenderingContext | WebGLRenderingContext,
 ) {
-  const builder = renderer as unknown as ShaderBuilder;
-  const build = builder.initShaderProgram.bind(renderer);
+  const build: unknown = Reflect.get(renderer, BUILD_SHADER);
 
-  builder.initShaderProgram = (vertex, fragment, attributes, uniforms) => {
-    const built = build(vertex, fragment, attributes, {});
+  if (typeof build !== "function") {
+    return;
+  }
+
+  const lenient: BuildShader = (vertex, fragment, attributes, uniforms) => {
+    const built: ShaderProgram = build.call(renderer, vertex, fragment, attributes, {});
 
     for (const name of Object.keys(uniforms)) {
       built.uniforms[name] = gl.getUniformLocation(built.program, name);
@@ -217,6 +221,8 @@ function allowMissingUniforms(
 
     return built;
   };
+
+  Reflect.set(renderer, BUILD_SHADER, lenient);
 }
 
 /**

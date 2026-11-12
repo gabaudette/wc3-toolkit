@@ -38,6 +38,16 @@ export function ShareDialog({ open, units, initial, onClose }: ShareDialogProps)
     }
   }, [open, initial]);
 
+  useEffect(() => {
+    if (!copied) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => setCopied(false), COPIED_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
   function choose(ids: string[]) {
     setChosen(ids);
     setPreview(null);
@@ -99,7 +109,6 @@ export function ShareDialog({ open, units, initial, onClose }: ShareDialogProps)
     }
 
     setCopied(true);
-    window.setTimeout(() => setCopied(false), COPIED_MS);
   }
 
   return (

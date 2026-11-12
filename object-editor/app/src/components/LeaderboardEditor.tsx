@@ -5,7 +5,7 @@ import { Checkbox } from "./Checkbox";
 import { ColorSwatches } from "./ColorSwatches";
 import { DesignBasics, designInputClass, GameScreen } from "./DesignBasics";
 import { GameText } from "./GameText";
-import { Select } from "./Select";
+import { pickedOption, Select } from "./Select";
 
 type LeaderboardEditorProps = {
   board: LeaderboardDesign;
@@ -170,7 +170,13 @@ export function LeaderboardEditor({
           <Select
             value={board.sort}
             options={SORTS}
-            onChange={(sort) => set({ sort: sort as LeaderboardDesign["sort"] })}
+            onChange={(picked) => {
+              const sort = pickedOption(SORTS, picked);
+
+              if (sort) {
+                set({ sort });
+              }
+            }}
             label="Order"
             isDisabled={!editable}
           />

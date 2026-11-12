@@ -4,6 +4,34 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-12 · One pane hook, late results dropped, no casts (AGE-79 follow-up)
+
+- `PlainPane`, `LeveledPane` and `AbilitiesPane` each had their own list refresh, detail load,
+  edit queue and "create copy". They now share `useObjectPane` (`objectPane.ts`), given a
+  memoized `source` (list, detail, create). `fillLevels` replaces the three copies of the
+  "same value on every later level" loop, `spellEdits.filled` included.
+- Late results were applied over newer ones:
+  - a detail load for a previous selection, in those three panes, the Assets pane's texture
+    list, the spell wizard's buff preview, `SpellUnits` and the import plan;
+  - a list search started before the next keystroke (`UnitList`, `AbilityList`): the timer was
+    cleared, but a search already sent still set its hits;
+  - a queued edit's result (and `PlainPane`'s reload after it) when another object had been
+    picked meanwhile, which put the previous object's page back.
+
+  `settleCurrent` in `result.ts` settles a load and returns the effect's cleanup, which drops a
+  result that arrives later. The edit queue checks a ref of the current selection before
+  applying an edit's result.
+- The five `as` casts are gone:
+  - `pickedOption` in `Select.tsx` maps a picked string back to a typed option (dialog button
+    action, leaderboard order);
+  - `ColoredTextInput` checks `instanceof Node`;
+  - `LootEditors.moved` spreads the spliced item;
+  - `ModelViewer` reaches war3-model's private `initShaderProgram` through `Reflect`, since the
+    library's types keep it private.
+- `ShareDialog`'s "Copied" reset timer is now an effect that clears it on close.
+- Tests: `settleCurrent` drops a late result; `fillLevels` fills from the first level and stops at
+  a failure.
+
 ## 2026-11-11 · Splitting the three largest React components (AGE-79)
 
 - `EditorScreen` (595 lines in one function) was both the app shell and the Units tab. The

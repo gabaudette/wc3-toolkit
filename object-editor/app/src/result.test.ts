@@ -1,5 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { attempt, attemptSync, errorMessage, failed, ok, settle, whenOk } from "./result";
+import {
+  attempt,
+  attemptSync,
+  errorMessage,
+  failed,
+  ok,
+  settle,
+  settleCurrent,
+  whenOk,
+} from "./result";
 
 describe("attempt", () => {
   test("turns a rejection or a throw into a failed result", async () => {
@@ -32,6 +41,25 @@ describe("settle", () => {
     await whenOk(Promise.resolve(failed("c")), (value: string) => seen.push(value));
 
     expect(seen).toEqual(["a", "!b"]);
+  });
+});
+
+describe("settleCurrent", () => {
+  test("drops a result that arrives after the cleanup", async () => {
+    const seen: string[] = [];
+    const record = (value: string) => seen.push(value);
+    const { promise: slow, resolve: finishSlow } =
+      Promise.withResolvers<ReturnType<typeof ok<string>>>();
+
+    const stopOld = settleCurrent(slow, record, record);
+
+    stopOld();
+    settleCurrent(Promise.resolve(ok("footman")), record, record);
+    finishSlow(ok("foot"));
+    await slow;
+    await Promise.resolve();
+
+    expect(seen).toEqual(["footman"]);
   });
 });
 

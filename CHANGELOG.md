@@ -13,6 +13,10 @@ under "What's new".
 
 ### Fixed
 
+- Typing quickly in a list's search box no longer shows, for a moment, the results of what you
+  had typed before.
+- Picking another object while a change to the previous one is still being saved no longer
+  brings the previous object's page back.
 - Website screenshots now show “Image subject to change” above their descriptive captions.
 - The first-map tutorial and the visual tour now say that Tinkerbench Setup connects the game,
   so the first launch skips the Warcraft III folder step.

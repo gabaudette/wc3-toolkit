@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "../api";
-import { failed, ok, type Result, settle } from "../result";
+import { failed, ok, type Result, settleCurrent } from "../result";
 import type { AbilityDetail, SpellTemplate, TemplateValues, UnitDetail, UnitItem } from "../types";
 import { useLuaFolder } from "./luaFolder";
 import type { BuffChoice } from "./SpellBuffStep";
@@ -99,7 +99,7 @@ export function useSpellBuff(spell: SpellDraft, onError: ErrorHandler) {
       return;
     }
 
-    void settle(api.plainDetail("buffs", shownId), setShown, onError);
+    return settleCurrent(api.plainDetail("buffs", shownId), setShown, onError);
   }, [shownId, onError]);
 
   async function load(base: string): Promise<Result<null>> {

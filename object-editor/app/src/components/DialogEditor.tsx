@@ -6,7 +6,7 @@ import { Checkbox } from "./Checkbox";
 import { ColorSwatches } from "./ColorSwatches";
 import { DesignHeader, designInputClass } from "./DesignBasics";
 import { GameText } from "./GameText";
-import { Select } from "./Select";
+import { pickedOption, Select } from "./Select";
 
 type DialogEditorProps = {
   dialog: DialogDesign;
@@ -33,6 +33,8 @@ const ACTION_LABELS: Record<ButtonAction["kind"], string> = {
   showDialog: "Show another dialog",
   runFunction: "Run a Lua function",
 };
+
+const ACTION_KINDS: ButtonAction["kind"][] = ["close", "showDialog", "runFunction"];
 
 function actionOfKind(kind: ButtonAction["kind"], others: Design[]): ButtonAction {
   if (kind === "showDialog") {
@@ -181,6 +183,11 @@ function ButtonRow({
 }: ButtonRowProps) {
   const label = `Button ${index + 1}`;
   const { action } = button;
+  const actions = ACTION_KINDS.map((kind) => ({
+    value: kind,
+    label: ACTION_LABELS[kind],
+    disabled: kind === "showDialog" && others.length === 0,
+  }));
 
   return (
     <li className="flex flex-col gap-1.5 rounded-[3px] border border-line bg-surface-2/40 p-2">
@@ -234,14 +241,14 @@ function ButtonRow({
         <span>When clicked:</span>
         <Select
           value={action.kind}
-          options={Object.entries(ACTION_LABELS).map(([kind, text]) => ({
-            value: kind,
-            label: text,
-            disabled: kind === "showDialog" && others.length === 0,
-          }))}
-          onChange={(kind) =>
-            onChange({ action: actionOfKind(kind as ButtonAction["kind"], others) })
-          }
+          options={actions}
+          onChange={(picked) => {
+            const kind = pickedOption(actions, picked);
+
+            if (kind) {
+              onChange({ action: actionOfKind(kind, others) });
+            }
+          }}
           label={`${label}: when clicked`}
           isDisabled={!editable}
         />
