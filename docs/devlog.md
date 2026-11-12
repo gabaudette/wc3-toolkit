@@ -4,6 +4,37 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-11 · Splitting the three largest React components (AGE-79)
+
+- `EditorScreen` (595 lines in one function) was both the app shell and the Units tab. The
+  Units tab is now `UnitsPane`, like the other tabs. The shell's parts moved out:
+  - `TabPanel`;
+  - `EditorTabs` (tab list, visited tabs, reload keys);
+  - `editorNavigation` (selection per tab, opening an asset's user);
+  - `mapFile` (open, save, unsaved-changes guard on close);
+  - `editorCommands` (palette commands);
+  - `EditorHeader` with the error banner.
+
+  It is now 247 lines.
+- `UnitsPane` loads the selected unit's page from its list entry. A list reload (after an edit
+  on the Abilities tab, for example) refreshes the page, which used to need a separate
+  `refreshUnits` callback. The load ignores answers for a unit no longer selected.
+- `SpellWizard` (730 lines) keeps only the step flow; it is now 242 lines.
+  - Every "Next" runs through one `advance(step, work)`: busy, wait for queued edits, error or
+    next step.
+  - The draft and its edit queue are `useSpellDraft`. The buff choice is `useSpellBuff` and
+    the triggered spell's template, values and Lua module are `useTriggeredSpell`.
+  - The ability edits that copy, rename, retarget placeholders and move hotkey highlights are
+    plain functions in `spellEdits.ts`; three loops over tooltip texts became one.
+  - The step components are in `SpellSteps.tsx`.
+- `PlacedPane` (539 lines) is split by concern, now 132 lines.
+  - `placedState.ts` has `usePlacedData` (loads and the edit queue), `usePlacedUnits` (filters,
+    selection, placing, unit edits) and `useItemTables`.
+  - `PlacedLists.tsx` has the lists, filters and the map section.
+  - The state stays in the pane, so switching between Placed units and Item tables keeps the
+    search, selection and placing as before.
+- `bun run check` and `bun test` pass.
+
 ## 2026-11-11 · One object store for every object type (AGE-77)
 
 - `wc3-map` had four copies of the same store: `units.rs`, `plain.rs`, `leveled.rs` and

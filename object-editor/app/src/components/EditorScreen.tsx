@@ -1,179 +1,28 @@
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import { SearchLg } from "@untitledui/icons";
-import { memo, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { api, report } from "../api";
-import { choosePath, confirm } from "../dialogs";
-import { attempt, type Result, settle } from "../result";
-import type {
-  AssetUse,
-  AssetUseKind,
-  Catalog,
-  Field,
-  GameSummary,
-  HotkeyClash,
-  LeveledCatalog,
-  MapSummary,
-  TransferObject,
-  UnitDetail,
-  UnitItem,
-} from "../types";
-import { classes, MAP_FILTERS, MAP_PATH_KEY, remembered, replaceField } from "../ui";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { api } from "../api";
+import { settle } from "../result";
+import type { GameSummary, MapSummary, TransferObject, UnitItem } from "../types";
 import { AbilitiesPane } from "./AbilitiesPane";
-import { AppVersion } from "./AppVersion";
 import { AssetsPane } from "./AssetsPane";
 import { AssistantPromptDialog } from "./AssistantPromptDialog";
-import { Button } from "./Button";
-import { CommandPalette, type PaletteCommand } from "./CommandPalette";
+import { CommandPalette } from "./CommandPalette";
+import { EditorHeader, ErrorBanner } from "./EditorHeader";
+import { TabBar, useEditorTabs } from "./EditorTabs";
 import { ExportDialog } from "./ExportDialog";
+import { type EditorDialog, editorCommands } from "./editorCommands";
+import { ignoreSelection, LEVELED_TABS, PLAIN_TABS, useNavigation } from "./editorNavigation";
 import { ExportContext, type ExportScope } from "./exportObjects";
 import { ImportDialog } from "./ImportDialog";
 import { InterfacePane } from "./InterfacePane";
 import { LeveledPane } from "./LeveledPane";
 import { LuaFolderContext } from "./luaFolder";
 import { MapPane } from "./MapPane";
-import { OpenAbilityContext } from "./openAbility";
+import { useMapFile } from "./mapFile";
 import { PlacedPane } from "./PlacedPane";
 import { PlainPane } from "./PlainPane";
 import { ShareDialog } from "./ShareDialog";
-import {
-  BUFF_LIST,
-  DESTRUCTABLE_LIST,
-  DOODAD_LIST,
-  ITEM_LIST,
-  type ListConfig,
-  UNIT_LIST,
-  UnitList,
-  UPGRADE_LIST,
-} from "./UnitList";
-import { UnitPage } from "./UnitPage";
-
-type Tab =
-  | "units"
-  | "abilities"
-  | LeveledCatalog
-  | Catalog
-  | "placed"
-  | "map"
-  | "interface"
-  | "assets";
-
-const TABS: { id: Tab; label: string }[] = [
-  { id: "units", label: "Units" },
-  { id: "abilities", label: "Abilities" },
-  { id: "items", label: "Items" },
-  { id: "upgrades", label: "Upgrades" },
-  { id: "buffs", label: "Buffs" },
-  { id: "destructables", label: "Destructables" },
-  { id: "doodads", label: "Doodads" },
-  { id: "placed", label: "Placed units" },
-  { id: "map", label: "Map" },
-  { id: "interface", label: "Interface" },
-  { id: "assets", label: "Assets" },
-];
-
-const PLAIN_USES: Partial<Record<AssetUseKind, Catalog>> = {
-  item: "items",
-  buff: "buffs",
-  destructable: "destructables",
-};
-
-const LEVELED_USES: Partial<Record<AssetUseKind, LeveledCatalog>> = {
-  upgrade: "upgrades",
-  doodad: "doodads",
-};
-
-const LEVELED_TABS: { catalog: LeveledCatalog; list: ListConfig }[] = [
-  { catalog: "upgrades", list: UPGRADE_LIST },
-  { catalog: "doodads", list: DOODAD_LIST },
-];
-
-const NO_LEVELED_SELECTION: Record<LeveledCatalog, string | null> = {
-  upgrades: null,
-  doodads: null,
-};
-
-const PLAIN_TABS: { catalog: Catalog; list: ListConfig }[] = [
-  { catalog: "items", list: ITEM_LIST },
-  { catalog: "buffs", list: BUFF_LIST },
-  { catalog: "destructables", list: DESTRUCTABLE_LIST },
-];
-
-const NO_PLAIN_SELECTION: Record<Catalog, string | null> = {
-  items: null,
-  buffs: null,
-  destructables: null,
-};
-
-function ignoreSelection(): void {}
-
-type TabPanelProps = { shown: boolean; children: ReactNode };
-
-const HIDE_FROM_FOCUS_MS = 1000;
-
-function afterPaint(run: () => void): () => void {
-  let timer = 0;
-  const frame = window.requestAnimationFrame(() => {
-    timer = window.setTimeout(run);
-  });
-
-  return () => {
-    window.cancelAnimationFrame(frame);
-    window.clearTimeout(timer);
-  };
-}
-
-function blur(target: EventTarget | null): void {
-  if (target instanceof HTMLElement) {
-    target.blur();
-  }
-}
-
-function TabPanel({ shown, children }: TabPanelProps) {
-  const [inert, setInert] = useState(!shown);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (shown) {
-      return afterPaint(() => setInert(false));
-    }
-
-    const panel = panelRef.current;
-    const stayOut = (e: FocusEvent) => blur(e.target);
-
-    if (panel?.contains(document.activeElement)) {
-      blur(document.activeElement);
-    }
-
-    panel?.addEventListener("focusin", stayOut);
-    const timer = window.setTimeout(() => setInert(true), HIDE_FROM_FOCUS_MS);
-
-    return () => {
-      panel?.removeEventListener("focusin", stayOut);
-      window.clearTimeout(timer);
-    };
-  }, [shown]);
-
-  return (
-    <div
-      ref={panelRef}
-      inert={inert}
-      className={classes(
-        "col-start-1 row-start-1 flex min-h-0 flex-col",
-        !shown && "-translate-x-[200vw]",
-      )}
-    >
-      <TabContent shown={shown}>{children}</TabContent>
-    </div>
-  );
-}
-
-function hiddenOrSame(before: TabPanelProps, after: TabPanelProps): boolean {
-  return !after.shown || before.children === after.children;
-}
-
-const TabContent = memo(function TabContent({ children }: TabPanelProps) {
-  return children;
-}, hiddenOrSame);
+import { TabPanel } from "./TabPanel";
+import { UnitsPane } from "./UnitsPane";
 
 type EditorScreenProps = {
   game: GameSummary;
@@ -181,441 +30,119 @@ type EditorScreenProps = {
   onChangeGame: () => void;
 };
 
-async function confirmDiscard(map: MapSummary): Promise<boolean> {
-  const answer = await confirm(`${map.name} has unsaved changes. Discard them?`, {
-    title: "Unsaved changes",
-    kind: "warning",
-    okLabel: "Discard changes",
-    cancelLabel: "Keep editing",
-  });
-
-  return answer.ok && answer.value;
-}
-
-export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenProps) {
-  const [map, setMap] = useState(initialMap);
-  const [units, setUnits] = useState<UnitItem[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
-  const [detail, setDetail] = useState<UnitDetail | null>(null);
-  const [clashes, setClashes] = useState<HotkeyClash[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [dialog, setDialog] = useState<"share" | "import" | "search" | "assistant" | null>(null);
-  const [exportScope, setExportScope] = useState<ExportScope | null>(null);
-  const [luaFolder, setLuaFolder] = useState("");
-  const sharedLuaFolder = useMemo(
-    () => ({ folder: luaFolder, setFolder: setLuaFolder }),
-    [luaFolder],
-  );
-  const [tab, setTab] = useState<Tab>("units");
-  const [visited, setVisited] = useState<Tab[]>(["units"]);
-  const [changes, setChanges] = useState(0);
-  const [reloads, setReloads] = useState<Partial<Record<Tab, number>>>({});
-  const seenChanges = useRef<Partial<Record<Tab, number>>>({});
-  const shownTab = useRef<Tab>(tab);
-
-  useEffect(() => {
-    const seen = seenChanges.current[tab];
-
-    if (shownTab.current !== tab && seen !== undefined && seen < changes) {
-      setReloads((current) => ({ ...current, [tab]: (current[tab] ?? 0) + 1 }));
-    }
-
-    seenChanges.current[tab] = changes;
-    shownTab.current = tab;
-    setVisited((current) => {
-      if (current.includes(tab)) {
-        return current;
-      }
-
-      return [...current, tab];
-    });
-  }, [tab, changes]);
-
-  function paneKey(pane: Tab): string {
-    return `${revision}-${reloads[pane] ?? 0}`;
-  }
-
-  const [selectedAbility, setSelectedAbility] = useState<string | null>(null);
-  const [selectedPlain, setSelectedPlain] = useState(NO_PLAIN_SELECTION);
-  const [selectedLeveled, setSelectedLeveled] = useState(NO_LEVELED_SELECTION);
-  const [revision, setRevision] = useState(0);
-  const editable = map !== null;
-  const customUnits = useMemo(() => units.filter((u) => u.custom), [units]);
-  const shareFirst = useMemo(() => {
-    if (selected && customUnits.some((u) => u.id === selected)) {
-      return [selected];
-    }
-
-    return [];
-  }, [selected, customUnits]);
-
-  const mapRef = useRef(map);
-
-  mapRef.current = map;
-
-  const refreshMap = useCallback(() => {
-    setChanges((count) => count + 1);
-    void settle(api.mapStatus(), setMap, setError);
-  }, []);
-
-  const openAbility = useCallback((id: string) => {
-    setSelectedAbility(id);
-    setTab("abilities");
-  }, []);
-
-  const openPlain = useCallback((catalog: Catalog, id: string) => {
-    setSelectedPlain((current) => ({ ...current, [catalog]: id }));
-    setTab(catalog);
-  }, []);
-
-  const openLeveled = useCallback((catalog: LeveledCatalog, id: string) => {
-    setSelectedLeveled((current) => ({ ...current, [catalog]: id }));
-    setTab(catalog);
-  }, []);
-
-  const selectPlain = useMemo(
-    () =>
-      new Map(PLAIN_TABS.map(({ catalog }) => [catalog, (id: string) => openPlain(catalog, id)])),
-    [openPlain],
-  );
-  const selectLeveled = useMemo(
-    () =>
-      new Map(
-        LEVELED_TABS.map(({ catalog }) => [catalog, (id: string) => openLeveled(catalog, id)]),
-      ),
-    [openLeveled],
-  );
-
-  const refreshList = useCallback(() => {
-    void settle(api.listUnits(), setUnits, setError);
-  }, []);
-
-  const refreshDetail = useCallback((id: string) => {
-    void settle(api.unitDetail(id), setDetail, setError);
-    void settle(api.hotkeyClashes(id), setClashes, setError);
-  }, []);
-
-  const refreshUnits = useCallback(() => {
-    refreshList();
-    if (selected) {
-      refreshDetail(selected);
-    }
-  }, [refreshList, refreshDetail, selected]);
-
-  useEffect(() => {
-    refreshList();
-  }, [refreshList]);
-
-  useEffect(() => {
-    if (selected) {
-      refreshDetail(selected);
-    }
-  }, [selected, refreshDetail]);
-
-  async function applyField(edit: Promise<Result<Field>>) {
-    const updated = await edit;
-
-    if (!updated.ok) {
-      setError(updated.error);
-      return;
-    }
-
-    setDetail((current) => current && replaceField(current, updated.value));
-    setError(null);
-    refreshMap();
-    refreshList();
-    if (selected) {
-      refreshDetail(selected);
-    }
-  }
-
-  async function createCopy() {
-    if (!detail) {
-      return;
-    }
-
-    const created = await api.createUnit(detail.item.base);
-
-    if (!created.ok) {
-      setError(created.error);
-      return;
-    }
-
-    refreshMap();
-    refreshList();
-    setSelected(created.value.id);
-  }
-
-  async function imported(objects: TransferObject[]) {
-    setDialog(null);
-    setRevision((r) => r + 1);
-    refreshMap();
-    refreshList();
-    const firstUnit = objects.find((o) => o.kind === "unit" && !o.dependency);
-
-    if (firstUnit) {
-      setSelected(firstUnit.newId ?? firstUnit.id);
-    }
-  }
-
-  const save = useCallback(async () => {
-    setSaving(true);
-    const saved = await api.saveMap();
-    setSaving(false);
-    if (!saved.ok) {
-      setError(saved.error);
-      return;
-    }
-
-    setMap(saved.value);
-    setError(null);
-  }, []);
-
-  async function changeGame() {
-    if (map?.unsaved && !(await confirmDiscard(map))) {
-      return;
-    }
-
-    onChangeGame();
-  }
-
-  async function openOtherMap() {
-    if (map?.unsaved && !(await confirmDiscard(map))) {
-      return;
-    }
-
-    const picked = await choosePath({
-      title: "Open a map",
-      filters: MAP_FILTERS,
-      ...(game.mapsDir && { defaultPath: game.mapsDir }),
-    });
-
-    if (!picked.ok) {
-      setError(picked.error);
-      return;
-    }
-
-    const path = picked.value;
-
-    if (!path) {
-      return;
-    }
-
-    const opened = await api.openMap(path);
-
-    if (!opened.ok) {
-      setError(opened.error);
-      return;
-    }
-
-    setMap(opened.value);
-    setLuaFolder("");
-    remembered.set(MAP_PATH_KEY, path);
-    setSelected(null);
-    setDetail(null);
-    setSelectedAbility(null);
-    setSelectedPlain(NO_PLAIN_SELECTION);
-    setSelectedLeveled(NO_LEVELED_SELECTION);
-    setRevision((r) => r + 1);
-    refreshList();
-  }
-
-  const commands: PaletteCommand[] = [];
-
-  if (map?.unsaved) {
-    commands.push({ id: "save", label: "Save the map", shortcut: "Ctrl S", run: save });
-  }
-
-  commands.push({ id: "open", label: "Open a map…", run: openOtherMap });
-  if (map) {
-    commands.push({ id: "import", label: "Import objects…", run: () => setDialog("import") });
-  }
-
-  if (map && customUnits.length > 0) {
-    commands.push({ id: "share", label: "Share units…", run: () => setDialog("share") });
-  }
-
-  commands.push({
-    id: "change-game",
-    label: "Change game folder…",
-    run: () => void changeGame(),
-  });
-
-  commands.push({
-    id: "assistant",
-    label: "Prompt for an AI assistant…",
-    run: () => setDialog("assistant"),
-  });
-
-  commands.push({
-    id: "export",
-    label: "Export objects…",
-    run: () => setExportScope({ type: null, shown: [], selected: null }),
-  });
-
-  for (const t of TABS.filter((other) => other.id !== tab)) {
-    commands.push({ id: `tab-${t.id}`, label: `Go to ${t.label}`, run: () => setTab(t.id) });
-  }
-
-  function openUnit(id: string) {
-    setTab("units");
-    setSelected(id);
-  }
-
-  function openUse(use: AssetUse) {
-    const plain = PLAIN_USES[use.kind];
-    const leveled = LEVELED_USES[use.kind];
-
-    if (use.kind === "unit") {
-      openUnit(use.id);
-      return;
-    }
-
-    if (use.kind === "ability") {
-      openAbility(use.id);
-      return;
-    }
-
-    if (plain) {
-      openPlain(plain, use.id);
-      return;
-    }
-
-    if (leveled) {
-      openLeveled(leveled, use.id);
-    }
-  }
-
-  function unitCreated(id: string) {
-    refreshMap();
-    refreshList();
-    openUnit(id);
-  }
-
-  useEffect(() => {
-    const appWindow = getCurrentWindow();
-    const unlisten = appWindow.onCloseRequested(async (event) => {
-      const current = mapRef.current;
-      if (!current?.unsaved) {
-        return;
-      }
-
-      event.preventDefault();
-      if (!(await confirmDiscard(current))) {
-        return;
-      }
-
-      const closed = await attempt(() => appWindow.destroy());
-      if (!closed.ok) {
-        report("error", "closing the window", closed.error);
-        setError(closed.error);
-      }
-    });
-
-    return () => {
-      void attempt(() => unlisten).then((listening) => {
-        if (listening.ok) {
-          listening.value();
-          return;
-        }
-
-        report("error", "close prompt", listening.error);
-      });
-    };
-  }, []);
-
+function useShortcuts(unsaved: boolean, save: () => void, search: () => void): void {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === "s" && map?.unsaved) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s" && unsaved) {
         e.preventDefault();
         save();
       }
 
       if ((e.ctrlKey || e.metaKey) && e.key === "k") {
         e.preventDefault();
-        setDialog("search");
+        search();
       }
     }
 
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [map, save]);
+  }, [unsaved, save, search]);
+}
+
+export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenProps) {
+  const [units, setUnits] = useState<UnitItem[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [dialog, setDialog] = useState<EditorDialog | null>(null);
+  const [exportScope, setExportScope] = useState<ExportScope | null>(null);
+  const [luaFolder, setLuaFolder] = useState("");
+  const [revision, setRevision] = useState(0);
+  const sharedLuaFolder = useMemo(
+    () => ({ folder: luaFolder, setFolder: setLuaFolder }),
+    [luaFolder],
+  );
+  const file = useMapFile({ game, initialMap, onOpened: opened, onError: setError });
+  const { map } = file;
+  const { tab, setTab, visited, paneKey } = useEditorTabs(file.changes, revision);
+  const nav = useNavigation(setTab);
+  const editable = map !== null;
+  const customUnits = useMemo(() => units.filter((u) => u.custom), [units]);
+  const shareFirst = useMemo(() => {
+    if (nav.unit && customUnits.some((u) => u.id === nav.unit)) {
+      return [nav.unit];
+    }
+
+    return [];
+  }, [nav.unit, customUnits]);
+  const closeDialog = useCallback(() => setDialog(null), []);
+  const openSearch = useCallback(() => setDialog("search"), []);
+
+  const refreshList = useCallback(() => {
+    void settle(api.listUnits(), setUnits, setError);
+  }, []);
+
+  useEffect(() => {
+    refreshList();
+  }, [refreshList]);
+
+  useShortcuts(map?.unsaved ?? false, file.save, openSearch);
+
+  function opened() {
+    setLuaFolder("");
+    nav.clear();
+    setRevision((r) => r + 1);
+    refreshList();
+  }
+
+  function imported(objects: TransferObject[]) {
+    setDialog(null);
+    setRevision((r) => r + 1);
+    file.refreshMap();
+    refreshList();
+    const firstUnit = objects.find((o) => o.kind === "unit" && !o.dependency);
+
+    if (firstUnit) {
+      nav.setUnit(firstUnit.newId ?? firstUnit.id);
+    }
+  }
+
+  async function changeGame() {
+    if (await file.mayLeave()) {
+      onChangeGame();
+    }
+  }
+
+  function unitCreated(id: string) {
+    file.refreshMap();
+    refreshList();
+    nav.openUnit(id);
+  }
+
+  const commands = editorCommands({
+    map,
+    canShare: customUnits.length > 0,
+    tab,
+    save: file.save,
+    openMap: file.openOther,
+    openDialog: setDialog,
+    changeGame: () => void changeGame(),
+    exportObjects: () => setExportScope({ type: null, shown: [], selected: null }),
+    goTo: setTab,
+  });
 
   return (
     <div className="relative flex h-full flex-col gap-2.5 overflow-hidden p-2.5">
-      <header className="frame flex flex-wrap items-center gap-3 bg-surface-1 px-4 py-2">
-        <h1 className="font-display text-2xl font-bold tracking-wide text-gold">Tinkerbench</h1>
-        <AppVersion />
-        <span className="flex-1" />
-        <button
-          type="button"
-          onClick={() => setDialog("search")}
-          className="flex w-[22rem] max-w-full items-center gap-2.5 rounded-[3px] border border-field bg-well px-3 py-1.5 text-left text-muted hover:border-frame"
-        >
-          <SearchLg className="size-4" aria-hidden="true" />
-          <span className="flex-1 truncate">Search objects and commands…</span>
-          <kbd className="rounded-[3px] border border-line-strong px-1.5 font-sans text-xs text-ink">
-            Ctrl K
-          </kbd>
-        </button>
-        <span className="flex-1" />
-        {map && (
-          <span
-            aria-live="polite"
-            className="min-w-0 truncate font-mono text-xs text-muted"
-            title={map.path}
-          >
-            {map.name}
-            {map.unsaved && <span className="ml-2 font-sans text-gold">● unsaved</span>}
-          </span>
-        )}
-        {!map && <span className="text-muted">Game data (read-only)</span>}
-        {map && (
-          <>
-            <Button onPress={() => setDialog("import")}>Import…</Button>
-            <Button disabled={customUnits.length === 0} onPress={() => setDialog("share")}>
-              Share…
-            </Button>
-          </>
-        )}
-        <Button onPress={openOtherMap}>Open map…</Button>
-        {map && (
-          <Button primary disabled={!map.unsaved || saving} onPress={save}>
-            Save
-          </Button>
-        )}
-      </header>
-
-      <nav className="flex gap-6 border-b border-line px-2" aria-label="Object types">
-        {TABS.map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            onClick={() => setTab(t.id)}
-            aria-current={tab === t.id && "page"}
-            className={classes(
-              "py-1.5 font-display text-lg font-bold",
-              tab === t.id && "text-gold-bright shadow-[inset_0_-2px_0_var(--color-gold)]",
-              tab !== t.id && "text-muted hover:text-ink",
-            )}
-          >
-            {t.label}
-          </button>
-        ))}
-      </nav>
-
-      {error && (
-        <div
-          role="alert"
-          className="flex items-center gap-3 rounded-[3px] border border-danger/40 bg-danger/10 px-4 py-2 text-danger"
-        >
-          <span className="flex-1">{error}</span>
-          <Button small onPress={() => setError(null)}>
-            Dismiss
-          </Button>
-        </div>
-      )}
+      <EditorHeader
+        map={map}
+        saving={file.saving}
+        canShare={customUnits.length > 0}
+        onSearch={openSearch}
+        onImport={() => setDialog("import")}
+        onShare={() => setDialog("share")}
+        onOpenMap={file.openOther}
+        onSave={file.save}
+      />
+      <TabBar tab={tab} onSelect={setTab} />
+      <ErrorBanner error={error} onDismiss={() => setError(null)} />
 
       <ExportDialog
         scope={exportScope}
@@ -623,28 +150,28 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
         onClose={() => setExportScope(null)}
         onError={setError}
       />
-      <AssistantPromptDialog open={dialog === "assistant"} onClose={() => setDialog(null)} />
+      <AssistantPromptDialog open={dialog === "assistant"} onClose={closeDialog} />
       <ShareDialog
         open={dialog === "share"}
         units={customUnits}
         initial={shareFirst}
-        onClose={() => setDialog(null)}
+        onClose={closeDialog}
       />
       <ImportDialog
         open={dialog === "import"}
         mapsDir={game.mapsDir}
         onImported={imported}
-        onClose={() => setDialog(null)}
+        onClose={closeDialog}
       />
       <CommandPalette
         open={dialog === "search"}
         commands={commands}
         units={units}
-        onOpenUnit={openUnit}
-        onOpenAbility={openAbility}
-        onOpenPlain={openPlain}
-        onOpenLeveled={openLeveled}
-        onClose={() => setDialog(null)}
+        onOpenUnit={nav.openUnit}
+        onOpenAbility={nav.openAbility}
+        onOpenPlain={nav.openPlain}
+        onOpenLeveled={nav.openLeveled}
+        onClose={closeDialog}
       />
 
       <ExportContext value={setExportScope}>
@@ -655,10 +182,10 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
                 <AbilitiesPane
                   key={paneKey("abilities")}
                   editable={editable}
-                  selected={selectedAbility}
-                  onSelect={setSelectedAbility}
-                  onMapChanged={refreshMap}
-                  onUnitsChanged={refreshUnits}
+                  selected={nav.ability}
+                  onSelect={nav.setAbility}
+                  onMapChanged={file.refreshMap}
+                  onUnitsChanged={refreshList}
                   onError={setError}
                 />
               </TabPanel>
@@ -670,7 +197,7 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
                   key={paneKey("interface")}
                   editable={editable}
                   mapPath={map?.path ?? null}
-                  onMapChanged={refreshMap}
+                  onMapChanged={file.refreshMap}
                   onError={setError}
                 />
               </TabPanel>
@@ -681,7 +208,7 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
                 <MapPane
                   key={paneKey("map")}
                   editable={editable}
-                  onMapChanged={refreshMap}
+                  onMapChanged={file.refreshMap}
                   onError={setError}
                 />
               </TabPanel>
@@ -693,8 +220,8 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
                   key={paneKey("placed")}
                   editable={editable}
                   units={units}
-                  onMapChanged={refreshMap}
-                  onOpenUnit={openUnit}
+                  onMapChanged={file.refreshMap}
+                  onOpenUnit={nav.openUnit}
                   onError={setError}
                 />
               </TabPanel>
@@ -708,9 +235,9 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
                   mapPath={map?.path ?? null}
                   unsaved={map?.unsaved ?? false}
                   units={units}
-                  onMapChanged={refreshMap}
+                  onMapChanged={file.refreshMap}
                   onUnitCreated={unitCreated}
-                  onOpenUse={openUse}
+                  onOpenUse={nav.openUse}
                   onError={setError}
                 />
               </TabPanel>
@@ -724,9 +251,9 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
                     catalog={catalog}
                     list={list}
                     editable={editable}
-                    selected={selectedLeveled[catalog]}
-                    onSelect={selectLeveled.get(catalog) ?? ignoreSelection}
-                    onMapChanged={refreshMap}
+                    selected={nav.leveled[catalog]}
+                    onSelect={nav.selectLeveled.get(catalog) ?? ignoreSelection}
+                    onMapChanged={file.refreshMap}
                     onError={setError}
                   />
                 </TabPanel>
@@ -741,9 +268,9 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
                     catalog={catalog}
                     list={list}
                     editable={editable}
-                    selected={selectedPlain[catalog]}
-                    onSelect={selectPlain.get(catalog) ?? ignoreSelection}
-                    onMapChanged={refreshMap}
+                    selected={nav.plain[catalog]}
+                    onSelect={nav.selectPlain.get(catalog) ?? ignoreSelection}
+                    onMapChanged={file.refreshMap}
                     onError={setError}
                   />
                 </TabPanel>
@@ -751,35 +278,17 @@ export function EditorScreen({ game, initialMap, onChangeGame }: EditorScreenPro
             )}
 
             <TabPanel shown={tab === "units"}>
-              <div className="flex min-h-0 flex-1 gap-2.5">
-                <UnitList
-                  config={UNIT_LIST}
-                  units={units}
-                  selected={selected}
-                  onSelect={setSelected}
-                  onError={setError}
-                />
-                {detail && (
-                  <OpenAbilityContext value={openAbility}>
-                    <UnitPage
-                      key={detail.item.id}
-                      detail={detail}
-                      clashes={clashes}
-                      editable={editable}
-                      onChange={(field, value) =>
-                        applyField(api.setField(detail.item.id, field, value))
-                      }
-                      onReset={(field) => applyField(api.resetField(detail.item.id, field))}
-                      onCreateCopy={createCopy}
-                    />
-                  </OpenAbilityContext>
-                )}
-                {!detail && (
-                  <p className="m-auto text-muted">
-                    Pick a unit on the left. {game.units} game units loaded.
-                  </p>
-                )}
-              </div>
+              <UnitsPane
+                units={units}
+                gameUnits={game.units}
+                editable={editable}
+                selected={nav.unit}
+                onSelect={nav.setUnit}
+                onOpenAbility={nav.openAbility}
+                onMapChanged={file.refreshMap}
+                onUnitsChanged={refreshList}
+                onError={setError}
+              />
             </TabPanel>
           </main>
         </LuaFolderContext>
