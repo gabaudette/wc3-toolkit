@@ -4,7 +4,7 @@ members = ["app/src-tauri", "crates/casc", "crates/mpq", "crates/wc3-data", "cra
 
 [workspace.package]
 edition = "2024"
-version = "0.3.0"
+version = "0.3.1"
 license = "GPL-2.0-or-later"
 repository = "https://github.com/gabaudette/wc3-toolkit"
 
