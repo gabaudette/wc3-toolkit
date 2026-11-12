@@ -9,7 +9,8 @@ use wc3_data::meta::FieldMeta;
 use wc3_data::strings::MapStrings;
 use wc3_data::units::UnitDatabase;
 use wc3_map::FourCC;
-use wc3_map::leveled::{DOODADS, LeveledObject, LeveledObjects, UPGRADES};
+use wc3_map::leveled::{DOODADS, LeveledObjects, UPGRADES};
+use wc3_map::store::MapObject;
 
 use crate::abilities::{
     AbilityCard, AbilityDetail, AbilitySection, AbilitySummary, LevelCell, LevelField,
@@ -105,7 +106,7 @@ impl LeveledView<'_> {
             .map(str::to_owned)
     }
 
-    fn ids_after(&self, map_upgrades: &[LeveledObject]) -> Vec<FourCC> {
+    fn ids_after(&self, map_upgrades: &[MapObject]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_upgrades.iter().map(|u| u.id).collect();
         let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
 
@@ -118,7 +119,7 @@ impl LeveledView<'_> {
         ids
     }
 
-    fn item_with(&self, id: FourCC, entry: Option<&LeveledObject>) -> Option<UnitItem> {
+    fn item_with(&self, id: FourCC, entry: Option<&MapObject>) -> Option<UnitItem> {
         let info = self.map.info(self.db, self.strings, id, self.mode)?;
         let base = self.map.base_of(self.db, id)?;
         let describe = self.catalog.describe();
@@ -147,8 +148,7 @@ impl LeveledView<'_> {
 
     pub fn list(&self) -> Vec<UnitItem> {
         let map_upgrades = self.map.objects();
-        let by_id: HashMap<FourCC, &LeveledObject> =
-            map_upgrades.iter().map(|u| (u.id, u)).collect();
+        let by_id: HashMap<FourCC, &MapObject> = map_upgrades.iter().map(|u| (u.id, u)).collect();
 
         self.ids_after(&map_upgrades)
             .into_iter()

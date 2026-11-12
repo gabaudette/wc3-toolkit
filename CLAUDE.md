@@ -21,12 +21,14 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   Heroic, Bottles, Lutris and `~/.wine`), `check_game` (plain-language reasons the data will
   not read) and `SetupChoices` (`setup.json` in the app's config folder, which the app reads on
   its first launch: game folder, HD, maps folder, one Lua folder for all maps).
-  `crates/wc3-map` opens maps, saves through a temp copy (`save_files`), and `units::MapUnits`
-  applies a map's unit changes over the game data and edits them; `abilities::MapAbilities`
-  does the same for abilities (per level), `items::MapItems` for items and
-  `upgrades::MapUpgrades` for upgrades (per level); each owns the tables `transfer` reads and
-  imports into. The map's string table lives in `MapUnits`; ability, item and upgrade text goes
-  through `MapUnits::strings_mut`. `transfer` moves custom units with the custom units,
+  `crates/wc3-map` opens maps, saves through a temp copy (`save_files`), and `store::ObjectStore`
+  holds one object type's changes (gameplay and skin tables, the strings it added, which files
+  the map had) and reads and edits them over the game data. `plain::PlainObjects` uses it for
+  items, buffs and destructables, `leveled::LeveledObjects` (per level) for upgrades and
+  doodads; `units::MapUnits` wraps the plain store and `abilities::MapAbilities` the leveled one
+  (which also stores data columns). Each owns the tables `transfer` reads and imports into. The
+  map's string table lives in `MapUnits`; other objects' text goes through
+  `MapUnits::strings_mut`. `transfer` moves custom units with the custom units,
   abilities, buffs, items and upgrades they reference between maps: share codes
   (`W3OBJ1:` + base64 of deflated object files) and imports, renaming taken IDs and every
   reference to them (found through field metadata types). Bundle files (`.w3obj`) also carry

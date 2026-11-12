@@ -9,6 +9,7 @@
 use std::collections::HashMap;
 
 use crate::game::{ArtMode, GameFiles, decode_text};
+use crate::leveled::LeveledData;
 use crate::meta::{FieldMeta, parse_metadata};
 use crate::profile::{Profile, split_list, unquote};
 use crate::slk::Slk;
@@ -422,6 +423,36 @@ impl AbilityDatabase {
         }
 
         Some(format_number(&raw))
+    }
+}
+
+impl LeveledData for AbilityDatabase {
+    fn fields(&self) -> &[FieldMeta] {
+        AbilityDatabase::fields(self)
+    }
+
+    fn field(&self, field_id: &str) -> Option<&FieldMeta> {
+        AbilityDatabase::field(self, field_id)
+    }
+
+    fn field_name(&self, field: &FieldMeta) -> String {
+        AbilityDatabase::field_name(self, field)
+    }
+
+    fn category_label(&self, category: &str) -> String {
+        AbilityDatabase::category_label(self, category)
+    }
+
+    fn ids(&self) -> &[String] {
+        AbilityDatabase::ids(self)
+    }
+
+    fn contains(&self, id: &str) -> bool {
+        AbilityDatabase::contains(self, id)
+    }
+
+    fn raw_value(&self, id: &str, field: &FieldMeta, level: u32, mode: ArtMode) -> Option<String> {
+        AbilityDatabase::raw_value(self, id, field, level, mode)
     }
 }
 
