@@ -61,3 +61,34 @@ export function attemptSync<T>(work: () => T): Result<T> {
     return failed(errorMessage(error));
   }
 }
+
+/**
+ * Settles a load an effect starts and returns the effect's cleanup. Once the
+ * effect is cleaned up, because its inputs changed or the component left, a
+ * late result is dropped instead of replacing what a newer load showed.
+ */
+export function settleCurrent<T>(
+  pending: Promise<Result<T>>,
+  onValue: (value: T) => void,
+  onError: (error: string) => void,
+): () => void {
+  let current = true;
+
+  void settle(
+    pending,
+    (value) => {
+      if (current) {
+        onValue(value);
+      }
+    },
+    (error) => {
+      if (current) {
+        onError(error);
+      }
+    },
+  );
+
+  return () => {
+    current = false;
+  };
+}

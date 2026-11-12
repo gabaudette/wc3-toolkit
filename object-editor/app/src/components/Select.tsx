@@ -36,6 +36,14 @@ type SelectProps = {
   className?: string;
 };
 
+/** The option whose value was picked, typed as the options are. */
+export function pickedOption<T extends string>(
+  options: readonly { value: T }[],
+  picked: string,
+): T | undefined {
+  return options.find((option) => option.value === picked)?.value;
+}
+
 export function optionKey(value: string): string {
   return KEY_PREFIX + value;
 }

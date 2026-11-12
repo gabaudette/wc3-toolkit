@@ -1,7 +1,7 @@
 import { Stars02 } from "@untitledui/icons";
 import { memo, use, useEffect, useMemo, useState } from "react";
 import { api } from "../api";
-import { settle } from "../result";
+import { settleCurrent } from "../result";
 import type { AbilitySummary, SearchHit } from "../types";
 import { classes } from "../ui";
 import { Button } from "./Button";
@@ -70,11 +70,15 @@ function AbilityListView({ abilities, selected, onSelect, onError, onNewSpell }:
       return;
     }
 
+    let stop: (() => void) | null = null;
     const timer = window.setTimeout(() => {
-      void settle(api.searchAbilities(trimmed), setHits, onError);
+      stop = settleCurrent(api.searchAbilities(trimmed), setHits, onError);
     }, SEARCH_DELAY_MS);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+      stop?.();
+    };
   }, [query, abilities, onError]);
 
   const shown = useMemo(() => {

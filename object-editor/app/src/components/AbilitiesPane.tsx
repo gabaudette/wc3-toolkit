@@ -1,14 +1,21 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { api } from "../api";
-import { type Result, settle } from "../result";
-import type { AbilityDetail, AbilitySummary } from "../types";
+import type { Result } from "../result";
+import type { AbilityDetail } from "../types";
 import { AbilityList } from "./AbilityList";
 import { AbilityPage } from "./AbilityPage";
 import { Button } from "./Button";
 import { DialogShell } from "./DialogShell";
 import { plainGameText } from "./GameText";
+import { fillLevels, useObjectPane } from "./objectPane";
 import { SpellUnits } from "./SpellUnits";
 import { SpellWizard } from "./SpellWizard";
+
+const ABILITIES = {
+  list: api.listAbilities,
+  detail: api.abilityDetail,
+  create: api.createAbility,
+};
 
 type AbilitiesPaneProps = {
   editable: boolean;
@@ -27,84 +34,33 @@ export function AbilitiesPane({
   onUnitsChanged,
   onError,
 }: AbilitiesPaneProps) {
-  const [abilities, setAbilities] = useState<AbilitySummary[]>([]);
-  const [detail, setDetail] = useState<AbilityDetail | null>(null);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [givingOpen, setGivingOpen] = useState(false);
-  const queue = useRef<Promise<void>>(Promise.resolve());
+  const pane = useObjectPane(ABILITIES, { selected, onSelect, onMapChanged, onError });
+  const { detail, setDetail, refreshList } = pane;
+  const abilities = pane.items;
 
   const listError = useCallback((message: string) => onError(message), [onError]);
   const openWizard = useCallback(() => setWizardOpen(true), []);
 
-  const refreshList = useCallback(() => {
-    void settle(api.listAbilities(), setAbilities, onError);
-  }, [onError]);
-
-  useEffect(() => {
-    refreshList();
-  }, [refreshList]);
-
-  useEffect(() => {
-    if (!selected) {
-      setDetail(null);
-      return;
-    }
-
-    void settle(api.abilityDetail(selected), setDetail, onError);
-  }, [selected, onError]);
-
-  function run(edit: () => Promise<Result<AbilityDetail>>) {
-    queue.current = queue.current.then(async () => {
-      const updated = await edit();
-
-      if (!updated.ok) {
-        onError(updated.error);
-        return;
-      }
-
-      setDetail(updated.value);
-      onError(null);
-      onMapChanged();
-      refreshList();
-    });
+  function run(id: string, edit: () => Promise<Result<AbilityDetail>>) {
+    pane.run(id, edit, async (updated) => setDetail(updated));
   }
 
   function change(id: string, field: string, level: number, value: string) {
-    run(() => api.setAbilityField(id, field, level, value));
+    run(id, () => api.setAbilityField(id, field, level, value));
   }
 
   function fill(id: string, field: string, fromLevel: number, value: string) {
-    run(async () => {
-      const levels = detail?.levels ?? fromLevel;
-      let updated = await api.setAbilityField(id, field, fromLevel, value);
+    const levels = detail?.levels ?? fromLevel;
 
-      for (let level = fromLevel + 1; level <= levels && updated.ok; level++) {
-        updated = await api.setAbilityField(id, field, level, value);
-      }
-
-      return updated;
-    });
+    run(id, () =>
+      fillLevels((level) => api.setAbilityField(id, field, level, value), fromLevel, levels),
+    );
   }
 
   function reset(id: string, field: string, level: number) {
-    run(() => api.resetAbilityField(id, field, level));
-  }
-
-  async function createCopy() {
-    if (!detail) {
-      return;
-    }
-
-    const created = await api.createAbility(detail.card.summary.base);
-
-    if (!created.ok) {
-      onError(created.error);
-      return;
-    }
-
-    onMapChanged();
-    refreshList();
-    onSelect(created.value.id);
+    run(id, () => api.resetAbilityField(id, field, level));
   }
 
   return (
@@ -158,7 +114,7 @@ export function AbilitiesPane({
           onChange={(field, level, value) => change(detail.card.summary.id, field, level, value)}
           onFill={(field, level, value) => fill(detail.card.summary.id, field, level, value)}
           onReset={(field, level) => reset(detail.card.summary.id, field, level)}
-          onCreateCopy={createCopy}
+          onCreateCopy={() => pane.createCopy(detail.card.summary.base)}
           onGiveToUnits={() => setGivingOpen(true)}
         />
       )}

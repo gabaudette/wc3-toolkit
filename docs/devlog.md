@@ -17,6 +17,75 @@ single line. Every pull request adds an entry here and to the changelog.
 - `scripts/changelog.ts` finds the section, with tests beside it. This branch is its own check:
   it changes no changelog, since Unreleased already has "Internal improvements.".
 
+## 2026-11-12 · Searches follow the list they search
+
+- `UnitList` (units, items, upgrades, buffs, destructables, doodads) ran its search only when
+  the query changed. The hits are IDs looked up in the current list, so an object created or
+  renamed while a search was shown stayed out of the results, or kept a stale match, until
+  the query changed. Found while testing the pane hook.
+- The search effect now also depends on `units`, as `AbilityList` already did with its
+  abilities: every list refresh reruns the search (still after `SEARCH_DELAY_MS`, and late
+  results are dropped by `settleCurrent`). While the list is still empty, no search runs.
+
+## 2026-11-12 · One pane hook, late results dropped, no casts (AGE-79 follow-up)
+
+- `PlainPane`, `LeveledPane` and `AbilitiesPane` each had their own list refresh, detail load,
+  edit queue and "create copy". They now share `useObjectPane` (`objectPane.ts`), given a
+  memoized `source` (list, detail, create). `fillLevels` replaces the three copies of the
+  "same value on every later level" loop, `spellEdits.filled` included.
+- Late results were applied over newer ones:
+  - a detail load for a previous selection, in those three panes, the Assets pane's texture
+    list, the spell wizard's buff preview, `SpellUnits` and the import plan;
+  - a list search started before the next keystroke (`UnitList`, `AbilityList`): the timer was
+    cleared, but a search already sent still set its hits;
+  - a queued edit's result (and `PlainPane`'s reload after it) when another object had been
+    picked meanwhile, which put the previous object's page back.
+
+  `settleCurrent` in `result.ts` settles a load and returns the effect's cleanup, which drops a
+  result that arrives later. The edit queue checks a ref of the current selection before
+  applying an edit's result.
+- The five `as` casts are gone:
+  - `pickedOption` in `Select.tsx` maps a picked string back to a typed option (dialog button
+    action, leaderboard order);
+  - `ColoredTextInput` checks `instanceof Node`;
+  - `LootEditors.moved` spreads the spliced item;
+  - `ModelViewer` reaches war3-model's private `initShaderProgram` through `Reflect`, since the
+    library's types keep it private.
+- `ShareDialog`'s "Copied" reset timer is now an effect that clears it on close.
+- Tests: `settleCurrent` drops a late result; `fillLevels` fills from the first level and stops at
+  a failure.
+
+## 2026-11-11 · Splitting the three largest React components (AGE-79)
+
+- `EditorScreen` (595 lines in one function) was both the app shell and the Units tab. The
+  Units tab is now `UnitsPane`, like the other tabs. The shell's parts moved out:
+  - `TabPanel`;
+  - `EditorTabs` (tab list, visited tabs, reload keys);
+  - `editorNavigation` (selection per tab, opening an asset's user);
+  - `mapFile` (open, save, unsaved-changes guard on close);
+  - `editorCommands` (palette commands);
+  - `EditorHeader` with the error banner.
+
+  It is now 247 lines.
+- `UnitsPane` loads the selected unit's page from its list entry. A list reload (after an edit
+  on the Abilities tab, for example) refreshes the page, which used to need a separate
+  `refreshUnits` callback. The load ignores answers for a unit no longer selected.
+- `SpellWizard` (730 lines) keeps only the step flow; it is now 242 lines.
+  - Every "Next" runs through one `advance(step, work)`: busy, wait for queued edits, error or
+    next step.
+  - The draft and its edit queue are `useSpellDraft`. The buff choice is `useSpellBuff` and
+    the triggered spell's template, values and Lua module are `useTriggeredSpell`.
+  - The ability edits that copy, rename, retarget placeholders and move hotkey highlights are
+    plain functions in `spellEdits.ts`; three loops over tooltip texts became one.
+  - The step components are in `SpellSteps.tsx`.
+- `PlacedPane` (539 lines) is split by concern, now 132 lines.
+  - `placedState.ts` has `usePlacedData` (loads and the edit queue), `usePlacedUnits` (filters,
+    selection, placing, unit edits) and `useItemTables`.
+  - `PlacedLists.tsx` has the lists, filters and the map section.
+  - The state stays in the pane, so switching between Placed units and Item tables keeps the
+    search, selection and placing as before.
+- `bun run check` and `bun test` pass.
+
 ## 2026-11-11 · One object store for every object type (AGE-77)
 
 - `wc3-map` had four copies of the same store: `units.rs`, `plain.rs`, `leveled.rs` and

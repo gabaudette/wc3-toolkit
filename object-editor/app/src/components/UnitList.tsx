@@ -1,6 +1,6 @@
 import { memo, use, useEffect, useMemo, useState } from "react";
 import { api } from "../api";
-import { type Result, settle } from "../result";
+import { type Result, settleCurrent } from "../result";
 import type { ObjectType, SearchHit, UnitGroup, UnitItem } from "../types";
 import { capitalized, classes } from "../ui";
 import { Button } from "./Button";
@@ -159,17 +159,21 @@ function UnitListView({ config, units, selected, onSelect, onError }: UnitListPr
   useEffect(() => {
     const trimmed = query.trim();
 
-    if (!trimmed) {
+    if (!trimmed || units.length === 0) {
       setHits(null);
       return;
     }
 
+    let stop: (() => void) | null = null;
     const timer = window.setTimeout(() => {
-      void settle(search(trimmed), setHits, onError);
+      stop = settleCurrent(search(trimmed), setHits, onError);
     }, SEARCH_DELAY_MS);
 
-    return () => window.clearTimeout(timer);
-  }, [query, search, onError]);
+    return () => {
+      window.clearTimeout(timer);
+      stop?.();
+    };
+  }, [query, units, search, onError]);
 
   const shown = useMemo(() => {
     const byId = new Map(units.map((u) => [u.id, u]));

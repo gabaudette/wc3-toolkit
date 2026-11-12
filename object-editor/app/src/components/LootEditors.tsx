@@ -43,9 +43,8 @@ function moved<T>(list: T[], index: number, by: number): T[] {
   }
 
   const next = [...list];
-  const [item] = next.splice(index, 1);
 
-  next.splice(target, 0, item as T);
+  next.splice(target, 0, ...next.splice(index, 1));
   return next;
 }
 

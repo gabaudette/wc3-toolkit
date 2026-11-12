@@ -81,7 +81,7 @@ export function ColoredTextInput({
   }
 
   function blur(e: FocusEvent) {
-    if (menuRef.current?.contains(e.relatedTarget as Node | null)) {
+    if (e.relatedTarget instanceof Node && menuRef.current?.contains(e.relatedTarget)) {
       return;
     }
 
