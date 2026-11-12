@@ -35,6 +35,58 @@ single line. Every pull request adds an entry here and to the changelog.
     search, selection and placing as before.
 - `bun run check` and `bun test` pass.
 
+## 2026-11-11 · One object store for every object type (AGE-77)
+
+- `wc3-map` had four copies of the same store: `units.rs`, `plain.rs`, `leveled.rs` and
+  `abilities.rs` each held the two tables, the strings they added and the files the map had,
+  with nearly identical `find`, `modification`, `set`, `reset`, `create`, `files`, `entry_mut`
+  and `same_as_base` (about 800 lines alike). Found in the code-smell audit of 2026-11-10.
+- `store.rs` now holds them once. `ObjectStore` keeps the tables and edits them; `Slot` says
+  which stored changes belong to a field (any level for plain fields and fields without levels,
+  else that level) and how a new one is stored (no level, or a level and a data column);
+  `Found` is an object's two entries; `MapObject` replaces `MapUnit`, `MapAbility`,
+  `PlainObject` and `LeveledObject`.
+- `MapUnits` is `PlainObjects` with a `UNITS` kind (custom IDs take the base's first letter)
+  plus the string table. `MapAbilities` is `LeveledObjects` with an `ABILITIES` kind (per-level
+  fields store their data column) plus `code`, `fields` and `info`; `AbilityDatabase`
+  implements `LeveledData` for it. Public methods keep their signatures.
+- Small behavior changes from taking the most complete copy:
+  - unit files are written only when they have changes or the map had them, like other types
+    (before, an empty `war3map.w3u`/`war3mapSkin.w3u` was always written);
+  - a unit change to a custom unit missing from one table adds a custom entry there, as the
+    other types did (before, it added a game-unit change keyed on the custom ID);
+  - an ability whose name is set empty shows its ID, like upgrades and doodads;
+  - unit string comments use the name with editor strings resolved, like items.
+- Tests: the listing, removal, file and missing-entry tests move to `store.rs`. Unit, real-map
+  (135 maps) and real-install tests pass.
+
+## 2026-11-11 · Test the map info and script rewrite in CI (AGE-78)
+
+- The code that can damage a map had no test CI runs: every real-map and real-install test is
+  `#[ignore]`, since CI has no game files. Found in the code-smell audit of 2026-11-10.
+- `sync` moves from the app into `wc3-map` (`wc3_map::sync`): `ScriptState` reads the script and
+  checks which parts reproduce, `updated` rewrites the parts whose data changed, `saved` records
+  a save. It takes the map's data as `MapData` (placements, item tables, properties, terrain
+  bounds) and the unit lookup as its own argument, since recording a save needs no game data.
+  The app's `sync.rs` keeps `GameKinds` and the two "cannot rewrite" messages
+  (`units_problem`, `setup_problem`). The app crate is excluded from CI's Linux tests (WebKit),
+  so this also lets the tests run on both systems.
+- `crates/wc3-map/tests/fixtures`: the `war3map.w3i`, script and `war3mapUnits.doo` of two
+  one-player maps saved by the World Editor 2.0, one Lua (the maintainer's test map) and one
+  JASS, no Blizzard files. `tests/script_sync.rs`, on both:
+  - the map info round-trips byte for byte;
+  - the script reproduces, stays as it is when nothing changed, and keeps its CRLF line endings;
+  - a race change with fixed player settings, fog, weather and an added Footman reach the
+    script, and the rewritten script reproduces again;
+  - a line added by hand to `InitCustomPlayerSlots` stops the setup rewrite and leaves the
+    text byte for byte;
+  - a save records the data the script now follows.
+- `info.rs` tests build a `war3map.w3i` for versions 25, 28, 31, 32, 33 and 39 and check a
+  byte-for-byte round trip and the fields each version adds (Lua, enemy priorities, patch 2.0
+  fog and HUD skins, including 2.0 maps without HUD skins). They also check that a fixed start
+  keeps its stored value, even older editors' leftover text, until it changes, and that maps
+  before version 25 keep their bytes.
+
 ## 2026-11-05 · GNU GPL version 2 or later
 
 - Replaced the project's MIT license with GNU GPL version 2 or later, retaining the project

@@ -8,8 +8,8 @@ under "What's new".
 
 ### Changed
 
-- Internal improvements.
 - Tinkerbench is now licensed under the GNU General Public License, version 2 or later.
+- Internal improvements.
 
 ### Fixed
 

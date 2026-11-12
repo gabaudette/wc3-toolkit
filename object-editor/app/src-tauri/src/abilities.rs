@@ -8,7 +8,8 @@ use wc3_data::meta::FieldMeta;
 use wc3_data::units::UnitDatabase;
 use wc3_map::FourCC;
 use wc3_map::MapStrings;
-use wc3_map::abilities::{MapAbilities, MapAbility, MapPlaceholders};
+use wc3_map::abilities::{MapAbilities, MapPlaceholders};
+use wc3_map::store::MapObject;
 
 use crate::view::{Field, FieldValue, SearchHit, base_text, build_field};
 
@@ -121,7 +122,7 @@ impl AbilityView<'_> {
         &self,
         id: FourCC,
         info: AbilityInfo,
-        entry: Option<&MapAbility>,
+        entry: Option<&MapObject>,
     ) -> AbilitySummary {
         AbilitySummary {
             id: info.id,
@@ -146,7 +147,7 @@ impl AbilityView<'_> {
         Some(self.summary_with(id, info, entry.as_ref()))
     }
 
-    fn ids_after(&self, map_abilities: &[MapAbility]) -> Vec<FourCC> {
+    fn ids_after(&self, map_abilities: &[MapObject]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_abilities.iter().map(|a| a.id).collect();
         let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
 
@@ -161,7 +162,7 @@ impl AbilityView<'_> {
 
     pub fn list(&self) -> Vec<AbilitySummary> {
         let map_abilities = self.map.abilities();
-        let by_id: HashMap<FourCC, &MapAbility> = map_abilities.iter().map(|a| (a.id, a)).collect();
+        let by_id: HashMap<FourCC, &MapObject> = map_abilities.iter().map(|a| (a.id, a)).collect();
 
         self.ids_after(&map_abilities)
             .into_iter()

@@ -8,7 +8,8 @@ use wc3_data::strings::MapStrings;
 use wc3_data::units::UnitDatabase;
 use wc3_map::FourCC;
 use wc3_map::plain::PlainObjects;
-use wc3_map::units::{MapUnit, MapUnits};
+use wc3_map::store::MapObject;
+use wc3_map::units::MapUnits;
 
 const CATEGORY_ORDER: &[&str] = &[
     "stats", "combat", "abil", "text", "art", "move", "path", "sound", "tech", "editor", "data",
@@ -130,7 +131,7 @@ pub struct SearchHit {
 }
 
 pub trait PlainChanges {
-    fn changed(&self) -> Vec<MapUnit>;
+    fn changed(&self) -> Vec<MapObject>;
     fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC>;
     fn raw_value(
         &self,
@@ -144,7 +145,7 @@ pub trait PlainChanges {
 }
 
 impl PlainChanges for MapUnits {
-    fn changed(&self) -> Vec<MapUnit> {
+    fn changed(&self) -> Vec<MapObject> {
         self.units()
     }
 
@@ -177,17 +178,8 @@ pub struct PlainObjectChanges<'a> {
 }
 
 impl PlainChanges for PlainObjectChanges<'_> {
-    fn changed(&self) -> Vec<MapUnit> {
-        self.objects
-            .objects()
-            .into_iter()
-            .map(|i| MapUnit {
-                id: i.id,
-                base: i.base,
-                is_custom: i.is_custom,
-                modified_fields: i.modified_fields,
-            })
-            .collect()
+    fn changed(&self) -> Vec<MapObject> {
+        self.objects.objects()
     }
 
     fn base_of(&self, db: &UnitDatabase, id: FourCC) -> Option<FourCC> {
@@ -226,11 +218,11 @@ impl<M: PlainChanges> View<'_, M> {
         self.ids_after(&self.map_units())
     }
 
-    fn map_units(&self) -> Vec<MapUnit> {
+    fn map_units(&self) -> Vec<MapObject> {
         self.map.map(M::changed).unwrap_or_default()
     }
 
-    fn ids_after(&self, map_units: &[MapUnit]) -> Vec<FourCC> {
+    fn ids_after(&self, map_units: &[MapObject]) -> Vec<FourCC> {
         let mut ids: Vec<FourCC> = map_units.iter().map(|u| u.id).collect();
         let mut seen: HashSet<FourCC> = ids.iter().copied().collect();
 
@@ -288,7 +280,7 @@ impl<M: PlainChanges> View<'_, M> {
         self.item_with(id, map_unit.as_ref())
     }
 
-    fn item_with(&self, id: FourCC, map_unit: Option<&MapUnit>) -> Option<UnitItem> {
+    fn item_with(&self, id: FourCC, map_unit: Option<&MapObject>) -> Option<UnitItem> {
         let base = self.base(id)?;
         let race = FILTER_FIELDS
             .iter()
@@ -344,7 +336,7 @@ impl<M: PlainChanges> View<'_, M> {
 
     pub fn items(&self) -> Vec<UnitItem> {
         let map_units = self.map_units();
-        let by_id: HashMap<FourCC, &MapUnit> = map_units.iter().map(|u| (u.id, u)).collect();
+        let by_id: HashMap<FourCC, &MapObject> = map_units.iter().map(|u| (u.id, u)).collect();
 
         self.ids_after(&map_units)
             .into_iter()

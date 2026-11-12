@@ -18,12 +18,12 @@ use wc3_map::info::{INFO_FILE, MapInfo};
 use wc3_map::leveled::{DOODADS, LeveledObjects, UPGRADES};
 use wc3_map::placements::{PLACEMENTS_FILE, UnitPlacements};
 use wc3_map::plain::{BUFFS, DESTRUCTABLES, ITEMS, PlainObjects};
+use wc3_map::sync::ScriptState;
 use wc3_map::terrain::Terrain;
 use wc3_map::units::MapUnits;
 
 use crate::interface::{self, Design};
 use crate::loot::{self, Cascade};
-use crate::sync::ScriptState;
 
 pub struct Session {
     pub files: Arc<GameFiles>,
