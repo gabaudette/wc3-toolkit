@@ -2,7 +2,7 @@
 
 Open-source tools for Warcraft III: Reforged map creation.
 
-> **Status: preview.** Tinkerbench 0.3.0 is the first public release, a preview before 1.0.
+> **Status: preview.** Tinkerbench 0.3.1 is the current preview before 1.0.
 > Work on copies of your maps and keep backups.
 
 Read the **[Tinkerbench field guide](https://tinkerbench-docs.vercel.app)** for installation,

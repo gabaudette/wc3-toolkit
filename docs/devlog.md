@@ -4,6 +4,18 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-12 · Prepare the 0.3.1 release
+
+- 0.3.1 is a patch preview after 0.3.0: the license change to GPL version 2 or later, the
+  search and late-result fixes, and the code-smell work (one object store in `wc3-map`, the
+  split React components and shared pane hook, CI fixtures for the map info and script
+  rewrite). No new features, so a patch version.
+- Version 0.3.1 in `object-editor/Cargo.toml`, `app/package.json` and `Cargo.lock` (the seven
+  workspace crates). `CHANGELOG.md`'s `Unreleased` section becomes `0.3.1 - 2026-11-12`; the
+  README's status line names 0.3.1 as the current preview.
+- The release notes template (`.github/release-notes.md`) needed no change; its "Tested with"
+  is filled in on the draft from the install tests.
+
 ## 2026-11-12 · The pre-push hook accepts a shared changelog line
 
 - `scripts/check-logs.ts` refused every branch that did not change `CHANGELOG.md`. But a
