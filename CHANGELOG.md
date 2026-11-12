@@ -13,6 +13,8 @@ under "What's new".
 
 ### Fixed
 
+- A unit, item, upgrade or other object you create now appears in the search results you are
+  looking at, and a renamed one moves in or out of them, without changing the search.
 - Typing quickly in a list's search box no longer shows, for a moment, the results of what you
   had typed before.
 - Picking another object while a change to the previous one is still being saved no longer

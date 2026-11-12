@@ -4,6 +4,16 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-12 · Searches follow the list they search
+
+- `UnitList` (units, items, upgrades, buffs, destructables, doodads) ran its search only when
+  the query changed. The hits are IDs looked up in the current list, so an object created or
+  renamed while a search was shown stayed out of the results, or kept a stale match, until
+  the query changed. Found while testing the pane hook.
+- The search effect now also depends on `units`, as `AbilityList` already did with its
+  abilities: every list refresh reruns the search (still after `SEARCH_DELAY_MS`, and late
+  results are dropped by `settleCurrent`). While the list is still empty, no search runs.
+
 ## 2026-11-12 · One pane hook, late results dropped, no casts (AGE-79 follow-up)
 
 - `PlainPane`, `LeveledPane` and `AbilitiesPane` each had their own list refresh, detail load,
