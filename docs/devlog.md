@@ -4,6 +4,33 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-11 · Test the map info and script rewrite in CI (AGE-78)
+
+- The code that can damage a map had no test CI runs: every real-map and real-install test is
+  `#[ignore]`, since CI has no game files. Found in the code-smell audit of 2026-11-10.
+- `sync` moves from the app into `wc3-map` (`wc3_map::sync`): `ScriptState` reads the script and
+  checks which parts reproduce, `updated` rewrites the parts whose data changed, `saved` records
+  a save. It takes the map's data as `MapData` (placements, item tables, properties, terrain
+  bounds) and the unit lookup as its own argument, since recording a save needs no game data.
+  The app's `sync.rs` keeps `GameKinds` and the two "cannot rewrite" messages
+  (`units_problem`, `setup_problem`). The app crate is excluded from CI's Linux tests (WebKit),
+  so this also lets the tests run on both systems.
+- `crates/wc3-map/tests/fixtures`: the `war3map.w3i`, script and `war3mapUnits.doo` of two
+  one-player maps saved by the World Editor 2.0, one Lua (the maintainer's test map) and one
+  JASS, no Blizzard files. `tests/script_sync.rs`, on both:
+  - the map info round-trips byte for byte;
+  - the script reproduces, stays as it is when nothing changed, and keeps its CRLF line endings;
+  - a race change with fixed player settings, fog, weather and an added Footman reach the
+    script, and the rewritten script reproduces again;
+  - a line added by hand to `InitCustomPlayerSlots` stops the setup rewrite and leaves the
+    text byte for byte;
+  - a save records the data the script now follows.
+- `info.rs` tests build a `war3map.w3i` for versions 25, 28, 31, 32, 33 and 39 and check a
+  byte-for-byte round trip and the fields each version adds (Lua, enemy priorities, patch 2.0
+  fog and HUD skins, including 2.0 maps without HUD skins). They also check that a fixed start
+  keeps its stored value, even older editors' leftover text, until it changes, and that maps
+  before version 25 keep their bytes.
+
 ## 2026-11-05 · GNU GPL version 2 or later
 
 - Replaced the project's MIT license with GNU GPL version 2 or later, retaining the project

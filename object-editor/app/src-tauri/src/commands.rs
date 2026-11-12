@@ -500,7 +500,7 @@ pub fn save_map(state: State<'_, AppState>) -> Result<MapSummary, String> {
         }
 
         if let Some(mut state) = map.script.take() {
-            state.saved(script.map(|(_, text)| text), map);
+            sync::saved(&mut state, script.map(|(_, text)| text), map);
             map.script = Some(state);
         }
 

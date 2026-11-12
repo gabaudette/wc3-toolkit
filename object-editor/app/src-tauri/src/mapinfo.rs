@@ -351,7 +351,7 @@ pub fn map_info(state: State<'_, AppState>) -> Result<MapInfoView, String> {
                 })
                 .collect(),
             script_problem: match &map.script {
-                Some(script) => script.setup_problem.clone(),
+                Some(script) => crate::sync::setup_problem(script),
                 None => Some(NO_SCRIPT.to_owned()),
             },
         })

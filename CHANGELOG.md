@@ -9,6 +9,7 @@ under "What's new".
 ### Changed
 
 - Tinkerbench is now licensed under the GNU General Public License, version 2 or later.
+- Internal improvements.
 
 ### Fixed
 

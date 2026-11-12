@@ -38,7 +38,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   byte; `constants` reads and writes `war3mapMisc.txt` (gameplay constants); `terrain` reads
   `war3map.w3e`. `script` writes the map script's unit functions (creation, drops, item
   tables) and `setup` its player, force and environment parts, both as the World Editor
-  would. `export` writes every object type as CSV or JSON (format in
+  would; `sync` rewrites those parts on save, only when they reproduce the script exactly
+  at load (tested in CI on two small World Editor maps in `tests/fixtures`). `export` writes every object type as CSV or JSON (format in
   `docs/export-format.md`), from a map or the game alone. `wc3map` is its CLI
   (`check`, `units`, `unit`, `set`, `new`, `lua`, `export`; `-` as the map exports the game's
   objects).
@@ -73,8 +74,8 @@ and the user's pet peeves live in `docs/pet-peeves.md`.
   `commands.rs` (Tauri commands), `mapinfo.rs` (the Map tab: properties, players,
   forces and gameplay constants), `loot.rs` (the Placed units tab: placements, inventories,
   drops, item tables and cascades, whose tiers are kept in `<map> Loot.json`), `mapview.rs`
-  (the terrain image under the map view), `export.rs` (the export dialog's command), `sync.rs` (rewrites those script parts on save,
-  only when it reproduces the map's script exactly at load), `interface.rs` (the Interface tab: dialogs, multiboards, leaderboards and timer windows, in `interface/`, designed visually,
+  (the terrain image under the map view), `export.rs` (the export dialog's command), `sync.rs` (the game-data side of
+  `wc3_map::sync`, and the messages when a map's script cannot be rewritten), `interface.rs` (the Interface tab: dialogs, multiboards, leaderboards and timer windows, in `interface/`, designed visually,
   kept in `<map> UI.json` beside the map, and the Lua modules they become; `.w3ui` design files carry them and their imported icons between maps), `icons.rs` (`wc3icon:`/`wc3tex:`/`wc3model:` URL schemes:
   the open map's imported file first, then the game's; they read game files outside the
   session lock, since `casc::Storage` is `Sync`, and textures decode at most 512 px),
