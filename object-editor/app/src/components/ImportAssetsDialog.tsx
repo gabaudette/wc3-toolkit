@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../api";
 import { mdxFromMdl, samePath, TEXTURE_STATUS } from "../assets";
-import { failed, ok, type Result, settle } from "../result";
+import { failed, ok, type Result, settleCurrent } from "../result";
 import type { ImportCandidate, ImportRequest } from "../types";
 import { classes, counted, fileSize } from "../ui";
 import { Button } from "./Button";
@@ -59,7 +59,7 @@ export function ImportAssetsDialog({
       return;
     }
 
-    void settle(
+    return settleCurrent(
       api.planImport(plan.files, plan.folder),
       (candidates) => setRows(candidates.map((c) => ({ ...c, included: true }))),
       setError,

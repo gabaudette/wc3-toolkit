@@ -10,7 +10,7 @@ import {
   withExtension,
 } from "../assets";
 import { chooseFiles, choosePath, chooseSavePath, confirm } from "../dialogs";
-import { settle } from "../result";
+import { settle, settleCurrent } from "../result";
 import type { AssetItem, AssetList, AssetUse, TextureStatus, UnitItem } from "../types";
 import { ASSET_FILTERS, besides, classes, counted, fileSize, PNG_FILTERS } from "../ui";
 import { CreateUnitDialog, ExportGameFileDialog } from "./AssetDialogs";
@@ -297,7 +297,7 @@ function AssetDetail({
       return;
     }
 
-    void settle(api.assetTextures(asset.path), setTextures, onError);
+    return settleCurrent(api.assetTextures(asset.path), setTextures, onError);
   }, [asset.kind, asset.path, onError]);
 
   const trimmed = newPath.trim();

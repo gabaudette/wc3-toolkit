@@ -28,7 +28,13 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let current = true;
+
     void Promise.all([api.listUnits(), api.spellUnits(spell)]).then(([all, has]) => {
+      if (!current) {
+        return;
+      }
+
       if (!all.ok) {
         setError(all.error);
         return;
@@ -42,6 +48,10 @@ export function SpellUnits({ spell, onChanged }: SpellUnitsProps) {
       setUnits(all.value.filter((u) => HOLDER_KINDS.includes(u.kind)));
       setHolders(new Set(has.value));
     });
+
+    return () => {
+      current = false;
+    };
   }, [spell]);
 
   useEffect(() => {

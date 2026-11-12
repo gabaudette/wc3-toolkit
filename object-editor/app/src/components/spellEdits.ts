@@ -1,6 +1,7 @@
 import { api } from "../api";
 import { ok, type Result } from "../result";
 import type { AbilityDetail, Field, LevelField, SpellTemplate } from "../types";
+import { fillLevels } from "./objectPane";
 import type { BuffChoice } from "./SpellBuffStep";
 
 export const NAME = "anam";
@@ -216,13 +217,7 @@ export async function filled(
   levels: number,
   value: string,
 ): Promise<Result<AbilityDetail>> {
-  let updated = await api.setAbilityField(id, field, fromLevel, value);
-
-  for (let level = fromLevel + 1; level <= levels && updated.ok; level++) {
-    updated = await api.setAbilityField(id, field, level, value);
-  }
-
-  return updated;
+  return fillLevels((level) => api.setAbilityField(id, field, level, value), fromLevel, levels);
 }
 
 export async function withIcon(

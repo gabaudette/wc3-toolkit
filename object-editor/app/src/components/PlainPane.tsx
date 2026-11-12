@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { api } from "../api";
-import { type Result, settle } from "../result";
-import type { Catalog, Field, UnitDetail, UnitItem } from "../types";
+import type { Result } from "../result";
+import type { Catalog, Field } from "../types";
 import { replaceField } from "../ui";
+import { useObjectPane } from "./objectPane";
 import { type ListConfig, UnitList } from "./UnitList";
 import { UnitPage } from "./UnitPage";
 
@@ -25,61 +26,25 @@ export function PlainPane({
   onMapChanged,
   onError,
 }: PlainPaneProps) {
-  const [objects, setObjects] = useState<UnitItem[]>([]);
-  const [detail, setDetail] = useState<UnitDetail | null>(null);
-  const queue = useRef<Promise<void>>(Promise.resolve());
+  const source = useMemo(
+    () => ({
+      list: () => api.listPlain(catalog),
+      detail: (id: string) => api.plainDetail(catalog, id),
+      create: (base: string) => api.createPlain(catalog, base),
+    }),
+    [catalog],
+  );
+  const pane = useObjectPane(source, { selected, onSelect, onMapChanged, onError });
+  const { detail, setDetail } = pane;
+  const objects = pane.items;
 
   const listError = useCallback((message: string) => onError(message), [onError]);
 
-  const refreshList = useCallback(() => {
-    void settle(api.listPlain(catalog), setObjects, onError);
-  }, [catalog, onError]);
-
-  useEffect(() => {
-    refreshList();
-  }, [refreshList]);
-
-  useEffect(() => {
-    if (!selected) {
-      setDetail(null);
-      return;
-    }
-
-    void settle(api.plainDetail(catalog, selected), setDetail, onError);
-  }, [catalog, selected, onError]);
-
   function run(id: string, edit: () => Promise<Result<Field>>) {
-    queue.current = queue.current.then(async () => {
-      const updated = await edit();
-
-      if (!updated.ok) {
-        onError(updated.error);
-        return;
-      }
-
-      setDetail((current) => current && replaceField(current, updated.value));
-      onError(null);
-      onMapChanged();
-      refreshList();
-      await settle(api.plainDetail(catalog, id), setDetail, onError);
+    pane.run(id, edit, (field) => {
+      setDetail((current) => current && replaceField(current, field));
+      return pane.reload(id);
     });
-  }
-
-  async function createCopy() {
-    if (!detail) {
-      return;
-    }
-
-    const created = await api.createPlain(catalog, detail.item.base);
-
-    if (!created.ok) {
-      onError(created.error);
-      return;
-    }
-
-    onMapChanged();
-    refreshList();
-    onSelect(created.value.id);
   }
 
   return (
@@ -102,7 +67,7 @@ export function PlainPane({
           onReset={(field) =>
             run(detail.item.id, () => api.resetPlainField(catalog, detail.item.id, field))
           }
-          onCreateCopy={createCopy}
+          onCreateCopy={() => pane.createCopy(detail.item.base)}
         />
       )}
       {!detail && (
