@@ -159,7 +159,7 @@ function UnitListView({ config, units, selected, onSelect, onError }: UnitListPr
   useEffect(() => {
     const trimmed = query.trim();
 
-    if (!trimmed) {
+    if (!trimmed || units.length === 0) {
       setHits(null);
       return;
     }
@@ -173,7 +173,7 @@ function UnitListView({ config, units, selected, onSelect, onError }: UnitListPr
       window.clearTimeout(timer);
       stop?.();
     };
-  }, [query, search, onError]);
+  }, [query, units, search, onError]);
 
   const shown = useMemo(() => {
     const byId = new Map(units.map((u) => [u.id, u]));
