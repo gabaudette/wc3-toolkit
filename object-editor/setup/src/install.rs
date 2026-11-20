@@ -262,3 +262,29 @@ pub fn launch(binary: &Path) -> std::io::Result<()> {
 
     command.spawn().map(drop)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The record Tinkerbench Setup 0.3 writes, which later setups must read
+    /// to update or remove that install.
+    #[test]
+    fn records_from_0_3_still_load() {
+        let record: InstallRecord = serde_json::from_str(
+            r#"{
+  "version": "0.3.1",
+  "dir": "/home/me/.local/share/tinkerbench",
+  "binary": "/home/me/.local/share/tinkerbench/tinkerbench",
+  "files": [
+    "/home/me/.local/share/tinkerbench/tinkerbench",
+    "/home/me/.local/bin/tinkerbench"
+  ]
+}"#,
+        )
+        .unwrap();
+
+        assert_eq!(record.version, "0.3.1");
+        assert_eq!(record.files.len(), 2);
+    }
+}

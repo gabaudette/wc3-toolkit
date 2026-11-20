@@ -4,6 +4,20 @@ What changed in Tinkerbench, for the people who use it. Performance and internal
 one line here; the details are in the [devlog](docs/devlog.md). Tinkerbench shows this file
 under "What's new".
 
+## Unreleased
+
+### Added
+
+- The website explains Tinkerbench's own files (interface designs, loot tiers, bundle files,
+  share codes and the setup's files) and promises that later versions keep reading them.
+
+### Fixed
+
+- A loot file made by a newer Tinkerbench now asks you to update instead of opening, so
+  saving it can no longer drop what this version doesn't know.
+- A share code or bundle file made by a newer Tinkerbench now says to update Tinkerbench,
+  instead of saying it came from a different version of the editor.
+
 ## 0.3.1 - 2026-11-12
 
 ### Changed

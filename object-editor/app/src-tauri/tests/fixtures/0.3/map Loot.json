@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "cascades": [
+    {
+      "table": 0,
+      "tiers": [
+        {
+          "name": "Legendary",
+          "chance": 2.0,
+          "items": [
+            {
+              "item": "ofro",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "name": "Epic",
+          "chance": 5.0,
+          "items": [
+            {
+              "item": "YiI6",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "name": "Rare",
+          "chance": 15.0,
+          "items": [
+            {
+              "item": "rde3",
+              "weight": 1
+            },
+            {
+              "item": "ratc",
+              "weight": 1
+            }
+          ]
+        },
+        {
+          "name": "Common",
+          "chance": 100.0,
+          "items": [
+            {
+              "item": "phea",
+              "weight": 1
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

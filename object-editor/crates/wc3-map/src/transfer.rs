@@ -420,12 +420,20 @@ impl Bundle {
     }
 
     fn from_payload(payload: &[u8], invalid: &dyn Fn(&str) -> Error) -> Result<Self> {
-        let rest = payload
+        let (version, rest) = payload
             .strip_prefix(PAYLOAD_MAGIC.as_slice())
             .and_then(|r| r.split_first())
-            .filter(|(version, _)| **version == PAYLOAD_VERSION)
-            .map(|(_, rest)| rest)
-            .ok_or_else(|| invalid("it was made by a different version of the editor"))?;
+            .ok_or_else(|| invalid("its contents are damaged"))?;
+
+        if *version > PAYLOAD_VERSION {
+            return Err(invalid(
+                "it was made by a newer Tinkerbench; update Tinkerbench to import it",
+            ));
+        }
+
+        if *version == 0 {
+            return Err(invalid("its contents are damaged"));
+        }
 
         let mut bundle = Self::new();
         let mut pos = 0;
@@ -1118,6 +1126,47 @@ mod tests {
         assert!(Bundle::from_code("hello").is_err());
         assert!(Bundle::from_code(&code[..code.len() - 8]).is_err());
         assert!(Bundle::from_code(&format!("{CODE_PREFIX}AAAA")).is_err());
+    }
+
+    /// A share code and a bundle file made by Tinkerbench 0.3, whose formats
+    /// every later version promises to import.
+    const CODE_0_3: &[&str] = &[
+        "W3OBJ1:bZCxasMwEIbtZlMRfQUPHUOw8dTRhjbxkoIS6FhOxK5MIrtRJDKULnmtDHmkvEJ0ig1CRGBk_ffr03_3l",
+        "X-W8fMRVC7hd3bMzSmKokl0X0_2ExyUSNM0HjSsGa0Ad6tnU9H0vasYuW1Rraz7Lqj6gAIbBbTinZGFuwHubhXWN",
+        "C0Wgjvqy5BotW07TLX0UsUPSJjUdCDRs2bVfLVm37bsWEZudqi_71pdz-zBqV7P8BbQMUbh9Yw7cNNMhn9c5diUB",
+        "xJJACoXfFN6oMCvs8CvQDdV8HDrDSgE7MPkTMiaBYAfVe_95Nh9ANKHV3u-ni92btVynmSU_FHiBpZ89L2W0FHyT",
+        "wklNw",
+    ];
+    const FILE_0_3: &[&str] = &[
+        "VzNPQkoxAG2QsWrDMBCG7WZTEX0FDx1DsPHU0YY28ZKCEuhYTsSuTCK7USQylC55rQx5pLxCdIoNQkRgZP3369N_",
+        "95V_lvHzEVQu4Xd2zM0piqJJdF9P9hMclEjTNB40rBmtAHerZ1PR9L2rGLltUa2s-y6o-oACGwW04p2RhbsB7m4V",
+        "1jQtFoI76suQaLVtO0y19FLFD0iY1HQg0bNm1Xy1Zt-27FhGbnaov-9aXc_swalez_AW0DFG4fWMO3DTTIZ_XOXY",
+        "lAcSSQAqF3xTeqDAr7PAr0A3VfBw6w0oBOzD5EzImgWAH1Xv_eTYfQDSh1d7vp4vdm7Vcp5klPxR4gaWfPS9ltBR",
+        "8k8JJTc",
+    ];
+
+    #[test]
+    fn codes_and_bundles_from_0_3_still_import() {
+        let code = CODE_0_3.concat();
+        let file = BASE64.decode(FILE_0_3.concat()).unwrap();
+
+        for bundle in [
+            Bundle::from_code(&code).unwrap(),
+            Bundle::from_file(&file).unwrap(),
+        ] {
+            assert!(!bundle.tables(ObjectType::Unit).is_empty());
+        }
+    }
+
+    #[test]
+    fn codes_from_a_newer_tinkerbench_ask_for_an_update() {
+        let mut payload = PAYLOAD_MAGIC.to_vec();
+
+        payload.push(PAYLOAD_VERSION + 1);
+        let code = format!("{CODE_PREFIX}{}", BASE64.encode(compress(&payload)));
+        let error = Bundle::from_code(&code).unwrap_err().to_string();
+
+        assert!(error.contains("newer Tinkerbench"), "{error}");
     }
 
     #[test]

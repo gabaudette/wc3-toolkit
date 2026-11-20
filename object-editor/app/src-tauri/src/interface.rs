@@ -947,4 +947,35 @@ mod tests {
 
         assert_eq!(ids, ["button-2", "button-1", "button-3"]);
     }
+
+    /// Files written by Tinkerbench 0.3, which later versions promise to read.
+    fn fixture(name: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("tests/fixtures/0.3")
+            .join(name)
+    }
+
+    #[test]
+    fn design_files_from_0_3_still_load() {
+        let dialogs = load(&fixture("map.w3m")).unwrap();
+        let boards = load(&fixture("boards.w3m")).unwrap();
+        let kinds: Vec<&str> = boards
+            .iter()
+            .map(|design| match design {
+                Design::Dialog(_) => "dialog",
+                Design::Multiboard(_) => "multiboard",
+                Design::Leaderboard(_) => "leaderboard",
+                Design::TimerWindow(_) => "timer window",
+            })
+            .collect();
+
+        assert_eq!(dialogs.len(), 3);
+        assert_eq!(kinds, ["multiboard", "leaderboard", "timer window"]);
+
+        let shared = std::fs::read_to_string(fixture("designs.w3ui")).unwrap();
+        let file = DesignFile::parse(&shared).unwrap();
+
+        assert_eq!(file.designs.len(), 2);
+        assert_eq!(file.imported_files().unwrap().len(), 1);
+    }
 }
