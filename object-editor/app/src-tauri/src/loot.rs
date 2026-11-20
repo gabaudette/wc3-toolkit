@@ -118,6 +118,14 @@ pub fn load(map: &Path) -> Result<Vec<Cascade>, String> {
         )
     })?;
 
+    if file.version > FORMAT_VERSION {
+        return Err(format!(
+            "{} was made by a newer Tinkerbench (format {}); update to edit it.",
+            path.display(),
+            file.version
+        ));
+    }
+
     Ok(file.cascades)
 }
 
@@ -784,5 +792,28 @@ mod tests {
         assert_eq!(player_name(0), "Player 1 (Red)");
         assert_eq!(player_name(24), "Neutral Hostile");
         assert_eq!(player_name(27), "Neutral Passive");
+    }
+
+    #[test]
+    fn loot_files_from_0_3_still_load() {
+        let map = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/0.3/map.w3m");
+        let cascades = load(&map).unwrap();
+        let tiers: Vec<&str> = cascades[0].tiers.iter().map(|t| t.name.as_str()).collect();
+
+        assert_eq!(tiers, ["Legendary", "Epic", "Rare", "Common"]);
+    }
+
+    #[test]
+    fn loot_files_from_a_newer_tinkerbench_are_not_edited() {
+        let dir = tempfile::tempdir().unwrap();
+        let map = dir.path().join("test.w3m");
+
+        std::fs::write(
+            file_for(&map),
+            r#"{ "version": 2, "cascades": [], "rarity": [] }"#,
+        )
+        .unwrap();
+
+        assert!(load(&map).unwrap_err().contains("newer Tinkerbench"));
     }
 }

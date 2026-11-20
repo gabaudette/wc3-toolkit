@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "designs": [
+    {
+      "kind": "dialog",
+      "id": "difficulty",
+      "name": "Difficulty",
+      "title": "The map's own dialog",
+      "titleColor": null,
+      "buttons": [
+        {
+          "id": "ok",
+          "text": "OK",
+          "hotkey": "O",
+          "highlightHotkey": true,
+          "action": {
+            "kind": "close"
+          }
+        }
+      ],
+      "showAtStart": false
+    },
+    {
+      "kind": "dialog",
+      "id": "difficulty-2",
+      "name": "Difficulty 2",
+      "title": "Choose a difficulty",
+      "titleColor": null,
+      "buttons": [
+        {
+          "id": "normal",
+          "text": "Normal",
+          "hotkey": "N",
+          "highlightHotkey": true,
+          "action": {
+            "kind": "close"
+          }
+        },
+        {
+          "id": "hard",
+          "text": "Hard",
+          "hotkey": "H",
+          "highlightHotkey": true,
+          "action": {
+            "kind": "runFunction",
+            "function": "OnHardMode"
+          }
+        },
+        {
+          "id": "about",
+          "text": "About this map",
+          "hotkey": "A",
+          "highlightHotkey": true,
+          "action": {
+            "kind": "showDialog",
+            "dialog": "details"
+          }
+        }
+      ],
+      "showAtStart": true
+    },
+    {
+      "kind": "dialog",
+      "id": "details",
+      "name": "Details",
+      "title": "Work together to survive.",
+      "titleColor": "00ffff",
+      "buttons": [
+        {
+          "id": "back",
+          "text": "Back",
+          "hotkey": "B",
+          "highlightHotkey": true,
+          "action": {
+            "kind": "showDialog",
+            "dialog": "difficulty-2"
+          }
+        }
+      ],
+      "showAtStart": false
+    }
+  ]
+}

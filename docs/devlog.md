@@ -4,6 +4,29 @@ The technical story of Tinkerbench, newest first: what changed, why, and what we
 Users read the [changelog](../CHANGELOG.md) instead, where performance and internal work is a
 single line. Every pull request adds an entry here and to the changelog.
 
+## 2026-11-20 · A compatibility promise for Tinkerbench's files (AGE-76)
+
+- Reviewed every file Tinkerbench writes besides the map. `UI.json` and `.w3ui` already
+  refused a newer `version`, and the serde structs ignore unknown fields and default the
+  optional ones, so older files load and newer ones are not edited.
+- Two gaps:
+  - `Loot.json` had no version check, so an older Tinkerbench would load a newer file and save
+    it back as version 1 without what it did not know. `loot::load` now refuses a newer
+    version like `interface::load`.
+  - Share codes and bundle files accepted only `PAYLOAD_VERSION == 1`. A future version 2 would
+    then have rejected every code made today. `Bundle::from_payload` now accepts 1 up to the
+    current version and asks for an update on a newer one; 0 counts as damaged.
+- Tests load files in today's format, kept in the repository, and must keep loading them:
+  - `app/src-tauri/tests/fixtures/0.3/`: two `UI.json` files (a real one with dialogs, and one
+    with a multiboard, a leaderboard and a timer window), a real `Loot.json` and a `.w3ui` with
+    an imported file;
+  - in `transfer.rs`, a share code and a bundle file made by 0.3.1, kept as text;
+  - `setup.json` (also with an unknown field) and `install.json` as 0.3 writes them.
+- The promise is on the website (`formats/tinkerbench-files.md`): later versions read earlier
+  files, a format whose change older versions could not keep gets a new version, and older
+  versions refuse it. It names what is not covered (generated Lua, `[DEV]` copies, remembered
+  session state, hand-edited files) and that 0.3.0 and 0.3.1 lack the `Loot.json` check.
+
 ## 2026-11-12 · Prepare the 0.3.1 release
 
 - 0.3.1 is a patch preview after 0.3.0: the license change to GPL version 2 or later, the

@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "designs": [
+    {
+      "kind": "multiboard",
+      "id": "scoreboard",
+      "name": "Scoreboard",
+      "title": "Scoreboard",
+      "titleColor": "ffcc00",
+      "columns": [
+        {
+          "id": "player",
+          "name": "Player",
+          "width": 12.0
+        },
+        {
+          "id": "kills",
+          "name": "Kills",
+          "width": 5.0
+        }
+      ],
+      "rows": [
+        {
+          "id": "header",
+          "name": "Header",
+          "perPlayer": false,
+          "cells": [
+            {
+              "text": "Player",
+              "color": "ffcc00",
+              "icon": null
+            },
+            {
+              "text": "Kills",
+              "color": "ffcc00",
+              "icon": "ReplaceableTextures\\CommandButtons\\BTNFootman.blp"
+            }
+          ]
+        },
+        {
+          "id": "players",
+          "name": "Players",
+          "perPlayer": true,
+          "cells": [
+            {
+              "text": "{player}",
+              "color": null,
+              "icon": null
+            },
+            {
+              "text": "0",
+              "color": null,
+              "icon": null
+            }
+          ]
+        }
+      ],
+      "showAtStart": true,
+      "minimized": false
+    },
+    {
+      "kind": "leaderboard",
+      "id": "kills",
+      "name": "Kills",
+      "title": "Kills",
+      "titleColor": null,
+      "players": true,
+      "playerValue": 0,
+      "labels": [
+        {
+          "id": "creeps",
+          "name": "Creeps",
+          "color": "ff0303",
+          "value": 10
+        }
+      ],
+      "sort": "highFirst",
+      "showAtStart": true
+    },
+    {
+      "kind": "timerWindow",
+      "id": "next-wave",
+      "name": "Next wave",
+      "title": "Next wave",
+      "titleColor": null,
+      "duration": 60.0,
+      "repeats": true,
+      "startAtStart": true,
+      "hideWhenDone": true,
+      "onDone": "SpawnWave"
+    }
+  ]
+}

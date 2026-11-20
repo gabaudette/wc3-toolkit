@@ -1,0 +1,88 @@
+{
+  "format": "tinkerbench-ui",
+  "version": 1,
+  "designs": [
+    {
+      "kind": "dialog",
+      "id": "difficulty",
+      "name": "Difficulty",
+      "title": "The map's own dialog",
+      "titleColor": null,
+      "buttons": [
+        {
+          "id": "ok",
+          "text": "OK",
+          "hotkey": "O",
+          "highlightHotkey": true,
+          "action": {
+            "kind": "close"
+          }
+        }
+      ],
+      "showAtStart": false
+    },
+    {
+      "kind": "multiboard",
+      "id": "scoreboard",
+      "name": "Scoreboard",
+      "title": "Scoreboard",
+      "titleColor": "ffcc00",
+      "columns": [
+        {
+          "id": "player",
+          "name": "Player",
+          "width": 12.0
+        },
+        {
+          "id": "kills",
+          "name": "Kills",
+          "width": 5.0
+        }
+      ],
+      "rows": [
+        {
+          "id": "header",
+          "name": "Header",
+          "perPlayer": false,
+          "cells": [
+            {
+              "text": "Player",
+              "color": "ffcc00",
+              "icon": null
+            },
+            {
+              "text": "Kills",
+              "color": "ffcc00",
+              "icon": "ReplaceableTextures\\CommandButtons\\BTNFootman.blp"
+            }
+          ]
+        },
+        {
+          "id": "players",
+          "name": "Players",
+          "perPlayer": true,
+          "cells": [
+            {
+              "text": "{player}",
+              "color": null,
+              "icon": null
+            },
+            {
+              "text": "0",
+              "color": null,
+              "icon": null
+            }
+          ]
+        }
+      ],
+      "showAtStart": true,
+      "minimized": false
+    }
+  ],
+  "files": [
+    {
+      "path": "war3mapImported\\Banner.blp",
+      "data": "QkxQMQ=="
+    }
+  ]
+}

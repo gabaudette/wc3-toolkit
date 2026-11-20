@@ -135,6 +135,32 @@ mod tests {
     }
 
     #[test]
+    fn choices_from_0_3_and_from_newer_setups_still_load() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join(CHOICES_FILE);
+
+        std::fs::write(
+            &path,
+            r#"{
+  "gameDir": "/games/Warcraft III",
+  "hd": false,
+  "mapsDir": "/docs/Warcraft III/Maps",
+  "luaFolder": null,
+  "addedLater": "ignored"
+}"#,
+        )
+        .unwrap();
+
+        let choices = SetupChoices::load_from(&path).unwrap().unwrap();
+
+        assert_eq!(choices.game_dir, PathBuf::from("/games/Warcraft III"));
+        assert_eq!(
+            choices.maps_dir,
+            Some(PathBuf::from("/docs/Warcraft III/Maps"))
+        );
+    }
+
+    #[test]
     fn a_broken_file_names_itself() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join(CHOICES_FILE);
